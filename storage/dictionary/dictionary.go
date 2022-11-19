@@ -1,10 +1,10 @@
 package dictionary
 
 import (
-	"LinguaEvo/storage"
 	"encoding/gob"
 	"errors"
 	"fmt"
+	"lingua-evo/storage"
 	"log"
 	"math/rand"
 	"os"

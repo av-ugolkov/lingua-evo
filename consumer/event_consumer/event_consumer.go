@@ -4,7 +4,7 @@ import (
 	"log"
 	"time"
 
-	"LinguaEvo/events"
+	"lingua-evo/events"
 )
 
 type Consumer struct {

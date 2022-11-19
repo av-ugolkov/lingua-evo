@@ -1,12 +1,12 @@
 package main
 
 import (
-	"LinguaEvo/events/commands/messengers"
-	"LinguaEvo/storage/dictionary"
 	"log"
 
-	tgClient "LinguaEvo/clients/telegram"
-	"LinguaEvo/consumer/event_consumer"
+	tgClient "lingua-evo/clients/telegram"
+	"lingua-evo/consumer/event_consumer"
+	"lingua-evo/events/commands/messengers"
+	"lingua-evo/storage/dictionary"
 )
 
 const (

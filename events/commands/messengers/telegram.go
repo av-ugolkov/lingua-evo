@@ -1,15 +1,15 @@
 package messengers
 
 import (
-	"LinguaEvo/events/commands"
 	"errors"
 	"fmt"
 	"log"
 	"strings"
 
-	"LinguaEvo/clients/telegram"
-	"LinguaEvo/events"
-	"LinguaEvo/storage"
+	"lingua-evo/clients/telegram"
+	"lingua-evo/events"
+	"lingua-evo/events/commands"
+	"lingua-evo/storage"
 )
 
 type Processor struct {
