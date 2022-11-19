@@ -1,11 +1,8 @@
-package messengers
+package telegram
 
 import (
 	"errors"
 	"fmt"
-	"log"
-	"strings"
-
 	"lingua-evo/clients/telegram"
 	"lingua-evo/events"
 	"lingua-evo/events/commands"
@@ -67,96 +64,24 @@ func (p *Processor) Process(event events.Event) error {
 }
 
 func (p *Processor) processMessage(event events.Event) error {
-	/*meta, err := meta(event)
+	meta, err := meta(event)
 	if err != nil {
 		return fmt.Errorf("telegram.processMessage.meta: %w", err)
 	}
 
 	if err := p.doCmd(event.Text, meta.ChatID, meta.UserName); err != nil {
 		return fmt.Errorf("telegram.processMessage.doCmd: %w", err)
-	}*/
+	}
 
 	return nil
-}
-
-func (p *Processor) doCmd(text string, chatID int, username string) error {
-	text = strings.TrimSpace(text)
-
-	log.Printf("got new command [%s] from %s", text, username)
-	/*cmd := p.chooseCmd(text)
-	if cmd == UnknownCmd {
-		if p.lastCmd != UnknownCmd {
-			cmd = p.lastCmd
-		}
-	} else {
-		p.lastCmd = cmd
-	}
-	switch cmd {
-	case StartCmd:
-		return p.sendHello(chatID)
-	case HelpCmd:
-		return p.sendHelp(chatID)
-	case AddCmd:
-		return p.sendAdd(chatID, text, username)
-	case Cancel:
-		return p.sendCancel(chatID)
-	case RndCmd:
-		return p.sendRandom(chatID, username)
-	default:
-		return p.tg.SendMessage(chatID, telegram.msgUnknownCommand, "")
-	}*/
-	return nil
-}
-
-func (p *Processor) chooseCmd(cmd string) commands.Command {
-	switch cmd {
-	case commands.StartCmd:
-		return commands.StartCmd
-	case commands.HelpCmd:
-		return commands.HelpCmd
-	case commands.Cancel:
-		return commands.Cancel
-	case commands.AddCmd:
-		return commands.AddCmd
-	case commands.RndCmd:
-		return commands.RndCmd
-	default:
-		return commands.UnknownCmd
-	}
-}
-
-func (p *Processor) sendCancel(chatID int) error {
-	p.lastCmd = commands.UnknownCmd
-	return p.tg.SendMessage(chatID, commands.MsgCancel, "")
-}
-
-func (p *Processor) sendAdd(chatID int, world string, username string) error {
-	return nil
-}
-
-func (p *Processor) sendRandom(chatID int, world *storage.Word) error {
-	page, err := p.storage.PickRandomWord(world)
-	if err != nil && !errors.Is(err, storage.ErrNoSavePages) {
-		return fmt.Errorf("messengers.telegram.senRandom.PickRandom: %w", err)
-	}
-
-	if errors.Is(err, storage.ErrNoSavePages) {
-		return p.tg.SendMessage(chatID, commands.MsgNoSavedPages, "")
-	}
-
-	if err := p.tg.SendMessage(chatID, page.Value, ""); err != nil {
-		return fmt.Errorf("messengers.telegram.senRandom.SendMessage: %w", err)
-	}
-
-	return nil //p.storage.RemoveWord(page)
-}
-
-func (p *Processor) sendHelp(chatID int) error {
-	return p.tg.SendMessage(chatID, commands.MsgHelp, "")
 }
 
 func (p *Processor) sendHello(chatID int) error {
-	return p.tg.SendMessage(chatID, commands.MsgHello, "")
+	return p.tg.SendMessage(chatID, commands.MsgHello)
+}
+
+func (p *Processor) sendHelp(chatID int) error {
+	return p.tg.SendMessage(chatID, commands.MsgHelp)
 }
 
 func meta(event events.Event) (Meta, error) {

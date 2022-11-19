@@ -1,16 +1,12 @@
 package commands
 
 const (
-	UnknownCmd = "/unknown"
-	StartCmd   = "/start"
-	HelpCmd    = "/help"
-	Cancel     = "/cancel"
-	AddCmd     = "/add"
-	RndCmd     = "/rnd"
+	UnknownCmd Command = "/unknown"
+	StartCmd   Command = "/start"
+	HelpCmd    Command = "/help"
+	Cancel     Command = "/cancel"
+	AddCmd     Command = "/add"
+	RndCmd     Command = "/rnd"
 )
 
 type Command string
-
-type CommandExec interface {
-	Execute(int) (Command, error)
-}

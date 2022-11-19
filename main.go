@@ -5,7 +5,7 @@ import (
 
 	tgClient "lingua-evo/clients/telegram"
 	"lingua-evo/consumer/event_consumer"
-	"lingua-evo/events/commands/messengers"
+	"lingua-evo/events/commands/messengers/telegram"
 	"lingua-evo/storage/dictionary"
 )
 
@@ -17,12 +17,9 @@ const (
 )
 
 func main() {
-	tgClient := tgClient.New(tgBotHost, tgToken)
+	tg := tgClient.New(tgBotHost, tgToken)
 
-	eventProcessor := messengers.New(
-		tgClient,
-		dictionary.New(storagePath),
-	)
+	eventProcessor := telegram.New(tg, dictionary.New(storagePath))
 
 	log.Print("service started")
 
