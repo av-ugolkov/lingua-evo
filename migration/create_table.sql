@@ -1,30 +1,33 @@
-create table if not exists items (
+create table if not exists users (
     id bigserial PRIMARY KEY,
-    name text,
-    price integer
+    user_mame text not null
 );
 
-create table if not exists orders (
+create table if not exists languages (
     id bigserial PRIMARY KEY,
-    user_id integer,
-    payment_type  smallint,
-    created_at timestamptz
+    value text not null,
+    translate text not null
 );
 
-create table if not exists order_items (
-    order_item_id bigserial PRIMARY KEY,
-    order_id bigint,
-    item_id bigint,
-    original_amount integer,
-    discounted_amount integer,
+create table if not exists examples (
+    id bigserial PRIMARY KEY,
+    value text,
+    translate text
+);
 
-    CONSTRAINT fk_order_item_id
-    FOREIGN KEY(order_id)
-    REFERENCES orders(id),
+create table if not exists words (
+    id bigserial PRIMARY KEY,
+    value text not null,
+    translate text not null,
+    pronunciation text,
+    language languages,
+    example examples
+);
 
-    CONSTRAINT fk_items
-    FOREIGN KEY(item_id)
-    REFERENCES items(id)
-    );
 
-insert into items (name, price) VALUES ('premium', 100000), ('calltracking', 20000), ('autoload', 200000), ('limit', 500000);
+create table if not exists dictionary (
+    id bigserial PRIMARY KEY,
+    user_id bigint not null,
+    word_id bigint not null,
+    created timestamptz
+);
