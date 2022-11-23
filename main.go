@@ -11,7 +11,6 @@ import (
 	"lingua-evo/events/commands/messengers/telegram"
 	"lingua-evo/storage"
 	"lingua-evo/storage/database"
-	"lingua-evo/storage/dictionary"
 )
 
 const (
@@ -28,12 +27,10 @@ func main() {
 	var repository storage.Storage
 	pool, err := pgxpool.Connect(context.Background(), dbConnection)
 	if err != nil {
-		log.Printf("can't create pg pool: %v", err)
-		repository = dictionary.New(storagePath)
-	} else {
-		log.Printf("create pg pool: %v", pool.Config().ConnConfig.Database)
-		repository = database.New(pool)
+		log.Fatalf("can't create pg pool: %v", err)
 	}
+	log.Printf("create pg pool: %v", pool.Config().ConnConfig.Database)
+	repository = database.New(pool)
 
 	eventProcessor := telegram.New(tg, repository)
 
