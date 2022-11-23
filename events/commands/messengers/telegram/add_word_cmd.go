@@ -1,6 +1,9 @@
 package telegram
 
-import "lingua-evo/events/commands"
+import (
+	"lingua-evo/clients/telegram"
+	"lingua-evo/events/commands"
+)
 
 const (
 	word = iota
@@ -11,7 +14,18 @@ const (
 
 var index = 0
 
-var numericKeyboard = `{"inline_keyboard":[[{"text":"Some button text 1", "callback_data": "1" }],[{ "text": "Some button text 2", "callback_data": "2" }],[{ "text": "Some button text 3", "callback_data": "3" }]]}`
+var keyboard = telegram.InlineKeyboard{
+	InlineKeyboardButton: [][]telegram.InlineKeyboardButton{
+		{
+			telegram.InlineKeyboardButton{Text: "RU", CallbackData: "RU"},
+			telegram.InlineKeyboardButton{Text: "EN", CallbackData: "EN"},
+		},
+		{
+			telegram.InlineKeyboardButton{Text: "FR", CallbackData: "FR"},
+			telegram.InlineKeyboardButton{Text: "GE", CallbackData: "GE"},
+		},
+	},
+}
 
 func (p *Processor) addWord(chatID int) error {
 	defer func() { index++ }()
@@ -19,13 +33,13 @@ func (p *Processor) addWord(chatID int) error {
 	case word:
 		return p.tg.SendMessage(chatID, commands.MsgAddWord)
 	case pronounce:
-		return p.tg.SendMessageWithButton(chatID, commands.MsgAddPronounce, numericKeyboard)
+		return p.tg.SendMessageWithButton(chatID, commands.MsgAddPronounce, keyboard.JSON())
 	case translate:
-		return p.tg.SendMessageWithButton(chatID, commands.MsgAddTranslate, numericKeyboard)
+		return p.tg.SendMessageWithButton(chatID, commands.MsgAddTranslate, keyboard.JSON())
 	case example:
-		return p.tg.SendMessageWithButton(chatID, commands.MsgAddExample, numericKeyboard)
+		return p.tg.SendMessageWithButton(chatID, commands.MsgAddExample, keyboard.JSON())
 	default:
 		index = -1
-		return p.tg.SendMessageWithButton(chatID, commands.MsgAddFinish, numericKeyboard)
+		return p.tg.SendMessageWithButton(chatID, commands.MsgAddFinish, keyboard.JSON())
 	}
 }

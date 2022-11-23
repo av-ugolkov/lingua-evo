@@ -17,6 +17,8 @@ type IncomingMessage struct {
 }
 
 type From struct {
+	ID       int    `json:"id"`
+	IsBot    bool   `json:"is_bot"`
 	Username string `json:"username"`
 }
 type Chat struct {

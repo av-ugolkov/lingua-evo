@@ -1,6 +1,7 @@
 package telegram
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"lingua-evo/clients/telegram"
@@ -18,7 +19,9 @@ type Processor struct {
 
 type Meta struct {
 	ChatID   int
+	UserID   int
 	UserName string
+	IsBot    bool
 }
 
 var (
@@ -69,15 +72,20 @@ func (p *Processor) processMessage(event events.Event) error {
 		return fmt.Errorf("telegram.processMessage.meta: %w", err)
 	}
 
-	if err := p.doCmd(event.Text, meta.ChatID, meta.UserName); err != nil {
+	if err := p.doCmd(event.Text, meta.ChatID, meta.UserID, meta.UserName); err != nil {
 		return fmt.Errorf("telegram.processMessage.doCmd: %w", err)
 	}
 
 	return nil
 }
 
-func (p *Processor) sendHello(chatID int) error {
-	return p.tg.SendMessage(chatID, commands.MsgHello)
+func (p *Processor) sendStart(chatID int, userId int, userName string) error {
+	err := p.storage.AddUser(context.Background(), userId, userName)
+	if err != nil {
+		return fmt.Errorf("telegram.sendStart.AddUser: %w", err)
+	}
+
+	return p.tg.SendMessage(chatID, fmt.Sprintf(commands.MsgHello, userName))
 }
 
 func (p *Processor) sendHelp(chatID int) error {
@@ -102,6 +110,8 @@ func event(upd telegram.Update) events.Event {
 	if updType == events.Message {
 		res.Meta = Meta{
 			ChatID:   upd.Message.Chat.ID,
+			UserID:   upd.Message.From.ID,
+			IsBot:    upd.Message.From.IsBot,
 			UserName: upd.Message.From.Username,
 		}
 	}

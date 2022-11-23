@@ -4,7 +4,7 @@ const MsgHelp = `I can save and keep you pages. Also I can offer you then to rea
 In order to save the page, just send ne at link to it.
 In order to get a random page from your list, send me command /rnd.
 Caution! After that, this page will be removed from your list!`
-const MsgHello = "Hi there! \n\n" + MsgHelp
+const MsgHello = "Hi %s! \n\n" + MsgHelp
 const MsgCancel = "You cancel last command"
 
 const (

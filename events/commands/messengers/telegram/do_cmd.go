@@ -8,10 +8,10 @@ import (
 	"lingua-evo/storage"
 )
 
-func (p *Processor) doCmd(text string, chatID int, username string) error {
+func (p *Processor) doCmd(text string, chatID int, userId int, userName string) error {
 	text = strings.TrimSpace(text)
 
-	log.Printf("got new command [%s] from %s", text, username)
+	log.Printf("got new command [%s] from [%s]", text, userName)
 	cmd := p.chooseCmd(commands.Command(text))
 	if cmd == commands.UnknownCmd {
 		if p.lastCmd != commands.UnknownCmd {
@@ -22,7 +22,7 @@ func (p *Processor) doCmd(text string, chatID int, username string) error {
 	}
 	switch cmd {
 	case commands.StartCmd:
-		return p.sendHello(chatID)
+		return p.sendStart(chatID, userId, userName)
 	case commands.HelpCmd:
 		return p.sendHelp(chatID)
 	case commands.AddCmd:

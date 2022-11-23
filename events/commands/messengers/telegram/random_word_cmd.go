@@ -1,6 +1,7 @@
 package telegram
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -9,7 +10,7 @@ import (
 )
 
 func (p *Processor) sendRandom(chatID int, world *storage.Word) error {
-	page, err := p.storage.PickRandomWord(world)
+	page, err := p.storage.PickRandomWord(context.Background(), world)
 	if err != nil && !errors.Is(err, storage.ErrNoSavePages) {
 		return fmt.Errorf("messengers.telegram.senRandom.PickRandom: %w", err)
 	}
