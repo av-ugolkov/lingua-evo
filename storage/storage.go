@@ -21,7 +21,7 @@ type Storage interface {
 }
 
 type Word struct {
-	UserName  string
+	UserID    int
 	Value     string
 	Translate []string
 	Language  Language
@@ -44,8 +44,8 @@ func (p *Word) Hash() (string, error) {
 	if _, err := io.WriteString(h, p.Value); err != nil {
 		return "", fmt.Errorf("storage.Hash.WriteString (Value): %w", err)
 	}
-	if _, err := io.WriteString(h, p.UserName); err != nil {
-		return "", fmt.Errorf("storage.Hash.WriteString (UserName): %w", err)
+	if _, err := io.WriteString(h, string(p.UserID)); err != nil {
+		return "", fmt.Errorf("storage.Hash.WriteString (UserID): %w", err)
 	}
 	return fmt.Sprintf("%x", h.Sum(nil)), nil
 }

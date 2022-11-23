@@ -16,7 +16,6 @@ import (
 const (
 	tgToken      = "5762950198:AAHRVBXPgAgrbSv-fUcXeAwbwDysiTXcMtY"
 	tgBotHost    = "api.telegram.org"
-	storagePath  = "storage"
 	dbConnection = "postgres://postgres:5623@localhost:5432/postgres"
 	batchSize    = 100
 )

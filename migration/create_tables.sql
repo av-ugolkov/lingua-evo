@@ -1,15 +1,12 @@
 create table if not exists users (
-    id bigserial PRIMARY KEY,
-    user_id bigint not null,
+    user_id bigint PRIMARY KEY,
     user_mame text not null
 );
 
 create table if not exists languages (
-    id bigserial PRIMARY KEY,
-    lang text not null,
+    lang text PRIMARY KEY,
     code text not null
 );
-
 
 create table if not exists examples (
     id bigserial PRIMARY KEY,
