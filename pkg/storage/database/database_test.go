@@ -2,9 +2,11 @@ package database
 
 import (
 	"context"
-	"github.com/jackc/pgx/v4/pgxpool"
-	"lingua-evo/storage"
 	"testing"
+
+	"lingua-evo/pkg/storage"
+
+	"github.com/jackc/pgx/v4/pgxpool"
 )
 
 func TestDatabase_AddWord(t *testing.T) {
@@ -25,7 +27,7 @@ func TestDatabase_AddWord(t *testing.T) {
 		{name: "first_word", fields: fields{
 			db: pool,
 		}, args: args{ctx: context.Background(), w: &storage.Word{
-			UserName:  "mak",
+			UserID:    123,
 			Value:     "first",
 			Language:  storage.Language{Origin: "Eng", Translate: "Rus"},
 			Translate: []string{"первый"},

@@ -1,10 +1,9 @@
 package event_consumer
 
 import (
+	"lingua-evo/internal/events"
 	"log"
 	"time"
-
-	"lingua-evo/events"
 )
 
 type Consumer struct {

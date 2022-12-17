@@ -1,8 +1,8 @@
 package telegram
 
 import (
-	"lingua-evo/clients/telegram"
-	"lingua-evo/events/commands"
+	"lingua-evo/internal/clients/telegram"
+	"lingua-evo/internal/events/commands"
 )
 
 const (

@@ -4,9 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-
-	"lingua-evo/events/commands"
-	"lingua-evo/storage"
+	"lingua-evo/internal/events/commands"
+	"lingua-evo/pkg/storage"
 )
 
 func (p *Processor) sendRandom(chatID int, world *storage.Word) error {

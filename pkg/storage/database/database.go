@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/jackc/pgx/v4/pgxpool"
-	"lingua-evo/storage"
+	"lingua-evo/pkg/storage"
 	"time"
 )
 

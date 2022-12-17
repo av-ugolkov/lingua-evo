@@ -2,15 +2,11 @@ package main
 
 import (
 	"context"
-	"log"
-
 	"github.com/jackc/pgx/v4/pgxpool"
-
-	tgClient "lingua-evo/clients/telegram"
-	"lingua-evo/consumer/event_consumer"
-	"lingua-evo/events/commands/messengers/telegram"
-	"lingua-evo/storage"
-	"lingua-evo/storage/database"
+	"lingua-evo/internal/clients/web"
+	"lingua-evo/pkg/logging"
+	"lingua-evo/pkg/storage"
+	"lingua-evo/pkg/storage/database"
 )
 
 const (
@@ -21,24 +17,29 @@ const (
 )
 
 func main() {
-	tg := tgClient.New(tgBotHost, tgToken)
+	logging.Init()
+	logger := logging.GetLogger()
+	//tg := tgClient.New(tgBotHost, tgToken)
 
 	var repository storage.Storage
 	pool, err := pgxpool.Connect(context.Background(), dbConnection)
 	if err != nil {
-		log.Fatalf("can't create pg pool: %v", err)
+		logger.Fatalf("can't create pg pool: %v", err)
 	}
-	log.Printf("create pg pool: %v", pool.Config().ConnConfig.Database)
+	logger.Printf("create pg pool: %v", pool.Config().ConnConfig.Database)
 	repository = database.New(pool)
+	logger.Printf("repository: %s", repository)
 
-	eventProcessor := telegram.New(tg, repository)
+	//eventProcessor := telegram.New(tg, repository)
 
-	log.Print("service started")
+	//log.Print("service started")
 
-	consumer := event_consumer.New(eventProcessor, eventProcessor, batchSize)
-	if err := consumer.Start(); err != nil {
-		log.Fatal("service is stopped", err)
-	}
+	//consumer := event_consumer.New(eventProcessor, eventProcessor, batchSize)
+	//if err := consumer.Start(); err != nil {
+	//	log.Fatal("service is stopped", err)
+	//}
+
+	web.CreateWeb()
 }
 
 /*func mustToken() string {

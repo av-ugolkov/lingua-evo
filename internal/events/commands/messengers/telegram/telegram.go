@@ -4,16 +4,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"lingua-evo/clients/telegram"
-	"lingua-evo/events"
-	"lingua-evo/events/commands"
-	"lingua-evo/storage"
+	telegram2 "lingua-evo/internal/clients/telegram"
+	"lingua-evo/internal/events"
+	commands2 "lingua-evo/internal/events/commands"
+	"lingua-evo/pkg/storage"
 )
 
 type Processor struct {
-	tg      *telegram.Client
+	tg      *telegram2.Client
 	storage storage.Storage
-	lastCmd commands.Command
+	lastCmd commands2.Command
 	offset  int
 }
 
@@ -29,11 +29,11 @@ var (
 	ErrUnknownMetaType  = errors.New("unknown meta type")
 )
 
-func New(client *telegram.Client, storage storage.Storage) *Processor {
+func New(client *telegram2.Client, storage storage.Storage) *Processor {
 	return &Processor{
 		tg:      client,
 		storage: storage,
-		lastCmd: commands.UnknownCmd,
+		lastCmd: commands2.UnknownCmd,
 	}
 }
 
@@ -85,11 +85,11 @@ func (p *Processor) sendStart(chatID int, userId int, userName string) error {
 		return fmt.Errorf("telegram.sendStart.AddUser: %w", err)
 	}
 
-	return p.tg.SendMessage(chatID, fmt.Sprintf(commands.MsgHello, userName))
+	return p.tg.SendMessage(chatID, fmt.Sprintf(commands2.MsgHello, userName))
 }
 
 func (p *Processor) sendHelp(chatID int) error {
-	return p.tg.SendMessage(chatID, commands.MsgHelp)
+	return p.tg.SendMessage(chatID, commands2.MsgHelp)
 }
 
 func meta(event events.Event) (Meta, error) {
@@ -100,35 +100,51 @@ func meta(event events.Event) (Meta, error) {
 	return res, nil
 }
 
-func event(upd telegram.Update) events.Event {
+func event(upd telegram2.Update) events.Event {
 	updType := fetchType(upd)
 	res := events.Event{
 		Type: updType,
 		Text: fetchText(upd),
 	}
 
-	if updType == events.Message {
+	switch updType {
+	case events.Message:
 		res.Meta = Meta{
 			ChatID:   upd.Message.Chat.ID,
 			UserID:   upd.Message.From.ID,
 			IsBot:    upd.Message.From.IsBot,
 			UserName: upd.Message.From.Username,
 		}
+	case events.CallbackQuery:
+		res.Meta = Meta{
+			ChatID:   upd.CallbackQuery.Chat.ID,
+			UserID:   upd.CallbackQuery.From.ID,
+			IsBot:    upd.CallbackQuery.From.IsBot,
+			UserName: upd.CallbackQuery.From.Username,
+		}
 	}
 
 	return res
 }
 
-func fetchType(upd telegram.Update) events.Type {
-	if upd.Message == nil {
+func fetchType(upd telegram2.Update) events.Type {
+	switch {
+	case upd.Message != nil:
+		return events.Message
+	case upd.CallbackQuery != nil:
+		return events.CallbackQuery
+	default:
 		return events.Unknown
 	}
-	return events.Message
 }
 
-func fetchText(upd telegram.Update) string {
-	if upd.Message == nil {
+func fetchText(upd telegram2.Update) string {
+	switch {
+	case upd.Message != nil:
+		return upd.Message.Text
+	case upd.CallbackQuery != nil:
+		return upd.CallbackQuery.Data
+	default:
 		return ""
 	}
-	return upd.Message.Text
 }

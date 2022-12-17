@@ -1,0 +1,31 @@
+### AUTH POST
+POST http://localhost:8080/api/auth
+Content-Type: application/json
+
+{
+  "username": "me",
+  "password": "pass"
+}
+
+### AUTH PUT
+PUT http://localhost:8080/api/auth
+Content-Type: application/json
+
+{
+  "refresh_token": "{{refresh_token}}"
+}
+
+> {%
+    client.global.set("auth_token", response.body.token)
+    client.global.set("refresh_token", response.body.refresh_token)
+%}
+
+### SIGNUP POST
+POST http://localhost:8080/api/signup
+Content-Type: application/json
+
+{
+  "username": "me",
+  "password": "pass",
+  "email": "email@me.here"
+}

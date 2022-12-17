@@ -1,0 +1,9 @@
+is_debug: true
+jwt:
+  secret: $3cr3t
+listen:
+  type: port
+  bind_ip: localhost
+  port: 8080
+web_service:
+  url: http://127.0.0.1:5000/api
