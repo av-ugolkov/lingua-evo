@@ -1,3 +1,6 @@
+# Lingua
+logs/*
+
 .DS_Store
 .vs/
 .vscode/
