@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	authURL   = "/api/auth"
+	authURL   = "/auth"
 	signupURL = "/api/signup"
 )
 
@@ -78,7 +78,7 @@ func (h *handler) Auth(w http.ResponseWriter, r *http.Request) {
 	case http.MethodPost:
 		var u user
 		if err := json.NewDecoder(r.Body).Decode(&u); err != nil {
-			h.logger.Fatal(err)
+			h.logger.Error(err)
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
@@ -86,10 +86,10 @@ func (h *handler) Auth(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
 		//TODO client to UserService and get user by username and password
 		//for now stub check
-		if u.Username != "me" || u.Password != "pass" {
-			w.WriteHeader(http.StatusNotFound)
-			return
-		}
+		//if u.Username != "me" || u.Password != "pass" {
+		//	w.WriteHeader(http.StatusNotFound)
+		//	return
+		//}
 	case http.MethodPut:
 		var refreshTokenS refresh
 		if err := json.NewDecoder(r.Body).Decode(&refreshTokenS); err != nil {
@@ -115,7 +115,8 @@ func (h *handler) Auth(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(201)
+	w.WriteHeader(http.StatusCreated)
+	h.logger.Info(string(jsonBytes))
 	w.Write(jsonBytes)
 }
 

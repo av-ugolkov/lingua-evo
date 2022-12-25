@@ -2,11 +2,14 @@ package main
 
 import (
 	"context"
-	"github.com/jackc/pgx/v4/pgxpool"
+
 	"lingua-evo/internal/clients/web"
+	"lingua-evo/internal/config"
 	"lingua-evo/pkg/logging"
 	"lingua-evo/pkg/storage"
 	"lingua-evo/pkg/storage/database"
+
+	"github.com/jackc/pgx/v4/pgxpool"
 )
 
 const (
@@ -19,6 +22,11 @@ const (
 func main() {
 	logging.Init()
 	logger := logging.GetLogger()
+	logger.Println("logger initialized")
+
+	logger.Println("config initializing")
+	cfg := config.GetConfig()
+
 	//tg := tgClient.New(tgBotHost, tgToken)
 
 	var repository storage.Storage
@@ -39,7 +47,7 @@ func main() {
 	//	log.Fatal("service is stopped", err)
 	//}
 
-	web.CreateWeb()
+	web.CreateWeb(logger, cfg)
 }
 
 /*func mustToken() string {
