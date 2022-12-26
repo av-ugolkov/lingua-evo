@@ -11,8 +11,7 @@ import (
 )
 
 const (
-	auth         = "/auth"
-	authPagePath = entity.RootPath + "/auth/auth.html"
+	auth = "/auth"
 )
 
 type authPage struct {
@@ -25,17 +24,24 @@ func CreatePage(logger *logging.Logger) *authPage {
 	}
 }
 
-func (p *authPage) Register(router *httprouter.Router) {
-	router.HandlerFunc(http.MethodGet, auth, p.auth)
+func (a *authPage) Register(router *httprouter.Router) {
+	router.HandlerFunc(http.MethodGet, auth, a.auth)
 }
 
-func (p *authPage) auth(w http.ResponseWriter, _ *http.Request) {
-	file, err := os.ReadFile(authPagePath)
-
+func (a *authPage) auth(w http.ResponseWriter, _ *http.Request) {
+	file, err := os.ReadFile("./pages/auth/auth.html")
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 	w.WriteHeader(http.StatusCreated)
-	w.Write(file)
+	_, err = w.Write(file)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+	}
+}
+
+type Page struct {
+	Title string
+	Body  []byte
 }
