@@ -2,6 +2,13 @@ package main
 
 import (
 	"context"
+	"errors"
+	"fmt"
+	"github.com/julienschmidt/httprouter"
+	"lingua-evo/internal/api"
+	"net"
+	"net/http"
+	"time"
 
 	"lingua-evo/internal/clients/web"
 	"lingua-evo/internal/config"
@@ -29,14 +36,14 @@ func main() {
 
 	//tg := tgClient.New(tgBotHost, tgToken)
 
-	var repository storage.Storage
 	pool, err := pgxpool.Connect(context.Background(), dbConnection)
 	if err != nil {
 		logger.Fatalf("can't create pg pool: %v", err)
 	}
 	logger.Printf("create pg pool: %v", pool.Config().ConnConfig.Database)
+
+	var repository storage.Storage
 	repository = database.New(pool)
-	logger.Printf("repository: %s", repository)
 
 	//eventProcessor := telegram.New(tg, repository)
 
@@ -46,8 +53,41 @@ func main() {
 	//if err := consumer.Start(); err != nil {
 	//	log.Fatal("service is stopped", err)
 	//}
+	router := httprouter.New()
 
-	web.CreateWeb(logger, cfg)
+	api := api.CreateApi(logger, repository)
+	api.RegisterApi(router)
+	web := web.CreateWeb(logger)
+	web.Register(router)
+
+	createServer(router, logger, cfg)
+}
+
+func createServer(router *httprouter.Router, logger *logging.Logger, cfg *config.Config) {
+	var server *http.Server
+	var listener net.Listener
+
+	listener, err := net.Listen("tcp", fmt.Sprintf("%s:%s", cfg.Listen.BindIP, cfg.Listen.Port))
+	if err != nil {
+		logger.Fatal(err)
+	}
+	logger.Infof("web address: %v", listener.Addr())
+
+	server = &http.Server{
+		Handler:      router,
+		WriteTimeout: 15 * time.Second,
+		ReadTimeout:  15 * time.Second,
+	}
+
+	if err := server.Serve(listener); err != nil {
+		switch {
+		case errors.Is(err, http.ErrServerClosed):
+			logger.Warn("server shutdown")
+		default:
+			logger.Fatal(err)
+		}
+	}
+
 }
 
 /*func mustToken() string {
