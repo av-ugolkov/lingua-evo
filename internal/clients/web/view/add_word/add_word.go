@@ -29,12 +29,14 @@ func (p *addWordPage) Register(router *httprouter.Router) {
 	router.HandlerFunc(http.MethodGet, addWord, p.account)
 }
 
-func (p *addWordPage) account(w http.ResponseWriter, r *http.Request) {
+func (p *addWordPage) account(w http.ResponseWriter, _ *http.Request) {
 	file, err := os.ReadFile(addWordPagePath)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
-	w.WriteHeader(http.StatusCreated)
-	w.Write(file)
+	_, err = w.Write(file)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+	}
 }

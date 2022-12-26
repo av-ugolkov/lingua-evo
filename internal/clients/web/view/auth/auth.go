@@ -36,6 +36,10 @@ func (p *authPage) auth(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
-	w.WriteHeader(http.StatusCreated)
-	w.Write(file)
+
+	_, err = w.Write(file)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 }
