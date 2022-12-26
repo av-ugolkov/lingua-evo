@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	account         = "/account"
-	addWordPagePath = entity.RootPath + "/account/account.html"
+	addWord         = "/add-word"
+	addWordPagePath = entity.RootPath + "/add_word/add_word.html"
 )
 
 type addWordPage struct {
@@ -26,7 +26,7 @@ func CreatePage(logger *logging.Logger) *addWordPage {
 }
 
 func (p *addWordPage) Register(router *httprouter.Router) {
-	router.HandlerFunc(http.MethodGet, account, p.account)
+	router.HandlerFunc(http.MethodGet, addWord, p.account)
 }
 
 func (p *addWordPage) account(w http.ResponseWriter, r *http.Request) {
