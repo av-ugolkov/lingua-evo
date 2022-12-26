@@ -45,12 +45,12 @@ func NewHandler(logger *logging.Logger) *handler {
 }
 
 func (h *handler) Register(router *httprouter.Router) {
-	router.HandlerFunc(http.MethodPost, authURL, h.Auth)
-	router.HandlerFunc(http.MethodPut, authURL, h.Auth)
-	router.HandlerFunc(http.MethodPost, signupURL, h.Signup)
+	router.HandlerFunc(http.MethodPost, authURL, h.authPost)
+	router.HandlerFunc(http.MethodPut, authURL, h.authPut)
+	router.HandlerFunc(http.MethodPost, signupURL, h.signup)
 }
 
-func (h *handler) Signup(w http.ResponseWriter, r *http.Request) {
+func (h *handler) signup(w http.ResponseWriter, r *http.Request) {
 	var nu newUser
 	if err := json.NewDecoder(r.Body).Decode(&nu); err != nil {
 		h.logger.Error(err)
@@ -73,41 +73,59 @@ func (h *handler) Signup(w http.ResponseWriter, r *http.Request) {
 	w.Write(jsonBytes)
 }
 
-func (h *handler) Auth(w http.ResponseWriter, r *http.Request) {
-	switch r.Method {
-	case http.MethodPost:
-		var u user
-		if err := json.NewDecoder(r.Body).Decode(&u); err != nil {
-			h.logger.Error(err)
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-
-		defer r.Body.Close()
-		//TODO client to UserService and get user by username and password
-		//for now stub check
-		//if u.Username != "me" || u.Password != "pass" {
-		//	w.WriteHeader(http.StatusNotFound)
-		//	return
-		//}
-	case http.MethodPut:
-		var refreshTokenS refresh
-		if err := json.NewDecoder(r.Body).Decode(&refreshTokenS); err != nil {
-			h.logger.Fatal(err)
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-		defer r.Body.Close()
-		/*userIdBytes, err := h.RTCache.Get([]byte(refreshTokenS.RefreshToken))
-		h.Logger.Infof("refresh token user_id: %s", userIdBytes)
-		if err != nil {
-			h.Logger.Fatal(err)
-			w.WriteHeader(http.StatusUnauthorized)
-			return
-		}
-		h.RTCache.Del([]byte(refreshTokenS.RefreshToken))*/
-		//TODO client to UserService and get user by username
+func (h *handler) authPost(w http.ResponseWriter, r *http.Request) {
+	var u user
+	if err := json.NewDecoder(r.Body).Decode(&u); err != nil {
+		h.logger.Error(err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
 	}
+
+	defer r.Body.Close()
+	//TODO client to UserService and get user by username and password
+	//for now stub check
+	//if u.Username != "me" || u.Password != "pass" {
+	//	w.WriteHeader(http.StatusNotFound)
+	//	return
+	//}
+
+	jsonBytes, errCode := h.generateAccessToken()
+	if errCode != 0 {
+		w.WriteHeader(errCode)
+		return
+	}
+
+	request, err := json.Marshal(map[string]string{
+		"token": string(jsonBytes),
+		"url":   "/account",
+	})
+	if err != nil {
+		w.WriteHeader(errCode)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	w.Write(request)
+}
+
+func (h *handler) authPut(w http.ResponseWriter, r *http.Request) {
+	var refreshTokenS refresh
+	if err := json.NewDecoder(r.Body).Decode(&refreshTokenS); err != nil {
+		h.logger.Fatal(err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	defer r.Body.Close()
+	/*userIdBytes, err := h.RTCache.Get([]byte(refreshTokenS.RefreshToken))
+	h.Logger.Infof("refresh token user_id: %s", userIdBytes)
+	if err != nil {
+		h.Logger.Fatal(err)
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+	h.RTCache.Del([]byte(refreshTokenS.RefreshToken))*/
+	//TODO client to UserService and get user by username
 
 	jsonBytes, errCode := h.generateAccessToken()
 	if errCode != 0 {
