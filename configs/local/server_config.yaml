@@ -9,8 +9,8 @@ database:
   name_db: lingua-evo
   user: lingua
   password: ib6vACdec2Fmht4lnX153
-  host: localhost
-  port: 6432
+  host: postgres-lingua-evo
+  port: 5432
 web_service:
   url: http://127.0.0.1:5000/api
 tlg:
