@@ -4,26 +4,19 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/julienschmidt/httprouter"
-	"lingua-evo/internal/api"
 	"net"
 	"net/http"
 	"time"
 
+	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/julienschmidt/httprouter"
+
+	"lingua-evo/internal/api"
 	"lingua-evo/internal/clients/web"
 	"lingua-evo/internal/config"
 	"lingua-evo/pkg/logging"
 	"lingua-evo/pkg/storage"
 	"lingua-evo/pkg/storage/database"
-
-	"github.com/jackc/pgx/v4/pgxpool"
-)
-
-const (
-	tgToken      = "5762950198:AAHRVBXPgAgrbSv-fUcXeAwbwDysiTXcMtY"
-	tgBotHost    = "api.telegram.org"
-	dbConnection = "postgres://postgres:5623@localhost:5432/postgres"
-	batchSize    = 100
 )
 
 func main() {
@@ -36,7 +29,7 @@ func main() {
 
 	//tg := tgClient.New(tgBotHost, tgToken)
 
-	pool, err := pgxpool.Connect(context.Background(), dbConnection)
+	pool, err := pgxpool.Connect(context.Background(), cfg.Database.GetConnStr())
 	if err != nil {
 		logger.Fatalf("can't create pg pool: %v", err)
 	}
