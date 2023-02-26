@@ -1,3 +1,4 @@
+-- +goose Up
 create table if not exists users (
     user_id bigint PRIMARY KEY,
     user_mame text not null
@@ -31,3 +32,10 @@ create table if not exists dictionary (
     word_id bigint not null,
     created timestamptz
 );
+
+-- +goose Down
+drop table if exists users;
+drop table if exists languages;
+drop table if exists examples;
+drop table if exists words;
+drop table if exists dictionary;

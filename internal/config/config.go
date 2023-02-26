@@ -36,7 +36,7 @@ type Database struct {
 }
 
 func (db *Database) GetConnStr() string {
-	return fmt.Sprintf("postgres://%s:%s@%s:%s/%s", db.User, db.Password, db.Host, db.Port, db.NameDB)
+	return fmt.Sprintf("postgresql://%s:%s@%s:%s/%s", db.User, db.Password, db.Host, db.Port, db.NameDB)
 }
 
 type WebService struct {
@@ -51,7 +51,7 @@ func GetConfig() *Config {
 		logger := logging.GetLogger()
 		logger.Info("read application config")
 		instance = &Config{}
-		if err := cleanenv.ReadConfig("configs/local.yaml", instance); err != nil {
+		if err := cleanenv.ReadConfig("configs/local/server_config.yaml", instance); err != nil {
 			help, _ := cleanenv.GetDescription(instance, nil)
 			logger.Info(help)
 			logger.Fatal(err)
