@@ -24,8 +24,8 @@ func main() {
 	logger := logging.GetLogger()
 	logger.Println("logger initialized")
 
-	logger.Println("config initializing")
 	cfg := config.GetConfig()
+	logger.Println("config initializing")
 
 	//tg := tgClient.New(tgBotHost, tgToken)
 
