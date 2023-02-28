@@ -19,8 +19,7 @@ services:
     build:
       context: .
       args:
-        config_dir: ${CONFIG:-local}
-        config_file: ${CONFIG:-server_config}
+        config_dir: ${CONFIG:-docker}
     depends_on:
       - postgres
     restart: always
