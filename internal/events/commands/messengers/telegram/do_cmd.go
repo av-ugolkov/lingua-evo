@@ -1,53 +1,54 @@
 package telegram
 
 import (
-	commands2 "lingua-evo/internal/events/commands"
-	"lingua-evo/pkg/storage"
 	"log"
 	"strings"
+
+	storage "lingua-evo/internal/delivery/repository"
+	eventsCommands "lingua-evo/internal/events/commands"
 )
 
 func (p *Processor) doCmd(text string, chatID int, userId int, userName string) error {
 	text = strings.TrimSpace(text)
 
 	log.Printf("got new command [%s] from [%s]", text, userName)
-	cmd := p.chooseCmd(commands2.Command(text))
-	if cmd == commands2.UnknownCmd {
-		if p.lastCmd != commands2.UnknownCmd {
+	cmd := p.chooseCmd(eventsCommands.Command(text))
+	if cmd == eventsCommands.UnknownCmd {
+		if p.lastCmd != eventsCommands.UnknownCmd {
 			cmd = p.lastCmd
 		}
 	} else {
 		p.lastCmd = cmd
 	}
 	switch cmd {
-	case commands2.StartCmd:
+	case eventsCommands.StartCmd:
 		return p.sendStart(chatID, userId, userName)
-	case commands2.HelpCmd:
+	case eventsCommands.HelpCmd:
 		return p.sendHelp(chatID)
-	case commands2.AddCmd:
+	case eventsCommands.AddCmd:
 		return p.addWord(chatID)
-	case commands2.Cancel:
+	case eventsCommands.Cancel:
 		return p.sendCancel(chatID)
-	case commands2.RndCmd:
+	case eventsCommands.RndCmd:
 		return p.sendRandom(chatID, &storage.Word{})
 	default:
-		return p.tg.SendMessage(chatID, commands2.MsgUnknownCommand)
+		return p.tg.SendMessage(chatID, eventsCommands.MsgUnknownCommand)
 	}
 }
 
-func (p *Processor) chooseCmd(cmd commands2.Command) commands2.Command {
+func (p *Processor) chooseCmd(cmd eventsCommands.Command) eventsCommands.Command {
 	switch cmd {
-	case commands2.StartCmd:
-		return commands2.StartCmd
-	case commands2.HelpCmd:
-		return commands2.HelpCmd
-	case commands2.Cancel:
-		return commands2.Cancel
-	case commands2.AddCmd:
-		return commands2.AddCmd
-	case commands2.RndCmd:
-		return commands2.RndCmd
+	case eventsCommands.StartCmd:
+		return eventsCommands.StartCmd
+	case eventsCommands.HelpCmd:
+		return eventsCommands.HelpCmd
+	case eventsCommands.Cancel:
+		return eventsCommands.Cancel
+	case eventsCommands.AddCmd:
+		return eventsCommands.AddCmd
+	case eventsCommands.RndCmd:
+		return eventsCommands.RndCmd
 	default:
-		return commands2.UnknownCmd
+		return eventsCommands.UnknownCmd
 	}
 }

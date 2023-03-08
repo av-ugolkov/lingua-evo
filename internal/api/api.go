@@ -2,18 +2,18 @@ package api
 
 import (
 	"lingua-evo/internal/api/auth"
+	"lingua-evo/internal/delivery/repository"
 	"lingua-evo/pkg/logging"
-	"lingua-evo/pkg/storage"
 
 	"github.com/julienschmidt/httprouter"
 )
 
 type api struct {
 	logger  *logging.Logger
-	storage storage.Storage
+	storage repository.Storage
 }
 
-func CreateApi(logger *logging.Logger, storage storage.Storage) *api {
+func CreateApi(logger *logging.Logger, storage repository.Storage) *api {
 	return &api{
 		logger:  logger,
 		storage: storage,

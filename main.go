@@ -14,9 +14,8 @@ import (
 	"lingua-evo/internal/api"
 	"lingua-evo/internal/clients/web"
 	"lingua-evo/internal/config"
+	storage "lingua-evo/internal/delivery/repository"
 	"lingua-evo/pkg/logging"
-	"lingua-evo/pkg/storage"
-	"lingua-evo/pkg/storage/database"
 )
 
 func main() {
@@ -35,8 +34,8 @@ func main() {
 	}
 	logger.Printf("create pg pool: %v", pool.Config().ConnConfig.Database)
 
-	var repository storage.Storage
-	repository = database.New(pool)
+	var repo storage.Storage
+	repo = storage.NewDatabase(pool)
 
 	//eventProcessor := telegram.New(tg, repository)
 
@@ -48,7 +47,7 @@ func main() {
 	//}
 	router := httprouter.New()
 
-	api := api.CreateApi(logger, repository)
+	api := api.CreateApi(logger, repo)
 	api.RegisterApi(router)
 	web := web.CreateWeb(logger)
 	web.Register(router)

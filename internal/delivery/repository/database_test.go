@@ -1,10 +1,8 @@
-package database
+package repository
 
 import (
 	"context"
 	"testing"
-
-	"lingua-evo/pkg/storage"
 
 	"github.com/jackc/pgx/v4/pgxpool"
 )
@@ -15,7 +13,7 @@ func TestDatabase_AddWord(t *testing.T) {
 	}
 	type args struct {
 		ctx context.Context
-		w   *storage.Word
+		w   *Word
 	}
 	pool, _ := pgxpool.Connect(context.Background(), "postgres://postgres:5623@localhost:5432/postgres")
 	tests := []struct {
@@ -26,12 +24,12 @@ func TestDatabase_AddWord(t *testing.T) {
 	}{
 		{name: "first_word", fields: fields{
 			db: pool,
-		}, args: args{ctx: context.Background(), w: &storage.Word{
+		}, args: args{ctx: context.Background(), w: &Word{
 			UserID:    123,
 			Value:     "first",
-			Language:  storage.Language{Origin: "Eng", Translate: "Rus"},
+			Language:  Language{Origin: "Eng", Translate: "Rus"},
 			Translate: []string{"первый"},
-			Example:   []storage.Example{{Value: "1", Translate: "1"}},
+			Example:   []Example{{Value: "1", Translate: "1"}},
 		}}, wantErr: nil},
 	}
 	for _, tt := range tests {
