@@ -4,16 +4,17 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	telegram2 "lingua-evo/internal/clients/telegram"
+
+	clientsTelegram "lingua-evo/internal/clients/telegram"
+	"lingua-evo/internal/delivery/repository"
 	"lingua-evo/internal/events"
-	commands2 "lingua-evo/internal/events/commands"
-	"lingua-evo/pkg/storage"
+	eventsCommands "lingua-evo/internal/events/commands"
 )
 
 type Processor struct {
-	tg      *telegram2.Client
-	storage storage.Storage
-	lastCmd commands2.Command
+	tg      *clientsTelegram.Client
+	storage repository.Storage
+	lastCmd eventsCommands.Command
 	offset  int
 }
 
@@ -29,11 +30,11 @@ var (
 	ErrUnknownMetaType  = errors.New("unknown meta type")
 )
 
-func New(client *telegram2.Client, storage storage.Storage) *Processor {
+func New(client *clientsTelegram.Client, storage repository.Storage) *Processor {
 	return &Processor{
 		tg:      client,
 		storage: storage,
-		lastCmd: commands2.UnknownCmd,
+		lastCmd: eventsCommands.UnknownCmd,
 	}
 }
 
@@ -85,11 +86,11 @@ func (p *Processor) sendStart(chatID int, userId int, userName string) error {
 		return fmt.Errorf("telegram.sendStart.AddUser: %w", err)
 	}
 
-	return p.tg.SendMessage(chatID, fmt.Sprintf(commands2.MsgHello, userName))
+	return p.tg.SendMessage(chatID, fmt.Sprintf(eventsCommands.MsgHello, userName))
 }
 
 func (p *Processor) sendHelp(chatID int) error {
-	return p.tg.SendMessage(chatID, commands2.MsgHelp)
+	return p.tg.SendMessage(chatID, eventsCommands.MsgHelp)
 }
 
 func meta(event events.Event) (Meta, error) {
@@ -100,7 +101,7 @@ func meta(event events.Event) (Meta, error) {
 	return res, nil
 }
 
-func event(upd telegram2.Update) events.Event {
+func event(upd clientsTelegram.Update) events.Event {
 	updType := fetchType(upd)
 	res := events.Event{
 		Type: updType,
@@ -127,7 +128,7 @@ func event(upd telegram2.Update) events.Event {
 	return res
 }
 
-func fetchType(upd telegram2.Update) events.Type {
+func fetchType(upd clientsTelegram.Update) events.Type {
 	switch {
 	case upd.Message != nil:
 		return events.Message
@@ -138,7 +139,7 @@ func fetchType(upd telegram2.Update) events.Type {
 	}
 }
 
-func fetchText(upd telegram2.Update) string {
+func fetchText(upd clientsTelegram.Update) string {
 	switch {
 	case upd.Message != nil:
 		return upd.Message.Text
