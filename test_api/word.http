@@ -1,0 +1,8 @@
+### Add Word
+POST http://localhost:8080/api/add_word
+Content-Type: application/json
+
+{
+  "text": "First",
+  "lang": "en_EN"
+}

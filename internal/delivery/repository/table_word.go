@@ -3,17 +3,28 @@ package repository
 import (
 	"context"
 	"fmt"
+
+	"github.com/google/uuid"
 )
 
-func (d *Database) AddWord(ctx context.Context, w *Word) error {
-	queryInsWord := `insert into word (text, lang, pronunciation) values($1, $2, $3) returning id`
-	wordId := 0
-	err := d.db.QueryRow(ctx, queryInsWord, w.Value, "lang", "pronuc").Scan(&wordId) //TODO fix parameters
+type WordDB interface {
+	AddWord(ctx context.Context, w *Word) (uuid.UUID, error)
+	EditWord(ctx context.Context, w *Word) error
+	FindWord(ctx context.Context, w string) (*Word, error)
+	RemoveWord(ctx context.Context, w *Word) error
+	PickRandomWord(ctx context.Context, w *Word) (*Word, error)
+	SharedWord(ctx context.Context, w *Word) (*Word, error)
+}
+
+func (d *Database) AddWord(ctx context.Context, w *Word) (uuid.UUID, error) {
+	query := `insert into word (text, lang) values($1, $2) returning id`
+	var id uuid.UUID
+	err := d.db.QueryRowContext(ctx, query, w.Text, w.Language).Scan(&id)
 	if err != nil {
-		return fmt.Errorf("database.AddWord.QueryRow: %w", err)
+		return uuid.UUID{}, fmt.Errorf("database.AddWord.QueryRow: %w", err)
 	}
 
-	return nil
+	return id, nil
 }
 
 func (d *Database) EditWord(ctx context.Context, w *Word) error {
