@@ -1,44 +1,60 @@
 package repository
 
 import (
-	"context"
-	"crypto/sha1"
+	"database/sql"
 	"errors"
 	"fmt"
-	"io"
+
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v4/stdlib"
 )
 
 var ErrNoSavePages = errors.New("no saved page")
 
-type Storage interface {
-	AddUser(ctx context.Context, userId int, userName string) error
-	AddWord(ctx context.Context, w *Word) error
-	EditWord(ctx context.Context, w *Word) error
-	FindWord(ctx context.Context, w string) (*Word, error)
-	RemoveWord(ctx context.Context, w *Word) error
-	PickRandomWord(ctx context.Context, w *Word) (*Word, error)
-	SharedWord(ctx context.Context, w *Word) (*Word, error)
+func NewDB(connString string) (*sql.DB, error) {
+	connConfig, err := pgx.ParseConfig(connString)
+	if err != nil {
+		return nil, fmt.Errorf("parse DB connection string: %w", err)
+	}
+	connStr := stdlib.RegisterConnConfig(connConfig)
+	db, err := sql.Open("pgx", connStr)
+	if err != nil {
+		return nil, fmt.Errorf("open db: %w", err)
+	}
+	if err := db.Ping(); err != nil {
+		return nil, fmt.Errorf("ping db %s: %w", connString, err)
+	}
+	return db, nil
 }
 
 type Word struct {
-	UserID    int
-	Value     string
-	Translate []string
-	Language  Language
-	Example   []Example
+	Text     string
+	Language string
 }
 
 type Language struct {
-	Origin    string
-	Translate string
+	Code string
+	Lang string
 }
 
 type Example struct {
-	Value     string
+	Id        uuid.UUID
+	Original  string
 	Translate string
 }
 
-func (p *Word) Hash() (string, error) {
+type Dictionary struct {
+	UserId        uuid.UUID
+	OriginalWord  uuid.UUID
+	OriginalLang  string
+	TranslateLang string
+	TranslateWord []uuid.UUID
+	Pronunciation string
+	Example       []uuid.UUID
+}
+
+/*func (p *Word) Hash() (string, error) {
 	h := sha1.New()
 
 	if _, err := io.WriteString(h, p.Value); err != nil {
@@ -48,4 +64,4 @@ func (p *Word) Hash() (string, error) {
 		return "", fmt.Errorf("storage.Hash.WriteString (UserID): %w", err)
 	}
 	return fmt.Sprintf("%x", h.Sum(nil)), nil
-}
+}*/

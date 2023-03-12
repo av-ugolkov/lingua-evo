@@ -1,20 +1,18 @@
 package main
 
 import (
-	"context"
 	"errors"
 	"fmt"
+	"lingua-evo/internal/service"
 	"net"
 	"net/http"
 	"time"
 
-	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/julienschmidt/httprouter"
 
 	"lingua-evo/internal/api"
-	"lingua-evo/internal/clients/web"
 	"lingua-evo/internal/config"
-	storage "lingua-evo/internal/delivery/repository"
+	"lingua-evo/internal/delivery/repository"
 	"lingua-evo/pkg/logging"
 )
 
@@ -28,14 +26,10 @@ func main() {
 
 	//tg := tgClient.New(tgBotHost, tgToken)
 
-	pool, err := pgxpool.Connect(context.Background(), cfg.Database.GetConnStr())
+	db, err := repository.NewDB(cfg.Database.GetConnStr())
 	if err != nil {
 		logger.Fatalf("can't create pg pool: %v", err)
 	}
-	logger.Printf("create pg pool: %v", pool.Config().ConnConfig.Database)
-
-	var repo storage.Storage
-	repo = storage.NewDatabase(pool)
 
 	//eventProcessor := telegram.New(tg, repository)
 
@@ -45,12 +39,16 @@ func main() {
 	//if err := consumer.Start(); err != nil {
 	//	log.Fatal("service is stopped", err)
 	//}
+
+	database := repository.NewDatabase(db)
+	wordsService := service.NewWordsService(database)
+
+	lingua := service.NewLinguaService(wordsService)
+
 	router := httprouter.New()
 
-	api := api.CreateApi(logger, repo)
+	api := api.CreateApi(logger, lingua)
 	api.RegisterApi(router)
-	web := web.CreateWeb(logger)
-	web.Register(router)
 
 	createServer(router, logger, cfg)
 }
