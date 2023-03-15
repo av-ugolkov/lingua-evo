@@ -10,11 +10,10 @@ import (
 )
 
 type Config struct {
-	IsDebug    *bool      `yaml:"is_debug"`
-	JWT        JWT        `yaml:"jwt"`
-	Listen     Listen     `yaml:"listen"`
-	Database   Database   `yaml:"database"`
-	WebService WebService `yaml:"web_service" env-required:"true"`
+	IsDebug  *bool    `yaml:"is_debug"`
+	JWT      JWT      `yaml:"jwt"`
+	Listen   Listen   `yaml:"listen"`
+	Database Database `yaml:"database"`
 }
 
 type JWT struct {
@@ -39,10 +38,6 @@ func (db *Database) GetConnStr() string {
 	return fmt.Sprintf("postgresql://%s:%s@%s:%s/%s", db.User, db.Password, db.Host, db.Port, db.NameDB)
 }
 
-type WebService struct {
-	URL string `yaml:"url" env-required:"true"`
-}
-
 var instance *Config
 var once sync.Once
 
@@ -52,7 +47,10 @@ func GetConfig() *Config {
 		logger.Info("read application config")
 		instance = &Config{}
 		if err := cleanenv.ReadConfig("configs/server_config.yaml", instance); err != nil {
-			cleanenv.GetDescription(instance, nil)
+			_, err := cleanenv.GetDescription(instance, nil)
+			if err != nil {
+				logger.Error(err)
+			}
 			logger.Fatal(err)
 		}
 	})
