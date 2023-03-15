@@ -10,7 +10,7 @@ const (
 	authPagePath = entity.RootPath + "/auth/auth.html"
 )
 
-func (h *Handler) authGet(w http.ResponseWriter, _ *http.Request) {
+func (h *Handler) getAuth(w http.ResponseWriter, _ *http.Request) {
 	file, err := os.ReadFile(authPagePath)
 
 	if err != nil {

@@ -5,9 +5,13 @@ import (
 	"net/http"
 )
 
-func (h *Handler) authPut(w http.ResponseWriter, r *http.Request) {
-	var refreshTokenS refresh
-	if err := json.NewDecoder(r.Body).Decode(&refreshTokenS); err != nil {
+type Refresh struct {
+	RefreshToken string `json:"refresh_token"`
+}
+
+func (h *Handler) putAuth(w http.ResponseWriter, r *http.Request) {
+	var refreshToken Refresh
+	if err := json.NewDecoder(r.Body).Decode(&refreshToken); err != nil {
 		h.logger.Fatal(err)
 		w.WriteHeader(http.StatusBadRequest)
 		return

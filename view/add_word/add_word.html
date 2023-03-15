@@ -5,8 +5,20 @@
     <title>Title</title>
 </head>
 <body>
-<dev>
-    Add Word!
-</dev>
+<div class="container">
+    <label for="orig_word"><b>Origin word</b></label>
+    <input id="orig_word" name="orig_word" type="text" placeholder="Enter origin word" required>
+    <select size="1">
+        <option value="Чебурашка">Чебурашка</option>
+        <option value="Крокодил Гена">Крокодил Гена</option>
+        <option value="Шапокляк">Шапокляк</option>
+        <option value="Крыса Лариса">Крыса Лариса</option>
+    </select>
+    <p>
+        <label for="tran_word"><b>Translate word</b></label>
+        <input id="tran_word" name="tran_word" type="text" placeholder="Enter translate word" required>
+    </p>
+    <button type="submit">Send</button>
+</div>
 </body>
 </html>
