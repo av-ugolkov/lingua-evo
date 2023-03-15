@@ -5,14 +5,23 @@ import (
 	"net/http"
 )
 
+type User struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+type NewUser struct {
+	User  User   `json:"user"`
+	Email string `json:"email*"`
+}
+
 func (h *Handler) signup(w http.ResponseWriter, r *http.Request) {
-	var nu newUser
+	var nu NewUser
 	if err := json.NewDecoder(r.Body).Decode(&nu); err != nil {
 		h.logger.Error(err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-
 	defer r.Body.Close()
 
 	//TODO validate username and password
@@ -28,15 +37,15 @@ func (h *Handler) signup(w http.ResponseWriter, r *http.Request) {
 	w.Write(jsonBytes)
 }
 
-func (h *Handler) authPost(w http.ResponseWriter, r *http.Request) {
-	var u user
+func (h *Handler) postAuth(w http.ResponseWriter, r *http.Request) {
+	var u User
 	if err := json.NewDecoder(r.Body).Decode(&u); err != nil {
 		h.logger.Error(err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-
 	defer r.Body.Close()
+
 	//TODO client to UserService and get user by username and password
 	//for now stub check
 	//if u.Username != "me" || u.Password != "pass" {

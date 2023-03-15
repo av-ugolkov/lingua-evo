@@ -12,10 +12,10 @@ import (
 )
 
 type Processor struct {
-	tg      *clientsTelegram.Client
-	storage repository.Storage
-	lastCmd eventsCommands.Command
-	offset  int
+	tg       *clientsTelegram.Client
+	database repository.Database
+	lastCmd  eventsCommands.Command
+	offset   int
 }
 
 type Meta struct {
@@ -30,11 +30,11 @@ var (
 	ErrUnknownMetaType  = errors.New("unknown meta type")
 )
 
-func New(client *clientsTelegram.Client, storage repository.Storage) *Processor {
+func New(client *clientsTelegram.Client, database repository.Database) *Processor {
 	return &Processor{
-		tg:      client,
-		storage: storage,
-		lastCmd: eventsCommands.UnknownCmd,
+		tg:       client,
+		database: database,
+		lastCmd:  eventsCommands.UnknownCmd,
 	}
 }
 
@@ -81,7 +81,7 @@ func (p *Processor) processMessage(event events.Event) error {
 }
 
 func (p *Processor) sendStart(chatID int, userId int, userName string) error {
-	err := p.storage.AddUser(context.Background(), userId, userName)
+	err := p.database.AddUser(context.Background(), userId, userName)
 	if err != nil {
 		return fmt.Errorf("telegram.sendStart.AddUser: %w", err)
 	}

@@ -1,11 +1,18 @@
 package service
 
+import (
+	"lingua-evo/internal/delivery/repository"
+	"lingua-evo/pkg/logging"
+)
+
 type Lingua struct {
-	ws *WordsService
+	logger *logging.Logger
+	db     *repository.Database
 }
 
-func NewLinguaService(ws *WordsService) *Lingua {
+func NewLinguaService(logger *logging.Logger, db *repository.Database) *Lingua {
 	return &Lingua{
-		ws: ws,
+		logger: logger,
+		db:     db,
 	}
 }

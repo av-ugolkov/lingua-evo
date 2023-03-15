@@ -41,9 +41,7 @@ func main() {
 	//}
 
 	database := repository.NewDatabase(db)
-	wordsService := service.NewWordsService(database)
-
-	lingua := service.NewLinguaService(wordsService)
+	lingua := service.NewLinguaService(logger, database)
 
 	router := httprouter.New()
 

@@ -24,7 +24,7 @@ func CreateApi(logger *logging.Logger, lingua *service.Lingua) *api {
 }
 
 func (a *api) RegisterApi(router *httprouter.Router) {
-	router.ServeFiles("/pages/*filepath", http.Dir("./pages/"))
+	router.ServeFiles("/view/*filepath", http.Dir("./view/"))
 
 	a.logger.Info("register auth api")
 	authHandler := auth.NewHandler(a.logger)
@@ -35,7 +35,7 @@ func (a *api) RegisterApi(router *httprouter.Router) {
 	accountPage.Register(router)
 
 	a.logger.Info("register add word page")
-	addWordPage := add_word.NewHandler(a.logger)
+	addWordPage := add_word.NewHandler(a.logger, a.lingua)
 	addWordPage.Register(router)
 
 }

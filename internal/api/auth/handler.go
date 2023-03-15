@@ -16,22 +16,8 @@ import (
 
 const (
 	authURL   = "/auth"
-	signupURL = "/api/signup"
+	signupURL = "/signup"
 )
-
-type user struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
-}
-
-type newUser struct {
-	user
-	Email string `json:"email*"`
-}
-
-type refresh struct {
-	RefreshToken string `json:"refresh_token"`
-}
 
 type Handler struct {
 	logger *logging.Logger
@@ -45,9 +31,9 @@ func NewHandler(logger *logging.Logger) *Handler {
 }
 
 func (h *Handler) Register(router *httprouter.Router) {
-	router.HandlerFunc(http.MethodGet, authURL, h.authGet)
-	router.HandlerFunc(http.MethodPut, authURL, h.authPut)
-	router.HandlerFunc(http.MethodPost, authURL, h.authPost)
+	router.HandlerFunc(http.MethodGet, authURL, h.getAuth)
+	router.HandlerFunc(http.MethodPut, authURL, h.putAuth)
+	router.HandlerFunc(http.MethodPost, authURL, h.postAuth)
 	router.HandlerFunc(http.MethodPost, signupURL, h.signup)
 }
 
