@@ -7,7 +7,7 @@ comment on column users.user_mame is 'user name';
 
 
 create table if not exists language (
-    code text not null primary key,
+    code text not null,
     lang text not null
 );
 create unique index if not exists idx_unique_languages__lang_code
@@ -22,7 +22,7 @@ create table if not exists example (
 
 
 create table if not exists word(
-    id uuid default gen_random_uuid() not null primary key,
+    id uuid default gen_random_uuid() not null,
     text text not null,
     lang text not null
 );

@@ -1,5 +1,5 @@
 ### Add Word
-POST http://localhost:8080/api/add_word
+POST http://localhost:5555/add_word
 Content-Type: application/json
 
 {
