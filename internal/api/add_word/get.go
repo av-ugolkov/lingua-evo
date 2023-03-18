@@ -1,23 +1,29 @@
 package add_word
 
 import (
+	"html/template"
 	"lingua-evo/internal/api/entity"
 	"net/http"
-	"os"
 )
 
 const (
 	addWordPagePath = entity.RootPath + "/add_word/add_word.html"
 )
 
-func (h *Handler) getAddWord(w http.ResponseWriter, _ *http.Request) {
-	file, err := os.ReadFile(addWordPagePath)
+func (h *Handler) getAddWord(w http.ResponseWriter, r *http.Request) {
+	t, err := template.ParseFiles(addWordPagePath)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
-	_, err = w.Write(file)
+
+	languages, err := h.lingua.GetLanguages(r.Context())
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	err = t.Execute(w, languages)
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		return
 	}
 }

@@ -17,8 +17,8 @@ func NewDatabase(db *sql.DB) *Database {
 }
 
 func (d *Database) AddUser(ctx context.Context, userId int, userName string) error {
-	query := `insert into users (user_id, user_mame) values ($1, $2) ON CONFLICT DO NOTHING`
-	_, err := d.db.QueryContext(ctx, query, userId, userName)
+	query := `INSERT INTO users (user_id, user_mame) VALUES ($1, $2) ON CONFLICT DO NOTHING`
+	err := d.db.QueryRowContext(ctx, query, userId, userName)
 	if err != nil {
 		return fmt.Errorf("database.AddUser.QueryRow: %w", err)
 	}

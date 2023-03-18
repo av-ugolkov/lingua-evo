@@ -17,7 +17,7 @@ type WordDB interface {
 }
 
 func (d *Database) AddWord(ctx context.Context, w *Word) (uuid.UUID, error) {
-	query := `insert into word (text, lang) values($1, $2) returning id`
+	query := `INSERT INTO word (text, lang) VALUES($1, $2) RETURNING id`
 	var id uuid.UUID
 	err := d.db.QueryRowContext(ctx, query, w.Text, w.Language).Scan(&id)
 	if err != nil {
