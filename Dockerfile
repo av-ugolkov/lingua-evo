@@ -16,4 +16,7 @@ RUN apk --no-cache --update --upgrade add curl
 WORKDIR .
 COPY ./configs/${config_dir}/server_config.yaml /configs/server_config.yaml
 COPY --from=0 . .
+
+EXPOSE 5000
+
 CMD ["/app/main"]

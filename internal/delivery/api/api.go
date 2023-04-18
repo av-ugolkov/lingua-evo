@@ -1,14 +1,21 @@
 package api
 
 import (
-	"lingua-evo/internal/api/account"
-	"lingua-evo/internal/api/add_word"
-	"lingua-evo/internal/api/auth"
-	"lingua-evo/internal/service"
-	"lingua-evo/pkg/logging"
+	"fmt"
 	"net/http"
 
+	"lingua-evo/internal/delivery/api/account"
+	"lingua-evo/internal/delivery/api/add_word"
+	"lingua-evo/internal/delivery/api/auth"
+	"lingua-evo/internal/service"
+	"lingua-evo/pkg/logging"
+	"lingua-evo/pkg/tools/view"
+
 	"github.com/julienschmidt/httprouter"
+)
+
+const (
+	pathFolder = "view/"
 )
 
 type api struct {
@@ -24,7 +31,10 @@ func CreateApi(logger *logging.Logger, lingua *service.Lingua) *api {
 }
 
 func (a *api) RegisterApi(router *httprouter.Router) {
-	router.ServeFiles("/view/*filepath", http.Dir("./view/"))
+	path := view.GetPathFolder(fmt.Sprintf("%s%s", pathFolder, "*filepath"))
+	root := http.Dir(view.GetPathFile(pathFolder))
+	a.logger.Debugf("%s ::: %s", root, path)
+	router.ServeFiles(path, root)
 
 	a.logger.Info("register auth api")
 	authHandler := auth.NewHandler(a.logger)
@@ -37,5 +47,4 @@ func (a *api) RegisterApi(router *httprouter.Router) {
 	a.logger.Info("register add word page")
 	addWordPage := add_word.NewHandler(a.logger, a.lingua)
 	addWordPage.Register(router)
-
 }

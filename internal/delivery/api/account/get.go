@@ -1,17 +1,18 @@
 package account
 
 import (
-	"lingua-evo/internal/api/entity"
 	"net/http"
 	"os"
+
+	"lingua-evo/pkg/tools/view"
 )
 
 const (
-	accountPagePath = entity.RootPath + "/account/account.html"
+	accountPagePath = "view/account/account.html"
 )
 
 func (h *Handler) account(w http.ResponseWriter, _ *http.Request) {
-	file, err := os.ReadFile(accountPagePath)
+	file, err := os.ReadFile(view.GetPathFile(accountPagePath))
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		return

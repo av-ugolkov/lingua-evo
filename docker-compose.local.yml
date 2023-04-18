@@ -1,36 +1,42 @@
 version: '3.5'
 services:
-  postgres:
-    container_name: postgres-lingua-evo
-    image: postgres:14-alpine
-    environment:
-      - POSTGRES_DB=pg-lingua-evo
-      - POSTGRES_PASSWORD=
-      - POSTGRES_USER=lingua
-    volumes:
-      - /var/lib/postgresql/lingua-evo/data:/var/lib/postgresql/data
-    expose:
-      - "5432"
-    ports:
-      - "6432:5432"
+    postgres:
+        container_name: postgres-lingua-evo
+        image: postgres:14-alpine
+        environment:
+            - POSTGRES_DB=pg-lingua-evo
+            - POSTGRES_PASSWORD=
+            - POSTGRES_USER=lingua
+        volumes:
+            - /var/lib/postgresql/lingua-evo/data:/var/lib/postgresql/data
+        expose:
+            - "5432"
+        ports:
+            - "6432:5432"
 
-  lingua-evo:
-    container_name: lingua-evo
-    build:
-      context: .
-      args:
-        config_dir: ${CONFIG:-docker}
-    depends_on:
-      - postgres
-    restart: always
+    lingua-evo:
+        container_name: lingua-evo
+        build:
+            context: .
+            args:
+                config_dir: ${CONFIG:-docker}
+        depends_on:
+            - postgres
+        restart: always
+        extra_hosts:
+            - "host.docker.internal:host-gateway"
+        expose:
+            - "5000"
+        ports:
+            - "5000:5000"
 
-  migration:
-    container_name: migration-lingua-evo
-    build:
-      context: migration
-    depends_on:
-      - postgres
-    entrypoint:
-      - "/bin/sh"
-      - "-ecx"
-      - "./migration -cmd up -url lingua:@postgres-lingua-evo:5432/lingua-evo"
+    migration:
+        container_name: migration-lingua-evo
+        build:
+            context: migration
+        depends_on:
+            - postgres
+        entrypoint:
+            - "/bin/sh"
+            - "-ecx"
+            - "./migration -cmd up -url lingua:@postgres-lingua-evo:5432/pg-lingua-evo"

@@ -8,11 +8,17 @@ import (
 	"lingua-evo/internal/delivery/repository"
 )
 
-func (l *Lingua) SendWord(ctx context.Context, w *repository.Word) (uuid.UUID, error) {
-	wordId, err := l.db.AddWord(ctx, w)
+func (l *Lingua) SendWord(ctx context.Context, origWord *repository.Word) (uuid.UUID, error) {
+	wordId, err := l.db.AddWord(ctx, origWord)
 	if err != nil {
 		return uuid.UUID{}, err
 	}
+
+	err = l.db.AddWordInDictionary(ctx, "", wordId, wordId)
+	if err != nil {
+		return uuid.UUID{}, err
+	}
+
 	return wordId, nil
 }
 

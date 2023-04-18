@@ -3,14 +3,15 @@ package main
 import (
 	"errors"
 	"fmt"
-	"lingua-evo/internal/service"
 	"net"
 	"net/http"
 	"time"
 
+	"lingua-evo/internal/delivery/api"
+	"lingua-evo/internal/service"
+
 	"github.com/julienschmidt/httprouter"
 
-	"lingua-evo/internal/api"
 	"lingua-evo/internal/config"
 	"lingua-evo/internal/delivery/repository"
 	"lingua-evo/pkg/logging"
@@ -55,7 +56,9 @@ func createServer(router *httprouter.Router, logger *logging.Logger, cfg *config
 	var server *http.Server
 	var listener net.Listener
 
-	listener, err := net.Listen("tcp", fmt.Sprintf("%s:%s", cfg.Listen.BindIP, cfg.Listen.Port))
+	address := fmt.Sprintf(":%s", cfg.Service.Port)
+
+	listener, err := net.Listen(cfg.Service.Type, address)
 	if err != nil {
 		logger.Fatal(err)
 	}
@@ -75,7 +78,6 @@ func createServer(router *httprouter.Router, logger *logging.Logger, cfg *config
 			logger.Fatal(err)
 		}
 	}
-
 }
 
 /*func mustToken() string {

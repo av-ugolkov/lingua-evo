@@ -2,16 +2,17 @@ package add_word
 
 import (
 	"html/template"
-	"lingua-evo/internal/api/entity"
 	"net/http"
+
+	"lingua-evo/pkg/tools/view"
 )
 
 const (
-	addWordPagePath = entity.RootPath + "/add_word/add_word.html"
+	addWordPagePath = "view/add_word/add_word.html"
 )
 
 func (h *Handler) getAddWord(w http.ResponseWriter, r *http.Request) {
-	t, err := template.ParseFiles(addWordPagePath)
+	t, err := template.ParseFiles(view.GetPathFile(addWordPagePath))
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		return
