@@ -6,8 +6,17 @@ create table if not exists users (
 comment on column users.user_mame is 'user name';
 
 
+create table if not exists word(
+    id uuid default gen_random_uuid() not null primary key,
+    text text not null,
+    lang text not null
+);
+create unique index if not exists idx_unique_word__text_lang
+    on word (text, lang);
+
+
 create table if not exists language (
-    code text not null,
+    code text not null primary key,
     lang text not null
 );
 create unique index if not exists idx_unique_languages__lang_code
@@ -21,17 +30,8 @@ create table if not exists example (
 );
 
 
-create table if not exists word(
-    id uuid default gen_random_uuid() not null,
-    text text not null,
-    lang text not null
-);
-create unique index if not exists idx_unique_word__text_lang
-    on word (text, lang);
-
-
 create table if not exists dictionary (
-    user_id uuid not null references users (user_id) not null,
+    user_id uuid references users (user_id) not null,
     original_word uuid references word (id) not null,
     original_lang text references language (code) not null,
     translate_lang text references language (code) not null,

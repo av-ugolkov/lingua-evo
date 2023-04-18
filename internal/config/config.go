@@ -12,18 +12,18 @@ import (
 type Config struct {
 	IsDebug  *bool    `yaml:"is_debug"`
 	JWT      JWT      `yaml:"jwt"`
-	Listen   Listen   `yaml:"listen"`
+	Service  Service  `yaml:"service"`
 	Database Database `yaml:"database"`
+	Front    Front    `yaml:"front"`
 }
 
 type JWT struct {
 	Secret string `yaml:"secret" env-required:"true"`
 }
 
-type Listen struct {
-	Type   string `yaml:"type" env-default:"port"`
-	BindIP string `yaml:"bind_ip" env-default:"localhost"`
-	Port   string `yaml:"port" env-default:"8080"`
+type Service struct {
+	Type string `yaml:"type" env-default:"tcp"`
+	Port string `yaml:"port" env-default:"8080"`
 }
 
 type Database struct {
@@ -36,6 +36,10 @@ type Database struct {
 
 func (db *Database) GetConnStr() string {
 	return fmt.Sprintf("postgresql://%s:%s@%s:%s/%s", db.User, db.Password, db.Host, db.Port, db.NameDB)
+}
+
+type Front struct {
+	Root string `yaml:"root" env-default:"./view"`
 }
 
 var instance *Config

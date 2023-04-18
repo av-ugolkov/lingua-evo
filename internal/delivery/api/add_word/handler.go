@@ -1,10 +1,11 @@
 package add_word
 
 import (
+	"net/http"
+
 	"github.com/julienschmidt/httprouter"
 	"lingua-evo/internal/service"
 	"lingua-evo/pkg/logging"
-	"net/http"
 )
 
 const (
