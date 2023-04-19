@@ -1,23 +1,36 @@
-<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Title</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 </head>
 <body>
-<div class="container">
-    <label for="orig_word"><b>Origin word</b></label>
-    <input id="orig_word" name="orig_word" type="text" placeholder="Enter origin word" required>
-    <select size="1">
-        {{ range .}}
-        <option value="{{ .Code }}">{{ .Lang }}</option>
-        {{end}}
-    </select>
-    <p>
-        <label for="tran_word"><b>Translate word</b></label>
-        <input id="tran_word" name="tran_word" type="text" placeholder="Enter translate word" required>
-    </p>
-    <button type="submit">Send</button>
-</div>
+<form id="add_word" method="post">
+    <div class="container">
+        <p><label for="orig_word"><b>Origin word</b></label>
+            <input id="orig_word" name="orig_word" type="text" placeholder="Enter origin word" required>
+            <label>
+                <select id="orig_lang" size="1">
+                    {{ range .Languages}}
+                    <option value="{{ .Code }}">{{ .Lang }}</option>
+                    {{end}}
+                </select>
+            </label>
+        </p>
+        <p>
+            <label for="tran_word"><b>Translate word</b></label>
+            <input id="tran_word" name="tran_word" type="text" placeholder="Enter translate word" required>
+            <label>
+                <select id="tran_lang" size="1">
+                    {{ range .Languages}}
+                    <option value="{{ .Code }}">{{ .Lang }}</option>
+                    {{end}}
+                </select>
+            </label>
+        </p>
+        <button type="submit">Send</button>
+    </div>
+</form>
+<script src="{{ .Root }}view/add_word/script.js"></script>
 </body>
 </html>
