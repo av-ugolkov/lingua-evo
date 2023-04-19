@@ -19,7 +19,7 @@ type AddWord struct {
 func (h *Handler) postAddWord(w http.ResponseWriter, r *http.Request) {
 	var data AddWord
 
-	if err := json.NewDecoder(r.Body).Decode(&data); err != nil { //TODO привести Data к правильному виду
+	if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
 		h.logger.Error(err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
