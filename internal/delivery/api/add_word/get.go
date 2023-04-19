@@ -4,6 +4,8 @@ import (
 	"html/template"
 	"net/http"
 
+	"lingua-evo/internal/config"
+	"lingua-evo/internal/service"
 	"lingua-evo/pkg/tools/view"
 )
 
@@ -20,11 +22,22 @@ func (h *Handler) getAddWord(w http.ResponseWriter, r *http.Request) {
 
 	languages, err := h.lingua.GetLanguages(r.Context())
 	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
 		return
 	}
-	err = t.Execute(w, languages)
+	data := struct {
+		Root      string
+		Languages []*service.Language
+	}{
+		Root:      config.GetConfig().Front.Root,
+		Languages: languages,
+	}
+
+	err = t.Execute(w, data)
 	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
 		return
 	}
 }
