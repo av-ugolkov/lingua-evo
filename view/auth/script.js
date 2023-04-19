@@ -1,4 +1,4 @@
-console.log("JS Loaded")
+console.log("Script Auth")
 
 let authPanel = document.getElementById("authPanel");
 

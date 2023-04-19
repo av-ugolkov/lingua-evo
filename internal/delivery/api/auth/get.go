@@ -19,13 +19,13 @@ func (h *Handler) getAuth(w http.ResponseWriter, _ *http.Request) {
 		return
 	}
 
-	rootPath := struct {
-		Root string
+	data := struct {
+		RootPath string
 	}{
-		Root: config.GetConfig().Front.Root,
+		RootPath: config.GetConfig().Front.Root,
 	}
 
-	err = t.Execute(w, rootPath)
+	err = t.Execute(w, data)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		return
