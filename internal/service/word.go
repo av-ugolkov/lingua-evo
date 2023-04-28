@@ -8,7 +8,7 @@ import (
 	"lingua-evo/internal/delivery/repository"
 )
 
-func (l *Lingua) SendWord(ctx context.Context, word *repository.Word) (uuid.UUID, error) {
+func (l *Lingua) AddWord(ctx context.Context, word *repository.Word) (uuid.UUID, error) {
 	wordId, err := l.db.FindWord(ctx, word)
 	if err == nil {
 		return wordId, nil
@@ -27,7 +27,11 @@ func (l *Lingua) EditWord(ctx context.Context, w *repository.Word) error {
 	return nil
 }
 
-func (l *Lingua) FindWord(ctx context.Context, w string) (*repository.Word, error) {
+func (l *Lingua) FindWord(ctx context.Context, w *repository.Word) (*repository.Word, error) {
+	return nil, nil
+}
+
+func (l *Lingua) FindWords(ctx context.Context, w string) (*repository.Word, error) {
 	return nil, nil
 }
 

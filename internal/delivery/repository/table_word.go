@@ -41,6 +41,16 @@ func (d *Database) FindWord(ctx context.Context, w *Word) (uuid.UUID, error) {
 	return id, nil
 }
 
+func (d *Database) FindWords(ctx context.Context, w string) ([]uuid.UUID, error) {
+	var ids []uuid.UUID
+	query := `SELECT id FROM word WHERE text=$1`
+	err := d.db.QueryRowContext(ctx, query, w).Scan(&ids)
+	if err != nil {
+		return []uuid.UUID{}, fmt.Errorf("database.FindWord.QueryRow: %w", err)
+	}
+	return ids, nil
+}
+
 func (d *Database) RemoveWord(ctx context.Context, w *Word) error {
 	return nil
 }
