@@ -1,6 +1,6 @@
 FROM golang:1.19.5-alpine
 
-RUN apk --no-cache --update --upgrade add ca-certificates
+RUN apk --no-cache --update --upgrade add ca-certificates gcc libc-dev
 
 ENV GO111MODULE on
 ENV CGO_ENABLED 1
