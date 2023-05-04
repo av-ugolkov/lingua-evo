@@ -5,12 +5,13 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 </head>
 <body>
-<form id="add_word" method="post">
+<form id=add_word method="post">
     <div class="container">
-        <p><label for="orig_word"><b>Origin word</b></label>
-            <input id="orig_word" name="orig_word" type="text" placeholder="Enter origin word" required>
+        <p>
+            <label for=orig_word><b>Origin word</b></label>
+            <input id=orig_word name="orig_word" type="text" placeholder="Enter origin word" required>
             <label>
-                <select id="orig_lang" size="1">
+                <select id=orig_lang size="1">
                     {{ range .Languages}}
                     <option value="{{ .Code }}">{{ .Lang }}</option>
                     {{end}}
@@ -18,8 +19,8 @@
             </label>
         </p>
         <p>
-            <label for="tran_word"><b>Translate word</b></label>
-            <input id="tran_word" name="tran_word" type="text" placeholder="Enter translate word" required>
+            <label for=tran_word><b>Translate word</b></label>
+            <input id=tran_word name="tran_word" type="text" placeholder="Enter translate word" required>
             <label>
                 <select id="tran_lang" size="1">
                     {{ range .Languages}}
@@ -28,6 +29,15 @@
                 </select>
             </label>
         </p>
+        <p>
+            <label for=pronunciation><b>Pronunciation</b></label>
+            <input id=pronunciation name="pronunciation" type="text" placeholder="Pronunciation" required>
+        </p>
+        <p>
+            <label for=example><b>Example</b></label>
+            <input id=example name="example" type="text" placeholder="Example">
+        </p>
+
         <button type="submit">Send</button>
     </div>
 </form>

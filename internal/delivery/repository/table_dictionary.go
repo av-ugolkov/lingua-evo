@@ -7,11 +7,11 @@ import (
 	"github.com/google/uuid"
 )
 
-func (d *Database) AddWordInDictionary(ctx context.Context, userId string, originalWord uuid.UUID, translateWord uuid.UUID) error {
-	query := `INSERT INTO dictionary (user_id, original_word, original_lang, translate_word, translate_lang, example) VALUES($1, $2, $3, $4, $5, $6)`
-	err := d.db.QueryRowContext(ctx, query, userId, "original_word", "lang", "translate_word", "translate_lang", "example") //TODO fix parameters
+func (d *Database) AddWordInDictionary(ctx context.Context, userId, originalWord uuid.UUID, translateWord []uuid.UUID, pronunciation string, examples []uuid.UUID) error {
+	query := `INSERT INTO dictionary (user_id, original_word, translate_word, pronunciation, examples) VALUES($1, $2, $3, $4, $5)`
+	_, err := d.db.QueryContext(ctx, query, userId, originalWord, translateWord, pronunciation, examples)
 	if err != nil {
-		return fmt.Errorf("database.AddWord.QueryRow: %w", err)
+		return fmt.Errorf("database.AddWord.QueryRow: %v", err)
 	}
 
 	return nil
