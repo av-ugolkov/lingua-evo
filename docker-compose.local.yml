@@ -39,4 +39,4 @@ services:
         entrypoint:
             - "/bin/sh"
             - "-ecx"
-            - "./migration -cmd up -url lingua:ib6vACdec2Fmht4lnX153@postgres-lingua-evo:5432/pg-lingua-evo"
+            - "./migration -cmd up -url lingua:ib6vACdec2Fmht4lnX153@postgres-lingua-evo:5432/pg-lingua-evo?sslmode=disable"

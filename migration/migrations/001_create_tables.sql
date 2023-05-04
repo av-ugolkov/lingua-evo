@@ -25,16 +25,14 @@ create unique index if not exists idx_unique_languages__lang_code
 
 create table if not exists example (
     id uuid default gen_random_uuid() not null primary key,
-    original text,
-    translate text
+    word_id uuid,
+    example text
 );
 
 
 create table if not exists dictionary (
     user_id uuid references users (user_id) not null,
     original_word uuid references word (id) not null,
-    original_lang text references language (code) not null,
-    translate_lang text references language (code) not null,
     translate_word uuid[] not null,
     pronunciation text,
     example uuid[]
