@@ -1,4 +1,4 @@
-package main
+package app
 
 import (
 	"errors"
@@ -17,14 +17,7 @@ import (
 	"lingua-evo/pkg/logging"
 )
 
-func main() {
-	logging.Init()
-	logger := logging.GetLogger()
-	logger.Println("logger initialized")
-
-	cfg := config.GetConfig()
-	logger.Println("config initializing")
-
+func ServerStart(logger *logging.Logger, cfg *config.Config) {
 	db, err := repository.NewDB(cfg.Database.GetConnStr())
 	if err != nil {
 		logger.Fatalf("can't create pg pool: %v", err)
@@ -38,13 +31,6 @@ func main() {
 	api := api.CreateApi(logger, lingua)
 	api.RegisterApi(router)
 
-	createServer(router, logger, cfg)
-}
-
-func createServer(router *httprouter.Router, logger *logging.Logger, cfg *config.Config) {
-	var server *http.Server
-	var listener net.Listener
-
 	address := fmt.Sprintf(":%s", cfg.Service.Port)
 
 	listener, err := net.Listen(cfg.Service.Type, address)
@@ -53,7 +39,7 @@ func createServer(router *httprouter.Router, logger *logging.Logger, cfg *config
 	}
 	logger.Infof("web address: %v", listener.Addr())
 
-	server = &http.Server{
+	server := &http.Server{
 		Handler:      router,
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
