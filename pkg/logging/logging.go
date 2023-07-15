@@ -10,6 +10,10 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+const (
+	pathLog = "../../logs/all.log"
+)
+
 type writerHook struct {
 	Writer    []io.Writer
 	LogLevels []logrus.Level
@@ -59,7 +63,7 @@ func Init() {
 	if err != nil || os.IsExist(err) {
 		panic("can't crate log dir. no configured logging to files")
 	} else {
-		allFile, err := os.OpenFile("logs/all.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0660)
+		allFile, err := os.OpenFile(pathLog, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0660)
 		if err != nil {
 			panic(fmt.Sprintf("[Message]: %s", err))
 		}

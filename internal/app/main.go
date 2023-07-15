@@ -7,13 +7,13 @@ import (
 	"net/http"
 	"time"
 
-	"lingua-evo/internal/delivery/api"
-	"lingua-evo/internal/service"
-
 	"github.com/julienschmidt/httprouter"
 
 	"lingua-evo/internal/config"
+	"lingua-evo/internal/delivery/api"
 	"lingua-evo/internal/delivery/repository"
+	"lingua-evo/internal/service"
+
 	"lingua-evo/pkg/logging"
 )
 
@@ -25,21 +25,10 @@ func main() {
 	cfg := config.GetConfig()
 	logger.Println("config initializing")
 
-	//tg := tgClient.New(tgBotHost, tgToken)
-
 	db, err := repository.NewDB(cfg.Database.GetConnStr())
 	if err != nil {
 		logger.Fatalf("can't create pg pool: %v", err)
 	}
-
-	//eventProcessor := telegram.New(tg, repository)
-
-	//log.Print("service started")
-
-	//consumer := event_consumer.New(eventProcessor, eventProcessor, batchSize)
-	//if err := consumer.Start(); err != nil {
-	//	log.Fatal("service is stopped", err)
-	//}
 
 	database := repository.NewDatabase(db)
 	lingua := service.NewLinguaService(logger, database)
@@ -79,12 +68,3 @@ func createServer(router *httprouter.Router, logger *logging.Logger, cfg *config
 		}
 	}
 }
-
-/*func mustToken() string {
-	token := flag.String("tg-token-bot", "", "token for access to telegram bot")
-	flag.Parse()
-	if *token == "" {
-		log.Fatal("token is not specified")
-	}
-	return *token
-}*/

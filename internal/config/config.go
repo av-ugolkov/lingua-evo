@@ -9,8 +9,12 @@ import (
 	"github.com/ilyakaznacheev/cleanenv"
 )
 
+const (
+	pathConfig = "../../configs/server_config.yaml"
+)
+
 type Config struct {
-	IsDebug  *bool    `yaml:"is_debug"`
+	IsDebug  bool     `yaml:"is_debug"`
 	JWT      JWT      `yaml:"jwt"`
 	Service  Service  `yaml:"service"`
 	Database Database `yaml:"database"`
@@ -50,12 +54,8 @@ func GetConfig() *Config {
 		logger := logging.GetLogger()
 		logger.Info("read application config")
 		instance = &Config{}
-		if err := cleanenv.ReadConfig("configs/server_config.yaml", instance); err != nil {
-			_, err := cleanenv.GetDescription(instance, nil)
-			if err != nil {
-				logger.Error(err)
-			}
-			logger.Fatal(err)
+		if err := cleanenv.ReadConfig(pathConfig, instance); err != nil {
+			logger.Fatalf("Fail read config: %v", err)
 		}
 	})
 	return instance
