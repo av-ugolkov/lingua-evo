@@ -3,9 +3,10 @@ package add_word
 import (
 	"net/http"
 
-	"github.com/julienschmidt/httprouter"
 	"lingua-evo/internal/service"
 	"lingua-evo/pkg/logging"
+
+	"github.com/julienschmidt/httprouter"
 )
 
 const (
@@ -17,14 +18,20 @@ type Handler struct {
 	lingua *service.Lingua
 }
 
-func NewHandler(logger *logging.Logger, lingua *service.Lingua) *Handler {
+func Create(log *logging.Logger, ling *service.Lingua, r *httprouter.Router) {
+	handler := newHandler(log, ling)
+	handler.register(r)
+}
+
+func newHandler(logger *logging.Logger, lingua *service.Lingua) *Handler {
 	return &Handler{
 		logger: logger,
 		lingua: lingua,
 	}
 }
 
-func (h *Handler) Register(router *httprouter.Router) {
+func (h *Handler) register(router *httprouter.Router) {
 	router.HandlerFunc(http.MethodGet, addWordURL, h.getAddWord)
+
 	router.HandlerFunc(http.MethodPost, addWordURL, h.postAddWord)
 }

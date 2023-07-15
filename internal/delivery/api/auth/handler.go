@@ -26,14 +26,19 @@ type Handler struct {
 	//RTCache cache.Repository
 }
 
-func NewHandler(logger *logging.Logger, lingua *service.Lingua) *Handler {
+func Create(log *logging.Logger, ling *service.Lingua, r *httprouter.Router) {
+	handler := newHandler(log, ling)
+	handler.register(r)
+}
+
+func newHandler(logger *logging.Logger, lingua *service.Lingua) *Handler {
 	return &Handler{
 		logger: logger,
 		lingua: lingua,
 	}
 }
 
-func (h *Handler) Register(router *httprouter.Router) {
+func (h *Handler) register(router *httprouter.Router) {
 	router.HandlerFunc(http.MethodGet, authURL, h.getAuth)
 	router.HandlerFunc(http.MethodPut, authURL, h.putAuth)
 	router.HandlerFunc(http.MethodPost, authURL, h.postAuth)

@@ -37,19 +37,15 @@ func (a *api) RegisterApi(router *httprouter.Router) {
 	a.logger.Debugf("%s ::: %s", root, path)
 	router.ServeFiles(path, root)
 
-	a.logger.Info("register index")
-	indexHandler := index.NewHandler(a.logger, a.lingua)
-	indexHandler.Register(router)
+	a.logger.Info("create index")
+	index.Create(a.logger, a.lingua, router)
 
-	a.logger.Info("register auth api")
-	authHandler := auth.NewHandler(a.logger, a.lingua)
-	authHandler.Register(router)
+	a.logger.Info("create auth api")
+	auth.Create(a.logger, a.lingua, router)
 
-	a.logger.Info("register account page")
-	accountPage := account.NewHandler(a.logger)
-	accountPage.Register(router)
+	a.logger.Info("create account page")
+	account.Create(a.logger, a.lingua, router)
 
-	a.logger.Info("register add word page")
-	addWordPage := add_word.NewHandler(a.logger, a.lingua)
-	addWordPage.Register(router)
+	a.logger.Info("create add word page")
+	add_word.Create(a.logger, a.lingua, router)
 }
