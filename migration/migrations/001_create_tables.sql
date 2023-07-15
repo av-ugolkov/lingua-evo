@@ -1,10 +1,10 @@
 -- +goose Up
 create table if not exists users (
-    user_id uuid not null primary key,
-    user_mame text not null
+    id uuid default gen_random_uuid() primary key,
+    name text not null,
+    password_hash text not null,
+    last_visit date
 );
-comment on column users.user_mame is 'user name';
-
 
 create table if not exists word(
     id uuid default gen_random_uuid() not null primary key,
@@ -31,7 +31,7 @@ create table if not exists example (
 
 
 create table if not exists dictionary (
-    user_id uuid references users (user_id) not null,
+    user_id uuid references users (id) not null,
     original_word uuid references word (id) not null,
     pronunciation text,
     translate_word uuid[] not null,

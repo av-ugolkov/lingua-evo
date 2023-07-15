@@ -54,6 +54,12 @@ type Dictionary struct {
 	Example       []uuid.UUID
 }
 
+type User struct {
+	Username     string
+	Email        string
+	PasswordHash string
+}
+
 /*func (p *Word) Hash() (string, error) {
 	h := sha1.New()
 

@@ -3,7 +3,7 @@
     <meta charset="utf-8">
     <title>Title</title>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <link rel="stylesheet" href="{{ .RootPath }}view/auth/auth.css">
+    <link rel="stylesheet" href="{{ .RootPath }}view/auth/style.css">
 </head>
 <body>
 <form id="authPanel" method="post">
@@ -11,11 +11,11 @@
         <img src="{{ .RootPath }}view/auth/img_avatar.png" alt="Avatar" class="avatar">
     </div>
     <div class="container">
-        <label for="username"><b>Username</b></label>
-        <input id="username" name="username" type="text" placeholder="Enter Username" required>
+        <label for=username><b>Email/Username</b></label>
+        <input id=username name=username type="text" placeholder="Enter Email/Username" required>
 
-        <label for="password"><b>Password</b></label>
-        <input id="password" name="password" type="password" placeholder="Enter Password" required>
+        <label for=password><b>Password</b></label>
+        <input id=password name=password type="password" placeholder="Enter Password" required>
 
         <button type="submit">Login</button>
         <label>

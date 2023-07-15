@@ -9,7 +9,7 @@
     <div class="container">
         <p>
             <label for=orig_word><b>Origin word</b></label>
-            <input id=orig_word name="orig_word" type="text" placeholder="Enter origin word" required>
+            <input id=orig_word name=orig_word type="text" placeholder="Enter origin word" required>
             <label>
                 <select id=orig_lang size="1">
                     {{ range .Languages}}
@@ -20,9 +20,9 @@
         </p>
         <p>
             <label for=tran_word><b>Translate word</b></label>
-            <input id=tran_word name="tran_word" type="text" placeholder="Enter translate word" required>
+            <input id=tran_word name=tran_word type="text" placeholder="Enter translate word" required>
             <label>
-                <select id="tran_lang" size="1">
+                <select id=tran_lang size="1">
                     {{ range .Languages}}
                     <option value="{{ .Code }}">{{ .Lang }}</option>
                     {{end}}
@@ -41,6 +41,6 @@
         <button type="submit">Send</button>
     </div>
 </form>
-<script src="{{ .Root }}view/add_word/script.js"></script>
+<script src="{{ .Root }}view/dictionaty/add_word/script.js"></script>
 </body>
 </html>
