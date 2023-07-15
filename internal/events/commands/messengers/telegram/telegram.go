@@ -81,7 +81,7 @@ func (p *Processor) processMessage(event events.Event) error {
 }
 
 func (p *Processor) sendStart(chatID int, userId int, userName string) error {
-	err := p.database.AddUser(context.Background(), userId, userName)
+	_, err := p.database.AddUser(context.Background(), &repository.User{Username: userName})
 	if err != nil {
 		return fmt.Errorf("telegram.sendStart.AddUser: %w", err)
 	}

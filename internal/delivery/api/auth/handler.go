@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"lingua-evo/internal/config"
+	"lingua-evo/internal/service"
 	"lingua-evo/pkg/logging"
 	linguaJWT "lingua-evo/pkg/middleware/jwt"
 
@@ -21,12 +22,14 @@ const (
 
 type Handler struct {
 	logger *logging.Logger
+	lingua *service.Lingua
 	//RTCache cache.Repository
 }
 
-func NewHandler(logger *logging.Logger) *Handler {
+func NewHandler(logger *logging.Logger, lingua *service.Lingua) *Handler {
 	return &Handler{
 		logger: logger,
+		lingua: lingua,
 	}
 }
 
@@ -34,7 +37,9 @@ func (h *Handler) Register(router *httprouter.Router) {
 	router.HandlerFunc(http.MethodGet, authURL, h.getAuth)
 	router.HandlerFunc(http.MethodPut, authURL, h.putAuth)
 	router.HandlerFunc(http.MethodPost, authURL, h.postAuth)
-	router.HandlerFunc(http.MethodPost, signupURL, h.signup)
+
+	router.HandlerFunc(http.MethodGet, signupURL, h.getSignup)
+	router.HandlerFunc(http.MethodPost, signupURL, h.postSignup)
 }
 
 func (h *Handler) generateAccessToken() ([]byte, int) {
@@ -50,7 +55,7 @@ func (h *Handler) generateAccessToken() ([]byte, int) {
 		RegisteredClaims: jwt.RegisteredClaims{
 			ID:        "uuid_here",
 			Audience:  []string{"users"},
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute * 60)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24)),
 		},
 		Email: "email@will.be.here",
 	}

@@ -37,7 +37,7 @@ func (a *api) RegisterApi(router *httprouter.Router) {
 	router.ServeFiles(path, root)
 
 	a.logger.Info("register auth api")
-	authHandler := auth.NewHandler(a.logger)
+	authHandler := auth.NewHandler(a.logger, a.lingua)
 	authHandler.Register(router)
 
 	a.logger.Info("register account page")
