@@ -28,7 +28,7 @@ func (h *Handler) getAuth(w http.ResponseWriter, _ *http.Request) {
 
 	err = t.Execute(w, data)
 	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 }

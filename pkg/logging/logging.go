@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	pathLog = "../../logs/all.log"
+	pathLog = "logs/all.log"
 )
 
 type writerHook struct {

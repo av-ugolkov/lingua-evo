@@ -7,6 +7,7 @@ import (
 	"lingua-evo/internal/delivery/api/account"
 	"lingua-evo/internal/delivery/api/add_word"
 	"lingua-evo/internal/delivery/api/auth"
+	"lingua-evo/internal/delivery/api/index"
 	"lingua-evo/internal/service"
 	"lingua-evo/pkg/logging"
 	"lingua-evo/pkg/tools/view"
@@ -35,6 +36,10 @@ func (a *api) RegisterApi(router *httprouter.Router) {
 	root := http.Dir(view.GetPathFile(pathFolder))
 	a.logger.Debugf("%s ::: %s", root, path)
 	router.ServeFiles(path, root)
+
+	a.logger.Info("register index")
+	indexHandler := index.NewHandler(a.logger, a.lingua)
+	indexHandler.Register(router)
 
 	a.logger.Info("register auth api")
 	authHandler := auth.NewHandler(a.logger, a.lingua)
