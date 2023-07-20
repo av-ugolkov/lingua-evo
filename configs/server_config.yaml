@@ -10,5 +10,3 @@ database:
     password: ib6vACdec2Fmht4lnX153
     host: localhost
     port: 6432
-front:
-    root: /

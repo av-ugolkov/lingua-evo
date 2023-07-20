@@ -1,7 +1,6 @@
 package api
 
 import (
-	"fmt"
 	"net/http"
 
 	"lingua-evo/internal/delivery/api/account"
@@ -10,13 +9,13 @@ import (
 	"lingua-evo/internal/delivery/api/index"
 	"lingua-evo/internal/service"
 	"lingua-evo/pkg/logging"
-	"lingua-evo/pkg/tools/view"
 
 	"github.com/julienschmidt/httprouter"
 )
 
 const (
-	pathFolder = "view/"
+	filePath = "/web/*filepath"
+	rootPath = "./../web"
 )
 
 type api struct {
@@ -32,10 +31,7 @@ func CreateApi(logger *logging.Logger, lingua *service.Lingua) *api {
 }
 
 func (a *api) RegisterApi(router *httprouter.Router) {
-	path := view.GetPathFolder(fmt.Sprintf("%s%s", pathFolder, "*filepath"))
-	root := http.Dir(view.GetPathFile(pathFolder))
-	a.logger.Debugf("%s ::: %s", root, path)
-	router.ServeFiles(path, root)
+	router.ServeFiles(filePath, http.Dir(rootPath))
 
 	a.logger.Info("create index")
 	index.Create(a.logger, a.lingua, router)

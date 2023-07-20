@@ -1,0 +1,36 @@
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>Title</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <link rel="stylesheet" href="web/static/auth/style.css">
+</head>
+
+<body>
+    <form id="authPanel" method="post">
+        <div class="img_container">
+            <img src="web/static/auth/img_avatar.png" alt="Avatar" class="avatar">
+        </div>
+        <div class="container">
+            <label for=username><b>Email/Username</b></label>
+            <input id=username name=username type="text" placeholder="Enter Email/Username" required>
+
+            <label for=password><b>Password</b></label>
+            <input id=password name=password type="password" placeholder="Enter Password" required>
+
+            <button type="submit">Login</button>
+            <label>
+                <input type="checkbox" checked="checked" name="remember"> Remember me
+            </label>
+        </div>
+
+        <div class="container" style="background-color:#f1f1f1">
+            <button type="button" class="cancel-btn">Cancel</button>
+            <span class="psw">Forgot <a href="#">password?</a></span>
+        </div>
+    </form>
+    <script src="web/static/auth/script.js"></script>
+</body>
+
+</html>

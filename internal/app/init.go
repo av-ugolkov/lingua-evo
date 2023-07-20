@@ -7,14 +7,14 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/julienschmidt/httprouter"
-
 	"lingua-evo/internal/config"
 	"lingua-evo/internal/delivery/api"
 	"lingua-evo/internal/delivery/repository"
 	"lingua-evo/internal/service"
 
 	"lingua-evo/pkg/logging"
+
+	"github.com/julienschmidt/httprouter"
 )
 
 func ServerStart(logger *logging.Logger, cfg *config.Config) {

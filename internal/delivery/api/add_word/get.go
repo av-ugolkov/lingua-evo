@@ -4,17 +4,15 @@ import (
 	"html/template"
 	"net/http"
 
-	"lingua-evo/internal/config"
 	"lingua-evo/internal/service"
-	"lingua-evo/pkg/tools/view"
 )
 
 const (
-	addWordPagePath = "view/add_word/add_word.html"
+	addWordPagePath = "./../view/add_word/add_word.html"
 )
 
 func (h *Handler) getAddWord(w http.ResponseWriter, r *http.Request) {
-	t, err := template.ParseFiles(view.GetPathFile(addWordPagePath))
+	t, err := template.ParseFiles(addWordPagePath)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		return
@@ -27,10 +25,8 @@ func (h *Handler) getAddWord(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	data := struct {
-		Root      string
 		Languages []*service.Language
 	}{
-		Root:      config.GetConfig().Front.Root,
 		Languages: languages,
 	}
 
