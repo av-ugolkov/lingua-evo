@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	addWordPagePath = "./../view/add_word/add_word.html"
+	addWordPagePath = "./web/static/add_word/add_word.html"
 )
 
 func (h *Handler) getAddWord(w http.ResponseWriter, r *http.Request) {

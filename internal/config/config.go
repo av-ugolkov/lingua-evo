@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	pathConfig = "./../configs/server_config.yaml"
+	pathConfig = "./configs/server_config.yaml"
 )
 
 type Config struct {

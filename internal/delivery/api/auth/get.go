@@ -6,8 +6,8 @@ import (
 )
 
 const (
-	authPagePath   = "./../web/static/auth/auth.html" //it is ok
-	signupPagePath = "./../web/static/signup/signup.html"
+	authPagePath   = "./web/static/auth/auth.html" //it is ok
+	signupPagePath = "./web/static/signup/signup.html"
 )
 
 func (h *Handler) getAuth(w http.ResponseWriter, r *http.Request) {

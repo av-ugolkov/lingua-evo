@@ -13,7 +13,7 @@ const (
 	url      = "/"
 	indexURL = "/index"
 
-	indexPagePath = "./../view/index.html"
+	indexPagePath = "./web/static/index.html"
 )
 
 type Handler struct {

@@ -15,7 +15,7 @@ import (
 
 const (
 	filePath = "/web/*filepath"
-	rootPath = "./../web"
+	rootPath = "./web"
 )
 
 type api struct {

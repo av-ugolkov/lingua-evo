@@ -3,7 +3,7 @@ FROM golang:1.20.3-alpine as builder
 RUN apk --no-cache --update --upgrade add git make
 
 WORKDIR /build
-COPY ./app/main .
+COPY ./main .
 
 FROM alpine:3.16
 LABEL key="Lingua-evo"
