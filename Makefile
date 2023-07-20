@@ -1,11 +1,13 @@
 .PHONY: build
 build:
-	go build -o main .
+	go build -o main ./app/main.go
 
-.PHONY: postgres
-postgres:
+.PHONY: run
+run:
+	go build -o main ./app/main.go
+	./main
 
 .PHONY: docker recreate
 docker recreate:
-	GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o ./app/main ./app/main.go
+	GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o ./main ./app/main.go
 	docker compose -f docker-compose.local.yml up --build --force-recreate

@@ -12,7 +12,7 @@ import (
 const (
 	account = "/account"
 
-	accountPagePath = "./../view/account/account.html"
+	accountPagePath = "./web/static/account/account.html"
 )
 
 type Handler struct {
