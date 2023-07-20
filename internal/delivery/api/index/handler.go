@@ -1,12 +1,10 @@
 package index
 
 import (
-	"html/template"
-	"lingua-evo/internal/config"
 	"lingua-evo/internal/service"
 	"lingua-evo/pkg/logging"
-	"lingua-evo/pkg/tools/view"
 	"net/http"
+	"os"
 
 	"github.com/julienschmidt/httprouter"
 )
@@ -15,7 +13,7 @@ const (
 	url      = "/"
 	indexURL = "/index"
 
-	indexPagePath = "view/index.html"
+	indexPagePath = "./../view/index.html"
 )
 
 type Handler struct {
@@ -41,23 +39,13 @@ func (h *Handler) register(router *httprouter.Router) {
 }
 
 func (h *Handler) getIndex(w http.ResponseWriter, r *http.Request) {
-	t, err := template.ParseFiles(view.GetPathFile(indexPagePath))
+	file, err := os.ReadFile(indexPagePath)
 	if err != nil {
 		h.logger.Errorf("index.get.ParseFiles: %v", err)
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 
-	data := struct {
-		RootPath string
-	}{
-		RootPath: config.GetConfig().Front.Root,
-	}
-
-	err = t.Execute(w, data)
-	if err != nil {
-		h.logger.Errorf("index.get.Execute: %v", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+	w.Write([]byte(file))
+	w.WriteHeader(http.StatusOK)
 }

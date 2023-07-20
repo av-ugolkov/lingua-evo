@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	pathConfig = "configs/server_config.yaml"
+	pathConfig = "./../configs/server_config.yaml"
 )
 
 type Config struct {
@@ -18,7 +18,6 @@ type Config struct {
 	JWT      JWT      `yaml:"jwt"`
 	Service  Service  `yaml:"service"`
 	Database Database `yaml:"database"`
-	Front    Front    `yaml:"front"`
 }
 
 type JWT struct {
@@ -40,10 +39,6 @@ type Database struct {
 
 func (db *Database) GetConnStr() string {
 	return fmt.Sprintf("postgresql://%s:%s@%s:%s/%s", db.User, db.Password, db.Host, db.Port, db.NameDB)
-}
-
-type Front struct {
-	Root string `yaml:"root" env-default:"./view"`
 }
 
 var instance *Config

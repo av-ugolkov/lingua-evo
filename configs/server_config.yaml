@@ -10,5 +10,3 @@ database:
     password: 
     host: localhost
     port: 6432
-front:
-    root: /

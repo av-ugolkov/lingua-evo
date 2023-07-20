@@ -10,11 +10,3 @@ database:
     password: 
     host: postgres-lingua-evo
     port: 5432
-front:
-    root: /app/
-web_service:
-    url: http://127.0.0.1:5000/api
-tlg:
-    token: 5762950198:AAHRVBXPgAgrbSv-fUcXeAwbwDysiTXcMtY
-    bot_host: api.telegram.org
-    batch_size: 100

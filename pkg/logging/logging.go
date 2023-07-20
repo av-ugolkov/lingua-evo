@@ -11,7 +11,8 @@ import (
 )
 
 const (
-	pathLog = "logs/all.log"
+	pathFileLog   = "./../logs/all.log"
+	pathFolderLog = "./../logs"
 )
 
 type writerHook struct {
@@ -59,11 +60,11 @@ func Init() {
 		DisableColors: false,
 		FullTimestamp: true,
 	}
-	err := os.MkdirAll("logs", 0755)
+	err := os.MkdirAll(pathFolderLog, 0755)
 	if err != nil || os.IsExist(err) {
 		panic("can't crate log dir. no configured logging to files")
 	} else {
-		allFile, err := os.OpenFile(pathLog, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0660)
+		allFile, err := os.OpenFile(pathFileLog, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0660)
 		if err != nil {
 			panic(fmt.Sprintf("[Message]: %s", err))
 		}
