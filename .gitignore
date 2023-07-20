@@ -1,5 +1,6 @@
 # Lingua
 logs/*
+app/main
 
 .DS_Store
 .vs/
