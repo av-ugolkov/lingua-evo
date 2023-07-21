@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"text/template"
 
-	"lingua-evo/internal/delivery/api/add_word/entity"
+	"lingua-evo/internal/delivery/handlers/add_word/entity"
 	"lingua-evo/internal/delivery/repository"
 	"lingua-evo/internal/service"
 	"lingua-evo/pkg/logging"

@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"lingua-evo/internal/config"
-	"lingua-evo/internal/delivery/api"
+	"lingua-evo/internal/delivery/handlers"
 	"lingua-evo/internal/delivery/repository"
 	"lingua-evo/internal/service"
 
@@ -28,8 +28,7 @@ func ServerStart(logger *logging.Logger, cfg *config.Config) {
 
 	router := httprouter.New()
 
-	api := api.CreateApi(logger, lingua)
-	api.RegisterApi(router)
+	handlers.RegisterHandlers(logger, router, lingua)
 
 	address := fmt.Sprintf(":%s", cfg.Service.Port)
 

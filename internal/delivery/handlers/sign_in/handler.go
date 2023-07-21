@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"lingua-evo/internal/config"
-	"lingua-evo/internal/delivery/api/sign_in/entity"
+	"lingua-evo/internal/delivery/handlers/sign_in/entity"
 	"lingua-evo/internal/service"
 	"lingua-evo/pkg/logging"
 	linguaJWT "lingua-evo/pkg/middleware/jwt"
