@@ -62,7 +62,7 @@ func Init() {
 	}
 	err := os.MkdirAll(pathFolderLog, 0755)
 	if err != nil || os.IsExist(err) {
-		panic("can't crate log dir. no configured logging to files")
+		panic("can't create log dir. no configured logging to files")
 	} else {
 		allFile, err := os.OpenFile(pathFileLog, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0660)
 		if err != nil {
