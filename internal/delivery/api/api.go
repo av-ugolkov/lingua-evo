@@ -5,8 +5,9 @@ import (
 
 	"lingua-evo/internal/delivery/api/account"
 	"lingua-evo/internal/delivery/api/add_word"
-	"lingua-evo/internal/delivery/api/auth"
 	"lingua-evo/internal/delivery/api/index"
+	"lingua-evo/internal/delivery/api/sign_in"
+	"lingua-evo/internal/delivery/api/sign_up"
 	"lingua-evo/internal/service"
 	"lingua-evo/pkg/logging"
 
@@ -36,8 +37,11 @@ func (a *api) RegisterApi(router *httprouter.Router) {
 	a.logger.Info("create index")
 	index.Create(a.logger, a.lingua, router)
 
-	a.logger.Info("create auth api")
-	auth.Create(a.logger, a.lingua, router)
+	a.logger.Info("create sign_in api")
+	sign_in.Create(a.logger, a.lingua, router)
+
+	a.logger.Info("create sign_up api")
+	sign_up.Create(a.logger, a.lingua, router)
 
 	a.logger.Info("create account page")
 	account.Create(a.logger, a.lingua, router)
