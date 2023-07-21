@@ -3,9 +3,11 @@ package sign_in
 import (
 	"encoding/json"
 	"net/http"
+	"os"
 	"time"
 
 	"lingua-evo/internal/config"
+	"lingua-evo/internal/delivery/api/sign_in/entity"
 	"lingua-evo/internal/service"
 	"lingua-evo/pkg/logging"
 	linguaJWT "lingua-evo/pkg/middleware/jwt"
@@ -17,6 +19,8 @@ import (
 
 const (
 	signInURL = "/signin"
+
+	signInPage = "./web/static/sign_in/signin.html"
 )
 
 type Handler struct {
@@ -38,9 +42,85 @@ func newHandler(logger *logging.Logger, lingua *service.Lingua) *Handler {
 }
 
 func (h *Handler) register(router *httprouter.Router) {
-	router.HandlerFunc(http.MethodGet, signInURL, h.getSignIn)
-	router.HandlerFunc(http.MethodPut, signInURL, h.putSignIn)
-	router.HandlerFunc(http.MethodPost, signInURL, h.postSignIn)
+	router.HandlerFunc(http.MethodGet, signInURL, h.get)
+	router.HandlerFunc(http.MethodPut, signInURL, h.put)
+	router.HandlerFunc(http.MethodPost, signInURL, h.post)
+}
+
+func (h *Handler) get(w http.ResponseWriter, r *http.Request) {
+	file, err := os.ReadFile(signInPage)
+	if err != nil {
+		h.logger.Errorf("auth.getSignIn.ReadFile: %v", err)
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(file))
+}
+
+func (h *Handler) post(w http.ResponseWriter, r *http.Request) {
+	var u entity.User
+	if err := json.NewDecoder(r.Body).Decode(&u); err != nil {
+		h.logger.Error(err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	defer r.Body.Close()
+
+	//TODO client to UserService and get user by username and password
+	//for now stub check
+	//if u.Username != "me" || u.Password != "pass" {
+	//	w.WriteHeader(http.StatusNotFound)
+	//	return
+	//}
+
+	jsonBytes, errCode := h.generateAccessToken()
+	if errCode != 0 {
+		w.WriteHeader(errCode)
+		return
+	}
+	request, err := json.Marshal(map[string]string{
+		"token": string(jsonBytes),
+		"url":   "/account",
+	})
+	if err != nil {
+		w.WriteHeader(errCode)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	w.Write(request)
+}
+
+func (h *Handler) put(w http.ResponseWriter, r *http.Request) {
+	var refreshToken entity.Refresh
+	if err := json.NewDecoder(r.Body).Decode(&refreshToken); err != nil {
+		h.logger.Fatal(err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	defer r.Body.Close()
+	/*userIdBytes, err := h.RTCache.Get([]byte(refreshTokenS.RefreshToken))
+	h.Logger.Infof("refresh token user_id: %s", userIdBytes)
+	if err != nil {
+		h.Logger.Fatal(err)
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+	h.RTCache.Del([]byte(refreshTokenS.RefreshToken))*/
+	//TODO client to UserService and get user by username
+
+	jsonBytes, errCode := h.generateAccessToken()
+	if errCode != 0 {
+		w.WriteHeader(errCode)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	h.logger.Info(string(jsonBytes))
+	w.Write(jsonBytes)
 }
 
 func (h *Handler) generateAccessToken() ([]byte, int) {
