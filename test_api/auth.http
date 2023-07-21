@@ -1,5 +1,5 @@
-### AUTH POST
-POST http://localhost:5000/api/auth
+### SIGN IN POST
+POST http://localhost:5000/signin
 Content-Type: application/json
 
 {
@@ -8,7 +8,7 @@ Content-Type: application/json
 }
 
 ### AUTH PUT
-PUT http://localhost:5555/api/auth
+PUT http://localhost:5555/signin
 Content-Type: application/json
 
 {
@@ -21,7 +21,7 @@ Content-Type: application/json
 %}
 
 ### SIGNUP POST
-POST http://localhost:5555/api/signup
+POST http://localhost:5555/signup
 Content-Type: application/json
 
 {

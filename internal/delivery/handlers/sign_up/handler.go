@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"lingua-evo/internal/config"
-	"lingua-evo/internal/delivery/api/sign_up/entity"
+	"lingua-evo/internal/delivery/handlers/sign_up/entity"
 	"lingua-evo/internal/delivery/repository"
 	"lingua-evo/internal/service"
 
