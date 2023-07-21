@@ -1,4 +1,4 @@
-package auth
+package sign_in
 
 import (
 	"encoding/json"
@@ -9,7 +9,7 @@ type Refresh struct {
 	RefreshToken string `json:"refresh_token"`
 }
 
-func (h *Handler) putAuth(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) putSignIn(w http.ResponseWriter, r *http.Request) {
 	var refreshToken Refresh
 	if err := json.NewDecoder(r.Body).Decode(&refreshToken); err != nil {
 		h.logger.Fatal(err)
