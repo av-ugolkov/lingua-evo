@@ -1,4 +1,4 @@
-package auth
+package sign_up
 
 import (
 	"encoding/json"
@@ -16,8 +16,7 @@ import (
 )
 
 const (
-	authURL   = "/auth"
-	signupURL = "/signup"
+	signUpURL = "/signup"
 )
 
 type Handler struct {
@@ -39,12 +38,8 @@ func newHandler(logger *logging.Logger, lingua *service.Lingua) *Handler {
 }
 
 func (h *Handler) register(router *httprouter.Router) {
-	router.HandlerFunc(http.MethodGet, authURL, h.getAuth)
-	router.HandlerFunc(http.MethodPut, authURL, h.putAuth)
-	router.HandlerFunc(http.MethodPost, authURL, h.postAuth)
-
-	router.HandlerFunc(http.MethodGet, signupURL, h.getSignup)
-	router.HandlerFunc(http.MethodPost, signupURL, h.postSignup)
+	router.HandlerFunc(http.MethodGet, signUpURL, h.getSignUp)
+	router.HandlerFunc(http.MethodPost, signUpURL, h.postSignUp)
 }
 
 func (h *Handler) generateAccessToken() ([]byte, int) {
