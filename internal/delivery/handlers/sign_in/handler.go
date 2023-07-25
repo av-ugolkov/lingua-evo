@@ -3,12 +3,13 @@ package sign_in
 import (
 	"encoding/json"
 	"net/http"
-	"os"
 	"time"
 
 	"lingua-evo/internal/config"
 	"lingua-evo/internal/delivery/handlers/sign_in/entity"
 	"lingua-evo/internal/service"
+	templates "lingua-evo/web/static"
+
 	"lingua-evo/pkg/logging"
 	linguaJWT "lingua-evo/pkg/middleware/jwt"
 
@@ -20,7 +21,7 @@ import (
 const (
 	signInURL = "/signin"
 
-	signInPage = "./web/static/sign_in/signin.html"
+	signInPage = "sign_in/signin.html"
 )
 
 type Handler struct {
@@ -48,9 +49,9 @@ func (h *Handler) register(router *httprouter.Router) {
 }
 
 func (h *Handler) get(w http.ResponseWriter, r *http.Request) {
-	file, err := os.ReadFile(signInPage)
+	file, err := templates.OpenFile(signInPage)
 	if err != nil {
-		h.logger.Errorf("auth.getSignIn.ReadFile: %v", err)
+		h.logger.Errorf("sign_in.get.OpenFile: %v", err)
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}

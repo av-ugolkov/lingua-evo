@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"os"
 	"strings"
 	"time"
 
@@ -15,6 +14,7 @@ import (
 	"lingua-evo/internal/delivery/handlers/sign_up/entity"
 	"lingua-evo/internal/delivery/repository"
 	"lingua-evo/internal/service"
+	templates "lingua-evo/web/static"
 
 	"lingua-evo/pkg/logging"
 	linguaJWT "lingua-evo/pkg/middleware/jwt"
@@ -29,7 +29,7 @@ import (
 const (
 	signUpURL = "/signup"
 
-	signupPage = "./web/static/sign_up/signup.html"
+	signupPage = "sign_up/signup.html"
 )
 
 type Handler struct {
@@ -56,9 +56,9 @@ func (h *Handler) register(router *httprouter.Router) {
 }
 
 func (h *Handler) get(w http.ResponseWriter, r *http.Request) {
-	file, err := os.ReadFile(signupPage)
+	file, err := templates.OpenFile(signupPage)
 	if err != nil {
-		h.logger.Errorf("auth.getSignup.ReadFile: %v", err)
+		h.logger.Errorf("sign_up.get.OpenFile: %v", err)
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
