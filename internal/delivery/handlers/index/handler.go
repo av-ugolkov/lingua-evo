@@ -3,8 +3,8 @@ package index
 import (
 	"lingua-evo/internal/service"
 	"lingua-evo/pkg/logging"
+	templates "lingua-evo/web/static"
 	"net/http"
-	"os"
 
 	"github.com/julienschmidt/httprouter"
 )
@@ -13,7 +13,7 @@ const (
 	url      = "/"
 	indexURL = "/index"
 
-	indexPagePath = "./web/static/index.html"
+	indexPagePath = "index.html"
 )
 
 type Handler struct {
@@ -34,14 +34,14 @@ func newHandler(logger *logging.Logger, lingua *service.Lingua) *Handler {
 }
 
 func (h *Handler) register(router *httprouter.Router) {
-	router.HandlerFunc(http.MethodGet, url, h.getIndex)
-	router.HandlerFunc(http.MethodGet, indexURL, h.getIndex)
+	router.HandlerFunc(http.MethodGet, url, h.get)
+	router.HandlerFunc(http.MethodGet, indexURL, h.get)
 }
 
-func (h *Handler) getIndex(w http.ResponseWriter, r *http.Request) {
-	file, err := os.ReadFile(indexPagePath)
+func (h *Handler) get(w http.ResponseWriter, r *http.Request) {
+	file, err := templates.OpenFile(indexPagePath)
 	if err != nil {
-		h.logger.Errorf("index.get.ParseFiles: %v", err)
+		h.logger.Errorf("index.get.OpenFile: %v", err)
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}

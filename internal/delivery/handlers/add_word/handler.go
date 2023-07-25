@@ -4,11 +4,12 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
-	"text/template"
 
 	"lingua-evo/internal/delivery/handlers/add_word/entity"
 	"lingua-evo/internal/delivery/repository"
 	"lingua-evo/internal/service"
+	templates "lingua-evo/web/static"
+
 	"lingua-evo/pkg/logging"
 
 	"github.com/google/uuid"
@@ -18,7 +19,7 @@ import (
 const (
 	addWordURL = "/add_word"
 
-	addWordPage = "./web/static/add_word/add_word.html"
+	addWordPage = "dictionary/add_word/add_word.html"
 )
 
 type Handler struct {
@@ -44,8 +45,9 @@ func (h *Handler) register(router *httprouter.Router) {
 }
 
 func (h *Handler) get(w http.ResponseWriter, r *http.Request) {
-	t, err := template.ParseFiles(addWordPage)
+	t, err := templates.ParseFiles(addWordPage)
 	if err != nil {
+		h.logger.Errorf("add_word.get.OpenFile: %v", err)
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
