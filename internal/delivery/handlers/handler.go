@@ -16,8 +16,8 @@ import (
 )
 
 const (
-	filePath = "/web/*filepath"
-	rootPath = "./web"
+	filePath = "/static/*filepath"
+	rootPath = "./static"
 )
 
 func RegisterHandlers(logger *logging.Logger, router *httprouter.Router, lingua *service.Lingua) {

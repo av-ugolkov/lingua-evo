@@ -1,4 +1,4 @@
-package templates
+package static
 
 import (
 	"embed"
@@ -7,11 +7,14 @@ import (
 	"io"
 )
 
-//go:embed index.html
-//go:embed sign_in/signin.html
-//go:embed sign_up/signup.html
-//go:embed dictionary/add_word/add_word.html
-//go:embed account/account.html
+//go:embed configs/server_config.yaml
+
+//go:embed web/index.html
+//go:embed web/sign_in/signin.html
+//go:embed web/sign_up/signup.html
+//go:embed web/sign_up/img_avatar.png
+//go:embed web/dictionary/add_word/add_word.html
+//go:embed web/account/account.html
 var files embed.FS
 
 // Files returns a filesystem with static files.
