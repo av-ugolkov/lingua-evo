@@ -22,4 +22,4 @@ EXPOSE 5000
 
 WORKDIR /lingua-evo/app/
 
-CMD ["/lingua-evo/app/main"]
+CMD ["./main"]
