@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	pathFileLog   = "./logs/all.log"
-	pathFolderLog = "./logs"
+	pathFileLog   = "./../logs/all.log"
+	pathFolderLog = "./../logs"
 )
 
 type writerHook struct {

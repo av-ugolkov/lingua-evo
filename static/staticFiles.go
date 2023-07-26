@@ -7,8 +7,6 @@ import (
 	"io"
 )
 
-//go:embed configs/server_config.yaml
-
 //go:embed web/index.html
 //go:embed web/sign_in/signin.html
 //go:embed web/sign_up/signup.html
