@@ -4,13 +4,14 @@ import (
 	"fmt"
 	"sync"
 
-	"lingua-evo/pkg/logging"
+	"gopkg.in/yaml.v2"
 
-	"github.com/ilyakaznacheev/cleanenv"
+	"lingua-evo/pkg/logging"
+	staticFiles "lingua-evo/static"
 )
 
 const (
-	pathConfig = "./configs/server_config.yaml"
+	pathConfig = "configs/server_config.yaml"
 )
 
 type Config struct {
@@ -49,7 +50,13 @@ func GetConfig() *Config {
 		logger := logging.GetLogger()
 		logger.Info("read application config")
 		instance = &Config{}
-		if err := cleanenv.ReadConfig(pathConfig, instance); err != nil {
+
+		fileConfig, err := staticFiles.OpenFile(pathConfig)
+		if err != nil {
+			logger.Fatalf("Fail Open File config: %v", err)
+		}
+
+		if err := yaml.Unmarshal(fileConfig, instance); err != nil {
 			logger.Fatalf("Fail read config: %v", err)
 		}
 	})

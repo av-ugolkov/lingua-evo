@@ -8,7 +8,7 @@ import (
 	"lingua-evo/internal/delivery/handlers/add_word/entity"
 	"lingua-evo/internal/delivery/repository"
 	"lingua-evo/internal/service"
-	templates "lingua-evo/web/static"
+	staticFiles "lingua-evo/static"
 
 	"lingua-evo/pkg/logging"
 
@@ -19,7 +19,7 @@ import (
 const (
 	addWordURL = "/add_word"
 
-	addWordPage = "dictionary/add_word/add_word.html"
+	addWordPage = "web/dictionary/add_word/add_word.html"
 )
 
 type Handler struct {
@@ -45,7 +45,7 @@ func (h *Handler) register(router *httprouter.Router) {
 }
 
 func (h *Handler) get(w http.ResponseWriter, r *http.Request) {
-	t, err := templates.ParseFiles(addWordPage)
+	t, err := staticFiles.ParseFiles(addWordPage)
 	if err != nil {
 		h.logger.Errorf("add_word.get.OpenFile: %v", err)
 		w.WriteHeader(http.StatusNotFound)
