@@ -4,8 +4,8 @@ build:
 
 .PHONY: run
 run:
-	go build -o main ./app/main.go
-	./main
+	go build -o ./app/main ./app/main.go
+	./app/main
 
 .PHONY: docker recreate
 docker recreate:
