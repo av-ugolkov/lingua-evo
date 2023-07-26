@@ -1,10 +1,11 @@
 package index
 
 import (
+	"net/http"
+
 	"lingua-evo/internal/service"
 	"lingua-evo/pkg/logging"
-	templates "lingua-evo/web/static"
-	"net/http"
+	staticFiles "lingua-evo/static"
 
 	"github.com/julienschmidt/httprouter"
 )
@@ -13,7 +14,7 @@ const (
 	url      = "/"
 	indexURL = "/index"
 
-	indexPagePath = "index.html"
+	indexPagePath = "web/index.html"
 )
 
 type Handler struct {
@@ -39,13 +40,13 @@ func (h *Handler) register(router *httprouter.Router) {
 }
 
 func (h *Handler) get(w http.ResponseWriter, r *http.Request) {
-	file, err := templates.OpenFile(indexPagePath)
+	file, err := staticFiles.OpenFile(indexPagePath)
 	if err != nil {
 		h.logger.Errorf("index.get.OpenFile: %v", err)
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 
-	w.Write([]byte(file))
 	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(file))
 }
