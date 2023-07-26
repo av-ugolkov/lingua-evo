@@ -3,7 +3,7 @@ package account
 import (
 	"lingua-evo/internal/service"
 	"lingua-evo/pkg/logging"
-	templates "lingua-evo/web/static"
+	staticFiles "lingua-evo/static"
 	"net/http"
 
 	"github.com/julienschmidt/httprouter"
@@ -12,7 +12,7 @@ import (
 const (
 	account = "/account"
 
-	accountPagePath = "account/account.html"
+	accountPagePath = "web/account/account.html"
 )
 
 type Handler struct {
@@ -35,7 +35,7 @@ func (h *Handler) register(router *httprouter.Router) {
 }
 
 func (h *Handler) account(w http.ResponseWriter, _ *http.Request) {
-	file, err := templates.OpenFile(accountPagePath)
+	file, err := staticFiles.OpenFile(accountPagePath)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		return
