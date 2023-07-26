@@ -7,14 +7,10 @@ import (
 	"io"
 )
 
-//go:embed web/index.html
-//go:embed web/sign_in/signin.html
-//go:embed web/sign_up/signup.html
-//go:embed web/dictionary/add_word/add_word.html
-//go:embed web/account/account.html
+//go:embed web
 var files embed.FS
 
-// Files returns a filesystem with static files.
+// OpenFile: open static file and return array bytes.
 func OpenFile(fileName string) ([]byte, error) {
 	file, err := files.Open(fileName)
 	if err != nil {
