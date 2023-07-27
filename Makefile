@@ -1,11 +1,11 @@
 .PHONY: build
 build:
-	go build -o main ./app/main.go
+	go build -o main ./cmd/main.go
 
 .PHONY: run
 run:
-	go build -o ./app/main ./app/main.go
-	./app/main
+	go build -o ./cmd/main ./cmd/main.go
+	./cmd/main
 
 .PHONY: docker recreate
 docker recreate:
