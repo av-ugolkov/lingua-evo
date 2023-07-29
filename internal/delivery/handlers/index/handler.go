@@ -3,7 +3,7 @@ package index
 import (
 	"net/http"
 
-	"lingua-evo/internal/service"
+	"lingua-evo/internal/services"
 	"lingua-evo/pkg/logging"
 	staticFiles "lingua-evo/static"
 
@@ -19,15 +19,15 @@ const (
 
 type Handler struct {
 	logger *logging.Logger
-	lingua *service.Lingua
+	lingua *services.Lingua
 }
 
-func Create(log *logging.Logger, ling *service.Lingua, r *httprouter.Router) {
+func Create(log *logging.Logger, ling *services.Lingua, r *httprouter.Router) {
 	handler := newHandler(log, ling)
 	handler.register(r)
 }
 
-func newHandler(logger *logging.Logger, lingua *service.Lingua) *Handler {
+func newHandler(logger *logging.Logger, lingua *services.Lingua) *Handler {
 	return &Handler{
 		logger: logger,
 		lingua: lingua,

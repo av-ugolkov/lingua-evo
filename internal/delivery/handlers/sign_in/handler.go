@@ -7,7 +7,7 @@ import (
 
 	"lingua-evo/internal/config"
 	"lingua-evo/internal/delivery/handlers/sign_in/entity"
-	"lingua-evo/internal/service"
+	"lingua-evo/internal/services"
 	staticFiles "lingua-evo/static"
 
 	"lingua-evo/pkg/logging"
@@ -26,16 +26,16 @@ const (
 
 type Handler struct {
 	logger *logging.Logger
-	lingua *service.Lingua
+	lingua *services.Lingua
 	//RTCache cache.Repository
 }
 
-func Create(log *logging.Logger, ling *service.Lingua, r *httprouter.Router) {
+func Create(log *logging.Logger, ling *services.Lingua, r *httprouter.Router) {
 	handler := newHandler(log, ling)
 	handler.register(r)
 }
 
-func newHandler(logger *logging.Logger, lingua *service.Lingua) *Handler {
+func newHandler(logger *logging.Logger, lingua *services.Lingua) *Handler {
 	return &Handler{
 		logger: logger,
 		lingua: lingua,
