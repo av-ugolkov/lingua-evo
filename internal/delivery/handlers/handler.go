@@ -8,7 +8,7 @@ import (
 	"lingua-evo/internal/delivery/handlers/index"
 	"lingua-evo/internal/delivery/handlers/sign_in"
 	"lingua-evo/internal/delivery/handlers/sign_up"
-	"lingua-evo/internal/service"
+	"lingua-evo/internal/services"
 
 	"lingua-evo/pkg/logging"
 
@@ -20,7 +20,7 @@ const (
 	rootPath = "./../static"
 )
 
-func RegisterHandlers(logger *logging.Logger, router *httprouter.Router, lingua *service.Lingua) {
+func RegisterHandlers(logger *logging.Logger, router *httprouter.Router, lingua *services.Lingua) {
 	router.ServeFiles(filePath, http.Dir(rootPath))
 
 	logger.Info("create index")

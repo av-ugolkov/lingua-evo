@@ -10,7 +10,7 @@ import (
 	"lingua-evo/internal/config"
 	"lingua-evo/internal/delivery/handlers"
 	"lingua-evo/internal/delivery/repository"
-	"lingua-evo/internal/service"
+	"lingua-evo/internal/services"
 
 	"lingua-evo/pkg/logging"
 
@@ -24,7 +24,7 @@ func ServerStart(logger *logging.Logger, cfg *config.Config) {
 	}
 
 	database := repository.NewDatabase(db)
-	lingua := service.NewLinguaService(logger, database)
+	lingua := services.NewLinguaService(logger, database)
 
 	router := httprouter.New()
 

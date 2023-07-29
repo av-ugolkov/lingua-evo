@@ -11,9 +11,8 @@ import (
 	"time"
 
 	"lingua-evo/internal/config"
-	"lingua-evo/internal/delivery/handlers/sign_up/entity"
 	"lingua-evo/internal/delivery/repository"
-	"lingua-evo/internal/service"
+	service "lingua-evo/internal/services"
 	staticFiles "lingua-evo/static"
 
 	"lingua-evo/pkg/logging"
@@ -68,40 +67,37 @@ func (h *Handler) get(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) post(w http.ResponseWriter, r *http.Request) {
-	var user entity.User
-	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
-		h.logger.Error(err)
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-	defer r.Body.Close()
+	username := r.FormValue("username")
+	email := r.FormValue("email")
+	password := r.FormValue("password")
 
-	if !tools.IsEmailValid(user.Email) {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte("Email is not correct"))
-		return
-	}
-
-	if err := h.validateUsername(r.Context(), user.Username); err != nil {
+	if err := h.validateEmail(r.Context(), email); err != nil {
 		w.WriteHeader(http.StatusConflict)
 		w.Write([]byte(err.Error()))
 		return
 	}
-	if err := validatePassword(user.Password); err != nil {
+
+	if err := h.validateUsername(r.Context(), username); err != nil {
+		w.WriteHeader(http.StatusConflict)
+		w.Write([]byte(err.Error()))
+		return
+	}
+
+	if err := validatePassword(password); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(err.Error()))
 		return
 	}
 
-	hashPassword, err := hashPassword(user.Password)
+	hashPassword, err := hashPassword(password)
 	if err != nil {
 		return
 	}
 
 	uid, err := h.lingua.AddUser(r.Context(), &repository.User{
-		Username:     user.Username,
+		Username:     username,
 		PasswordHash: hashPassword,
-		Email:        user.Email})
+		Email:        email})
 	if err != nil {
 		return
 	}
@@ -173,6 +169,23 @@ func (h *Handler) generateAccessToken() ([]byte, int) {
 		return nil, http.StatusInternalServerError
 	}
 	return jsonBytes, 0
+}
+
+func (h *Handler) validateEmail(ctx context.Context, email string) error {
+	if !tools.IsEmailValid(email) {
+		return errors.New("email is not correct")
+	}
+
+	uid, err := h.lingua.FindUser(ctx, email)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return err
+	} else if uid == uuid.Nil && err == nil {
+		return fmt.Errorf("it is admin")
+	} else if uid != uuid.Nil {
+		return fmt.Errorf("this username is busy")
+	}
+
+	return nil
 }
 
 func (h *Handler) validateUsername(ctx context.Context, username string) error {

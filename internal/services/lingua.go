@@ -1,4 +1,4 @@
-package service
+package services
 
 import (
 	"lingua-evo/internal/delivery/repository"

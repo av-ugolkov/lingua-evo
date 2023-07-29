@@ -1,7 +1,8 @@
-package service
+package services
 
 import (
 	"context"
+
 	"github.com/google/uuid"
 
 	"lingua-evo/internal/delivery/repository"
@@ -22,6 +23,15 @@ func (l *Lingua) EditUser(ctx context.Context, u *repository.User) error {
 
 func (l *Lingua) FindUser(ctx context.Context, username string) (uuid.UUID, error) {
 	uid, err := l.db.FindUser(ctx, username)
+	if err != nil {
+		return uuid.Nil, err
+	}
+
+	return uid, nil
+}
+
+func (l *Lingua) FindEmail(ctx context.Context, email string) (uuid.UUID, error) {
+	uid, err := l.db.FindUserByEmail(ctx, email)
 	if err != nil {
 		return uuid.Nil, err
 	}

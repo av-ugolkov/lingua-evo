@@ -1,7 +1,7 @@
 package account
 
 import (
-	"lingua-evo/internal/service"
+	"lingua-evo/internal/services"
 	"lingua-evo/pkg/logging"
 	staticFiles "lingua-evo/static"
 	"net/http"
@@ -19,7 +19,7 @@ type Handler struct {
 	logger *logging.Logger
 }
 
-func Create(log *logging.Logger, _ *service.Lingua, r *httprouter.Router) {
+func Create(log *logging.Logger, _ *services.Lingua, r *httprouter.Router) {
 	handler := newHandler(log)
 	handler.register(r)
 }

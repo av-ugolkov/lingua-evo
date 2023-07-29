@@ -7,7 +7,7 @@ import (
 
 	"lingua-evo/internal/delivery/handlers/add_word/entity"
 	"lingua-evo/internal/delivery/repository"
-	"lingua-evo/internal/service"
+	"lingua-evo/internal/services"
 	staticFiles "lingua-evo/static"
 
 	"lingua-evo/pkg/logging"
@@ -24,15 +24,15 @@ const (
 
 type Handler struct {
 	logger *logging.Logger
-	lingua *service.Lingua
+	lingua *services.Lingua
 }
 
-func Create(log *logging.Logger, ling *service.Lingua, r *httprouter.Router) {
+func Create(log *logging.Logger, ling *services.Lingua, r *httprouter.Router) {
 	handler := newHandler(log, ling)
 	handler.register(r)
 }
 
-func newHandler(logger *logging.Logger, lingua *service.Lingua) *Handler {
+func newHandler(logger *logging.Logger, lingua *services.Lingua) *Handler {
 	return &Handler{
 		logger: logger,
 		lingua: lingua,
@@ -59,7 +59,7 @@ func (h *Handler) get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	data := struct {
-		Languages []*service.Language
+		Languages []*services.Language
 	}{
 		Languages: languages,
 	}
