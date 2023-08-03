@@ -17,11 +17,11 @@ type UsersDB interface {
 }
 
 func (d *Database) AddUser(ctx context.Context, u *User) (uuid.UUID, error) {
-	query := `INSERT INTO users (name, password_hash, last_visit) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING RETURNING id`
+	query := `INSERT INTO users (name, email, password_hash, last_visit) VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING RETURNING id`
 
 	var uid uuid.UUID
 
-	err := d.db.QueryRowContext(ctx, query, u.Username, u.PasswordHash, time.Now()).Scan(&uid)
+	err := d.db.QueryRowContext(ctx, query, u.Username, u.Email, u.PasswordHash, time.Now()).Scan(&uid)
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("database.AddUser.QueryRow: %w", err)
 	}
