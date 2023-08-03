@@ -1,14 +1,9 @@
-### SIGN IN POST
-POST http://localhost:5000/signin
+### SIGN IN GET
+GET http://localhost:5000/signin
 Content-Type: application/json
 
-{
-  "username": "me",
-  "password": "pass"
-}
-
-### AUTH PUT
-PUT http://localhost:5555/signin
+### SIGN IN PUT
+PUT http://localhost:5000/signin
 Content-Type: application/json
 
 {
@@ -20,12 +15,11 @@ Content-Type: application/json
     client.global.set("refresh_token", response.body.refresh_token)
 %}
 
-### SIGNUP POST
-POST http://localhost:5555/signup
+### SIGN IN POST
+POST http://localhost:5000/signin
 Content-Type: application/json
 
 {
   "username": "me",
-  "password": "pass",
-  "email": "email@me.here"
+  "password": "pass"
 }
