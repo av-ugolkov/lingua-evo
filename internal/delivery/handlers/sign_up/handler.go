@@ -5,12 +5,12 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 	"strings"
 	"time"
 
 	"lingua-evo/internal/config"
+	"lingua-evo/internal/delivery/handlers/sign_up/entity"
 	"lingua-evo/internal/delivery/repository"
 	service "lingua-evo/internal/services"
 	staticFiles "lingua-evo/static"
@@ -61,7 +61,6 @@ func (h *Handler) get(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
-
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(file))
 }
@@ -91,6 +90,8 @@ func (h *Handler) post(w http.ResponseWriter, r *http.Request) {
 
 	hashPassword, err := hashPassword(password)
 	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(err.Error()))
 		return
 	}
 
@@ -99,6 +100,8 @@ func (h *Handler) post(w http.ResponseWriter, r *http.Request) {
 		PasswordHash: hashPassword,
 		Email:        email})
 	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(err.Error()))
 		return
 	}
 
@@ -106,7 +109,8 @@ func (h *Handler) post(w http.ResponseWriter, r *http.Request) {
 
 	jsonBytes, errCode := h.generateAccessToken()
 	if errCode != 0 {
-		w.WriteHeader(errCode)
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte{byte(errCode)})
 		return
 	}
 
@@ -115,7 +119,8 @@ func (h *Handler) post(w http.ResponseWriter, r *http.Request) {
 		"url":   "/account",
 	})
 	if err != nil {
-		w.WriteHeader(errCode)
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(err.Error()))
 		return
 	}
 
@@ -173,49 +178,49 @@ func (h *Handler) generateAccessToken() ([]byte, int) {
 
 func (h *Handler) validateEmail(ctx context.Context, email string) error {
 	if !tools.IsEmailValid(email) {
-		return errors.New("email is not correct")
+		return entity.ErrEmailNotCorrect
 	}
 
-	uid, err := h.lingua.FindUser(ctx, email)
+	uid, err := h.lingua.FindEmail(ctx, email)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return err
 	} else if uid == uuid.Nil && err == nil {
-		return fmt.Errorf("it is admin")
+		return entity.ErrItIsAdmin
 	} else if uid != uuid.Nil {
-		return fmt.Errorf("this username is busy")
+		return entity.ErrEmailBusy
 	}
 
 	return nil
 }
 
 func (h *Handler) validateUsername(ctx context.Context, username string) error {
-	if len(username) < 4 {
-		return fmt.Errorf("username must be more 3 characters")
+	if len(username) <= entity.UsernameLen {
+		return entity.ErrUsernameLen
 	}
 
-	if strings.Contains(username, "admin") {
-		return fmt.Errorf("username can not contains admin")
+	if strings.Contains(strings.ToLower(username), entity.UsernameAdmin) {
+		return entity.ErrUsernameAdmin
 	}
 
 	uid, err := h.lingua.FindUser(ctx, username)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return err
 	} else if uid == uuid.Nil && err == nil {
-		return fmt.Errorf("it is admin")
+		return entity.ErrItIsAdmin
 	} else if uid != uuid.Nil {
-		return fmt.Errorf("this username is busy")
+		return entity.ErrUsernameBusy
 	}
 
 	return nil
 }
 
 func validatePassword(password string) error {
-	if len(password) < 6 {
-		return fmt.Errorf("password must be more 5 characters")
+	if len(password) < entity.PasswordLen {
+		return entity.ErrPasswordLen
 	}
 
 	if !tools.IsPasswordValid(password) {
-		return fmt.Errorf("password must be more difficult")
+		return entity.ErrPasswordDifficult
 	}
 
 	return nil
