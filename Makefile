@@ -1,10 +1,10 @@
 .PHONY: build
 build:
-	go build -o main ./cmd/main.go
+	go build --gcflags="all=-N -l" -o main ./cmd/main.go
 
 .PHONY: run
 run:
-	go build -o ./cmd/main ./cmd/main.go
+	go build --gcflags="all=-N -l" -o ./cmd/main ./cmd/main.go
 	./cmd/main
 
 .PHONY: docker recreate
