@@ -1,0 +1,12 @@
+### SIGN UP GET
+GET http://localhost:5000/signup
+Content-Type: application/json
+
+### SIGN UP POST
+POST http://localhost:5000/signup
+Content-Type: application/json
+
+{
+  "username": "me",
+  "password": "pass"
+}
