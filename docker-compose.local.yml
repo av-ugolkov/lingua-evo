@@ -36,6 +36,7 @@ services:
             context: migration
         depends_on:
             - postgres
+            - lingua-evo
         entrypoint:
             - "/bin/sh"
             - "-ecx"

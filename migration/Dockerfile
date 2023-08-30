@@ -7,6 +7,6 @@ ENV CGO_ENABLED 1
 ENV GOOS linux
 ENV GOARCH amd64
 
-WORKDIR /go/migrations
-ADD . /go/migrations
+WORKDIR /migrations
+ADD . /migrations
 RUN go build -o migration .
