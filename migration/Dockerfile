@@ -1,4 +1,4 @@
-FROM golang:1.19.5-alpine
+FROM golang:1.21.0-alpine
 
 RUN apk --no-cache --update --upgrade add ca-certificates gcc libc-dev
 

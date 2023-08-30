@@ -3,12 +3,12 @@ package jwt
 import (
 	"context"
 	"encoding/json"
+	"log/slog"
 	"net/http"
 	"strings"
 	"time"
 
 	"lingua-evo/internal/config"
-	"lingua-evo/pkg/logging"
 
 	"github.com/cristalhq/jwt/v3"
 )
@@ -20,15 +20,14 @@ type UserClaims struct {
 
 func Middleware(h http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		logger := logging.GetLogger()
 		authHeader := strings.Split(r.Header.Get("Authorization"), "Bearer ")
 		if len(authHeader) != 2 {
-			logger.Error("Malformed token")
+			slog.Error("Malformed token")
 			w.WriteHeader(http.StatusUnauthorized)
-			w.Write([]byte("malformed token"))
+			_, _ = w.Write([]byte("malformed token"))
 			return
 		}
-		logger.Debug("create jwt verifier")
+		slog.Debug("create jwt verifier")
 		jwtToken := authHeader[1]
 		key := []byte(config.GetConfig().JWT.Secret)
 		verifier, err := jwt.NewVerifierHS(jwt.HS256, key)
@@ -37,13 +36,13 @@ func Middleware(h http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		logger.Debug("parse and verify token")
+		slog.Debug("parse and verify token")
 		token, err := jwt.ParseAndVerifyString(jwtToken, verifier)
 		if err != nil {
 			unauthorized(w, err)
 			return
 		}
-		logger.Debug("parse user claims")
+		slog.Debug("parse user claims")
 		var uc UserClaims
 		err = json.Unmarshal(token.RawClaims(), &uc)
 		if err != nil {
@@ -51,18 +50,21 @@ func Middleware(h http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 		if valid := uc.IsValidAt(time.Now()); !valid {
-			logger.Error("token has been expired")
+			slog.Error("token has been expired")
 			unauthorized(w, err)
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), "user_uuid", uc.ID)
+		var userUUID ContextKey = "user_uuid"
+		ctx := context.WithValue(r.Context(), userUUID, uc.ID)
 		h(w, r.WithContext(ctx))
 	}
 }
 
+type ContextKey string
+
 func unauthorized(w http.ResponseWriter, err error) {
-	logging.GetLogger().Error(err)
+	slog.Error(err.Error())
 	w.WriteHeader(http.StatusUnauthorized)
-	w.Write([]byte("unauthorized"))
+	_, _ = w.Write([]byte("unauthorized"))
 }

@@ -2,9 +2,8 @@ package config
 
 import (
 	"fmt"
+	"log/slog"
 	"sync"
-
-	"lingua-evo/pkg/logging"
 
 	"github.com/ilyakaznacheev/cleanenv"
 )
@@ -46,11 +45,11 @@ var once sync.Once
 
 func GetConfig() *Config {
 	once.Do(func() {
-		logger := logging.GetLogger()
-		logger.Info("read application config")
+		slog.Info("read application config")
 		instance = &Config{}
 		if err := cleanenv.ReadConfig(pathConfig, instance); err != nil {
-			logger.Fatalf("Fail read config: %v", err)
+			slog.Error("Fail read config: %v", err)
+			return
 		}
 	})
 	return instance
