@@ -1,4 +1,4 @@
-FROM golang:1.20.3-alpine as builder
+FROM golang:1.21.0-alpine as builder
 
 RUN apk --no-cache --update --upgrade add git make
 
@@ -6,7 +6,7 @@ WORKDIR /build
 COPY . .
 RUN --mount=type=cache,target=/go make build
 
-FROM alpine:3.16
+FROM alpine:3.18
 LABEL key="Lingua-evo"
 
 ARG config_dir
@@ -22,4 +22,4 @@ EXPOSE 5000
 
 WORKDIR /lingua-evo/cmd/
 
-CMD ["./main"]
+ENTRYPOINT ["./main"]

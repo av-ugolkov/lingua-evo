@@ -3,17 +3,12 @@ package main
 import (
 	"lingua-evo/internal/app"
 	"lingua-evo/internal/config"
-
-	"lingua-evo/pkg/logging"
+	"log/slog"
 )
 
 func main() {
-	logging.Init()
-	logger := logging.GetLogger()
-	logger.Println("logger initialized")
-
 	cfg := config.GetConfig()
-	logger.Println("config initializing")
+	slog.Info("config initializing")
 
-	app.ServerStart(logger, cfg)
+	app.ServerStart(cfg)
 }

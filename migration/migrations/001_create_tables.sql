@@ -21,20 +21,16 @@ CREATE TABLE IF NOT EXISTS
     word (
         id UUID DEFAULT gen_random_uuid () PRIMARY KEY,
         text TEXT NOT NULL,
-        lang_id int,
-        tags UUID[],
+        lang_id INT,
         CONSTRAINT word_lang_id_fkey FOREIGN KEY (lang_id) REFERENCES language (id) ON DELETE CASCADE
     );
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_word__text_lang_id ON word (text, lang_id);
 
 CREATE TABLE IF NOT EXISTS
-    example (
-        id UUID DEFAULT gen_random_uuid () PRIMARY KEY,
-        word_id UUID NOT NULL,
-        example TEXT,
-        CONSTRAINT example_word_id_fkey FOREIGN KEY (word_id) REFERENCES word (id)
-    );
+    example (id UUID DEFAULT gen_random_uuid () PRIMARY KEY, example TEXT);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_example__example ON example (example);
 
 CREATE TABLE IF NOT EXISTS
     dictionary (
@@ -42,13 +38,14 @@ CREATE TABLE IF NOT EXISTS
         original_word UUID REFERENCES word (id) NOT NULL,
         pronunciation TEXT,
         translate_word UUID[] NOT NULL,
-        examples UUID[]
+        examples UUID[],
+        tags INT[]
     );
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_dictionary__user_id_original_word ON dictionary (user_id, original_word);
 
 CREATE TABLE IF NOT EXISTS
-    tag (id bigserial, tag TEXT);
+    tag (id bigserial PRIMARY KEY, tag TEXT NOT NULL);
 
 -- +goose Down
 DROP TABLE IF EXISTS users;
