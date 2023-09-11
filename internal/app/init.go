@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
+	_ "net/http/pprof"
 	"time"
 
 	"lingua-evo/internal/config"
@@ -32,6 +33,12 @@ const (
 )
 
 func ServerStart(cfg *config.Config) {
+	if cfg.PprofDebug.Enable {
+		go func() {
+			slog.Error("%v", http.ListenAndServe("localhost:6060", nil))
+		}()
+	}
+
 	db, err := repository.NewDB(cfg.Database.GetConnStr())
 	if err != nil {
 		slog.Error("can't create pg pool: %v", err)

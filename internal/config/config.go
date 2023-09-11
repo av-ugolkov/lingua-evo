@@ -13,10 +13,15 @@ const (
 )
 
 type Config struct {
-	IsDebug  bool     `yaml:"is_debug"`
-	JWT      JWT      `yaml:"jwt"`
-	Service  Service  `yaml:"service"`
-	Database Database `yaml:"database"`
+	PprofDebug PprofDebug `yaml:"pprof_debug"`
+	JWT        JWT        `yaml:"jwt"`
+	Service    Service    `yaml:"service"`
+	Database   Database   `yaml:"database"`
+}
+
+type PprofDebug struct {
+	Enable bool `yaml:"enable"`
+	Port   int  `yaml:"port"`
 }
 
 type JWT struct {

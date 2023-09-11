@@ -1,4 +1,6 @@
-is_debug: true
+pprof_debug:
+    enable: false
+    port: 6060
 jwt:
     secret: $3cr3t
 service:
