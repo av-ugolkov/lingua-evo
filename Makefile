@@ -9,7 +9,11 @@ run:
 
 .PHONY: docker recreate
 docker recreate:
-	docker compose -f docker-compose.local.yml up --build --force-recreate
+	docker compose -f deploy/docker-compose.local.yml up --build --force-recreate
+
+.PHONY: docker recreate database
+docker recreate:
+	docker compose -p lingua-evo -f deploy/docker-compose.database.local.yml up --build --force-recreate
 
 .PHONY: lint
 lint:
