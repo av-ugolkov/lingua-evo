@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS
     word (
         id UUID DEFAULT gen_random_uuid () PRIMARY KEY,
         text TEXT NOT NULL,
+        pronunciation TEXT,
         lang_id INT,
         CONSTRAINT word_lang_id_fkey FOREIGN KEY (lang_id) REFERENCES language (id) ON DELETE CASCADE
     );
@@ -36,7 +37,6 @@ CREATE TABLE IF NOT EXISTS
     dictionary (
         user_id UUID REFERENCES users (id) NOT NULL,
         original_word UUID REFERENCES word (id) NOT NULL,
-        pronunciation TEXT,
         translate_word UUID[] NOT NULL,
         examples UUID[],
         tags INT[]
