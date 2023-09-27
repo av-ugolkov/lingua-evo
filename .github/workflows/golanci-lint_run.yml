@@ -4,7 +4,7 @@ on:
   push:
     branches: ["develop"]
 jobs:
-  build:
+  golanci-lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -15,7 +15,12 @@ jobs:
           go-version: "1.21"
 
       - name: golangci-lint
-        run: |
-          go version \
-          golangci-lint --version \
-          golangci-lint run ./...
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: v1.54
+
+      #- name: golangci-lint
+      #  run: |
+      #    go version \
+      #    golangci-lint --version \
+      #    golangci-lint run ./...
