@@ -15,6 +15,7 @@ services:
             - "6432:5432"
 
     lingua-evo:
+        
         container_name: lingua-evo
         build:
             context: .
