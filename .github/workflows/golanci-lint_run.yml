@@ -1,0 +1,21 @@
+name: Go
+
+on:
+  push:
+    branches: ["develop"]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: "1.21"
+
+      - name: golangci-lint
+        run: |
+          go version \
+          golangci-lint --version \
+          golangci-lint run ./...
