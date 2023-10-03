@@ -4,13 +4,13 @@ import (
 	"log/slog"
 	"net/http"
 
-	staticFiles "lingua-evo/static"
+	"github.com/gorilla/mux"
 
-	"github.com/julienschmidt/httprouter"
+	staticFiles "lingua-evo/static"
 )
 
 const (
-	url      = "/"
+	mainURL  = "/"
 	indexURL = "/index"
 
 	indexPagePath = "web/index.html"
@@ -18,7 +18,7 @@ const (
 
 type Handler struct{}
 
-func Create(r *httprouter.Router) {
+func Create(r *mux.Router) {
 	handler := newHandler()
 	handler.register(r)
 }
@@ -27,9 +27,9 @@ func newHandler() *Handler {
 	return &Handler{}
 }
 
-func (h *Handler) register(router *httprouter.Router) {
-	router.HandlerFunc(http.MethodGet, url, h.get)
-	router.HandlerFunc(http.MethodGet, indexURL, h.get)
+func (h *Handler) register(r *mux.Router) {
+	r.HandleFunc(mainURL, h.get).Methods(http.MethodGet)
+	r.HandleFunc(indexURL, h.get).Methods(http.MethodGet)
 }
 
 func (h *Handler) get(w http.ResponseWriter, r *http.Request) {

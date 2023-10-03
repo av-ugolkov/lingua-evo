@@ -5,7 +5,7 @@ import (
 
 	staticFiles "lingua-evo/static"
 
-	"github.com/julienschmidt/httprouter"
+	"github.com/gorilla/mux"
 )
 
 const (
@@ -17,7 +17,7 @@ const (
 type Handler struct {
 }
 
-func Create(r *httprouter.Router) {
+func Create(r *mux.Router) {
 	handler := newHandler()
 	handler.register(r)
 }
@@ -26,8 +26,8 @@ func newHandler() *Handler {
 	return &Handler{}
 }
 
-func (h *Handler) register(router *httprouter.Router) {
-	router.HandlerFunc(http.MethodGet, account, h.account)
+func (h *Handler) register(r *mux.Router) {
+	r.HandleFunc(account, h.account).Methods(http.MethodGet)
 }
 
 func (h *Handler) account(w http.ResponseWriter, _ *http.Request) {
