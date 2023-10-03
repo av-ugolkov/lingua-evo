@@ -21,7 +21,7 @@ import (
 
 	"github.com/cristalhq/jwt/v3"
 	"github.com/google/uuid"
-	"github.com/julienschmidt/httprouter"
+	"github.com/gorilla/mux"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -35,7 +35,7 @@ type Handler struct {
 	usersSvc *userSvc.UserSvc
 }
 
-func Create(r *httprouter.Router, srcUser *userSvc.UserSvc) {
+func Create(r *mux.Router, srcUser *userSvc.UserSvc) {
 	handler := newHandler(srcUser)
 	handler.register(r)
 }
@@ -46,9 +46,9 @@ func newHandler(usersSvc *userSvc.UserSvc) *Handler {
 	}
 }
 
-func (h *Handler) register(router *httprouter.Router) {
-	router.HandlerFunc(http.MethodGet, signUpURL, h.get)
-	router.HandlerFunc(http.MethodPost, signUpURL, h.post)
+func (h *Handler) register(r *mux.Router) {
+	r.HandleFunc(signUpURL, h.get).Methods(http.MethodGet)
+	r.HandleFunc(signUpURL, h.post).Methods(http.MethodPost)
 }
 
 func (h *Handler) get(w http.ResponseWriter, r *http.Request) {
@@ -63,6 +63,7 @@ func (h *Handler) get(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) post(w http.ResponseWriter, r *http.Request) {
+	//TODO получение данных из формы плохое решение
 	username := r.FormValue("username")
 	email := r.FormValue("email")
 	password := r.FormValue("password")

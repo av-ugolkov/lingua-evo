@@ -7,12 +7,12 @@ run:
 	go build --gcflags="all=-N -l" -o ./cmd/main ./cmd/main.go
 	./cmd/main
 
-.PHONY: docker-recreate
-docker-recreate:
+.PHONY: docker-create
+docker-create:
 	docker compose -p lingua-evo -f deploy/docker-compose.local.yml up --build --force-recreate
 
-.PHONY: docker-recreate-database
-docker-recreate-database:
+.PHONY: docker-create-database
+docker-create-database:
 	docker compose -p lingua-evo -f deploy/docker-compose.database.local.yml up --build --force-recreate
 
 .PHONY: lint

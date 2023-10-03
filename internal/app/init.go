@@ -10,6 +10,8 @@ import (
 	_ "net/http/pprof"
 	"time"
 
+	"github.com/gorilla/mux"
+
 	"lingua-evo/internal/config"
 	repository "lingua-evo/internal/db"
 	accountHandler "lingua-evo/internal/services/account/delivery"
@@ -23,12 +25,10 @@ import (
 	wordHandler "lingua-evo/internal/services/word/delivery"
 	wordRepository "lingua-evo/internal/services/word/repository"
 	wordService "lingua-evo/internal/services/word/service"
-
-	"github.com/julienschmidt/httprouter"
 )
 
 const (
-	filePath = "/static/*filepath"
+	filePath = "/static/"
 	rootPath = "./../static"
 )
 
@@ -45,9 +45,7 @@ func ServerStart(cfg *config.Config) {
 		return
 	}
 
-	router := httprouter.New()
-	router.ServeFiles(filePath, http.Dir(rootPath))
-
+	router := mux.NewRouter()
 	initServer(router, db)
 
 	address := fmt.Sprintf(":%s", cfg.Service.Port)
@@ -76,7 +74,9 @@ func ServerStart(cfg *config.Config) {
 	}
 }
 
-func initServer(router *httprouter.Router, db *sql.DB) {
+func initServer(r *mux.Router, db *sql.DB) {
+	fs := http.FileServer(http.Dir(rootPath))
+	r.PathPrefix(filePath).Handler(http.StripPrefix(filePath, fs))
 
 	slog.Info("<----- create services ----->")
 	slog.Info("user service")
@@ -93,19 +93,19 @@ func initServer(router *httprouter.Router, db *sql.DB) {
 
 	slog.Info("<----- create handlers ----->")
 	slog.Info("index")
-	indexHandler.Create(router)
+	indexHandler.Create(r)
 
 	slog.Info("sign_in")
-	signInHandler.Create(router, userSvc)
+	signInHandler.Create(r, userSvc)
 
 	slog.Info("sign_up")
-	signUpHandler.Create(router, userSvc)
+	signUpHandler.Create(r, userSvc)
 
 	slog.Info("account")
-	accountHandler.Create(router)
+	accountHandler.Create(r)
 
 	slog.Info("word")
-	wordHandler.Create(router, wordSvc, langSvc)
+	wordHandler.Create(r, wordSvc, langSvc)
 
 	slog.Info("<----- end init services ----->")
 }

@@ -11,11 +11,13 @@ import (
 	staticFiles "lingua-evo/static"
 
 	"github.com/google/uuid"
-	"github.com/julienschmidt/httprouter"
+	"github.com/gorilla/mux"
 )
 
 const (
-	addWordURL = "/add_word"
+	addWord       = "/add_word"
+	getWord       = "/get_word/{key}"
+	getRandomWord = "/get_random_word"
 
 	addWordPage = "web/dictionary/add_word/add_word.html"
 )
@@ -35,7 +37,7 @@ type (
 	}
 )
 
-func Create(r *httprouter.Router, wordSvc wordSvc, langSvc langSvc) {
+func Create(r *mux.Router, wordSvc wordSvc, langSvc langSvc) {
 	handler := newHandler(wordSvc, langSvc)
 	handler.register(r)
 }
@@ -47,12 +49,45 @@ func newHandler(wordSvc wordSvc, langSvc langSvc) *Handler {
 	}
 }
 
-func (h *Handler) register(router *httprouter.Router) {
-	router.HandlerFunc(http.MethodGet, addWordURL, h.get)
-	router.HandlerFunc(http.MethodPost, addWordURL, h.post)
+func (h *Handler) register(r *mux.Router) {
+	r.HandleFunc(getWord, h.getWord).Methods(http.MethodGet)
+	r.HandleFunc(getRandomWord, h.getRandomWord).Methods(http.MethodGet)
+	r.HandleFunc(addWord, h.addWord).Methods(http.MethodPost)
 }
 
-func (h *Handler) get(w http.ResponseWriter, r *http.Request) {
+/*func (h *Handler) openPage(w http.ResponseWriter, r *http.Request) {
+	t, err := staticFiles.ParseFiles(addWordPage)
+	if err != nil {
+		slog.Error("add_word.get.OpenFile: %v", err)
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	languages, err := h.langSvc.GetLanguages(r.Context())
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		_, _ = w.Write([]byte(err.Error()))
+		return
+	}
+	data := struct {
+		Languages []*entityLanguage.Language
+	}{
+		Languages: languages,
+	}
+
+	err = t.Execute(w, data)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		_, _ = w.Write([]byte(err.Error()))
+		return
+	}
+}*/
+
+func (h *Handler) getWord(w http.ResponseWriter, r *http.Request) {
+	slog.Info(r.URL.Path)
+}
+
+func (h *Handler) getRandomWord(w http.ResponseWriter, r *http.Request) {
 	t, err := staticFiles.ParseFiles(addWordPage)
 	if err != nil {
 		slog.Error("add_word.get.OpenFile: %v", err)
@@ -80,7 +115,7 @@ func (h *Handler) get(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h *Handler) post(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) addWord(w http.ResponseWriter, r *http.Request) {
 	var data entity.AddWord
 
 	if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
