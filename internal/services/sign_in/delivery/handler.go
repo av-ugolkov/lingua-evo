@@ -16,7 +16,7 @@ import (
 
 	"github.com/cristalhq/jwt/v3"
 	"github.com/google/uuid"
-	"github.com/julienschmidt/httprouter"
+	"github.com/gorilla/mux"
 )
 
 const (
@@ -35,7 +35,7 @@ type (
 	}
 )
 
-func Create(r *httprouter.Router, userSvc userSvc) {
+func Create(r *mux.Router, userSvc userSvc) {
 	handler := newHandler(userSvc)
 	handler.register(r)
 }
@@ -46,10 +46,10 @@ func newHandler(userSvc userSvc) *Handler {
 	}
 }
 
-func (h *Handler) register(router *httprouter.Router) {
-	router.HandlerFunc(http.MethodGet, signInURL, h.get)
-	router.HandlerFunc(http.MethodPut, signInURL, h.put)
-	router.HandlerFunc(http.MethodPost, signInURL, h.post)
+func (h *Handler) register(r *mux.Router) {
+	r.HandleFunc(signInURL, h.get).Methods(http.MethodGet)
+	r.HandleFunc(signInURL, h.put).Methods(http.MethodPut)
+	r.HandleFunc(signInURL, h.post).Methods(http.MethodPost)
 }
 
 func (h *Handler) get(w http.ResponseWriter, r *http.Request) {
