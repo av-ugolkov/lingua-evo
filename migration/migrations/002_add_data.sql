@@ -2,41 +2,38 @@
 INSERT INTO
     users (name, email, password_hash)
 VALUES
-    (
-        'admin',
-        'makedonskiy07@gmail.com',
-        '$2a$14$/55EnnJAv.3XYeKwwU6WAuAKkfO/GvSOYwADH0JSqsX2nCE2OtB.2'
-    ) ON CONFLICT
+    ('admin', 'makedonskiy07@gmail.com', '$2a$14$/55EnnJAv.3XYeKwwU6WAuAKkfO/GvSOYwADH0JSqsX2nCE2OtB.2') ON CONFLICT
 DO NOTHING;
 
 INSERT INTO
     language (code, lang)
 VALUES
-    ('en_US', 'USA') ON CONFLICT
+    ('en_us', 'USA') ON CONFLICT
 DO NOTHING;
 
 INSERT INTO
     language (code, lang)
 VALUES
-    ('en_EN', 'English') ON CONFLICT
+    ('en_gb', 'English') ON CONFLICT
 DO NOTHING;
 
 INSERT INTO
     language (code, lang)
 VALUES
-    ('ru_RU', 'Russian') ON CONFLICT
+    ('ru_ru', 'Russian') ON CONFLICT
 DO NOTHING;
 
 INSERT INTO
     language (code, lang)
 VALUES
-    ('fi_FI', 'Finnish') ON CONFLICT
+    ('fi_fi', 'Finnish') ON CONFLICT
 DO NOTHING;
 
 INSERT INTO
-    word (text, lang_id)
+    word_en_gb (id, text, lang_id)
 VALUES
     (
+        gen_random_uuid (),
         'get by',
         (
             SELECT
@@ -44,14 +41,15 @@ VALUES
             FROM
                 language
             where
-                code = 'en_EN'
+                code = 'en_gb'
         )
     );
 
 INSERT INTO
-    word (text, lang_id)
+    word_en_gb (id, text, lang_id)
 VALUES
     (
+        gen_random_uuid (),
         'get away',
         (
             SELECT
@@ -59,14 +57,15 @@ VALUES
             FROM
                 language
             where
-                code = 'en_EN'
+                code = 'en_gb'
         )
     );
 
 INSERT INTO
-    word (text, lang_id)
+    word_en_gb (id, text, lang_id)
 VALUES
     (
+        gen_random_uuid (),
         'get into',
         (
             SELECT
@@ -74,14 +73,15 @@ VALUES
             FROM
                 language
             where
-                code = 'en_EN'
+                code = 'en_gb'
         )
     );
 
 INSERT INTO
-    word (text, lang_id)
+    word_en_gb (id, text, lang_id)
 VALUES
     (
+        gen_random_uuid (),
         'get together',
         (
             SELECT
@@ -89,14 +89,15 @@ VALUES
             FROM
                 language
             where
-                code = 'en_EN'
+                code = 'en_gb'
         )
     );
 
 INSERT INTO
-    word (text, lang_id)
+    word_en_gb (id, text, lang_id)
 VALUES
     (
+        gen_random_uuid (),
         'get away with it',
         (
             SELECT
@@ -104,14 +105,15 @@ VALUES
             FROM
                 language
             where
-                code = 'en_EN'
+                code = 'en_gb'
         )
     );
 
 INSERT INTO
-    word (text, lang_id)
+    word_en_gb (id, text, lang_id)
 VALUES
     (
+        gen_random_uuid (),
         'get up to',
         (
             SELECT
@@ -119,14 +121,15 @@ VALUES
             FROM
                 language
             where
-                code = 'en_EN'
+                code = 'en_gb'
         )
     );
 
 INSERT INTO
-    word (text, lang_id)
+    word_en_gb (id, text, lang_id)
 VALUES
     (
+        gen_random_uuid (),
         'get up',
         (
             SELECT
@@ -134,14 +137,15 @@ VALUES
             FROM
                 language
             where
-                code = 'en_EN'
+                code = 'en_gb'
         )
     );
 
 INSERT INTO
-    word (text, lang_id)
+    word_en_gb (id, text, lang_id)
 VALUES
     (
+        gen_random_uuid (),
         'get rid of',
         (
             SELECT
@@ -149,14 +153,15 @@ VALUES
             FROM
                 language
             where
-                code = 'en_EN'
+                code = 'en_gb'
         )
     );
 
 INSERT INTO
-    word (text, lang_id)
+    word_en_gb (id, text, lang_id)
 VALUES
     (
+        gen_random_uuid (),
         'get to',
         (
             SELECT
@@ -164,14 +169,15 @@ VALUES
             FROM
                 language
             where
-                code = 'en_EN'
+                code = 'en_gb'
         )
     );
 
 INSERT INTO
-    word (text, lang_id)
+    word_en_gb (id, text, lang_id)
 VALUES
     (
+        gen_random_uuid (),
         'get over',
         (
             SELECT
@@ -179,7 +185,7 @@ VALUES
             FROM
                 language
             where
-                code = 'en_EN'
+                code = 'en_gb'
         )
     );
 
