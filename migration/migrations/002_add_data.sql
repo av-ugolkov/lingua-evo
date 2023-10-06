@@ -14,13 +14,13 @@ DO NOTHING;
 INSERT INTO
     language (code, lang)
 VALUES
-    ('en_gb', 'English') ON CONFLICT
+    ('en-GB', 'English') ON CONFLICT
 DO NOTHING;
 
 INSERT INTO
     language (code, lang)
 VALUES
-    ('ru_ru', 'Russian') ON CONFLICT
+    ('ru', 'Russian') ON CONFLICT
 DO NOTHING;
 
 INSERT INTO
@@ -30,7 +30,7 @@ VALUES
 DO NOTHING;
 
 INSERT INTO
-    word_en_gb (id, text, lang_id)
+    "word_en-GB" (id, text, lang_id)
 VALUES
     (
         gen_random_uuid (),
@@ -41,12 +41,12 @@ VALUES
             FROM
                 language
             where
-                code = 'en_gb'
+                code = 'en-GB'
         )
     );
 
 INSERT INTO
-    word_en_gb (id, text, lang_id)
+    "word_en-GB" (id, text, lang_id)
 VALUES
     (
         gen_random_uuid (),
@@ -57,12 +57,12 @@ VALUES
             FROM
                 language
             where
-                code = 'en_gb'
+                code = 'en-GB'
         )
     );
 
 INSERT INTO
-    word_en_gb (id, text, lang_id)
+    "word_en-GB" (id, text, lang_id)
 VALUES
     (
         gen_random_uuid (),
@@ -73,12 +73,12 @@ VALUES
             FROM
                 language
             where
-                code = 'en_gb'
+                code = 'en-GB'
         )
     );
 
 INSERT INTO
-    word_en_gb (id, text, lang_id)
+    "word_en-GB" (id, text, lang_id)
 VALUES
     (
         gen_random_uuid (),
@@ -89,12 +89,12 @@ VALUES
             FROM
                 language
             where
-                code = 'en_gb'
+                code = 'en-GB'
         )
     );
 
 INSERT INTO
-    word_en_gb (id, text, lang_id)
+    "word_en-GB" (id, text, lang_id)
 VALUES
     (
         gen_random_uuid (),
@@ -105,12 +105,12 @@ VALUES
             FROM
                 language
             where
-                code = 'en_gb'
+                code = 'en-GB'
         )
     );
 
 INSERT INTO
-    word_en_gb (id, text, lang_id)
+    "word_en-GB" (id, text, lang_id)
 VALUES
     (
         gen_random_uuid (),
@@ -121,12 +121,12 @@ VALUES
             FROM
                 language
             where
-                code = 'en_gb'
+                code = 'en-GB'
         )
     );
 
 INSERT INTO
-    word_en_gb (id, text, lang_id)
+    "word_en-GB" (id, text, lang_id)
 VALUES
     (
         gen_random_uuid (),
@@ -137,12 +137,12 @@ VALUES
             FROM
                 language
             where
-                code = 'en_gb'
+                code = 'en-GB'
         )
     );
 
 INSERT INTO
-    word_en_gb (id, text, lang_id)
+    "word_en-GB" (id, text, lang_id)
 VALUES
     (
         gen_random_uuid (),
@@ -153,12 +153,12 @@ VALUES
             FROM
                 language
             where
-                code = 'en_gb'
+                code = 'en-GB'
         )
     );
 
 INSERT INTO
-    word_en_gb (id, text, lang_id)
+    "word_en-GB" (id, text, lang_id)
 VALUES
     (
         gen_random_uuid (),
@@ -169,12 +169,12 @@ VALUES
             FROM
                 language
             where
-                code = 'en_gb'
+                code = 'en-GB'
         )
     );
 
 INSERT INTO
-    word_en_gb (id, text, lang_id)
+    "word_en-GB" (id, text, lang_id)
 VALUES
     (
         gen_random_uuid (),
@@ -185,7 +185,7 @@ VALUES
             FROM
                 language
             where
-                code = 'en_gb'
+                code = 'en-GB'
         )
     );
 
