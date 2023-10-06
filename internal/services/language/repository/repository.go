@@ -33,6 +33,17 @@ func (r *LangRepo) GetLanguages(ctx context.Context) ([]*entity.Language, error)
 	return languages, nil
 }
 
+func (r *LangRepo) GetNameLanguage(ctx context.Context, codeLang string) (string, error) {
+	query := `SELECT lang FROM language WHERE code=$1`
+	var language string
+	err := r.db.QueryRowContext(ctx, query, codeLang).Scan(&language)
+	if err != nil {
+		return "", fmt.Errorf("database.CheckLanguage - scan: %v", err)
+	}
+
+	return language, nil
+}
+
 func scanRowsLanguage(rows *sql.Rows) ([]*entity.Language, error) {
 	var languages []*entity.Language
 	for rows.Next() {

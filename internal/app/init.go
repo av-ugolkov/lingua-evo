@@ -16,6 +16,7 @@ import (
 	repository "lingua-evo/internal/db"
 	accountHandler "lingua-evo/internal/services/account/delivery"
 	indexHandler "lingua-evo/internal/services/index/delivery"
+	languageHandler "lingua-evo/internal/services/language/delivery"
 	langRepository "lingua-evo/internal/services/language/repository"
 	langService "lingua-evo/internal/services/language/service"
 	signInHandler "lingua-evo/internal/services/sign_in/delivery"
@@ -103,6 +104,9 @@ func initServer(r *mux.Router, db *sql.DB) {
 
 	slog.Info("account")
 	accountHandler.Create(r)
+
+	slog.Info("language")
+	languageHandler.Create(r, langSvc)
 
 	slog.Info("word")
 	wordHandler.Create(r, wordSvc, langSvc)
