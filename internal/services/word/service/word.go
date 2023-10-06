@@ -13,7 +13,7 @@ type repoWord interface {
 	EditWord(ctx context.Context, w *entity.Word) error
 	FindWord(ctx context.Context, w *entity.Word) (uuid.UUID, error)
 	RemoveWord(ctx context.Context, w *entity.Word) error
-	PickRandomWord(ctx context.Context, w *entity.Word) (*entity.Word, error)
+	GetRandomWord(ctx context.Context, lang string) (*entity.Word, error)
 	SharedWord(ctx context.Context, w *entity.Word) (*entity.Word, error)
 }
 
@@ -57,8 +57,8 @@ func (s *WordSvc) RemoveWord(ctx context.Context, w *entity.Word) error {
 	return nil
 }
 
-func (s *WordSvc) PickRandomWord(ctx context.Context, w *entity.Word) (*entity.Word, error) {
-	return nil, nil
+func (s *WordSvc) GetRandomWord(ctx context.Context, lang string) (*entity.Word, error) {
+	return s.repo.GetRandomWord(ctx, lang)
 }
 
 func (s *WordSvc) SharedWord(ctx context.Context, w *entity.Word) (*entity.Word, error) {
