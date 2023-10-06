@@ -2,8 +2,6 @@ package delivery
 
 import (
 	"context"
-	"encoding/json"
-	"errors"
 	"log/slog"
 	"net/http"
 
@@ -88,31 +86,26 @@ func (h *Handler) openPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) getRandomWord(w http.ResponseWriter, r *http.Request) {
-	if r.Body == http.NoBody {
-		w.WriteHeader(http.StatusInternalServerError)
-		_, _ = w.Write([]byte(errors.New("body is empty").Error()))
-		return
-	}
-
-	ctx := r.Context()
-	var randomWord GetRandomWordRequest
+	var data GetRandomWordRequest
 	defer func() {
 		_ = r.Body.Close()
 	}()
 
-	if err := tools.CheckBody(w, r, &randomWord); err != nil {
+	if err := tools.CheckBody(w, r, &data); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		_, _ = w.Write([]byte(err.Error()))
 		return
 	}
 
-	if err := h.langSvc.CheckLanguage(ctx, randomWord.Language); err != nil {
+	ctx := r.Context()
+
+	if err := h.langSvc.CheckLanguage(ctx, data.Language); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		_, _ = w.Write([]byte(err.Error()))
 		return
 	}
 
-	word, err := h.wordSvc.GetRandomWord(r.Context(), randomWord.Language)
+	word, err := h.wordSvc.GetRandomWord(ctx, data.Language)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		_, _ = w.Write([]byte(err.Error()))
@@ -124,11 +117,15 @@ func (h *Handler) getRandomWord(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) addWord(w http.ResponseWriter, r *http.Request) {
 	var data AddWordRequest
 
-	if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
-		slog.Error(err.Error())
+	defer func() {
+		_ = r.Body.Close()
+	}()
+
+	if err := tools.CheckBody(w, r, &data); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		_, _ = w.Write([]byte(err.Error()))
 		return
 	}
-	defer r.Body.Close()
 
 	if data.OrigWord == "" || data.TranWord == "" {
 		slog.Error("empty word can't add in db")
