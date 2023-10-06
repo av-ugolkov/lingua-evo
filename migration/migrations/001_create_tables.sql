@@ -29,10 +29,10 @@ CREATE TABLE IF NOT EXISTS
 CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_word__text_lang_id ON word (text, lang_id);
 
 create table
-    word_en_gb () inherits (word);
+    "word_en-GB" () inherits (word);
 
 create table
-    word_ru_ru () inherits (word);
+    word_ru () inherits (word);
 
 CREATE TABLE IF NOT EXISTS
     example (id UUID DEFAULT gen_random_uuid () PRIMARY KEY, example TEXT);
