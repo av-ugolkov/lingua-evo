@@ -48,10 +48,11 @@ func (r *WordRepo) FindWord(ctx context.Context, w *entity.Word) (uuid.UUID, err
 func (r *WordRepo) FindWords(ctx context.Context, w string) ([]uuid.UUID, error) {
 	var ids []uuid.UUID
 	query := `SELECT id FROM word WHERE text=$1`
-	err := r.db.QueryRowContext(ctx, query, w).Scan(&ids)
+	err := r.db.QueryRowContext(ctx, query, w).Scan(ids)
 	if err != nil {
 		return []uuid.UUID{}, fmt.Errorf("database.FindWord.QueryRow: %w", err)
 	}
+
 	return ids, nil
 }
 
@@ -59,8 +60,18 @@ func (r *WordRepo) RemoveWord(ctx context.Context, w *entity.Word) error {
 	return nil
 }
 
-func (r *WordRepo) PickRandomWord(ctx context.Context, w *entity.Word) (*entity.Word, error) {
-	return nil, nil
+func (r *WordRepo) GetRandomWord(ctx context.Context, lang string) (*entity.Word, error) {
+	table := "word"
+	if len(lang) != 0 {
+		table = fmt.Sprintf(`%s_%s`, table, lang)
+	}
+	query := fmt.Sprintf(`SELECT text FROM %s ORDER BY RANDOM() LIMIT 1;`, table)
+	word := &entity.Word{}
+	err := r.db.QueryRowContext(ctx, query).Scan(&word.Text)
+	if err != nil {
+		return nil, fmt.Errorf("database.GetRandomWord.QueryRow: %w", err)
+	}
+	return word, nil
 }
 
 func (r *WordRepo) SharedWord(ctx context.Context, w *entity.Word) (*entity.Word, error) {
