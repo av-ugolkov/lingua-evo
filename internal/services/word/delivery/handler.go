@@ -6,8 +6,9 @@ import (
 	"net/http"
 
 	entityLanguage "lingua-evo/internal/services/language/entity"
+	"lingua-evo/internal/services/word/dto"
 	"lingua-evo/internal/services/word/entity"
-	"lingua-evo/pkg/tools"
+	"lingua-evo/internal/tools"
 	staticFiles "lingua-evo/static"
 
 	"github.com/google/uuid"
@@ -86,7 +87,7 @@ func (h *Handler) openPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) getRandomWord(w http.ResponseWriter, r *http.Request) {
-	var data GetRandomWordRequest
+	var data dto.GetRandomWordRequest
 	defer func() {
 		_ = r.Body.Close()
 	}()
@@ -115,8 +116,7 @@ func (h *Handler) getRandomWord(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) addWord(w http.ResponseWriter, r *http.Request) {
-	var data AddWordRequest
-
+	var data dto.AddWordRequest
 	defer func() {
 		_ = r.Body.Close()
 	}()
