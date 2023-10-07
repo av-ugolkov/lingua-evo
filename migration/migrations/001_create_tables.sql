@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS
         text TEXT NOT NULL,
         pronunciation TEXT,
         lang_id INT,
+        created_at TIMESTAMP NOT NULL,
         CONSTRAINT word_lang_id_fkey FOREIGN KEY (lang_id) REFERENCES language (id) ON DELETE CASCADE
     );
 
