@@ -1,4 +1,4 @@
-package delivery
+package dto
 
 type GetRandomWordRequest struct {
 	Language string `json:"language"`
