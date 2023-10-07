@@ -53,7 +53,7 @@ func GetConfig() *Config {
 		slog.Info("read application config")
 		instance = &Config{}
 		if err := cleanenv.ReadConfig(pathConfig, instance); err != nil {
-			slog.Error("Fail read config: %v", err)
+			slog.Error(fmt.Errorf("Fail read config: %v", err).Error())
 			return
 		}
 	})

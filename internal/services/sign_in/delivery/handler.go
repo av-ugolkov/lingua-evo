@@ -55,7 +55,7 @@ func (h *Handler) register(r *mux.Router) {
 func (h *Handler) get(w http.ResponseWriter, r *http.Request) {
 	file, err := staticFiles.OpenFile(signInPage)
 	if err != nil {
-		slog.Error("sign_in.get.OpenFile: %v", err)
+		slog.Error(fmt.Errorf("sign_in.get.OpenFile: %v", err).Error())
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}

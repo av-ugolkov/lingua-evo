@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 
@@ -22,10 +23,11 @@ func NewRepo(db *sql.DB) *WordRepo {
 
 func (r *WordRepo) AddWord(ctx context.Context, w *entity.Word) (uuid.UUID, error) {
 	var id uuid.UUID
-	query := `INSERT INTO word (text, lang) VALUES($1, $2) ON CONFLICT DO NOTHING RETURNING id`
-	err := r.db.QueryRowContext(ctx, query, w.Text, w.Language).Scan(&id)
+	table := getTable(w.LanguageCode)
+	query := fmt.Sprintf(`INSERT INTO "%s" (id, text, pronunciation, lang_code, created_at) VALUES($1, $2, $3, $4, $5) ON CONFLICT DO NOTHING RETURNING id;`, table)
+	err := r.db.QueryRowContext(ctx, query, uuid.New(), w.Text, w.Pronunciation, w.LanguageCode, time.Now().UTC()).Scan(&id)
 	if err != nil {
-		return uuid.UUID{}, fmt.Errorf("database.AddWord.QueryRow: %w", err)
+		return uuid.Nil, fmt.Errorf("database.AddWord.QueryRow: %w", err)
 	}
 
 	return id, nil
@@ -37,10 +39,10 @@ func (r *WordRepo) EditWord(ctx context.Context, w *entity.Word) error {
 
 func (r *WordRepo) FindWord(ctx context.Context, w *entity.Word) (uuid.UUID, error) {
 	var id uuid.UUID
-	query := `SELECT id FROM word WHERE text=$1 AND lang=$2`
-	err := r.db.QueryRowContext(ctx, query, w.Text, w.Language).Scan(&id)
+	query := `SELECT id FROM word WHERE text=$1 AND lang_code=$2`
+	err := r.db.QueryRowContext(ctx, query, w.Text, w.LanguageCode).Scan(&id)
 	if err != nil {
-		return uuid.UUID{}, fmt.Errorf("database.FindWord.QueryRow: %w", err)
+		return uuid.Nil, fmt.Errorf("database.FindWord.QueryRow: %w", err)
 	}
 	return id, nil
 }
@@ -50,7 +52,7 @@ func (r *WordRepo) FindWords(ctx context.Context, w string) ([]uuid.UUID, error)
 	query := `SELECT id FROM word WHERE text=$1`
 	err := r.db.QueryRowContext(ctx, query, w).Scan(ids)
 	if err != nil {
-		return []uuid.UUID{}, fmt.Errorf("database.FindWord.QueryRow: %w", err)
+		return nil, fmt.Errorf("word.repository.WordRepo.FindWord - scan: %w", err)
 	}
 
 	return ids, nil
@@ -61,19 +63,24 @@ func (r *WordRepo) RemoveWord(ctx context.Context, w *entity.Word) error {
 }
 
 func (r *WordRepo) GetRandomWord(ctx context.Context, lang string) (*entity.Word, error) {
-	table := "word"
-	if len(lang) != 0 {
-		table = fmt.Sprintf(`%s_%s`, table, lang)
-	}
-	query := fmt.Sprintf(`SELECT text FROM %s ORDER BY RANDOM() LIMIT 1;`, table)
+	table := getTable(lang)
+	query := fmt.Sprintf(`SELECT text FROM "%s" ORDER BY RANDOM() LIMIT 1;`, table)
 	word := &entity.Word{}
 	err := r.db.QueryRowContext(ctx, query).Scan(&word.Text)
 	if err != nil {
-		return nil, fmt.Errorf("database.GetRandomWord.QueryRow: %w", err)
+		return nil, fmt.Errorf("word.repository.WordRepo.GetRandomWord - scan: %w", err)
 	}
 	return word, nil
 }
 
 func (r *WordRepo) SharedWord(ctx context.Context, w *entity.Word) (*entity.Word, error) {
 	return nil, nil
+}
+
+func getTable(langCode string) string {
+	table := "word"
+	if len(langCode) != 0 {
+		table = fmt.Sprintf(`%s_%s`, table, langCode)
+	}
+	return table
 }
