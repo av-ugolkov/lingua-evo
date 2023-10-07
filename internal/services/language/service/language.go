@@ -9,8 +9,8 @@ import (
 )
 
 type langRepo interface {
-	GetLanguages(context.Context) ([]*entity.Language, error)
-	GetNameLanguage(ctx context.Context, lang string) (string, error)
+	GetAvailableLanguages(ctx context.Context) ([]*entity.Language, error)
+	GetLanguage(ctx context.Context, lang string) (*entity.Language, error)
 }
 
 type LanguageSvc struct {
@@ -23,10 +23,19 @@ func NewService(repo langRepo) *LanguageSvc {
 	}
 }
 
-func (s *LanguageSvc) GetLanguages(ctx context.Context) ([]*entity.Language, error) {
-	languages, err := s.repo.GetLanguages(ctx)
+func (s *LanguageSvc) GetLanguage(ctx context.Context, lang string) (*entity.Language, error) {
+	language, err := s.repo.GetLanguage(ctx, lang)
 	if err != nil {
-		return nil, fmt.Errorf("service.lingua.GetLanguages: %v", err)
+		return nil, fmt.Errorf("service.lingua.GetLanguage: %v", err)
+	}
+
+	return language, nil
+}
+
+func (s *LanguageSvc) GetAvailableLanguages(ctx context.Context) ([]*entity.Language, error) {
+	languages, err := s.repo.GetAvailableLanguages(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("service.lingua.GetAvailableLanguages: %v", err)
 	}
 
 	return languages, nil
@@ -37,7 +46,7 @@ func (s *LanguageSvc) CheckLanguage(ctx context.Context, codeLang string) error 
 		return errors.New("language.service.LanguageSvc.CheckLanguage - code language is empty")
 	}
 
-	if _, err := s.repo.GetNameLanguage(ctx, codeLang); err != nil {
+	if _, err := s.repo.GetLanguage(ctx, codeLang); err != nil {
 		return fmt.Errorf("language.service.LanguageSvc.CheckLanguage - not found language: %s", codeLang)
 	}
 	return nil

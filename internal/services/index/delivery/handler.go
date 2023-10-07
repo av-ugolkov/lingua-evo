@@ -1,6 +1,7 @@
 package index
 
 import (
+	"fmt"
 	"log/slog"
 	"net/http"
 
@@ -35,7 +36,7 @@ func (h *Handler) register(r *mux.Router) {
 func (h *Handler) get(w http.ResponseWriter, r *http.Request) {
 	file, err := staticFiles.OpenFile(indexPagePath)
 	if err != nil {
-		slog.Error("index.get.OpenFile: %v", err)
+		slog.Error(fmt.Errorf("index.get.OpenFile: %v", err).Error())
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}

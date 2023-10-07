@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"strings"
@@ -54,7 +55,7 @@ func (h *Handler) register(r *mux.Router) {
 func (h *Handler) get(w http.ResponseWriter, r *http.Request) {
 	file, err := staticFiles.OpenFile(signupPage)
 	if err != nil {
-		slog.Error("sign_up.get.OpenFile: %v", err)
+		slog.Error(fmt.Errorf("sign_up.get.OpenFile: %v", err).Error())
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}

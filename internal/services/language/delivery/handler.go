@@ -11,12 +11,12 @@ import (
 )
 
 const (
-	getLanguages = "/get_languages"
+	getAvailableLanguages = "/get_languages"
 )
 
 type (
 	langSvc interface {
-		GetLanguages(context.Context) ([]*entity.Language, error)
+		GetAvailableLanguages(context.Context) ([]*entity.Language, error)
 	}
 
 	Handler struct {
@@ -36,11 +36,11 @@ func newHandler(langSvc langSvc) *Handler {
 }
 
 func (h *Handler) register(r *mux.Router) {
-	r.HandleFunc(getLanguages, h.getLanguages).Methods(http.MethodGet)
+	r.HandleFunc(getAvailableLanguages, h.getAvailableLanguages).Methods(http.MethodGet)
 }
 
-func (h *Handler) getLanguages(w http.ResponseWriter, r *http.Request) {
-	languages, err := h.langSvc.GetLanguages(r.Context())
+func (h *Handler) getAvailableLanguages(w http.ResponseWriter, r *http.Request) {
+	languages, err := h.langSvc.GetAvailableLanguages(r.Context())
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		_, _ = w.Write([]byte(err.Error()))
