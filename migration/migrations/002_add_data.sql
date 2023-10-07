@@ -30,7 +30,7 @@ VALUES
 DO NOTHING;
 
 INSERT INTO
-    "word_en-GB" (id, text, lang_id)
+    "word_en-GB" (id, text, lang_id, created_at)
 VALUES
     (
         gen_random_uuid (),
@@ -42,11 +42,12 @@ VALUES
                 language
             where
                 code = 'en-GB'
-        )
+        ),
+        now()
     );
 
 INSERT INTO
-    "word_en-GB" (id, text, lang_id)
+    "word_en-GB" (id, text, lang_id, created_at)
 VALUES
     (
         gen_random_uuid (),
@@ -58,11 +59,12 @@ VALUES
                 language
             where
                 code = 'en-GB'
-        )
+        ),
+        now()
     );
 
 INSERT INTO
-    "word_en-GB" (id, text, lang_id)
+    "word_en-GB" (id, text, lang_id, created_at)
 VALUES
     (
         gen_random_uuid (),
@@ -74,11 +76,12 @@ VALUES
                 language
             where
                 code = 'en-GB'
-        )
+        ),
+        now()
     );
 
 INSERT INTO
-    "word_en-GB" (id, text, lang_id)
+    "word_en-GB" (id, text, lang_id, created_at)
 VALUES
     (
         gen_random_uuid (),
@@ -90,11 +93,12 @@ VALUES
                 language
             where
                 code = 'en-GB'
-        )
+        ),
+        now()
     );
 
 INSERT INTO
-    "word_en-GB" (id, text, lang_id)
+    "word_en-GB" (id, text, lang_id, created_at)
 VALUES
     (
         gen_random_uuid (),
@@ -106,11 +110,12 @@ VALUES
                 language
             where
                 code = 'en-GB'
-        )
+        ),
+        now()
     );
 
 INSERT INTO
-    "word_en-GB" (id, text, lang_id)
+    "word_en-GB" (id, text, lang_id, created_at)
 VALUES
     (
         gen_random_uuid (),
@@ -122,11 +127,12 @@ VALUES
                 language
             where
                 code = 'en-GB'
-        )
+        ),
+        now()
     );
 
 INSERT INTO
-    "word_en-GB" (id, text, lang_id)
+    "word_en-GB" (id, text, lang_id, created_at)
 VALUES
     (
         gen_random_uuid (),
@@ -138,11 +144,12 @@ VALUES
                 language
             where
                 code = 'en-GB'
-        )
+        ),
+        now()
     );
 
 INSERT INTO
-    "word_en-GB" (id, text, lang_id)
+    "word_en-GB" (id, text, lang_id, created_at)
 VALUES
     (
         gen_random_uuid (),
@@ -154,11 +161,12 @@ VALUES
                 language
             where
                 code = 'en-GB'
-        )
+        ),
+        now()
     );
 
 INSERT INTO
-    "word_en-GB" (id, text, lang_id)
+    "word_en-GB" (id, text, lang_id, created_at)
 VALUES
     (
         gen_random_uuid (),
@@ -170,11 +178,12 @@ VALUES
                 language
             where
                 code = 'en-GB'
-        )
+        ),
+        now()
     );
 
 INSERT INTO
-    "word_en-GB" (id, text, lang_id)
+    "word_en-GB" (id, text, lang_id, created_at)
 VALUES
     (
         gen_random_uuid (),
@@ -186,7 +195,8 @@ VALUES
                 language
             where
                 code = 'en-GB'
-        )
+        ),
+        now()
     );
 
 -- +goose Down
