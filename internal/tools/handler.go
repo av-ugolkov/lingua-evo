@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 )
 
@@ -22,4 +23,12 @@ func CheckBody(w http.ResponseWriter, r *http.Request, body any) error {
 	}
 
 	return nil
+}
+
+func SendError(w http.ResponseWriter, httpStatus int, err error) {
+	w.WriteHeader(httpStatus)
+	_, err = w.Write([]byte(err.Error()))
+	if err != nil {
+		slog.Error(fmt.Errorf("internal.tools.handler.SendError: %v", err).Error())
+	}
 }

@@ -2,6 +2,7 @@ package delivery
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"net/http"
 
@@ -25,7 +26,8 @@ const (
 
 type (
 	langSvc interface {
-		GetLanguages(context.Context) ([]*entityLanguage.Language, error)
+		GetAvailableLanguages(ctx context.Context) ([]*entityLanguage.Language, error)
+		GetLanguage(ctx context.Context, lang string) (*entityLanguage.Language, error)
 		CheckLanguage(ctx context.Context, lang string) error
 	}
 
@@ -61,12 +63,12 @@ func (h *Handler) register(r *mux.Router) {
 func (h *Handler) openPage(w http.ResponseWriter, r *http.Request) {
 	t, err := staticFiles.ParseFiles(addWordPage)
 	if err != nil {
-		slog.Error("add_word.get.OpenFile: %v", err)
+		slog.Error(fmt.Errorf("add_word.get.OpenFile: %v", err).Error())
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 
-	languages, err := h.langSvc.GetLanguages(r.Context())
+	languages, err := h.langSvc.GetAvailableLanguages(r.Context())
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		_, _ = w.Write([]byte(err.Error()))
@@ -122,24 +124,28 @@ func (h *Handler) addWord(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	if err := tools.CheckBody(w, r, &data); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		_, _ = w.Write([]byte(err.Error()))
+		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.addWord - check: %v", err))
 		return
 	}
 
-	if data.OrigWord == "" || data.TranWord == "" {
-		slog.Error("empty word can't add in db")
-		return
-	}
+	ctx := r.Context()
 
-	origWordId, err := h.wordSvc.AddWord(r.Context(), &entity.Word{
-		Text:     data.OrigWord,
-		Language: data.OrigLang,
-	})
+	lang, err := h.langSvc.GetLanguage(ctx, data.Language)
 	if err != nil {
-		slog.Error(err.Error())
+		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.addWord - get language: %v", err))
 		return
 	}
 
-	slog.Info(origWordId.String())
+	word := &entity.Word{
+		Text:          data.Text,
+		Pronunciation: data.Pronunciation,
+		LanguageCode:  lang.Code,
+	}
+
+	wordUUID, err := h.wordSvc.AddWord(ctx, word)
+	if err != nil {
+		tools.SendError(w, http.StatusInternalServerError, err)
+		return
+	}
+	_, _ = w.Write([]byte(wordUUID.String()))
 }

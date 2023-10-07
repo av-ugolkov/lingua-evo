@@ -1,6 +1,7 @@
 package entity
 
 type Word struct {
-	Text     string
-	Language string
+	Text          string
+	Pronunciation string
+	LanguageCode  string
 }

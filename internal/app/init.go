@@ -42,7 +42,7 @@ func ServerStart(cfg *config.Config) {
 
 	db, err := repository.NewDB(cfg.Database.GetConnStr())
 	if err != nil {
-		slog.Error("can't create pg pool: %v", err)
+		slog.Error(fmt.Errorf("can't create pg pool: %v", err).Error())
 		return
 	}
 
@@ -56,7 +56,7 @@ func ServerStart(cfg *config.Config) {
 		slog.Error(err.Error())
 		return
 	}
-	slog.Info("web address: %v", listener.Addr())
+	slog.Info(fmt.Sprintf("web address: %s", listener.Addr()))
 
 	server := &http.Server{
 		Handler:      router,

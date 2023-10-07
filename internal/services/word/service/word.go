@@ -28,14 +28,9 @@ func NewService(repo repoWord) *WordSvc {
 }
 
 func (s *WordSvc) AddWord(ctx context.Context, word *entity.Word) (uuid.UUID, error) {
-	wordID, err := s.repo.FindWord(ctx, word)
-	if err == nil {
-		return wordID, nil
-	}
-
-	wordID, err = s.repo.AddWord(ctx, word)
+	wordID, err := s.repo.AddWord(ctx, word)
 	if err != nil {
-		return uuid.UUID{}, err
+		return uuid.Nil, err
 	}
 
 	return wordID, nil
