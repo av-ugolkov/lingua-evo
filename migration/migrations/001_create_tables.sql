@@ -13,27 +13,31 @@ CREATE UNIQUE INDEX IF not EXISTS idx_unique_users__name ON users (name);
 CREATE UNIQUE INDEX IF not EXISTS idx_unique_users__email ON users (email);
 
 CREATE TABLE IF NOT EXISTS
-    language (id bigserial PRIMARY KEY, code TEXT NOT NULL, lang TEXT NOT NULL);
+    language (code TEXT NOT NULL PRIMARY KEY, lang TEXT NOT NULL);
 
-CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_language__lang_code ON language (lang, code);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_language__code ON language (code);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_language__code_lang ON language (code, lang);
 
 CREATE TABLE IF NOT EXISTS
     word (
         id UUID NOT NULL PRIMARY KEY,
         text TEXT NOT NULL,
         pronunciation TEXT,
-        lang_id INT,
+        lang_code TEXT,
         created_at TIMESTAMP NOT NULL,
-        CONSTRAINT word_lang_id_fkey FOREIGN KEY (lang_id) REFERENCES language (id) ON DELETE CASCADE
+        CONSTRAINT word_lang_code_fkey FOREIGN KEY (lang_code) REFERENCES language (code) ON DELETE CASCADE
     );
-
-CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_word__text_lang_id ON word (text, lang_id);
 
 create table
     "word_en-GB" () inherits (word);
 
+CREATE UNIQUE INDEX IF NOT EXISTS "idx_unique_word_en-GB__text" ON "word_en-GB" (text);
+
 create table
     word_ru () inherits (word);
+
+CREATE UNIQUE INDEX IF NOT EXISTS "idx_unique_word_ru__text" ON "word_ru" (text);
 
 CREATE TABLE IF NOT EXISTS
     example (id UUID DEFAULT gen_random_uuid () PRIMARY KEY, example TEXT);
