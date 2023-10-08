@@ -137,6 +137,7 @@ func (h *Handler) addWord(w http.ResponseWriter, r *http.Request) {
 	}
 
 	word := &entity.Word{
+		ID:            uuid.New(),
 		Text:          data.Text,
 		Pronunciation: data.Pronunciation,
 		LanguageCode:  lang.Code,

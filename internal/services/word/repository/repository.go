@@ -25,12 +25,23 @@ func (r *WordRepo) AddWord(ctx context.Context, w *entity.Word) (uuid.UUID, erro
 	var id uuid.UUID
 	table := getTable(w.LanguageCode)
 	query := fmt.Sprintf(`INSERT INTO "%s" (id, text, pronunciation, lang_code, created_at) VALUES($1, $2, $3, $4, $5) ON CONFLICT DO NOTHING RETURNING id;`, table)
-	err := r.db.QueryRowContext(ctx, query, uuid.New(), w.Text, w.Pronunciation, w.LanguageCode, time.Now().UTC()).Scan(&id)
+	err := r.db.QueryRowContext(ctx, query, w.ID, w.Text, w.Pronunciation, w.LanguageCode, time.Now().UTC()).Scan(&id)
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("database.AddWord.QueryRow: %w", err)
 	}
 
 	return id, nil
+}
+
+func (r *WordRepo) GetWord(ctx context.Context, text, langCode string) (*entity.Word, error) {
+	word := &entity.Word{}
+	table := getTable(langCode)
+	query := fmt.Sprintf(`SELECT id, text, pronunciation, lang_code FROM "%s" WHERE text=$1 AND lang_code=$2;`, table)
+	err := r.db.QueryRowContext(ctx, query, text, langCode).Scan(&word.ID, &word.Text, &word.Pronunciation, &word.LanguageCode)
+	if err != nil {
+		return nil, err
+	}
+	return word, nil
 }
 
 func (r *WordRepo) EditWord(ctx context.Context, w *entity.Word) error {
