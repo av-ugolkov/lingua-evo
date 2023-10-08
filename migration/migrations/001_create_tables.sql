@@ -45,15 +45,20 @@ CREATE TABLE IF NOT EXISTS
 CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_example__example ON example (example);
 
 CREATE TABLE IF NOT EXISTS
-    dictionary (
-        user_id UUID REFERENCES users (id) NOT NULL,
+    dictionary (id UUID PRIMARY KEY, user_id UUID REFERENCES users (id) NOT NULL, name TEXT, tags INT[]);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_dictionary__user_id_name ON dictionary (user_id, name);
+
+CREATE TABLE IF NOT EXISTS
+    vocabulary (
+        dictionary_id UUID REFERENCES dictionary (id) NOT NULL,
         original_word UUID REFERENCES word (id) NOT NULL,
         translate_word UUID[] NOT NULL,
         examples UUID[],
         tags INT[]
     );
 
-CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_dictionary__user_id_original_word ON dictionary (user_id, original_word);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_vocabulary__dictionary_id_original_word ON vocabulary (dictionary_id, original_word);
 
 CREATE TABLE IF NOT EXISTS
     tag (id bigserial PRIMARY KEY, tag TEXT NOT NULL);

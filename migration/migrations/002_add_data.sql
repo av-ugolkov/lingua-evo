@@ -30,54 +30,54 @@ VALUES
 DO NOTHING;
 
 INSERT INTO
-    "word_en-GB" (id, text, lang_code, created_at)
+    "word_en-GB" (id, text, pronunciation, lang_code, created_at)
 VALUES
-    (gen_random_uuid (), 'get by', 'en-GB', now());
+    (gen_random_uuid (), 'get by', '', 'en-GB', now());
 
 INSERT INTO
-    "word_en-GB" (id, text, lang_code, created_at)
+    "word_en-GB" (id, text, pronunciation, lang_code, created_at)
 VALUES
-    (gen_random_uuid (), 'get away', 'en-GB', now());
+    (gen_random_uuid (), 'get away', '', 'en-GB', now());
 
 INSERT INTO
-    "word_en-GB" (id, text, lang_code, created_at)
+    "word_en-GB" (id, text, pronunciation, lang_code, created_at)
 VALUES
-    (gen_random_uuid (), 'get into', 'en-GB', now());
+    (gen_random_uuid (), 'get into', '', 'en-GB', now());
 
 INSERT INTO
-    "word_en-GB" (id, text, lang_code, created_at)
+    "word_en-GB" (id, text, pronunciation, lang_code, created_at)
 VALUES
-    (gen_random_uuid (), 'get together', 'en-GB', now());
+    (gen_random_uuid (), 'get together', '', 'en-GB', now());
 
 INSERT INTO
-    "word_en-GB" (id, text, lang_code, created_at)
+    "word_en-GB" (id, text, pronunciation, lang_code, created_at)
 VALUES
-    (gen_random_uuid (), 'get away with it', 'en-GB', now());
+    (gen_random_uuid (), 'get away with it', '', 'en-GB', now());
 
 INSERT INTO
-    "word_en-GB" (id, text, lang_code, created_at)
+    "word_en-GB" (id, text, pronunciation, lang_code, created_at)
 VALUES
-    (gen_random_uuid (), 'get up to', 'en-GB', now());
+    (gen_random_uuid (), 'get up to', '', 'en-GB', now());
 
 INSERT INTO
-    "word_en-GB" (id, text, lang_code, created_at)
+    "word_en-GB" (id, text, pronunciation, lang_code, created_at)
 VALUES
-    (gen_random_uuid (), 'get up', 'en-GB', now());
+    (gen_random_uuid (), 'get up', '', 'en-GB', now());
 
 INSERT INTO
-    "word_en-GB" (id, text, lang_code, created_at)
+    "word_en-GB" (id, text, pronunciation, lang_code, created_at)
 VALUES
-    (gen_random_uuid (), 'get rid of', 'en-GB', now());
+    (gen_random_uuid (), 'get rid of', '', 'en-GB', now());
 
 INSERT INTO
-    "word_en-GB" (id, text, lang_code, created_at)
+    "word_en-GB" (id, text, pronunciation, lang_code, created_at)
 VALUES
-    (gen_random_uuid (), 'get to', 'en-GB', now());
+    (gen_random_uuid (), 'get to', '', 'en-GB', now());
 
 INSERT INTO
-    "word_en-GB" (id, text, lang_code, created_at)
+    "word_en-GB" (id, text, pronunciation, lang_code, created_at)
 VALUES
-    (gen_random_uuid (), 'get over', 'en-GB', now());
+    (gen_random_uuid (), 'get over', '', 'en-GB', now());
 
 -- +goose Down
 TRUNCATE TABLE users RESTART IDENTITY CASCADE;
