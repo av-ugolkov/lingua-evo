@@ -3,7 +3,6 @@ package repository
 import (
 	"context"
 	"database/sql"
-	"fmt"
 
 	entityWord "lingua-evo/internal/services/word/entity"
 
@@ -20,12 +19,11 @@ func NewRepo(db *sql.DB) *VocabularyRepo {
 	}
 }
 
-func (r *VocabularyRepo) AddWordInVocabulary(ctx context.Context, userId, originalWord uuid.UUID, translateWord []uuid.UUID, pronunciation string, examples []uuid.UUID) error {
-	//TODO переписать
-	query := `INSERT INTO vocabulary (user_id, original_word, translate_word, pronunciation, examples) VALUES($1, $2, $3, $4, $5)`
-	_, err := r.db.QueryContext(ctx, query, userId, originalWord, translateWord, pronunciation, examples)
+func (r *VocabularyRepo) AddWord(ctx context.Context, dictID, originalWord uuid.UUID, translateWord []uuid.UUID, examples []uuid.UUID, tags []uuid.UUID) error {
+	const query = `INSERT INTO vocabulary (dictionary_id, original_word, translate_word, examples, tags) VALUES($1, $2, $3, $4, $5)`
+	_, err := r.db.QueryContext(ctx, query, dictID, originalWord, translateWord, examples, tags)
 	if err != nil {
-		return fmt.Errorf("vocabulary.VocabularyRepo.AddWordInVocabulary: %w", err)
+		return err
 	}
 
 	return nil
