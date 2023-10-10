@@ -89,29 +89,27 @@ func (h *Handler) openPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) getRandomWord(w http.ResponseWriter, r *http.Request) {
-	var data dto.GetRandomWordRequest
 	defer func() {
 		_ = r.Body.Close()
 	}()
 
+	var data dto.GetRandomWordRequest
+
 	if err := tools.CheckBody(w, r, &data); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		_, _ = w.Write([]byte(err.Error()))
+		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getRandomWord - check body: %v", err))
 		return
 	}
 
 	ctx := r.Context()
 
 	if err := h.langSvc.CheckLanguage(ctx, data.Language); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		_, _ = w.Write([]byte(err.Error()))
+		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getRandomWord - check language: %v", err))
 		return
 	}
 
 	word, err := h.wordSvc.GetRandomWord(ctx, data.Language)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		_, _ = w.Write([]byte(err.Error()))
+		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getRandomWord: %v", err))
 		return
 	}
 	_, _ = w.Write([]byte(word.Text))
@@ -124,7 +122,7 @@ func (h *Handler) addWord(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	if err := tools.CheckBody(w, r, &data); err != nil {
-		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.addWord - check: %v", err))
+		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.addWord - check body: %v", err))
 		return
 	}
 
