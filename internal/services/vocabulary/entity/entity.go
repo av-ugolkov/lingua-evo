@@ -6,6 +6,6 @@ type Vocabulary struct {
 	DictionaryId  uuid.UUID
 	OriginalWord  uuid.UUID
 	TranslateWord []uuid.UUID
-	Example       []uuid.UUID
+	Examples      []uuid.UUID
 	Tags          []uuid.UUID
 }

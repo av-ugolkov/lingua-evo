@@ -33,15 +33,15 @@ func (r *WordRepo) AddWord(ctx context.Context, w *entity.Word) (uuid.UUID, erro
 	return id, nil
 }
 
-func (r *WordRepo) GetWord(ctx context.Context, text, langCode string) (*entity.Word, error) {
+func (r *WordRepo) GetWord(ctx context.Context, w *entity.Word) (uuid.UUID, error) {
 	word := &entity.Word{}
-	table := getTable(langCode)
-	query := fmt.Sprintf(`SELECT id, text, pronunciation, lang_code FROM "%s" WHERE text=$1 AND lang_code=$2;`, table)
-	err := r.db.QueryRowContext(ctx, query, text, langCode).Scan(&word.ID, &word.Text, &word.Pronunciation, &word.LanguageCode)
+	table := getTable(w.LanguageCode)
+	query := fmt.Sprintf(`SELECT id FROM "%s" WHERE text=$1 AND lang_code=$2;`, table)
+	err := r.db.QueryRowContext(ctx, query, w.Text, w.LanguageCode).Scan(&word.ID)
 	if err != nil {
-		return nil, err
+		return uuid.Nil, err
 	}
-	return word, nil
+	return word.ID, nil
 }
 
 func (r *WordRepo) EditWord(ctx context.Context, w *entity.Word) error {

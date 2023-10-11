@@ -13,7 +13,7 @@ import (
 
 type repoWord interface {
 	AddWord(ctx context.Context, w *entity.Word) (uuid.UUID, error)
-	GetWord(ctx context.Context, text, langCode string) (*entity.Word, error)
+	GetWord(ctx context.Context, w *entity.Word) (uuid.UUID, error)
 	EditWord(ctx context.Context, w *entity.Word) error
 	FindWord(ctx context.Context, w *entity.Word) (uuid.UUID, error)
 	RemoveWord(ctx context.Context, w *entity.Word) error
@@ -32,18 +32,31 @@ func NewService(repo repoWord) *WordSvc {
 }
 
 func (s *WordSvc) AddWord(ctx context.Context, word *entity.Word) (uuid.UUID, error) {
-	repoWord, err := s.repo.GetWord(ctx, word.Text, word.LanguageCode)
+	wordID, err := s.repo.GetWord(ctx, word)
 
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return uuid.Nil, fmt.Errorf("word.service.WordSvc.AddWord - get word: %w", err)
-	} else if repoWord != nil {
-		return repoWord.ID, nil
+	} else if wordID != uuid.Nil {
+		return wordID, nil
 	}
-	wordID, err := s.repo.AddWord(ctx, word)
+	wordID, err = s.repo.AddWord(ctx, word)
 	if err != nil {
 		return uuid.Nil, err
 	}
 
+	return wordID, nil
+}
+
+func (s *WordSvc) GetWord(ctx context.Context, text, language string) (uuid.UUID, error) {
+	word := entity.Word{
+		Text:         text,
+		LanguageCode: language,
+	}
+
+	wordID, err := s.repo.GetWord(ctx, &word)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("word.service.WordSvc.GetWord: %w", err)
+	}
 	return wordID, nil
 }
 
