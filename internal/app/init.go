@@ -15,6 +15,9 @@ import (
 	"lingua-evo/internal/config"
 	repository "lingua-evo/internal/db"
 	accountHandler "lingua-evo/internal/services/account/delivery"
+	dictHandler "lingua-evo/internal/services/dictionary/delivery"
+	dictRepository "lingua-evo/internal/services/dictionary/repository"
+	dictService "lingua-evo/internal/services/dictionary/service"
 	indexHandler "lingua-evo/internal/services/index/delivery"
 	languageHandler "lingua-evo/internal/services/language/delivery"
 	langRepository "lingua-evo/internal/services/language/repository"
@@ -26,6 +29,10 @@ import (
 	wordHandler "lingua-evo/internal/services/word/delivery"
 	wordRepository "lingua-evo/internal/services/word/repository"
 	wordService "lingua-evo/internal/services/word/service"
+
+	vocabularyHandler "lingua-evo/internal/services/vocabulary/delivery"
+	vocabularyRepository "lingua-evo/internal/services/vocabulary/repository"
+	vocabularyService "lingua-evo/internal/services/vocabulary/service"
 )
 
 const (
@@ -92,6 +99,14 @@ func initServer(r *mux.Router, db *sql.DB) {
 	langRepo := langRepository.NewRepo(db)
 	langSvc := langService.NewService(langRepo)
 
+	slog.Info("dictionary service")
+	dictRepo := dictRepository.NewRepo(db)
+	dictSvc := dictService.NewService(dictRepo)
+
+	slog.Info("vocabulary service")
+	vocabularyRepo := vocabularyRepository.NewRepo(db)
+	vocabularySvc := vocabularyService.NewService(vocabularyRepo, wordSvc)
+
 	slog.Info("<----- create handlers ----->")
 	slog.Info("index")
 	indexHandler.Create(r)
@@ -110,6 +125,12 @@ func initServer(r *mux.Router, db *sql.DB) {
 
 	slog.Info("word")
 	wordHandler.Create(r, wordSvc, langSvc)
+
+	slog.Info("dictionary")
+	dictHandler.Create(r, dictSvc)
+
+	slog.Info("vocabulary")
+	vocabularyHandler.Create(r, vocabularySvc)
 
 	slog.Info("<----- end init services ----->")
 }

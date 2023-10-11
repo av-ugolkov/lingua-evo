@@ -27,7 +27,7 @@ type DictionarySvc struct {
 	repo repoDict
 }
 
-func NewDictionarySvc(repo repoDict) *DictionarySvc {
+func NewService(repo repoDict) *DictionarySvc {
 	return &DictionarySvc{
 		repo: repo,
 	}
