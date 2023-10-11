@@ -17,12 +17,13 @@ import (
 )
 
 const (
-	openPage      = "/word"
-	addWord       = "/add_word"
-	getRandomWord = "/get_random_word"
-
-	addWordPage = "web/dictionary/add_word/add_word.html"
+	openPage      = "/word/openPage"
+	addWord       = "/word/add"
+	getWord       = "/word/get"
+	getRandomWord = "/word/get_random"
 )
+
+const addWordPage = "web/dictionary/add_word/add_word.html"
 
 type (
 	langSvc interface {
@@ -33,6 +34,7 @@ type (
 
 	wordSvc interface {
 		AddWord(ctx context.Context, word *entity.Word) (uuid.UUID, error)
+		GetWord(ctx context.Context, text, language string) (uuid.UUID, error)
 		GetRandomWord(ctx context.Context, lang string) (*entity.Word, error)
 	}
 
@@ -56,8 +58,9 @@ func newHandler(wordSvc wordSvc, langSvc langSvc) *Handler {
 
 func (h *Handler) register(r *mux.Router) {
 	r.HandleFunc(openPage, h.openPage).Methods(http.MethodGet)
-	r.HandleFunc(getRandomWord, h.getRandomWord).Methods(http.MethodPost)
 	r.HandleFunc(addWord, h.addWord).Methods(http.MethodPost)
+	r.HandleFunc(getWord, h.getWord).Methods(http.MethodPost)
+	r.HandleFunc(getRandomWord, h.getRandomWord).Methods(http.MethodPost)
 }
 
 func (h *Handler) openPage(w http.ResponseWriter, r *http.Request) {
@@ -86,33 +89,6 @@ func (h *Handler) openPage(w http.ResponseWriter, r *http.Request) {
 		_, _ = w.Write([]byte(err.Error()))
 		return
 	}
-}
-
-func (h *Handler) getRandomWord(w http.ResponseWriter, r *http.Request) {
-	defer func() {
-		_ = r.Body.Close()
-	}()
-
-	var data dto.GetRandomWordRequest
-
-	if err := tools.CheckBody(w, r, &data); err != nil {
-		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getRandomWord - check body: %v", err))
-		return
-	}
-
-	ctx := r.Context()
-
-	if err := h.langSvc.CheckLanguage(ctx, data.Language); err != nil {
-		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getRandomWord - check language: %v", err))
-		return
-	}
-
-	word, err := h.wordSvc.GetRandomWord(ctx, data.Language)
-	if err != nil {
-		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getRandomWord: %v", err))
-		return
-	}
-	_, _ = w.Write([]byte(word.Text))
 }
 
 func (h *Handler) addWord(w http.ResponseWriter, r *http.Request) {
@@ -147,4 +123,58 @@ func (h *Handler) addWord(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	_, _ = w.Write([]byte(wordUUID.String()))
+}
+
+func (h *Handler) getWord(w http.ResponseWriter, r *http.Request) {
+	defer func() {
+		_ = r.Body.Close()
+	}()
+
+	var data dto.GetWordRequest
+
+	if err := tools.CheckBody(w, r, &data); err != nil {
+		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getWord - check body: %v", err))
+		return
+	}
+
+	ctx := r.Context()
+
+	if err := h.langSvc.CheckLanguage(ctx, data.Language); err != nil {
+		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getWord - check language: %v", err))
+		return
+	}
+
+	wordID, err := h.wordSvc.GetWord(ctx, data.Text, data.Language)
+	if err != nil {
+		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getWord: %v", err))
+		return
+	}
+	_, _ = w.Write([]byte(wordID.String()))
+}
+
+func (h *Handler) getRandomWord(w http.ResponseWriter, r *http.Request) {
+	defer func() {
+		_ = r.Body.Close()
+	}()
+
+	var data dto.GetRandomWordRequest
+
+	if err := tools.CheckBody(w, r, &data); err != nil {
+		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getRandomWord - check body: %v", err))
+		return
+	}
+
+	ctx := r.Context()
+
+	if err := h.langSvc.CheckLanguage(ctx, data.Language); err != nil {
+		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getRandomWord - check language: %v", err))
+		return
+	}
+
+	word, err := h.wordSvc.GetRandomWord(ctx, data.Language)
+	if err != nil {
+		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getRandomWord: %v", err))
+		return
+	}
+	_, _ = w.Write([]byte(word.Text))
 }
