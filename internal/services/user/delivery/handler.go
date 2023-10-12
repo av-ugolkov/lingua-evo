@@ -1,15 +1,14 @@
 package delivery
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 
 	"lingua-evo/internal/services/user/dto"
+	"lingua-evo/internal/services/user/service"
 	"lingua-evo/internal/tools"
 
-	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 )
 
@@ -19,22 +18,17 @@ const (
 )
 
 type (
-	userSvc interface {
-		GetIDByName(ctx context.Context, name string) (uuid.UUID, error)
-		GetIDByEmail(ctx context.Context, email string) (uuid.UUID, error)
-	}
-
 	Handler struct {
-		userSvc userSvc
+		userSvc *service.UserSvc
 	}
 )
 
-func Create(r *mux.Router, userSvc userSvc) {
+func Create(r *mux.Router, userSvc *service.UserSvc) {
 	handler := newHandler(userSvc)
 	handler.register(r)
 }
 
-func newHandler(userSvc userSvc) *Handler {
+func newHandler(userSvc *service.UserSvc) *Handler {
 	return &Handler{
 		userSvc: userSvc,
 	}
