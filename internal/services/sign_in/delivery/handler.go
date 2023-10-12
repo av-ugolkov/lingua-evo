@@ -27,7 +27,7 @@ const (
 
 type (
 	userSvc interface {
-		FindUser(context.Context, string) (uuid.UUID, error)
+		GetIDByName(context.Context, string) (uuid.UUID, error)
 	}
 
 	Handler struct {
@@ -69,7 +69,7 @@ func (h *Handler) post(w http.ResponseWriter, r *http.Request) {
 	//email := r.FormValue("email")
 	//password := r.FormValue("password")
 
-	user, err := h.userSvc.FindUser(r.Context(), username)
+	user, err := h.userSvc.GetIDByName(r.Context(), username)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		_, _ = w.Write([]byte(err.Error()))

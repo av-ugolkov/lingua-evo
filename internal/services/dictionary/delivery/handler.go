@@ -23,7 +23,7 @@ const (
 
 type (
 	dictionarySvc interface {
-		AddDictionary(ctx context.Context, userID uuid.UUID, name string) (uuid.UUID, error)
+		AddDictionary(ctx context.Context, data dto.DictionaryRq) (uuid.UUID, error)
 		DeleteDictionary(ctx context.Context, userID uuid.UUID, name string) error
 		GetDictionary(ctx context.Context, userID uuid.UUID, name string) (uuid.UUID, error)
 		GetDictionaries(ctx context.Context, userID uuid.UUID) ([]*entity.Dictionary, error)
@@ -57,7 +57,7 @@ func (h *Handler) addDictionary(w http.ResponseWriter, r *http.Request) {
 		_ = r.Body.Close()
 	}()
 
-	var data dto.DictionaryRequest
+	var data dto.DictionaryRq
 	err := tools.CheckBody(w, r, &data)
 	if err != nil {
 		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.addDictionary - check body: %v", err))
@@ -65,7 +65,7 @@ func (h *Handler) addDictionary(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := r.Context()
-	dictID, err := h.dictionarySvc.AddDictionary(ctx, data.UserID, data.Name)
+	dictID, err := h.dictionarySvc.AddDictionary(ctx, data)
 	if err != nil {
 		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.addDictionary: %v", err))
 	}
@@ -78,7 +78,7 @@ func (h *Handler) deleteDictionary(w http.ResponseWriter, r *http.Request) {
 		_ = r.Body.Close()
 	}()
 
-	var data dto.DictionaryRequest
+	var data dto.DictionaryRq
 	err := tools.CheckBody(w, r, &data)
 	if err != nil {
 		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.deleteDictionary - check body: %v", err))
@@ -99,7 +99,7 @@ func (h *Handler) getDictionary(w http.ResponseWriter, r *http.Request) {
 		_ = r.Body.Close()
 	}()
 
-	var data dto.DictionaryRequest
+	var data dto.DictionaryRq
 	err := tools.CheckBody(w, r, &data)
 	if err != nil {
 		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.getDictionary - check body: %v", err))

@@ -21,7 +21,7 @@ const (
 
 type (
 	vocabularySvc interface {
-		AddWordInVocabulary(ctx context.Context, vocab *dto.AddWordRequest) (uuid.UUID, error)
+		AddWordInVocabulary(ctx context.Context, vocab *dto.AddWordRq) (uuid.UUID, error)
 	}
 
 	Handler struct {
@@ -50,7 +50,7 @@ func (h *Handler) addWord(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	ctx := r.Context()
-	var data dto.AddWordRequest
+	var data dto.AddWordRq
 
 	err := tools.CheckBody(w, r, &data)
 	if err != nil {
