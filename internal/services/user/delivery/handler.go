@@ -2,10 +2,12 @@ package delivery
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"net/http"
+
 	"lingua-evo/internal/services/user/dto"
 	"lingua-evo/internal/tools"
-	"net/http"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
@@ -57,13 +59,21 @@ func (h *Handler) getIDByName(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := r.Context()
-	userID, err := h.userSvc.GetIDByName(ctx, data.Value)
+	id, err := h.userSvc.GetIDByName(ctx, data.Value)
 	if err != nil {
 		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.getIDByName: %v", err))
 		return
 	}
 
-	_, _ = w.Write([]byte(userID.String()))
+	userID := dto.UserIDRs{
+		ID: id,
+	}
+	b, err := json.Marshal(userID)
+	if err != nil {
+		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.getIDByName - marshal: %v", err))
+		return
+	}
+	_, _ = w.Write(b)
 }
 
 func (h *Handler) getIDByEmail(w http.ResponseWriter, r *http.Request) {
@@ -80,11 +90,19 @@ func (h *Handler) getIDByEmail(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := r.Context()
-	userID, err := h.userSvc.GetIDByEmail(ctx, data.Value)
+	id, err := h.userSvc.GetIDByEmail(ctx, data.Value)
 	if err != nil {
 		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.getIDByEmail: %v", err))
 		return
 	}
 
-	_, _ = w.Write([]byte(userID.String()))
+	userID := dto.UserIDRs{
+		ID: id,
+	}
+	b, err := json.Marshal(userID)
+	if err != nil {
+		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.getIDByEmail - marshal: %v", err))
+		return
+	}
+	_, _ = w.Write(b)
 }
