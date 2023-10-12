@@ -1,8 +1,10 @@
 package dto
 
+import "github.com/google/uuid"
+
 type (
 	AddWordRq struct {
-		DictionaryID string         `json:"dictionary_id"`
+		DictionaryID uuid.UUID      `json:"dictionary_id"`
 		OriginalWord VocabularyWord `json:"orig_word"`
 		TanslateWord VocabularyWord `json:"translate_word"`
 		Examples     []string       `json:"examples"`

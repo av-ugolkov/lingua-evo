@@ -40,11 +40,12 @@ func (r *DictRepo) DeleteDictionary(ctx context.Context, dict entity.Dictionary)
 
 func (r *DictRepo) GetDictionary(ctx context.Context, dict entity.Dictionary) (uuid.UUID, error) {
 	query := `SELECT id FROM dictionary WHERE user_id=$1 AND name=$2;`
-	_, err := r.db.QueryContext(ctx, query, dict.UserID, dict.Name)
+	var dictID uuid.UUID
+	err := r.db.QueryRowContext(ctx, query, dict.UserID, dict.Name).Scan(&dictID)
 	if err != nil {
 		return uuid.Nil, err
 	}
-	return uuid.Nil, nil
+	return dictID, nil
 }
 
 func (r *DictRepo) GetDictionaries(ctx context.Context, userID uuid.UUID) ([]*entity.Dictionary, error) {
