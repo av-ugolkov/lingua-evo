@@ -11,8 +11,8 @@ import (
 type userRepo interface {
 	AddUser(ctx context.Context, u *entity.User) (uuid.UUID, error)
 	EditUser(ctx context.Context, u *entity.User) error
-	FindUser(ctx context.Context, username string) (uuid.UUID, error)
-	FindUserByEmail(ctx context.Context, email string) (uuid.UUID, error)
+	GetIDByName(ctx context.Context, name string) (uuid.UUID, error)
+	GetIDByEmail(ctx context.Context, email string) (uuid.UUID, error)
 	RemoveUser(ctx context.Context, u *entity.User) error
 }
 
@@ -39,22 +39,12 @@ func (s *UserSvc) EditUser(ctx context.Context, user *entity.User) error {
 	return nil
 }
 
-func (s *UserSvc) FindUser(ctx context.Context, username string) (uuid.UUID, error) {
-	uid, err := s.repo.FindUser(ctx, username)
-	if err != nil {
-		return uuid.Nil, err
-	}
-
-	return uid, nil
+func (s *UserSvc) GetIDByName(ctx context.Context, name string) (uuid.UUID, error) {
+	return s.repo.GetIDByName(ctx, name)
 }
 
-func (s *UserSvc) FindEmail(ctx context.Context, email string) (uuid.UUID, error) {
-	uid, err := s.repo.FindUserByEmail(ctx, email)
-	if err != nil {
-		return uuid.Nil, err
-	}
-
-	return uid, nil
+func (s *UserSvc) GetIDByEmail(ctx context.Context, email string) (uuid.UUID, error) {
+	return s.repo.GetIDByEmail(ctx, email)
 }
 
 func (s *UserSvc) RemoveUser(ctx context.Context, user *entity.User) error {

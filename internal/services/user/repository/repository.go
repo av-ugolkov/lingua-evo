@@ -38,12 +38,12 @@ func (r *UserRepo) EditUser(ctx context.Context, u *entity.User) error {
 	return nil
 }
 
-func (r *UserRepo) FindUser(ctx context.Context, username string) (uuid.UUID, error) {
+func (r *UserRepo) GetIDByName(ctx context.Context, name string) (uuid.UUID, error) {
 	query := `SELECT id FROM users where name=$1`
 
 	var uid uuid.UUID
 
-	err := r.db.QueryRowContext(ctx, query, username).Scan(&uid)
+	err := r.db.QueryRowContext(ctx, query, name).Scan(&uid)
 	if err != nil {
 		return uuid.Nil, err
 	}
@@ -51,7 +51,7 @@ func (r *UserRepo) FindUser(ctx context.Context, username string) (uuid.UUID, er
 	return uid, nil
 }
 
-func (r *UserRepo) FindUserByEmail(ctx context.Context, email string) (uuid.UUID, error) {
+func (r *UserRepo) GetIDByEmail(ctx context.Context, email string) (uuid.UUID, error) {
 	query := `SELECT id FROM users where email=$1`
 
 	var uid uuid.UUID

@@ -1,7 +1,7 @@
 package dto
 
 type (
-	AddWordRequest struct {
+	AddWordRq struct {
 		DictionaryID string         `json:"dictionary_id"`
 		OriginalWord VocabularyWord `json:"orig_word"`
 		TanslateWord VocabularyWord `json:"translate_word"`

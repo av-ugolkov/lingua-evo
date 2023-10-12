@@ -3,12 +3,12 @@ package dto
 import "github.com/google/uuid"
 
 type (
-	DictionaryRequest struct {
-		UserID uuid.UUID
-		Name   string
+	DictionaryRq struct {
+		UserID uuid.UUID `json:"user_id"`
+		Name   string    `json:"name"`
 	}
 
-	DictionariesResponse struct {
+	DictionariesRs struct {
 		Dictionaries []Dictionary
 	}
 
