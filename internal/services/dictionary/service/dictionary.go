@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"lingua-evo/internal/services/dictionary/dto"
 	"lingua-evo/internal/services/dictionary/entity"
 
 	"github.com/google/uuid"
@@ -33,20 +34,20 @@ func NewService(repo repoDict) *DictionarySvc {
 	}
 }
 
-func (s *DictionarySvc) AddDictionary(ctx context.Context, userID uuid.UUID, name string) (uuid.UUID, error) {
+func (s *DictionarySvc) AddDictionary(ctx context.Context, dictionary dto.DictionaryRq) (uuid.UUID, error) {
 	dict := entity.Dictionary{
 		ID:     uuid.New(),
-		UserID: userID,
-		Name:   name,
+		UserID: dictionary.UserID,
+		Name:   dictionary.Name,
 	}
 
-	dictionaries, err := s.repo.GetDictionaries(ctx, userID)
+	dictionaries, err := s.repo.GetDictionaries(ctx, dictionary.UserID)
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("dictionary.service.DictionarySvc.AddDictionary - get count dictionaries: %w", err)
 	}
 
 	if len(dictionaries) > 3 {
-		return uuid.Nil, fmt.Errorf("dictionary.service.DictionarySvc.AddDictionary - %w %v", errCountDictionary, userID)
+		return uuid.Nil, fmt.Errorf("dictionary.service.DictionarySvc.AddDictionary - %w %v", errCountDictionary, dictionary.UserID)
 	}
 
 	err = s.repo.AddDictionary(ctx, dict)

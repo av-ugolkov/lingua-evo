@@ -32,6 +32,7 @@ const (
 	signupPage = "web/sign_up/signup.html"
 )
 
+// TODO переписать на интерфейс
 type Handler struct {
 	usersSvc *userSvc.UserSvc
 }
@@ -180,7 +181,7 @@ func (h *Handler) validateEmail(ctx context.Context, email string) error {
 		return entity.ErrEmailNotCorrect
 	}
 
-	uid, err := h.usersSvc.FindEmail(ctx, email)
+	uid, err := h.usersSvc.GetIDByEmail(ctx, email)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return err
 	} else if uid == uuid.Nil && err == nil {
@@ -201,7 +202,7 @@ func (h *Handler) validateUsername(ctx context.Context, username string) error {
 		return entity.ErrUsernameAdmin
 	}
 
-	uid, err := h.usersSvc.FindUser(ctx, username)
+	uid, err := h.usersSvc.GetIDByName(ctx, username)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return err
 	} else if uid == uuid.Nil && err == nil {

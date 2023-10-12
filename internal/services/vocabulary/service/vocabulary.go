@@ -34,7 +34,7 @@ func NewService(repo repoDict, wordSvc wordSvc) *VocabularySvc {
 
 func (s *VocabularySvc) AddWordInVocabulary(
 	ctx context.Context,
-	vocab *dto.AddWordRequest,
+	vocab *dto.AddWordRq,
 ) (uuid.UUID, error) {
 	v := entity.Vocabulary{
 		DictionaryId:  uuid.UUID{},
