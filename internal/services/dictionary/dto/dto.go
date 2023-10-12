@@ -16,4 +16,8 @@ type (
 		ID   uuid.UUID
 		Name string
 	}
+
+	DictionaryIDRs struct {
+		ID uuid.UUID `json:"dictionary_id"`
+	}
 )

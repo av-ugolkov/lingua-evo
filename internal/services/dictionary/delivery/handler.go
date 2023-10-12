@@ -2,6 +2,7 @@ package delivery
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -107,12 +108,21 @@ func (h *Handler) getDictionary(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := r.Context()
-	dictID, err := h.dictionarySvc.GetDictionary(ctx, data.UserID, data.Name)
+	id, err := h.dictionarySvc.GetDictionary(ctx, data.UserID, data.Name)
 	if err != nil {
 		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.getDictionary: %v", err))
+		return
 	}
 
-	_, _ = w.Write([]byte(dictID.String()))
+	dictID := dto.DictionaryIDRs{
+		ID: id,
+	}
+	b, err := json.Marshal(&dictID)
+	if err != nil {
+		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.getDictionary - marshal: %v", err))
+		return
+	}
+	_, _ = w.Write(b)
 }
 
 func (h *Handler) getAllDictionary(w http.ResponseWriter, r *http.Request) {
