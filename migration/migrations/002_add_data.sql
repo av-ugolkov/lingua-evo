@@ -1,8 +1,8 @@
 -- +goose Up
 INSERT INTO
-    users (name, email, password_hash)
+    users (name, email, password_hash, role)
 VALUES
-    ('admin', 'makedonskiy07@gmail.com', '$2a$14$/55EnnJAv.3XYeKwwU6WAuAKkfO/GvSOYwADH0JSqsX2nCE2OtB.2') ON CONFLICT
+    ('admin', 'makedonskiy07@gmail.com', '$2a$14$/55EnnJAv.3XYeKwwU6WAuAKkfO/GvSOYwADH0JSqsX2nCE2OtB.2', 'admin') ON CONFLICT
 DO NOTHING;
 
 INSERT INTO
