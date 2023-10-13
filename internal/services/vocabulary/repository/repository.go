@@ -6,8 +6,6 @@ import (
 
 	"lingua-evo/internal/services/vocabulary/entity"
 	entityWord "lingua-evo/internal/services/word/entity"
-
-	"github.com/google/uuid"
 )
 
 type VocabularyRepo struct {
@@ -20,15 +18,14 @@ func NewRepo(db *sql.DB) *VocabularyRepo {
 	}
 }
 
-func (r *VocabularyRepo) AddWord(ctx context.Context, vocabulary entity.Vocabulary) (uuid.UUID, error) {
-	var id uuid.UUID
-	const query = `INSERT INTO vocabulary (dictionary_id, native_word, translate_word, examples, tags) VALUES($1, $2, $3, $4, $5) ON CONFLICT DO NOTHING RETURNING id;`
-	err := r.db.QueryRowContext(ctx, query, vocabulary.DictionaryId, vocabulary.NativeWord, vocabulary.TranslateWord, vocabulary.Examples, vocabulary.Tags).Scan(&id)
+func (r *VocabularyRepo) AddWord(ctx context.Context, vocabulary entity.Vocabulary) error {
+	const query = `INSERT INTO vocabulary (dictionary_id, native_word, translate_word, examples, tags) VALUES($1, $2, $3, $4, $5) ON CONFLICT DO NOTHING;`
+	_, err := r.db.QueryContext(ctx, query, vocabulary.DictionaryId, vocabulary.NativeWord, vocabulary.TranslateWord, vocabulary.Examples, vocabulary.Tags)
 	if err != nil {
-		return uuid.Nil, err
+		return err
 	}
 
-	return id, nil
+	return nil
 }
 
 func (r *VocabularyRepo) GetWord(ctx context.Context, dictID, word string) (*entityWord.Word, error) {
