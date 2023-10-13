@@ -5,8 +5,8 @@ let addWord = document.getElementById("add_word");
 addWord.addEventListener("submit", (e) => {
     e.preventDefault()
 
-    let orig_word = document.getElementById("orig_word")
-    let orig_lang = document.getElementById("orig_lang")
+    let native_word = document.getElementById("native_word")
+    let native_lang = document.getElementById("native_lang")
     let tran_word = document.getElementById("tran_word")
     let tran_lang = document.getElementById("tran_lang")
     let example = document.getElementById("example")
@@ -19,8 +19,8 @@ addWord.addEventListener("submit", (e) => {
             'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-            orig_word: orig_word.value,
-            orig_lang: orig_lang.value,
+            native_word: native_word.value,
+            native_lang: native_lang.value,
             tran_word: tran_word.value,
             tran_lang: tran_lang.value,
             example: example.value,

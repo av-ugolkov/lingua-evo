@@ -53,13 +53,13 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_dictionary__user_id_name ON diction
 CREATE TABLE IF NOT EXISTS
     vocabulary (
         dictionary_id UUID REFERENCES dictionary (id) NOT NULL,
-        original_word UUID REFERENCES word (id) NOT NULL,
+        native_word UUID REFERENCES word (id) NOT NULL,
         translate_word UUID[] NOT NULL,
         examples UUID[],
         tags INT[]
     );
 
-CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_vocabulary__dictionary_id_original_word ON vocabulary (dictionary_id, original_word);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_vocabulary__dictionary_id_native_word ON vocabulary (dictionary_id, native_word);
 
 CREATE TABLE IF NOT EXISTS
     tag (id bigserial PRIMARY KEY, tag TEXT NOT NULL);
