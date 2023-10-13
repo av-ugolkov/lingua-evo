@@ -8,7 +8,6 @@ import (
 	"lingua-evo/internal/services/vocabulary/dto"
 	"lingua-evo/internal/tools"
 
-	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 )
 
@@ -21,7 +20,7 @@ const (
 
 type (
 	vocabularySvc interface {
-		AddWordInVocabulary(ctx context.Context, vocab *dto.AddWordRq) (uuid.UUID, error)
+		AddWordInVocabulary(ctx context.Context, vocab *dto.AddWordRq) error
 	}
 
 	Handler struct {
@@ -58,11 +57,11 @@ func (h *Handler) addWord(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	vocabID, err := h.vocabularySvc.AddWordInVocabulary(ctx, &data)
+	err = h.vocabularySvc.AddWordInVocabulary(ctx, &data)
 	if err != nil {
 		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.addWord: %v", err))
 		return
 	}
 
-	_, _ = w.Write([]byte(vocabID.String()))
+	_, _ = w.Write([]byte("done"))
 }

@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"fmt"
-	"log/slog"
 
 	"lingua-evo/internal/services/vocabulary/dto"
 	"lingua-evo/internal/services/vocabulary/entity"
@@ -14,7 +13,7 @@ import (
 
 type (
 	repoDict interface {
-		AddWord(ctx context.Context, vocabulary entity.Vocabulary) (uuid.UUID, error)
+		AddWord(ctx context.Context, vocabulary entity.Vocabulary) error
 	}
 
 	wordSvc interface {
@@ -34,31 +33,30 @@ func NewService(repo repoDict, wordSvc wordSvc) *VocabularySvc {
 	}
 }
 
-func (s *VocabularySvc) AddWordInVocabulary(
-	ctx context.Context,
-	vocab *dto.AddWordRq,
-) (uuid.UUID, error) {
+func (s *VocabularySvc) AddWordInVocabulary(ctx context.Context, vocab *dto.AddWordRq) error {
 
 	word := entityWord.Word{
+		ID:            uuid.New(),
 		Text:          vocab.NativeWord.Text,
 		Pronunciation: vocab.NativeWord.Pronunciation,
 		LanguageCode:  vocab.NativeWord.LangCode,
 	}
 	nativeWordID, err := s.wordSvc.AddWord(ctx, &word)
 	if err != nil {
-		return uuid.Nil, fmt.Errorf("vocabulary.service.VocabularuSvc.AddWordInVocabulary - add native word in dictionary: %w", err)
+		return fmt.Errorf("vocabulary.service.VocabularuSvc.AddWordInVocabulary - add native word in dictionary: %w", err)
 	}
 
 	translateWordIDs := make([]uuid.UUID, 0, len(vocab.TanslateWords))
 	for _, translateWord := range vocab.TanslateWords {
 		word = entityWord.Word{
+			ID:            uuid.New(),
 			Text:          translateWord.Text,
 			Pronunciation: translateWord.Pronunciation,
 			LanguageCode:  translateWord.LangCode,
 		}
 		translateWordID, err := s.wordSvc.AddWord(ctx, &word)
 		if err != nil {
-			return uuid.Nil, fmt.Errorf("vocabulary.service.VocabularuSvc.AddWordInVocabulary - add translate word in dictionary: %w", err)
+			return fmt.Errorf("vocabulary.service.VocabularuSvc.AddWordInVocabulary - add translate word in dictionary: %w", err)
 		}
 		translateWordIDs = append(translateWordIDs, translateWordID)
 	}
@@ -71,14 +69,10 @@ func (s *VocabularySvc) AddWordInVocabulary(
 		Tags:          []uuid.UUID{},
 	}
 
-	slog.Info(fmt.Sprintf("vocab: %v", vocab))
-
-	fmt.Print(v)
-
-	vocabID, err := s.repo.AddWord(ctx, v)
+	err = s.repo.AddWord(ctx, v)
 	if err != nil {
-		return uuid.Nil, err
+		return fmt.Errorf("vocabulary.service.VocabularuSvc.AddWordInVocabulary - add vocabulary: %w", err)
 	}
 
-	return vocabID, nil
+	return nil
 }
