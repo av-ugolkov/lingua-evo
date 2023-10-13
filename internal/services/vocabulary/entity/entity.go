@@ -4,7 +4,7 @@ import "github.com/google/uuid"
 
 type Vocabulary struct {
 	DictionaryId  uuid.UUID
-	OriginalWord  uuid.UUID
+	NativeWord    uuid.UUID
 	TranslateWord []uuid.UUID
 	Examples      []uuid.UUID
 	Tags          []uuid.UUID
