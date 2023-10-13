@@ -10,10 +10,10 @@
     <form id=add_word method="post">
         <div class="container">
             <p>
-                <label for=orig_word><b>Origin word</b></label>
-                <input id=orig_word name=orig_word type="text" placeholder="Enter origin word" required>
+                <label for=native_word><b>Native word</b></label>
+                <input id=native_word name=native_word type="text" placeholder="Enter native word" required>
                 <label>
-                    <select id=orig_lang size="1">
+                    <select id=native_lang size="1">
                         {{ range .Languages}}
                         <option value="{{ .Code }}">{{ .Lang }}</option>
                         {{end}}
