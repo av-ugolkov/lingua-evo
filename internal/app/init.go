@@ -18,6 +18,8 @@ import (
 	dictHandler "lingua-evo/internal/services/dictionary/delivery"
 	dictRepository "lingua-evo/internal/services/dictionary/repository"
 	dictService "lingua-evo/internal/services/dictionary/service"
+	exampleRepository "lingua-evo/internal/services/example/repository"
+	exampleService "lingua-evo/internal/services/example/service"
 	indexHandler "lingua-evo/internal/services/index/delivery"
 	languageHandler "lingua-evo/internal/services/language/delivery"
 	langRepository "lingua-evo/internal/services/language/repository"
@@ -27,13 +29,12 @@ import (
 	userHandler "lingua-evo/internal/services/user/delivery"
 	userRepository "lingua-evo/internal/services/user/repository"
 	userService "lingua-evo/internal/services/user/service"
-	wordHandler "lingua-evo/internal/services/word/delivery"
-	wordRepository "lingua-evo/internal/services/word/repository"
-	wordService "lingua-evo/internal/services/word/service"
-
 	vocabularyHandler "lingua-evo/internal/services/vocabulary/delivery"
 	vocabularyRepository "lingua-evo/internal/services/vocabulary/repository"
 	vocabularyService "lingua-evo/internal/services/vocabulary/service"
+	wordHandler "lingua-evo/internal/services/word/delivery"
+	wordRepository "lingua-evo/internal/services/word/repository"
+	wordService "lingua-evo/internal/services/word/service"
 )
 
 const (
@@ -104,9 +105,13 @@ func initServer(r *mux.Router, db *sql.DB) {
 	dictRepo := dictRepository.NewRepo(db)
 	dictSvc := dictService.NewService(dictRepo)
 
+	slog.Info("example service")
+	exampleRepo := exampleRepository.NewRepo(db)
+	exampleSvc := exampleService.NewService(exampleRepo)
+
 	slog.Info("vocabulary service")
 	vocabularyRepo := vocabularyRepository.NewRepo(db)
-	vocabularySvc := vocabularyService.NewService(vocabularyRepo, wordSvc)
+	vocabularySvc := vocabularyService.NewService(vocabularyRepo, wordSvc, exampleSvc)
 
 	slog.Info("<----- create handlers ----->")
 	slog.Info("index")
