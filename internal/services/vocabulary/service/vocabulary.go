@@ -16,25 +16,30 @@ type (
 		AddWord(ctx context.Context, vocabulary entity.Vocabulary) error
 	}
 
+	exampleSvc interface {
+		AddExample(ctx context.Context, text, langCode string) (uuid.UUID, error)
+	}
+
 	wordSvc interface {
 		AddWord(ctx context.Context, word *entityWord.Word) (uuid.UUID, error)
 	}
 )
 
 type VocabularySvc struct {
-	repo    repoDict
-	wordSvc wordSvc
+	repo       repoDict
+	wordSvc    wordSvc
+	exampleSvc exampleSvc
 }
 
-func NewService(repo repoDict, wordSvc wordSvc) *VocabularySvc {
+func NewService(repo repoDict, wordSvc wordSvc, exexampleSvc exampleSvc) *VocabularySvc {
 	return &VocabularySvc{
-		repo:    repo,
-		wordSvc: wordSvc,
+		repo:       repo,
+		wordSvc:    wordSvc,
+		exampleSvc: exexampleSvc,
 	}
 }
 
 func (s *VocabularySvc) AddWordInVocabulary(ctx context.Context, vocab *dto.AddWordRq) error {
-
 	word := entityWord.Word{
 		ID:            uuid.New(),
 		Text:          vocab.NativeWord.Text,
@@ -60,12 +65,22 @@ func (s *VocabularySvc) AddWordInVocabulary(ctx context.Context, vocab *dto.AddW
 		}
 		translateWordIDs = append(translateWordIDs, translateWordID)
 	}
+
+	exampleIDs := make([]uuid.UUID, 0, len(vocab.Examples))
+	for _, example := range vocab.Examples {
+		exampleID, err := s.exampleSvc.AddExample(ctx, example, vocab.NativeWord.LangCode)
+		if err != nil {
+			return fmt.Errorf("vocabulary.service.VocabularuSvc.AddWordInVocabulary - add example: %w", err)
+		}
+		exampleIDs = append(exampleIDs, exampleID)
+	}
+
 	//TODO сначала получать id слов и остальные данные и потом создается структура
 	v := entity.Vocabulary{
 		DictionaryId:  vocab.DictionaryID,
 		NativeWord:    nativeWordID,
 		TranslateWord: translateWordIDs,
-		Examples:      []uuid.UUID{},
+		Examples:      exampleIDs,
 		Tags:          []uuid.UUID{},
 	}
 
