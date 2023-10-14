@@ -59,6 +59,11 @@ CREATE TABLE IF NOT EXISTS
 CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_dictionary__user_id_name ON dictionary (user_id, name);
 
 CREATE TABLE IF NOT EXISTS
+    tag (id bigserial PRIMARY KEY, text TEXT NOT NULL);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_tag__text ON tag (text);
+
+CREATE TABLE IF NOT EXISTS
     vocabulary (
         dictionary_id UUID REFERENCES dictionary (id) NOT NULL,
         native_word UUID NOT NULL,
@@ -68,9 +73,6 @@ CREATE TABLE IF NOT EXISTS
     );
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_vocabulary__dictionary_id_native_word ON vocabulary (dictionary_id, native_word);
-
-CREATE TABLE IF NOT EXISTS
-    tag (id bigserial PRIMARY KEY, tag TEXT NOT NULL);
 
 -- +goose Down
 DROP TABLE IF EXISTS users;
