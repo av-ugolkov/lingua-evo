@@ -7,7 +7,8 @@ import (
 )
 
 type repoExample interface {
-	AddExample(ctx context.Context, wordId uuid.UUID, example string) (uuid.UUID, error)
+	AddExample(ctx context.Context, id uuid.UUID, text, langCode string) error
+	GetExample(ctx context.Context, id uuid.UUID, langCode string) (string, error)
 }
 
 type ExampleSvc struct {
@@ -20,11 +21,21 @@ func NewService(repo repoExample) *ExampleSvc {
 	}
 }
 
-func (s *ExampleSvc) AddExample(ctx context.Context, wordId uuid.UUID, example string) (uuid.UUID, error) {
-	exampleId, err := s.repo.AddExample(ctx, wordId, example)
+func (s *ExampleSvc) AddExample(ctx context.Context, text, langCode string) (uuid.UUID, error) {
+	id := uuid.New()
+	err := s.repo.AddExample(ctx, id, text, langCode)
 	if err != nil {
 		return uuid.Nil, err
 	}
 
-	return exampleId, nil
+	return id, nil
+}
+
+func (s *ExampleSvc) GetExample(ctx context.Context, id uuid.UUID, langCode string) (string, error) {
+	text, err := s.repo.GetExample(ctx, id, langCode)
+	if err != nil {
+		return "", err
+	}
+
+	return text, nil
 }

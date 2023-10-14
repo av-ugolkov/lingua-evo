@@ -41,13 +41,13 @@ func (s *LanguageSvc) GetAvailableLanguages(ctx context.Context) ([]*entity.Lang
 	return languages, nil
 }
 
-func (s *LanguageSvc) CheckLanguage(ctx context.Context, codeLang string) error {
-	if len(codeLang) == 0 {
+func (s *LanguageSvc) CheckLanguage(ctx context.Context, langCode string) error {
+	if len(langCode) == 0 {
 		return errors.New("language.service.LanguageSvc.CheckLanguage - code language is empty")
 	}
 
-	if _, err := s.repo.GetLanguage(ctx, codeLang); err != nil {
-		return fmt.Errorf("language.service.LanguageSvc.CheckLanguage - not found language: %s", codeLang)
+	if _, err := s.repo.GetLanguage(ctx, langCode); err != nil {
+		return fmt.Errorf("language.service.LanguageSvc.CheckLanguage - not found language: %s", langCode)
 	}
 	return nil
 }

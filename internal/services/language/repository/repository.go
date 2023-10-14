@@ -18,10 +18,10 @@ func NewRepo(db *sql.DB) *LangRepo {
 	}
 }
 
-func (r *LangRepo) GetLanguage(ctx context.Context, codeLang string) (*entity.Language, error) {
+func (r *LangRepo) GetLanguage(ctx context.Context, langCode string) (*entity.Language, error) {
 	query := `SELECT code, lang FROM language WHERE code=$1`
 	language := entity.Language{}
-	err := r.db.QueryRowContext(ctx, query, codeLang).Scan(&language.Code, &language.Lang)
+	err := r.db.QueryRowContext(ctx, query, langCode).Scan(&language.Code, &language.Lang)
 	if err != nil {
 		return nil, fmt.Errorf("language.repository.LangRepo.GetLanguage - scan: %v", err)
 	}
