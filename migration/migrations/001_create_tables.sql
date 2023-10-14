@@ -41,9 +41,17 @@ create table
 CREATE UNIQUE INDEX IF NOT EXISTS "idx_unique_word_ru__text" ON "word_ru" (text);
 
 CREATE TABLE IF NOT EXISTS
-    example (id UUID DEFAULT gen_random_uuid () PRIMARY KEY, example TEXT);
+    example (id UUID DEFAULT gen_random_uuid () PRIMARY KEY, text TEXT);
 
-CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_example__example ON example (example);
+create table
+    "example_en-GB" () inherits (example);
+
+CREATE UNIQUE INDEX IF NOT EXISTS "idx_unique_example_en-GB__text" ON "example_en-GB" (text);
+
+create table
+    example_ru () inherits (example);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_example_ru__text ON example_ru (text);
 
 CREATE TABLE IF NOT EXISTS
     dictionary (id UUID PRIMARY KEY, user_id UUID REFERENCES users (id) NOT NULL, name TEXT NOT NULL, tags INT[]);
