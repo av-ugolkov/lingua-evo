@@ -7,7 +7,6 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
-	_ "net/http/pprof"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -120,31 +119,31 @@ func initServer(r *mux.Router, db *sql.DB) {
 	vocabularySvc := vocabularyService.NewService(vocabularyRepo, wordSvc, exampleSvc, tagSvc)
 
 	slog.Info("<----- create handlers ----->")
-	slog.Info("index")
+	slog.Info("index handler")
 	indexHandler.Create(r)
 
-	slog.Info("user")
+	slog.Info("user handler")
 	userHandler.Create(r, userSvc)
 
-	slog.Info("sign_in")
+	slog.Info("sign_in handler")
 	signInHandler.Create(r, userSvc)
 
-	slog.Info("sign_up")
+	slog.Info("sign_up handler")
 	signUpHandler.Create(r, userSvc)
 
-	slog.Info("account")
+	slog.Info("account handler")
 	accountHandler.Create(r)
 
-	slog.Info("language")
+	slog.Info("language handler")
 	languageHandler.Create(r, langSvc)
 
-	slog.Info("word")
+	slog.Info("word handler")
 	wordHandler.Create(r, wordSvc, langSvc)
 
-	slog.Info("dictionary")
+	slog.Info("dictionary handler")
 	dictHandler.Create(r, dictSvc)
 
-	slog.Info("vocabulary")
+	slog.Info("vocabulary handler")
 	vocabularyHandler.Create(r, vocabularySvc)
 
 	slog.Info("<----- end init services ----->")
