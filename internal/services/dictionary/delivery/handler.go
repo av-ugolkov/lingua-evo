@@ -1,7 +1,6 @@
 package delivery
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"log/slog"
@@ -11,7 +10,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"lingua-evo/internal/services/dictionary/dto"
-	"lingua-evo/internal/services/dictionary/entity"
+	"lingua-evo/internal/services/dictionary/service"
 	"lingua-evo/internal/tools"
 )
 
@@ -23,24 +22,17 @@ const (
 )
 
 type (
-	dictionarySvc interface {
-		AddDictionary(ctx context.Context, data dto.DictionaryRq) (uuid.UUID, error)
-		DeleteDictionary(ctx context.Context, userID uuid.UUID, name string) error
-		GetDictionary(ctx context.Context, userID uuid.UUID, name string) (uuid.UUID, error)
-		GetDictionaries(ctx context.Context, userID uuid.UUID) ([]*entity.Dictionary, error)
-	}
-
 	Handler struct {
-		dictionarySvc dictionarySvc
+		dictionarySvc *service.DictionarySvc
 	}
 )
 
-func Create(r *mux.Router, dictionarySvc dictionarySvc) {
+func Create(r *mux.Router, dictionarySvc *service.DictionarySvc) {
 	handler := newHandler(dictionarySvc)
 	handler.register(r)
 }
 
-func newHandler(dictionarySvc dictionarySvc) *Handler {
+func newHandler(dictionarySvc *service.DictionarySvc) *Handler {
 	return &Handler{
 		dictionarySvc: dictionarySvc,
 	}

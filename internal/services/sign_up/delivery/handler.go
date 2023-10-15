@@ -15,10 +15,10 @@ import (
 	"lingua-evo/internal/services/sign_up/entity"
 	entityUserSvc "lingua-evo/internal/services/user/entity"
 	userSvc "lingua-evo/internal/services/user/service"
-	staticFiles "lingua-evo/static"
+	"lingua-evo/pkg/tools"
 
 	linguaJWT "lingua-evo/pkg/middleware/jwt"
-	"lingua-evo/pkg/tools"
+	staticFiles "lingua-evo/static"
 
 	"github.com/cristalhq/jwt/v3"
 	"github.com/google/uuid"
@@ -34,17 +34,17 @@ const (
 
 // TODO переписать на интерфейс
 type Handler struct {
-	usersSvc *userSvc.UserSvc
+	userSvc *userSvc.UserSvc
 }
 
-func Create(r *mux.Router, srcUser *userSvc.UserSvc) {
-	handler := newHandler(srcUser)
+func Create(r *mux.Router, userSvc *userSvc.UserSvc) {
+	handler := newHandler(userSvc)
 	handler.register(r)
 }
 
-func newHandler(usersSvc *userSvc.UserSvc) *Handler {
+func newHandler(userSvc *userSvc.UserSvc) *Handler {
 	return &Handler{
-		usersSvc: usersSvc,
+		userSvc: userSvc,
 	}
 }
 
@@ -95,7 +95,7 @@ func (h *Handler) post(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	uid, err := h.usersSvc.AddUser(r.Context(), &entityUserSvc.User{
+	uid, err := h.userSvc.AddUser(r.Context(), &entityUserSvc.User{
 		Username:     username,
 		PasswordHash: hashPassword,
 		Email:        email})
@@ -181,7 +181,7 @@ func (h *Handler) validateEmail(ctx context.Context, email string) error {
 		return entity.ErrEmailNotCorrect
 	}
 
-	uid, err := h.usersSvc.GetIDByEmail(ctx, email)
+	uid, err := h.userSvc.GetIDByEmail(ctx, email)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return err
 	} else if uid == uuid.Nil && err == nil {
@@ -202,7 +202,7 @@ func (h *Handler) validateUsername(ctx context.Context, username string) error {
 		return entity.ErrUsernameAdmin
 	}
 
-	uid, err := h.usersSvc.GetIDByName(ctx, username)
+	uid, err := h.userSvc.GetIDByName(ctx, username)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return err
 	} else if uid == uuid.Nil && err == nil {

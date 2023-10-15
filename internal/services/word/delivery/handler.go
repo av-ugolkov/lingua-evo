@@ -1,14 +1,15 @@
 package delivery
 
 import (
-	"context"
 	"fmt"
 	"log/slog"
 	"net/http"
 
 	entityLanguage "lingua-evo/internal/services/language/entity"
+	serviceLang "lingua-evo/internal/services/language/service"
 	"lingua-evo/internal/services/word/dto"
 	"lingua-evo/internal/services/word/entity"
+	serviceWord "lingua-evo/internal/services/word/service"
 	"lingua-evo/internal/tools"
 	staticFiles "lingua-evo/static"
 
@@ -26,30 +27,18 @@ const (
 const addWordPage = "web/dictionary/add_word/add_word.html"
 
 type (
-	langSvc interface {
-		GetAvailableLanguages(ctx context.Context) ([]*entityLanguage.Language, error)
-		GetLanguage(ctx context.Context, lang string) (*entityLanguage.Language, error)
-		CheckLanguage(ctx context.Context, lang string) error
-	}
-
-	wordSvc interface {
-		AddWord(ctx context.Context, word *entity.Word) (uuid.UUID, error)
-		GetWord(ctx context.Context, text, language string) (uuid.UUID, error)
-		GetRandomWord(ctx context.Context, lang string) (*entity.Word, error)
-	}
-
 	Handler struct {
-		wordSvc wordSvc
-		langSvc langSvc
+		wordSvc *serviceWord.WordSvc
+		langSvc *serviceLang.LanguageSvc
 	}
 )
 
-func Create(r *mux.Router, wordSvc wordSvc, langSvc langSvc) {
+func Create(r *mux.Router, wordSvc *serviceWord.WordSvc, langSvc *serviceLang.LanguageSvc) {
 	handler := newHandler(wordSvc, langSvc)
 	handler.register(r)
 }
 
-func newHandler(wordSvc wordSvc, langSvc langSvc) *Handler {
+func newHandler(wordSvc *serviceWord.WordSvc, langSvc *serviceLang.LanguageSvc) *Handler {
 	return &Handler{
 		wordSvc: wordSvc,
 		langSvc: langSvc,
