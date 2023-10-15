@@ -1,7 +1,6 @@
 package delivery
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"log/slog"
@@ -10,6 +9,7 @@ import (
 
 	"lingua-evo/internal/config"
 	"lingua-evo/internal/services/sign_in/entity"
+	"lingua-evo/internal/services/user/service"
 	staticFiles "lingua-evo/static"
 
 	linguaJWT "lingua-evo/pkg/middleware/jwt"
@@ -26,21 +26,17 @@ const (
 )
 
 type (
-	userSvc interface {
-		GetIDByName(context.Context, string) (uuid.UUID, error)
-	}
-
 	Handler struct {
-		userSvc userSvc
+		userSvc *service.UserSvc
 	}
 )
 
-func Create(r *mux.Router, userSvc userSvc) {
+func Create(r *mux.Router, userSvc *service.UserSvc) {
 	handler := newHandler(userSvc)
 	handler.register(r)
 }
 
-func newHandler(userSvc userSvc) *Handler {
+func newHandler(userSvc *service.UserSvc) *Handler {
 	return &Handler{
 		userSvc: userSvc,
 	}

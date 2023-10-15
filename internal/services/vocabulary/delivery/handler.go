@@ -1,11 +1,11 @@
 package delivery
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 
 	"lingua-evo/internal/services/vocabulary/dto"
+	"lingua-evo/internal/services/vocabulary/service"
 	"lingua-evo/internal/tools"
 
 	"github.com/gorilla/mux"
@@ -19,21 +19,17 @@ const (
 )
 
 type (
-	vocabularySvc interface {
-		AddWordInVocabulary(ctx context.Context, vocab *dto.AddWordRq) error
-	}
-
 	Handler struct {
-		vocabularySvc vocabularySvc
+		vocabularySvc *service.VocabularySvc
 	}
 )
 
-func Create(r *mux.Router, vocabularySvc vocabularySvc) {
+func Create(r *mux.Router, vocabularySvc *service.VocabularySvc) {
 	handler := newHandler(vocabularySvc)
 	handler.register(r)
 }
 
-func newHandler(vocabularySvc vocabularySvc) *Handler {
+func newHandler(vocabularySvc *service.VocabularySvc) *Handler {
 	return &Handler{
 		vocabularySvc: vocabularySvc,
 	}

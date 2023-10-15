@@ -1,13 +1,12 @@
 package delivery
 
 import (
-	"context"
 	"encoding/json"
 	"net/http"
 
 	"github.com/gorilla/mux"
 
-	"lingua-evo/internal/services/language/entity"
+	"lingua-evo/internal/services/language/service"
 )
 
 const (
@@ -15,21 +14,17 @@ const (
 )
 
 type (
-	langSvc interface {
-		GetAvailableLanguages(context.Context) ([]*entity.Language, error)
-	}
-
 	Handler struct {
-		langSvc langSvc
+		langSvc *service.LanguageSvc
 	}
 )
 
-func Create(r *mux.Router, langSvc langSvc) {
+func Create(r *mux.Router, langSvc *service.LanguageSvc) {
 	handler := newHandler(langSvc)
 	handler.register(r)
 }
 
-func newHandler(langSvc langSvc) *Handler {
+func newHandler(langSvc *service.LanguageSvc) *Handler {
 	return &Handler{
 		langSvc: langSvc,
 	}
