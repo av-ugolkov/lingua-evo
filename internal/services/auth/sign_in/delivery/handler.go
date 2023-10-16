@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"lingua-evo/internal/config"
-	"lingua-evo/internal/services/sign_in/entity"
+	"lingua-evo/internal/services/auth/sign_in/entity"
 	"lingua-evo/internal/services/user/service"
 	staticFiles "lingua-evo/static"
 
