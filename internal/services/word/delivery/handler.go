@@ -8,12 +8,11 @@ import (
 	entityLanguage "lingua-evo/internal/services/language/entity"
 	serviceLang "lingua-evo/internal/services/language/service"
 	"lingua-evo/internal/services/word/dto"
-	"lingua-evo/internal/services/word/entity"
 	serviceWord "lingua-evo/internal/services/word/service"
+
 	"lingua-evo/internal/tools"
 	staticFiles "lingua-evo/static"
 
-	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 )
 
@@ -93,20 +92,13 @@ func (h *Handler) addWord(w http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
 
-	lang, err := h.langSvc.GetLanguage(ctx, data.Language)
+	err := h.langSvc.CheckLanguage(ctx, data.LanguageCode)
 	if err != nil {
-		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.addWord - get language: %v", err))
+		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.addWord - check language: %v", err))
 		return
 	}
 
-	word := &entity.Word{
-		ID:            uuid.New(),
-		Text:          data.Text,
-		Pronunciation: data.Pronunciation,
-		LanguageCode:  lang.Code,
-	}
-
-	wordUUID, err := h.wordSvc.AddWord(ctx, word)
+	wordUUID, err := h.wordSvc.AddWord(ctx, &data)
 	if err != nil {
 		tools.SendError(w, http.StatusInternalServerError, err)
 		return
@@ -128,12 +120,12 @@ func (h *Handler) getWord(w http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
 
-	if err := h.langSvc.CheckLanguage(ctx, data.Language); err != nil {
+	if err := h.langSvc.CheckLanguage(ctx, data.LanguageCode); err != nil {
 		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getWord - check language: %v", err))
 		return
 	}
 
-	wordID, err := h.wordSvc.GetWord(ctx, data.Text, data.Language)
+	wordID, err := h.wordSvc.GetWord(ctx, &data)
 	if err != nil {
 		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getWord: %v", err))
 		return
@@ -155,12 +147,12 @@ func (h *Handler) getRandomWord(w http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
 
-	if err := h.langSvc.CheckLanguage(ctx, data.Language); err != nil {
+	if err := h.langSvc.CheckLanguage(ctx, data.LanguageCode); err != nil {
 		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getRandomWord - check language: %v", err))
 		return
 	}
 
-	word, err := h.wordSvc.GetRandomWord(ctx, data.Language)
+	word, err := h.wordSvc.GetRandomWord(ctx, &data)
 	if err != nil {
 		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getRandomWord: %v", err))
 		return
