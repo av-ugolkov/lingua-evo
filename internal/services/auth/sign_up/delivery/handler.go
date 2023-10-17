@@ -15,6 +15,7 @@ import (
 	"lingua-evo/internal/services/auth/sign_up/entity"
 	entityUserSvc "lingua-evo/internal/services/user/entity"
 	userSvc "lingua-evo/internal/services/user/service"
+	httpTools "lingua-evo/internal/tools"
 	"lingua-evo/pkg/tools"
 
 	staticFiles "lingua-evo"
@@ -32,7 +33,6 @@ const (
 	signupPage = "website/sign_up/signup.html"
 )
 
-// TODO переписать на интерфейс
 type Handler struct {
 	userSvc *userSvc.UserSvc
 }
@@ -65,43 +65,45 @@ func (h *Handler) get(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) post(w http.ResponseWriter, r *http.Request) {
-	//TODO получение данных из формы плохое решение
-	username := r.FormValue("username")
-	email := r.FormValue("email")
-	password := r.FormValue("password")
+	defer func() {
+		_ = r.Body.Close()
+	}()
 
-	if err := h.validateEmail(r.Context(), email); err != nil {
-		w.WriteHeader(http.StatusConflict)
-		_, _ = w.Write([]byte(err.Error()))
+	var data entity.UserRq
+	err := httpTools.CheckBody(w, r, &data)
+	if err != nil {
+		httpTools.SendError(w, http.StatusBadRequest, fmt.Errorf("auth.sign_up.Handler.post - check body: %v", err))
+		return
+	}
+	if err := h.validateEmail(r.Context(), data.Email); err != nil {
+		httpTools.SendError(w, http.StatusConflict, fmt.Errorf("auth.sign_up.Handler.post - validateEmail: %v", err))
 		return
 	}
 
-	if err := h.validateUsername(r.Context(), username); err != nil {
-		w.WriteHeader(http.StatusConflict)
-		_, _ = w.Write([]byte(err.Error()))
+	if err := h.validateUsername(r.Context(), data.Username); err != nil {
+		httpTools.SendError(w, http.StatusConflict, fmt.Errorf("auth.sign_up.Handler.post - validateUsername: %v", err))
 		return
 	}
 
-	if err := validatePassword(password); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		_, _ = w.Write([]byte(err.Error()))
+	if err := validatePassword(data.Password); err != nil {
+		httpTools.SendError(w, http.StatusConflict, fmt.Errorf("auth.sign_up.Handler.post - validatePassword: %v", err))
 		return
 	}
 
-	hashPassword, err := hashPassword(password)
+	hashPassword, err := hashPassword(data.Password)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		_, _ = w.Write([]byte(err.Error()))
 		return
 	}
 
-	uid, err := h.userSvc.AddUser(r.Context(), &entityUserSvc.User{
-		Username:     username,
+	uid, err := h.userSvc.CreateUser(r.Context(), &entityUserSvc.User{
+		Username:     data.Username,
 		PasswordHash: hashPassword,
-		Email:        email})
+		Email:        data.Email,
+	})
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		_, _ = w.Write([]byte(err.Error()))
+		httpTools.SendError(w, http.StatusInternalServerError, fmt.Errorf("auth.sign_up.Handler.post - create user: %v", err))
 		return
 	}
 
