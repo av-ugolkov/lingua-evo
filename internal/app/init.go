@@ -39,8 +39,8 @@ import (
 )
 
 const (
-	filePath = "/static/"
-	rootPath = "./../static"
+	filePath = "/website/"
+	rootPath = "./../website"
 )
 
 func ServerStart(cfg *config.Config) {
