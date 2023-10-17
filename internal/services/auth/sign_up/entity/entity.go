@@ -23,7 +23,7 @@ var (
 	ErrPasswordDifficult = errors.New("password must be more difficult")
 )
 
-type User struct {
+type UserRq struct {
 	Email    string `json:"email"`
 	Username string `json:"username"`
 	Password string `json:"password"`
