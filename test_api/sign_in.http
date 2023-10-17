@@ -1,0 +1,25 @@
+### SIGN IN GET
+GET http://localhost:5000/signin
+Content-Type: application/json
+
+### SIGN IN PUT
+PUT http://localhost:5000/signin
+Content-Type: application/json
+
+{
+  "refresh_token": "{{refresh_token}}"
+}
+
+> {%
+    client.global.set("auth_token", response.body.token)
+    client.global.set("refresh_token", response.body.refresh_token)
+%}
+
+### SIGN IN POST
+POST http://localhost:5000/signin
+Content-Type: application/json
+
+{
+  "username": "me",
+  "password": "pass"
+}
