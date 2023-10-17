@@ -1,0 +1,14 @@
+pprof_debug:
+    enable: false
+    port: 6060
+jwt:
+    secret: $3cr3t
+service:
+    type: tcp
+    port: 5000
+database:
+    name_db: pg-lingua-evo
+    user: lingua
+    password: ib6vACdec2Fmht4lnX153
+    host: postgres-lingua-evo
+    port: 5432
