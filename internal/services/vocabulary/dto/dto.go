@@ -11,6 +11,11 @@ type (
 		Tags          []string         `json:"tags"`
 	}
 
+	RemoveWordRq struct {
+		DictionaryID uuid.UUID `json:"dictionary_id"`
+		NativeWordID uuid.UUID `json:"native_word_id"`
+	}
+
 	VocabularyWord struct {
 		Text          string `json:"text"`
 		Pronunciation string `json:"pronunciation,omitempty"`
