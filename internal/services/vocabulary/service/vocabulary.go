@@ -12,8 +12,9 @@ import (
 )
 
 type (
-	repoDict interface {
+	repoVocabulary interface {
 		AddWord(ctx context.Context, vocabulary entity.Vocabulary) error
+		DeleteWord(ctx context.Context, vocabulary entity.Vocabulary) (int64, error)
 	}
 
 	exampleSvc interface {
@@ -30,14 +31,14 @@ type (
 )
 
 type VocabularySvc struct {
-	repo       repoDict
+	repo       repoVocabulary
 	wordSvc    wordSvc
 	exampleSvc exampleSvc
 	tagSvc     tagSvc
 }
 
 func NewService(
-	repo repoDict,
+	repo repoVocabulary,
 	wordSvc wordSvc,
 	exexampleSvc exampleSvc,
 	tagSvc tagSvc,
@@ -50,19 +51,19 @@ func NewService(
 	}
 }
 
-func (s *VocabularySvc) AddWordInVocabulary(ctx context.Context, vocab *dto.AddWordRq) error {
+func (s *VocabularySvc) AddWordInVocabulary(ctx context.Context, v *dto.AddWordRq) error {
 	word := dtoWord.AddWordRequest{
-		Text:          vocab.NativeWord.Text,
-		Pronunciation: vocab.NativeWord.Pronunciation,
-		LanguageCode:  vocab.NativeWord.LangCode,
+		Text:          v.NativeWord.Text,
+		Pronunciation: v.NativeWord.Pronunciation,
+		LanguageCode:  v.NativeWord.LangCode,
 	}
 	nativeWordID, err := s.wordSvc.AddWord(ctx, &word)
 	if err != nil {
 		return fmt.Errorf("vocabulary.service.VocabularuSvc.AddWordInVocabulary - add native word in dictionary: %w", err)
 	}
 
-	translateWordIDs := make([]uuid.UUID, 0, len(vocab.TanslateWords))
-	for _, translateWord := range vocab.TanslateWords {
+	translateWordIDs := make([]uuid.UUID, 0, len(v.TanslateWords))
+	for _, translateWord := range v.TanslateWords {
 		word = dtoWord.AddWordRequest{
 			Text:          translateWord.Text,
 			Pronunciation: translateWord.Pronunciation,
@@ -75,17 +76,17 @@ func (s *VocabularySvc) AddWordInVocabulary(ctx context.Context, vocab *dto.AddW
 		translateWordIDs = append(translateWordIDs, translateWordID)
 	}
 
-	exampleIDs := make([]uuid.UUID, 0, len(vocab.Examples))
-	for _, example := range vocab.Examples {
-		exampleID, err := s.exampleSvc.AddExample(ctx, example, vocab.NativeWord.LangCode)
+	exampleIDs := make([]uuid.UUID, 0, len(v.Examples))
+	for _, example := range v.Examples {
+		exampleID, err := s.exampleSvc.AddExample(ctx, example, v.NativeWord.LangCode)
 		if err != nil {
 			return fmt.Errorf("vocabulary.service.VocabularuSvc.AddWordInVocabulary - add example: %w", err)
 		}
 		exampleIDs = append(exampleIDs, exampleID)
 	}
 
-	tagIDs := make([]uuid.UUID, 0, len(vocab.Tags))
-	for _, tag := range vocab.Tags {
+	tagIDs := make([]uuid.UUID, 0, len(v.Tags))
+	for _, tag := range v.Tags {
 		tagID, err := s.tagSvc.AddTag(ctx, tag)
 		if err != nil {
 			return fmt.Errorf("vocabulary.service.VocabularuSvc.AddWordInVocabulary - add tag: %w", err)
@@ -93,18 +94,31 @@ func (s *VocabularySvc) AddWordInVocabulary(ctx context.Context, vocab *dto.AddW
 		tagIDs = append(tagIDs, tagID)
 	}
 
-	v := entity.Vocabulary{
-		DictionaryId:  vocab.DictionaryID,
-		NativeWord:    nativeWordID,
-		TranslateWord: translateWordIDs,
-		Examples:      exampleIDs,
-		Tags:          tagIDs,
+	vocabulary := entity.Vocabulary{
+		DictionaryId:   v.DictionaryID,
+		NativeWord:     nativeWordID,
+		TranslateWords: translateWordIDs,
+		Examples:       exampleIDs,
+		Tags:           tagIDs,
 	}
 
-	err = s.repo.AddWord(ctx, v)
+	err = s.repo.AddWord(ctx, vocabulary)
 	if err != nil {
 		return fmt.Errorf("vocabulary.service.VocabularuSvc.AddWordInVocabulary - add vocabulary: %w", err)
 	}
 
+	return nil
+}
+
+func (s *VocabularySvc) DeleteWordFromVocabulary(ctx context.Context, v *dto.RemoveWordRq) error {
+	vocabulary := entity.Vocabulary{
+		DictionaryId: v.DictionaryID,
+		NativeWord:   v.NativeWordID,
+	}
+
+	_, err := s.repo.DeleteWord(ctx, vocabulary)
+	if err != nil {
+		return fmt.Errorf("vocabulary.service.VocabularySvc.DeleteWordFromVocabulary - delete word: %w", err)
+	}
 	return nil
 }

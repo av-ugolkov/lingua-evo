@@ -37,6 +37,7 @@ func newHandler(vocabularySvc *service.VocabularySvc) *Handler {
 
 func (h *Handler) register(r *mux.Router) {
 	r.HandleFunc(addVocabulary, h.addWord).Methods(http.MethodPost)
+	r.HandleFunc(deleteVocabulary, h.deleteWord).Methods(http.MethodDelete)
 }
 
 func (h *Handler) addWord(w http.ResponseWriter, r *http.Request) {
@@ -56,6 +57,28 @@ func (h *Handler) addWord(w http.ResponseWriter, r *http.Request) {
 	err = h.vocabularySvc.AddWordInVocabulary(ctx, &data)
 	if err != nil {
 		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.addWord: %v", err))
+		return
+	}
+
+	_, _ = w.Write([]byte("done"))
+}
+
+func (h *Handler) deleteWord(w http.ResponseWriter, r *http.Request) {
+	defer func() {
+		_ = r.Body.Close()
+	}()
+
+	ctx := r.Context()
+	var data dto.RemoveWordRq
+	err := tools.CheckBody(w, r, &data)
+	if err != nil {
+		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.deleteWord - check body: %v", err))
+		return
+	}
+
+	err = h.vocabularySvc.DeleteWordFromVocabulary(ctx, &data)
+	if err != nil {
+		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.deleteWord: %v", err))
 		return
 	}
 
