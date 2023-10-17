@@ -26,7 +26,7 @@ func NewService(repo userRepo) *UserSvc {
 	}
 }
 
-func (s *UserSvc) AddUser(ctx context.Context, user *entity.User) (uuid.UUID, error) {
+func (s *UserSvc) CreateUser(ctx context.Context, user *entity.User) (uuid.UUID, error) {
 	uid, err := s.repo.AddUser(ctx, user)
 	if err != nil {
 		return uuid.Nil, err
