@@ -7,14 +7,14 @@ import (
 
 	"github.com/gorilla/mux"
 
-	staticFiles "lingua-evo/static"
+	staticFiles "lingua-evo"
 )
 
 const (
 	mainURL  = "/"
 	indexURL = "/index"
 
-	indexPagePath = "web/index.html"
+	indexPagePath = "website/index.html"
 )
 
 type Handler struct{}

@@ -10,8 +10,8 @@ import (
 	"lingua-evo/internal/services/word/dto"
 	serviceWord "lingua-evo/internal/services/word/service"
 
+	staticFiles "lingua-evo"
 	"lingua-evo/internal/tools"
-	staticFiles "lingua-evo/static"
 
 	"github.com/gorilla/mux"
 )
@@ -23,7 +23,7 @@ const (
 	getRandomWord = "/word/get_random"
 )
 
-const addWordPage = "web/dictionary/add_word/add_word.html"
+const addWordPage = "dictionary/add_word/add_word.html"
 
 type (
 	Handler struct {

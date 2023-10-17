@@ -7,7 +7,7 @@ import (
 	"io"
 )
 
-//go:embed web
+//go:embed website
 var files embed.FS
 
 // OpenFile: open static file and return array bytes.

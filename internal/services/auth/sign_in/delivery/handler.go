@@ -10,8 +10,8 @@ import (
 	"lingua-evo/internal/config"
 	"lingua-evo/internal/services/auth/sign_in/entity"
 	"lingua-evo/internal/services/user/service"
-	staticFiles "lingua-evo/static"
 
+	staticFiles "lingua-evo"
 	linguaJWT "lingua-evo/pkg/middleware/jwt"
 
 	"github.com/cristalhq/jwt/v3"
@@ -22,7 +22,7 @@ import (
 const (
 	signInURL = "/signin"
 
-	signInPage = "web/sign_in/signin.html"
+	signInPage = "website/sign_in/signin.html"
 )
 
 type (
