@@ -1,0 +1,9 @@
+# Lingua
+logs/*
+main
+
+.DS_Store
+.vs/
+.vscode/
+# Ignore Rider IDE folder
+.idea/
