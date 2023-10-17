@@ -17,8 +17,8 @@ import (
 	userSvc "lingua-evo/internal/services/user/service"
 	"lingua-evo/pkg/tools"
 
+	staticFiles "lingua-evo"
 	linguaJWT "lingua-evo/pkg/middleware/jwt"
-	staticFiles "lingua-evo/static"
 
 	"github.com/cristalhq/jwt/v3"
 	"github.com/google/uuid"
@@ -29,7 +29,7 @@ import (
 const (
 	signUpURL = "/signup"
 
-	signupPage = "web/sign_up/signup.html"
+	signupPage = "website/sign_up/signup.html"
 )
 
 // TODO переписать на интерфейс

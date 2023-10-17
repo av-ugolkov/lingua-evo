@@ -3,7 +3,7 @@ package delivery
 import (
 	"net/http"
 
-	staticFiles "lingua-evo/static"
+	staticFiles "lingua-evo"
 
 	"github.com/gorilla/mux"
 )
@@ -11,7 +11,7 @@ import (
 const (
 	account = "/account"
 
-	accountPagePath = "web/account/account.html"
+	accountPagePath = "account/account.html"
 )
 
 type Handler struct {

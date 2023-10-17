@@ -15,7 +15,7 @@ RUN apk --no-cache --update --upgrade add curl
 
 WORKDIR /lingua-evo
 COPY /configs/${config_dir}/server_config.yaml ./configs/server_config.yaml
-COPY /static/web ./static/web
+COPY /website/ ./website/
 COPY --from=builder ./build/main ./cmd/
 
 EXPOSE 5000
