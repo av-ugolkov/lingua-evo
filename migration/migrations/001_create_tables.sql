@@ -31,25 +31,25 @@ CREATE TABLE IF NOT EXISTS
     );
 
 create table
-    "word_en-GB" () inherits (word);
+    "word_en-GB" () INHERITS (word);
 
 CREATE UNIQUE INDEX IF NOT EXISTS "idx_unique_word_en-GB__text" ON "word_en-GB" (text);
 
 create table
-    word_ru () inherits (word);
+    word_ru () INHERITS (word);
 
 CREATE UNIQUE INDEX IF NOT EXISTS "idx_unique_word_ru__text" ON "word_ru" (text);
 
 CREATE TABLE IF NOT EXISTS
     example (id UUID DEFAULT gen_random_uuid () PRIMARY KEY, text TEXT);
 
-create table
-    "example_en-GB" () inherits (example);
+CREATE TABLE IF NOT EXISTS
+    "example_en-GB" () INHERITS (example);
 
 CREATE UNIQUE INDEX IF NOT EXISTS "idx_unique_example_en-GB__text" ON "example_en-GB" (text);
 
-create table
-    example_ru () inherits (example);
+CREATE TABLE IF NOT EXISTS
+    example_ru () INHERITS (example);
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_example_ru__text ON example_ru (text);
 
@@ -84,5 +84,7 @@ DROP TABLE IF EXISTS example;
 DROP TABLE IF EXISTS word;
 
 DROP TABLE IF EXISTS dictionary;
+
+DROP TABLE IF EXISTS vocabulary;
 
 DROP TABLE IF EXISTS tag;

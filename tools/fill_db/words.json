@@ -1,0 +1,565 @@
+{
+    "dictionary": [
+        {
+            "word": "get by",
+            "translate": [
+                "получить"
+            ],
+            "example": [
+                "How much money do you need to get by each day?"
+            ]
+        },
+        {
+            "word": "get away",
+            "translate": [
+                "уходить"
+            ],
+            "example": [
+                "How often do you get away from it all?"
+            ]
+        },
+        {
+            "word": "get into",
+            "translate": [
+                "попасть в"
+            ],
+            "example": [
+                "When was the last time you got into trouble?"
+            ]
+        },
+        {
+            "word": "get together",
+            "translate": [
+                "собираться"
+            ],
+            "example": [
+                "When was the last time you got together with your friends?"
+            ]
+        },
+        {
+            "word": "get away with it",
+            "translate": [
+                "сходить с рук"
+            ],
+            "example": [
+                "Have you ever done something wrong and gotten away with it?"
+            ]
+        },
+        {
+            "word": "get up to",
+            "translate": [
+                "вставать",
+                "заниматься"
+            ],
+            "example": [
+                "What did you get up to last weekend?"
+            ]
+        },
+        {
+            "word": "get up",
+            "translate": [
+                "вставать"
+            ],
+            "example": [
+                "What time do you usually get up?",
+                "What do you do after you get up?"
+            ]
+        },
+        {
+            "word": "get rid of",
+            "translate": [
+                "избавляться от"
+            ],
+            "example": [
+                "What would you like to get rid of in your house?"
+            ]
+        },
+        {
+            "word": "get to",
+            "translate": [
+                "добраться до"
+            ],
+            "example": [
+                "How long does it take you to get to class?"
+            ]
+        },
+        {
+            "word": "get over",
+            "translate": [
+                "забыть",
+                "пережить"
+            ],
+            "example": [
+                "What do you usually do to get over a big disappointment?"
+            ]
+        },
+        {
+            "word": "get through to",
+            "translate": [
+                "пройти к",
+                "дозвониться"
+            ],
+            "example": [
+                "What do you do when you can't get through to someone on the phone?"
+            ]
+        },
+        {
+            "word": "get off",
+            "translate": [
+                "отправиться",
+                "отделаться"
+            ],
+            "example": [
+                "What was the last time you did something wrong and got off lightly?"
+            ]
+        },
+        {
+            "word": "get wound up",
+            "translate": [
+                "заводиться"
+            ],
+            "example": [
+                "When was the last time you got wound up?"
+            ]
+        },
+        {
+            "word": "get out of",
+            "translate": [
+                "убираться из",
+                "избежать"
+            ],
+            "example": [
+                "What lies have you told to get out of doing something?"
+            ]
+        },
+        {
+            "word": "get down",
+            "translate": [
+                "спускаться"
+            ],
+            "example": [
+                "Have you ever had problems getting down from somewhere?"
+            ]
+        },
+        {
+            "word": "get on with",
+            "translate": [
+                "ужиться",
+                "ладить"
+            ],
+            "example": [
+                "How well do you get on with everyone in your family?"
+            ]
+        },
+        {
+            "word": "count on",
+            "translate": [
+                "рассчитывать на"
+            ],
+            "example": []
+        },
+        {
+            "word": "calm down",
+            "translate": [
+                "успокоиться"
+            ],
+            "example": []
+        },
+        {
+            "word": "over yonder",
+            "translate": [],
+            "example": []
+        },
+        {
+            "word": "on a roll",
+            "translate": [],
+            "example": []
+        },
+        {
+            "word": "till the cows come home",
+            "translate": [
+                "повторять до посинения"
+            ],
+            "example": []
+        },
+        {
+            "word": "as all get out",
+            "translate": [],
+            "example": []
+        },
+        {
+            "word": "flake out",
+            "translate": [],
+            "example": []
+        },
+        {
+            "word": "figure out",
+            "translate": [
+                "понимать",
+                "вычислять"
+            ],
+            "example": []
+        },
+        {
+            "word": "turn down",
+            "translate": [
+                "отказываться",
+                "отклонять"
+            ],
+            "example": []
+        },
+        {
+            "word": "put off",
+            "translate": [
+                "откладывать"
+            ],
+            "example": []
+        },
+        {
+            "word": "come up with",
+            "translate": [
+                "придумывать"
+            ],
+            "example": []
+        },
+        {
+            "word": "mess up",
+            "translate": [
+                "испортить",
+                "портачить"
+            ],
+            "example": []
+        },
+        {
+            "word": "miss out",
+            "translate": [
+                "пропустить"
+            ],
+            "example": []
+        },
+        {
+            "word": "knuckle down",
+            "translate": [
+                "решительно взяться"
+            ],
+            "example": [
+                ""
+            ]
+        },
+        {
+            "word": "fucked out",
+            "translate": [
+                "разбитый",
+                "уставший"
+            ],
+            "example": [],
+            "pronunciation": "['fʌkt'aut]"
+        },
+        {
+            "word": "clue",
+            "translate": [
+                "зацепка"
+            ],
+            "pronunciation": "[klu:]"
+        },
+        {
+            "word": "muggy",
+            "translate": [
+                "душный"
+            ],
+            "pronunciation": "['mʌgɪ]"
+        },
+        {
+            "word": "dump",
+            "translate": [
+                "бросать"
+            ],
+            "pronunciation": "[dʌmp]"
+        },
+        {
+            "word": "murder",
+            "translate": [
+                "убийца"
+            ],
+            "pronunciation": "['mɜ:də]"
+        },
+        {
+            "word": "droopy",
+            "translate": [
+                "упавший духом",
+                "впавший в уныние",
+                "разбитый"
+            ],
+            "pronunciation": "['dru:pɪ]"
+        },
+        {
+            "word": "solve a task/problem",
+            "translate": [
+                "упавший духом",
+                "впавший в уныние",
+                "разбитый"
+            ]
+        },
+        {
+            "word": "widespread"
+        },
+        {
+            "word": "surroundings",
+            "translate": [
+                "среда",
+                "окрестности"
+            ],
+            "pronunciation": "[sə'raundɪŋz]"
+        },
+        {
+            "word": "depend on",
+            "translate": [
+                "зависит от"
+            ]
+        },
+        {
+            "word": "surrounded by",
+            "translate": [
+                "окружен"
+            ]
+        },
+        {
+            "word": "under development",
+            "translate": [
+                "в разработке"
+            ]
+        },
+        {
+            "word": "pick us up",
+            "translate": [
+                "подбери нас"
+            ]
+        },
+        {
+            "word": "it stand for",
+            "translate": [
+                "это означает"
+            ]
+        },
+        {
+            "word": "explanation",
+            "translate": [
+                "объяснение"
+            ]
+        },
+        {
+            "word": "operate",
+            "translate": [
+                "работать",
+                "управлять",
+                "действовать"
+            ]
+        },
+        {
+            "word": "foundational",
+            "translate": [
+                "основополагающий"
+            ]
+        },
+        {
+            "word": "quirk",
+            "translate": [
+                "причуда",
+                "каламбур",
+                "острота́",
+                "высмеивать"
+            ],
+            "pronunciation": "[kwɜ:k]"
+        },
+        {
+            "word": "impact",
+            "translate": [
+                "влияние",
+                "воздействие",
+                "удар"
+            ]
+        },
+        {
+            "word": "decrease",
+            "translate": [
+                "уменьшение",
+                "понижение",
+                "спад"
+            ]
+        },
+        {
+            "word": "introduce",
+            "translate": [
+                "вводить",
+                "вносить",
+                "представлять"
+            ]
+        },
+        {
+            "word": "relevant",
+            "translate": [
+                "релевантный",
+                "уместный"
+            ]
+        },
+        {
+            "word": "regardless",
+            "translate": [
+                "несмотря ни на что",
+                "не обращающий внимания",
+                "не заслуживающий внимания",
+                "не считающийся",
+                "не обращая внимания ни на что",
+                "не считаясь ни с чем"
+            ],
+            "pronunciation": "[rɪ'gɑ:dlɪs]"
+        },
+        {
+            "word": "spread",
+            "translate": [
+                "распространение",
+                "размах",
+                "протяженность"
+            ],
+            "pronunciation": "[spred]"
+        },
+        {
+            "word": "allocate",
+            "translate": [
+                "распределять",
+                "предназначать"
+            ]
+        },
+        {
+            "word": "reason",
+            "translate": [
+                "причина",
+                "повод",
+                "основание"
+            ],
+            "pronunciation": "['ri:z(ə)n]"
+        },
+        {
+            "word": "entirely",
+            "translate": [
+                "полностью",
+                "целиком",
+                "совершенно"
+            ],
+            "pronunciation": "[ɪn'taɪəlɪ]"
+        },
+        {
+            "word": "entire",
+            "translate": [
+                "весь",
+                "целый",
+                "полный"
+            ]
+        },
+        {
+            "word": "surgery",
+            "translate": [
+                "операция(хирургическая)"
+            ],
+            "pronunciation": "['sɜ:ʤ(ə)rɪ]"
+        },
+        {
+            "word": "operation",
+            "translate": [
+                "операция(хирургическая)"
+            ],
+            "pronunciation": "['ɔpə'reɪʃ(ə)n]"
+        },
+        {
+            "word": "abdomen",
+            "translate": [
+                "живот"
+            ],
+            "pronunciation": "['æbdəmən]"
+        },
+        {
+            "word": "appendicitis",
+            "translate": [
+                "аппендицит"
+            ],
+            "pronunciation": "[əˌpendɪˈsaɪtɪs]"
+        },
+        {
+            "word": "dismiss",
+            "translate": [
+                "снять",
+                "увольнение",
+                "отставка",
+                "выписать"
+            ],
+            "pronunciation": "[dɪs'mɪs]",
+            "example": "My father was dismissed from hospital"
+        },
+        {
+            "word": "required",
+            "translate": [
+                "необходимый"
+            ]
+        },
+        {
+            "word": "capable"
+        },
+        {
+            "word": "response"
+        },
+        {
+            "word": "explore"
+        },
+        {
+            "word": "artificial"
+        },
+        {
+            "word": "consume"
+        },
+        {
+            "word": "keep track"
+        },
+        {
+            "word": "gain"
+        },
+        {
+            "word": "mental"
+        },
+        {
+            "word": "decrease"
+        },
+        {
+            "word": "strengthen"
+        },
+        {
+            "word": "widen"
+        },
+        {
+            "word": "heighten"
+        },
+        {
+            "word": "lengthen"
+        },
+        {
+            "word": "shorten"
+        },
+        {
+            "word": "weaken"
+        },
+        {
+            "word": "dedicate",
+            "pronunciation": "['dedɪkeɪt]"
+        },
+        {
+            "word": "dig, dug, dug"
+        },
+        {
+            "word": "renovation",
+            "pronunciation": "['renə'veɪʃ(ə)n]"
+        },
+        {
+            "word": "violent",
+            "pronunciation": "['vaɪələnt]"
+        }
+    ]
+}
