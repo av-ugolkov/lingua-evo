@@ -2,45 +2,70 @@ package index
 
 import (
 	"fmt"
-	"log/slog"
 	"net/http"
 
 	"github.com/gorilla/mux"
 
 	staticFiles "lingua-evo"
+	entityLanguage "lingua-evo/internal/services/lingua/language/entity"
+	dtoWord "lingua-evo/internal/services/lingua/word/dto"
+	entityWord "lingua-evo/internal/services/lingua/word/entity"
+	wordSvc "lingua-evo/internal/services/lingua/word/service"
+	"lingua-evo/internal/tools"
 )
 
 const (
-	mainURL  = "/"
-	indexURL = "/index"
+	mainURL = "/"
 
 	indexPagePath = "website/index.html"
 )
 
-type Handler struct{}
+type Handler struct {
+	wordSvc *wordSvc.WordSvc
+}
 
-func Create(r *mux.Router) {
-	handler := newHandler()
+func Create(r *mux.Router, wordSvc *wordSvc.WordSvc) {
+	handler := newHandler(wordSvc)
 	handler.register(r)
 }
 
-func newHandler() *Handler {
-	return &Handler{}
+func newHandler(wordSvc *wordSvc.WordSvc) *Handler {
+	return &Handler{
+		wordSvc: wordSvc,
+	}
 }
 
 func (h *Handler) register(r *mux.Router) {
 	r.HandleFunc(mainURL, h.get).Methods(http.MethodGet)
-	r.HandleFunc(indexURL, h.get).Methods(http.MethodGet)
 }
 
 func (h *Handler) get(w http.ResponseWriter, r *http.Request) {
-	file, err := staticFiles.OpenFile(indexPagePath)
+	t, err := staticFiles.ParseFiles(indexPagePath)
 	if err != nil {
-		slog.Error(fmt.Errorf("index.get.OpenFile: %v", err).Error())
+		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("site.index.delivery.Handler.get - parseFiles: %v", err))
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	_, _ = w.Write([]byte(file))
+	randomWord, err := h.wordSvc.GetRandomWord(r.Context(), &dtoWord.RandomWordRq{LanguageCode: "en-GB"})
+	if err != nil {
+		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("site.index.delivery.Handler.get - GetRandomWord: %v", err))
+		return
+	}
+	data := struct {
+		Language *entityLanguage.Language
+		Word     *entityWord.Word
+	}{
+		//TODO нужно то ли с браузера, то ли еще откуда-то брать язык
+		Language: &entityLanguage.Language{
+			Code: "en-GB",
+		},
+		Word: randomWord,
+	}
+
+	err = t.Execute(w, data)
+	if err != nil {
+		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("site.index.delivery.Handler.get - Execute: %v", err))
+		return
+	}
 }
