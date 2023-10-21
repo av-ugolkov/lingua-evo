@@ -93,12 +93,15 @@ func (r *WordRepo) DeleteWord(ctx context.Context, w *entity.Word) (int64, error
 
 func (r *WordRepo) GetRandomWord(ctx context.Context, w *entity.Word) (*entity.Word, error) {
 	table := getTable(w.LanguageCode)
-	query := fmt.Sprintf(`SELECT text FROM "%s" ORDER BY RANDOM() LIMIT 1;`, table)
+	query := fmt.Sprintf(`SELECT text, pronunciation FROM "%s" ORDER BY RANDOM() LIMIT 1;`, table)
 	word := &entity.Word{}
-	err := r.db.QueryRowContext(ctx, query).Scan(&word.Text, &word.Pronunciation, &word.LanguageCode)
+	err := r.db.QueryRowContext(ctx, query).Scan(&word.Text, &word.Pronunciation)
 	if err != nil {
 		return nil, fmt.Errorf("word.repository.WordRepo.GetRandomWord - scan: %w", err)
 	}
+
+	word.LanguageCode = w.LanguageCode
+
 	return word, nil
 }
 
