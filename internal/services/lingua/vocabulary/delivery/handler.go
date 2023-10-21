@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"lingua-evo/internal/services/vocabulary/dto"
-	"lingua-evo/internal/services/vocabulary/service"
+	"lingua-evo/internal/services/lingua/vocabulary/dto"
+	"lingua-evo/internal/services/lingua/vocabulary/service"
 	"lingua-evo/internal/tools"
 
 	"github.com/gorilla/mux"

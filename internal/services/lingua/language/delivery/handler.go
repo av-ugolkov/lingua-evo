@@ -6,7 +6,7 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"lingua-evo/internal/services/language/service"
+	"lingua-evo/internal/services/lingua/language/service"
 )
 
 const (
