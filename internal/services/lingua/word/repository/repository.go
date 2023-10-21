@@ -8,7 +8,7 @@ import (
 
 	"github.com/google/uuid"
 
-	"lingua-evo/internal/services/word/entity"
+	"lingua-evo/internal/services/lingua/word/entity"
 )
 
 type WordRepo struct {

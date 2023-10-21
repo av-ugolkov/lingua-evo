@@ -9,8 +9,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 
-	"lingua-evo/internal/services/word/dto"
-	"lingua-evo/internal/services/word/entity"
+	"lingua-evo/internal/services/lingua/word/dto"
+	"lingua-evo/internal/services/lingua/word/entity"
 )
 
 type repoWord interface {
@@ -33,7 +33,7 @@ func NewService(repo repoWord) *WordSvc {
 	}
 }
 
-func (s *WordSvc) AddWord(ctx context.Context, w *dto.AddWordRequest) (uuid.UUID, error) {
+func (s *WordSvc) AddWord(ctx context.Context, w *dto.AddWordRq) (uuid.UUID, error) {
 	word := &entity.Word{
 		ID:            uuid.New(),
 		Text:          w.Text,
@@ -56,7 +56,7 @@ func (s *WordSvc) AddWord(ctx context.Context, w *dto.AddWordRequest) (uuid.UUID
 	return wordID, nil
 }
 
-func (s *WordSvc) GetWord(ctx context.Context, w *dto.GetWordRequest) (uuid.UUID, error) {
+func (s *WordSvc) GetWord(ctx context.Context, w *dto.GetWordRq) (uuid.UUID, error) {
 	word := entity.Word{
 		Text:         w.Text,
 		LanguageCode: w.LanguageCode,
@@ -69,11 +69,11 @@ func (s *WordSvc) GetWord(ctx context.Context, w *dto.GetWordRequest) (uuid.UUID
 	return wordID, nil
 }
 
-func (s *WordSvc) EditWord(ctx context.Context, w *dto.GetWordRequest) error {
+func (s *WordSvc) EditWord(ctx context.Context, w *dto.GetWordRq) error {
 	return nil
 }
 
-func (s *WordSvc) FindWords(ctx context.Context, w *dto.GetWordRequest) ([]uuid.UUID, error) {
+func (s *WordSvc) FindWords(ctx context.Context, w *dto.GetWordRq) ([]uuid.UUID, error) {
 	word := entity.Word{
 		Text:         w.Text,
 		LanguageCode: w.LanguageCode,
@@ -87,7 +87,7 @@ func (s *WordSvc) FindWords(ctx context.Context, w *dto.GetWordRequest) ([]uuid.
 	return wordIDs, nil
 }
 
-func (s *WordSvc) DeleteWord(ctx context.Context, w *dto.GetWordRequest) error {
+func (s *WordSvc) DeleteWord(ctx context.Context, w *dto.GetWordRq) error {
 	word := entity.Word{
 		Text:         w.Text,
 		LanguageCode: w.LanguageCode,
@@ -103,7 +103,7 @@ func (s *WordSvc) DeleteWord(ctx context.Context, w *dto.GetWordRequest) error {
 	return nil
 }
 
-func (s *WordSvc) GetRandomWord(ctx context.Context, w *dto.GetRandomWordRequest) (*entity.Word, error) {
+func (s *WordSvc) GetRandomWord(ctx context.Context, w *dto.RandomWordRq) (*entity.Word, error) {
 	word := &entity.Word{
 		LanguageCode: w.LanguageCode,
 	}

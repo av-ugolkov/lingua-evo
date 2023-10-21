@@ -1,0 +1,48 @@
+body {
+    background-color: white;
+}
+
+.container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.header {
+    text-align: left;
+    padding: 20px;
+    background-color: gray;
+}
+
+.header-brand {
+    display: flex;
+    align-items: center;
+    font-size: 25px;
+    text-decoration: none;
+    color: black;
+}
+
+.header-brand-logo {
+    width: 30px;
+    height: 30px;
+    padding-right: 10px;
+}
+
+.header-right {
+    float: right;
+    place-items: center;
+}
+
+.header-right a {
+    color: black;
+    text-decoration: none;
+    padding: 14px 16px;
+}
+
+.grid-container {
+    display: grid;
+    place-items: center;
+    height: 100vh;
+
+}

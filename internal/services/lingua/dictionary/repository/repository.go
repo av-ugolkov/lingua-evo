@@ -4,7 +4,7 @@ import (
 	"context"
 	"database/sql"
 
-	"lingua-evo/internal/services/dictionary/entity"
+	"lingua-evo/internal/services/lingua/dictionary/entity"
 
 	"github.com/google/uuid"
 )

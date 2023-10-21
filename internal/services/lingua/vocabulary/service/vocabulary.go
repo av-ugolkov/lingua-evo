@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"lingua-evo/internal/services/vocabulary/dto"
-	"lingua-evo/internal/services/vocabulary/entity"
-	dtoWord "lingua-evo/internal/services/word/dto"
+	"lingua-evo/internal/services/lingua/vocabulary/dto"
+	"lingua-evo/internal/services/lingua/vocabulary/entity"
+	dtoWord "lingua-evo/internal/services/lingua/word/dto"
 
 	"github.com/google/uuid"
 )
@@ -26,7 +26,7 @@ type (
 	}
 
 	wordSvc interface {
-		AddWord(ctx context.Context, word *dtoWord.AddWordRequest) (uuid.UUID, error)
+		AddWord(ctx context.Context, word *dtoWord.AddWordRq) (uuid.UUID, error)
 	}
 )
 
@@ -52,7 +52,7 @@ func NewService(
 }
 
 func (s *VocabularySvc) AddWordInVocabulary(ctx context.Context, v *dto.AddWordRq) error {
-	word := dtoWord.AddWordRequest{
+	word := dtoWord.AddWordRq{
 		Text:          v.NativeWord.Text,
 		Pronunciation: v.NativeWord.Pronunciation,
 		LanguageCode:  v.NativeWord.LangCode,
@@ -64,7 +64,7 @@ func (s *VocabularySvc) AddWordInVocabulary(ctx context.Context, v *dto.AddWordR
 
 	translateWordIDs := make([]uuid.UUID, 0, len(v.TanslateWords))
 	for _, translateWord := range v.TanslateWords {
-		word = dtoWord.AddWordRequest{
+		word = dtoWord.AddWordRq{
 			Text:          translateWord.Text,
 			Pronunciation: translateWord.Pronunciation,
 			LanguageCode:  translateWord.LangCode,

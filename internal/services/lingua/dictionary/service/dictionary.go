@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 
-	"lingua-evo/internal/services/dictionary/dto"
-	"lingua-evo/internal/services/dictionary/entity"
+	"lingua-evo/internal/services/lingua/dictionary/dto"
+	"lingua-evo/internal/services/lingua/dictionary/entity"
 
 	"github.com/google/uuid"
 )
