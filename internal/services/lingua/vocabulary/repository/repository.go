@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 
-	"lingua-evo/internal/services/vocabulary/entity"
+	"lingua-evo/internal/services/lingua/vocabulary/entity"
 )
 
 type VocabularyRepo struct {

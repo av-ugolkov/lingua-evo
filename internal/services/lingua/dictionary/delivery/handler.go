@@ -9,8 +9,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 
-	"lingua-evo/internal/services/dictionary/dto"
-	"lingua-evo/internal/services/dictionary/service"
+	"lingua-evo/internal/services/lingua/dictionary/dto"
+	"lingua-evo/internal/services/lingua/dictionary/service"
 	"lingua-evo/internal/tools"
 )
 

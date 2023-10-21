@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"lingua-evo/internal/config"
-	"lingua-evo/internal/services/auth/sign_up/entity"
+	"lingua-evo/internal/services/site/auth/sign_up/entity"
 	entityUserSvc "lingua-evo/internal/services/user/entity"
 	userSvc "lingua-evo/internal/services/user/service"
 	httpTools "lingua-evo/internal/tools"
