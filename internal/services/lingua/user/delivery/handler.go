@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"lingua-evo/internal/services/user/dto"
-	"lingua-evo/internal/services/user/service"
+	"lingua-evo/internal/services/lingua/user/dto"
+	"lingua-evo/internal/services/lingua/user/service"
 	"lingua-evo/internal/tools"
 
 	"github.com/gorilla/mux"
