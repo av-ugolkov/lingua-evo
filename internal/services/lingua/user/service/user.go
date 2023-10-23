@@ -5,7 +5,7 @@ import (
 
 	"github.com/google/uuid"
 
-	"lingua-evo/internal/services/user/entity"
+	"lingua-evo/internal/services/lingua/user/entity"
 )
 
 type userRepo interface {
