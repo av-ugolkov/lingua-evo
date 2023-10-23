@@ -12,14 +12,14 @@ import (
 	"time"
 
 	"lingua-evo/internal/config"
+	entityUserSvc "lingua-evo/internal/services/lingua/user/entity"
+	userSvc "lingua-evo/internal/services/lingua/user/service"
 	"lingua-evo/internal/services/site/auth/sign_up/entity"
-	entityUserSvc "lingua-evo/internal/services/user/entity"
-	userSvc "lingua-evo/internal/services/user/service"
 	httpTools "lingua-evo/internal/tools"
-	"lingua-evo/pkg/tools"
 
 	staticFiles "lingua-evo"
 	linguaJWT "lingua-evo/pkg/middleware/jwt"
+	"lingua-evo/pkg/tools"
 
 	"github.com/cristalhq/jwt/v3"
 	"github.com/google/uuid"

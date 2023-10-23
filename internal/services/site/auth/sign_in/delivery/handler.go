@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"lingua-evo/internal/config"
+	"lingua-evo/internal/services/lingua/user/service"
 	"lingua-evo/internal/services/site/auth/sign_in/entity"
-	"lingua-evo/internal/services/user/service"
 
 	staticFiles "lingua-evo"
 	linguaJWT "lingua-evo/pkg/middleware/jwt"
