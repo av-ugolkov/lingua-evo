@@ -1,48 +1,55 @@
 body {
     background-color: white;
+    margin: 0px;
 }
 
 .container {
-    display: flex;
+    width: 100%;
     justify-content: center;
     align-items: center;
     height: 100vh;
 }
 
 .header {
-    text-align: left;
-    padding: 20px;
+    display: flex;
     background-color: gray;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .header-brand {
     display: flex;
-    align-items: center;
-    font-size: 25px;
+    font-size: 30px;
+    font-weight: 700;
     text-decoration: none;
     color: black;
+    padding: 5px 0px;
 }
 
-.header-brand-logo {
+.header-logo {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
     width: 30px;
     height: 30px;
     padding-right: 10px;
+    padding-left: 10px;
 }
 
-.header-right {
-    float: right;
-    place-items: center;
+.header-nav {
+    font-size: 18px;
+    font-weight: 500;
+    text-transform: uppercase;
+    padding-right: 20px;
 }
 
-.header-right a {
+.nav-link {
     color: black;
     text-decoration: none;
-    padding: 14px 16px;
 }
 
 .grid-container {
     display: grid;
     place-items: center;
     height: 100vh;
-
 }
