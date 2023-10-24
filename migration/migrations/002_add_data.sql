@@ -6,7 +6,7 @@ VALUES
         gen_random_uuid (),
         'admin',
         'makedonskiy07@gmail.com',
-        '$2a$14$/55EnnJAv.3XYeKwwU6WAuAKkfO/GvSOYwADH0JSqsX2nCE2OtB.2',
+        '$2a$11$Br7apwhrxr1yvfCSzsz3rec0m9MXRUiyBeY6V543cBXVwl/TKd.fO',
         'admin',
         now(),
         now()

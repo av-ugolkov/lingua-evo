@@ -11,7 +11,8 @@ import (
 
 	"lingua-evo/internal/services/lingua/dictionary/dto"
 	"lingua-evo/internal/services/lingua/dictionary/service"
-	"lingua-evo/internal/tools"
+
+	"lingua-evo/pkg/tools"
 )
 
 const (

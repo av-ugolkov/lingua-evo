@@ -2,6 +2,9 @@ package service
 
 import (
 	"context"
+	"database/sql"
+	"errors"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -13,8 +16,8 @@ import (
 type userRepo interface {
 	AddUser(ctx context.Context, u *entity.User) (uuid.UUID, error)
 	EditUser(ctx context.Context, u *entity.User) error
-	GetIDByName(ctx context.Context, name string) (uuid.UUID, error)
-	GetIDByEmail(ctx context.Context, email string) (uuid.UUID, error)
+	GetUserByName(ctx context.Context, name string) (*entity.User, error)
+	GetUserByEmail(ctx context.Context, email string) (*entity.User, error)
 	RemoveUser(ctx context.Context, u *entity.User) error
 }
 
@@ -51,12 +54,29 @@ func (s *UserSvc) EditUser(ctx context.Context, user *entity.User) error {
 	return nil
 }
 
-func (s *UserSvc) GetIDByName(ctx context.Context, name string) (uuid.UUID, error) {
-	return s.repo.GetIDByName(ctx, name)
+func (s *UserSvc) GetUser(ctx context.Context, login string) (*entity.User, error) {
+	user, err := s.repo.GetUserByName(ctx, login)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return nil, fmt.Errorf("user.service.UserSvc.GetUser - by name: %w", err)
+	} else if errors.Is(err, sql.ErrNoRows) {
+		user, err = s.repo.GetUserByEmail(ctx, login)
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			return nil, fmt.Errorf("user.service.UserSvc.GetUser - by email: %w", err)
+		}
+	}
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, fmt.Errorf("user.service.UserSvc.GetUser - by [%s]: %w", login, entity.ErrNotFoundUser)
+	}
+
+	return user, nil
 }
 
-func (s *UserSvc) GetIDByEmail(ctx context.Context, email string) (uuid.UUID, error) {
-	return s.repo.GetIDByEmail(ctx, email)
+func (s *UserSvc) GetUserByName(ctx context.Context, name string) (*entity.User, error) {
+	return s.repo.GetUserByName(ctx, name)
+}
+
+func (s *UserSvc) GetUserByEmail(ctx context.Context, email string) (*entity.User, error) {
+	return s.repo.GetUserByEmail(ctx, email)
 }
 
 func (s *UserSvc) RemoveUser(ctx context.Context, user *entity.User) error {

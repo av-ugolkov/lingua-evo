@@ -6,7 +6,8 @@ import (
 
 	"lingua-evo/internal/services/lingua/vocabulary/dto"
 	"lingua-evo/internal/services/lingua/vocabulary/service"
-	"lingua-evo/internal/tools"
+
+	"lingua-evo/pkg/tools"
 
 	"github.com/gorilla/mux"
 )
