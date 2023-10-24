@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	signInURL = "/signin"
+	//signInURL = "/signin"
 
 	signInPage = "website/sign_in/signin.html"
 )
@@ -39,9 +39,9 @@ func newHandler(userSvc *service.UserSvc) *Handler {
 }
 
 func (h *Handler) register(r *mux.Router) {
-	r.HandleFunc(signInURL, h.get).Methods(http.MethodGet)
-	r.HandleFunc(signInURL, h.put).Methods(http.MethodPut)
-	r.HandleFunc(signInURL, h.post).Methods(http.MethodPost)
+	//r.HandleFunc(signInURL, h.get).Methods(http.MethodGet)
+	//r.HandleFunc(signInURL, h.put).Methods(http.MethodPut)
+	//r.HandleFunc(signInURL, h.post).Methods(http.MethodPost)
 }
 
 func (h *Handler) get(w http.ResponseWriter, r *http.Request) {
@@ -61,7 +61,7 @@ func (h *Handler) post(w http.ResponseWriter, r *http.Request) {
 	//email := r.FormValue("email")
 	//password := r.FormValue("password")
 
-	user, err := h.userSvc.GetIDByName(r.Context(), username)
+	user, err := h.userSvc.GetUserByName(r.Context(), username)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		_, _ = w.Write([]byte(err.Error()))

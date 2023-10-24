@@ -37,30 +37,32 @@ func (r *UserRepo) EditUser(ctx context.Context, u *entity.User) error {
 	return nil
 }
 
-func (r *UserRepo) GetIDByName(ctx context.Context, name string) (uuid.UUID, error) {
-	query := `SELECT id FROM users where name=$1`
+func (r *UserRepo) GetUserByName(ctx context.Context, name string) (*entity.User, error) {
+	query := `SELECT id, email, password_hash, role, last_visit_at, created_at FROM users where name=$1`
 
-	var uid uuid.UUID
+	var u entity.User
 
-	err := r.db.QueryRowContext(ctx, query, name).Scan(&uid)
+	err := r.db.QueryRowContext(ctx, query, name).Scan(&u.ID, &u.Email, &u.PasswordHash, &u.Role, &u.LastVisitAt, &u.CreatedAt)
 	if err != nil {
-		return uuid.Nil, err
+		return nil, err
 	}
 
-	return uid, nil
+	return &u, nil
 }
 
-func (r *UserRepo) GetIDByEmail(ctx context.Context, email string) (uuid.UUID, error) {
-	query := `SELECT id FROM users where email=$1`
+func (r *UserRepo) GetUserByEmail(ctx context.Context, email string) (*entity.User, error) {
+	query := `SELECT id, user, password_hash, role, last_visit_at, created_at FROM users where email=$1`
 
-	var uid uuid.UUID
+	var u entity.User
 
-	err := r.db.QueryRowContext(ctx, query, email).Scan(&uid)
+	err := r.db.QueryRowContext(ctx, query, email).Scan(&u.ID, &u.Username, &u.PasswordHash, &u.Role, &u.LastVisitAt, &u.CreatedAt)
 	if err != nil {
-		return uuid.Nil, err
+		return nil, err
 	}
 
-	return uid, nil
+	u.Email = email
+
+	return &u, nil
 }
 
 func (r *UserRepo) RemoveUser(ctx context.Context, u *entity.User) error {

@@ -11,7 +11,8 @@ import (
 	dtoWord "lingua-evo/internal/services/lingua/word/dto"
 	entityWord "lingua-evo/internal/services/lingua/word/entity"
 	wordSvc "lingua-evo/internal/services/lingua/word/service"
-	"lingua-evo/internal/tools"
+
+	"lingua-evo/pkg/tools"
 )
 
 const (

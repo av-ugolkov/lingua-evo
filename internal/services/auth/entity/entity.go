@@ -1,23 +1,28 @@
 package entity
 
 import (
-	"errors"
-	"fmt"
+	"time"
+
+	"github.com/google/uuid"
 )
 
-const (
-	UsernameLen    = 3
-	MinPasswordLen = 6
-	PasswordSolt   = 11
-)
+type (
+	Session struct {
+		ID           uuid.UUID
+		UserID       uuid.UUID
+		RefreshToken uuid.UUID
+		ExpiresAt    time.Time
+		CreatedAt    time.Time
+	}
 
-var (
-	ErrEmailNotCorrect   = errors.New("email is not correct")
-	ErrItIsAdmin         = errors.New("it is admin")
-	ErrEmailBusy         = errors.New("this email is busy")
-	ErrUsernameLen       = fmt.Errorf("username must be more %d characters", UsernameLen)
-	ErrUsernameAdmin     = errors.New("username can not contains admin")
-	ErrUsernameBusy      = errors.New("this username is busy")
-	ErrPasswordLen       = fmt.Errorf("password must be more %d characters", MinPasswordLen)
-	ErrPasswordDifficult = errors.New("password must be more difficult")
+	Tokens struct {
+		JWT          string
+		RefreshToken uuid.UUID
+	}
+
+	Claims struct {
+		ID        uuid.UUID
+		UserID    uuid.UUID
+		ExpiresAt time.Time
+	}
 )
