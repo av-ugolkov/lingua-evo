@@ -25,7 +25,9 @@ type PprofDebug struct {
 }
 
 type JWT struct {
-	Secret string `yaml:"secret" env-required:"true"`
+	Secret        string `yaml:"secret" env-required:"true"`
+	ExpireAccess  int    `yaml:"expire_access" env-default:"60*60"`
+	ExpireRefresh int    `yaml:"expire_refresh" env-default:"60*60*24*30"`
 }
 
 type Service struct {
