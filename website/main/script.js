@@ -7,7 +7,7 @@ let interval = setInterval(function () {
             'Accept': 'application/json',
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ language_code: 'en-GB' })
+        body: JSON.stringify({ language_code: 'en' })
     })
         .then((response) => response.json())
         .then((data) => {

@@ -13,6 +13,7 @@ import (
 
 	"lingua-evo/internal/config"
 	repository "lingua-evo/internal/db"
+	authHandler "lingua-evo/internal/services/auth/delivery"
 	accountHandler "lingua-evo/internal/services/lingua/account/delivery"
 	dictHandler "lingua-evo/internal/services/lingua/dictionary/delivery"
 	dictRepository "lingua-evo/internal/services/lingua/dictionary/repository"
@@ -24,15 +25,15 @@ import (
 	langService "lingua-evo/internal/services/lingua/language/service"
 	tagRepository "lingua-evo/internal/services/lingua/tag/repository"
 	tagService "lingua-evo/internal/services/lingua/tag/service"
-	userHandler "lingua-evo/internal/services/lingua/user/delivery"
-	userRepository "lingua-evo/internal/services/lingua/user/repository"
-	userService "lingua-evo/internal/services/lingua/user/service"
 	vocabularyHandler "lingua-evo/internal/services/lingua/vocabulary/delivery"
 	vocabularyRepository "lingua-evo/internal/services/lingua/vocabulary/repository"
 	vocabularyService "lingua-evo/internal/services/lingua/vocabulary/service"
 	wordHandler "lingua-evo/internal/services/lingua/word/delivery"
 	wordRepository "lingua-evo/internal/services/lingua/word/repository"
 	wordService "lingua-evo/internal/services/lingua/word/service"
+	userHandler "lingua-evo/internal/services/user/delivery"
+	userRepository "lingua-evo/internal/services/user/repository"
+	userService "lingua-evo/internal/services/user/service"
 
 	signInHandler "lingua-evo/internal/services/site/auth/sign_in/delivery"
 	signUpHandler "lingua-evo/internal/services/site/auth/sign_up/delivery"
@@ -130,7 +131,7 @@ func initServer(r *mux.Router, db *sql.DB) {
 	signInHandler.Create(r, userSvc)
 
 	slog.Info("sign_up handler")
-	signUpHandler.Create(r, userSvc)
+	signUpHandler.Create(r)
 
 	slog.Info("account handler")
 	accountHandler.Create(r)
@@ -146,6 +147,9 @@ func initServer(r *mux.Router, db *sql.DB) {
 
 	slog.Info("vocabulary handler")
 	vocabularyHandler.Create(r, vocabularySvc)
+
+	slog.Info("auth handler")
+	authHandler.Create(r, userSvc)
 
 	slog.Info("<----- end init services ----->")
 }

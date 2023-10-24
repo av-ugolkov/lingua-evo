@@ -4,9 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"time"
 
-	"lingua-evo/internal/services/lingua/user/entity"
+	"lingua-evo/internal/services/user/entity"
 
 	"github.com/google/uuid"
 )
@@ -22,13 +21,13 @@ func NewRepo(db *sql.DB) *UserRepo {
 }
 
 func (r *UserRepo) AddUser(ctx context.Context, u *entity.User) (uuid.UUID, error) {
-	query := `INSERT INTO users (name, email, password_hash, last_visit) VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING RETURNING id`
+	query := `INSERT INTO users (id, name, email, password_hash, role, last_visit_at, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7) ON CONFLICT DO NOTHING RETURNING id`
 
 	var uid uuid.UUID
 
-	err := r.db.QueryRowContext(ctx, query, u.Username, u.Email, u.PasswordHash, time.Now()).Scan(&uid)
+	err := r.db.QueryRowContext(ctx, query, u.ID, u.Username, u.Email, u.PasswordHash, u.Role, u.LastVisitAt, u.CreatedAt).Scan(&uid)
 	if err != nil {
-		return uuid.Nil, fmt.Errorf("database.AddUser.QueryRow: %w", err)
+		return uuid.Nil, fmt.Errorf("user.repository.AddUser: %w", err)
 	}
 
 	return uid, nil
