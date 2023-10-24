@@ -5,17 +5,13 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	"time"
 
-	"lingua-evo/internal/config"
-	"lingua-evo/internal/services/lingua/user/service"
 	"lingua-evo/internal/services/site/auth/sign_in/entity"
+	"lingua-evo/internal/services/user/service"
 
 	staticFiles "lingua-evo"
-	linguaJWT "lingua-evo/pkg/middleware/jwt"
+	//linguaJWT "lingua-evo/pkg/middleware/jwt"
 
-	"github.com/cristalhq/jwt/v3"
-	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 )
 
@@ -129,7 +125,8 @@ func (h *Handler) put(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) generateAccessToken() ([]byte, int) {
-	key := []byte(config.GetConfig().JWT.Secret)
+	return nil, 0
+	/*key := []byte(config.GetConfig().JWT.Secret)
 	signer, err := jwt.NewSignerHS(jwt.HS256, key)
 	if err != nil {
 		return nil, 418
@@ -152,18 +149,18 @@ func (h *Handler) generateAccessToken() ([]byte, int) {
 	}
 
 	slog.Info("create refresh token")
-	refreshTokenUuid := uuid.New()
+	refreshTokenUuid := uuid.New()*/
 	/*err = h.RTCache.Set([]byte(refreshTokenUuid.String()), []byte(claims.ID), 0)
 	if err != nil {
 		slog.Error(err)
 		return nil, http.StatusInternalServerError
 	}*/
-	jsonBytes, err := json.Marshal(map[string]string{
+	/*jsonBytes, err := json.Marshal(map[string]string{
 		"token":         token.String(),
 		"refresh_token": refreshTokenUuid.String(),
 	})
 	if err != nil {
 		return nil, http.StatusInternalServerError
 	}
-	return jsonBytes, 0
+	return jsonBytes, 0*/
 }
