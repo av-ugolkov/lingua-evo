@@ -2,9 +2,13 @@ package jwt
 
 import (
 	"fmt"
-	"time"
+
+	"lingua-evo/internal/config"
+	entitySession "lingua-evo/internal/services/auth/entity"
+	entityUser "lingua-evo/internal/services/user/entity"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 )
 
 const (
@@ -13,37 +17,25 @@ const (
 
 type (
 	UserClaims struct {
-		Username string `json:"username"`
-		Password string `json:"password"`
-		Email    string `json:"email"`
+		ID uuid.UUID
 		jwt.RegisteredClaims
 	}
 )
 
-func NewToken(secretKey string) (string, error) {
+func NewJWTToken(u *entityUser.User, s *entitySession.Claims) (string, error) {
 	userClaims := UserClaims{
-		Username: "me",
-		Password: "pass",
-		Email:    "email@will.be.here",
+		ID: u.ID,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ID:        "uuid_here",
+			ID:        s.ID.String(),
 			Audience:  []string{"users"},
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24)),
+			ExpiresAt: jwt.NewNumericDate(s.ExpiresAt),
 		},
 	}
-	err := userClaims.validate()
-	if err != nil {
-		return emptyString, fmt.Errorf("jwt_manager.GetRoken - incorrect claims: %w", err)
-	}
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, userClaims)
-	s, err := token.SignedString(secretKey)
-	if err != nil {
-		return emptyString, fmt.Errorf("jwt_manager.GetRoken - can't signed token: %w", err)
-	}
-	return s, nil
-}
 
-func (c *UserClaims) validate() error {
-	//TODO validate
-	return nil
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, userClaims)
+	t, err := token.SignedString([]byte(config.GetConfig().JWT.Secret))
+	if err != nil {
+		return emptyString, fmt.Errorf("pkg.jwt.token.NewJWTToken - can't signed token: %w", err)
+	}
+	return t, nil
 }

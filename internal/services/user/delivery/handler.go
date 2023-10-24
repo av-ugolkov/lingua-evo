@@ -8,22 +8,19 @@ import (
 	"fmt"
 	"net/http"
 
-	"lingua-evo/internal/services/auth/entity"
 	"lingua-evo/internal/services/user/dto"
+	"lingua-evo/internal/services/user/entity"
 	"lingua-evo/internal/services/user/service"
 	"lingua-evo/pkg/tools"
 
-	httpTools "lingua-evo/internal/tools"
-
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
-	"golang.org/x/crypto/bcrypt"
 )
 
 const (
-	createAccount    = "/signup"
-	userGetIDByName  = "/user/get_id_by_name"
-	userGetIDByEmail = "/user/get_id_by_email"
+	createAccount  = "/signup"
+	getUserByName  = "/user/get_by_name"
+	getUserByEmail = "/user/get_by_email"
 )
 
 type (
@@ -45,8 +42,8 @@ func newHandler(userSvc *service.UserSvc) *Handler {
 
 func (h *Handler) register(r *mux.Router) {
 	r.HandleFunc(createAccount, h.createAccount).Methods(http.MethodPost)
-	r.HandleFunc(userGetIDByName, h.getIDByName).Methods(http.MethodPost)
-	r.HandleFunc(userGetIDByEmail, h.getIDByEmail).Methods(http.MethodPost)
+	r.HandleFunc(getUserByName, h.getUserByName).Methods(http.MethodGet)
+	r.HandleFunc(getUserByEmail, h.getUserByEmail).Methods(http.MethodGet)
 }
 
 func (h *Handler) createAccount(w http.ResponseWriter, r *http.Request) {
@@ -55,30 +52,30 @@ func (h *Handler) createAccount(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	var data dto.CreateUserRq
-	err := httpTools.CheckBody(w, r, &data)
+	err := tools.CheckBody(w, r, &data)
 	if err != nil {
-		httpTools.SendError(w, http.StatusBadRequest, fmt.Errorf("user.delivery.Handler.createAccount - check body: %v", err))
+		tools.SendError(w, http.StatusBadRequest, fmt.Errorf("user.delivery.Handler.createAccount - check body: %v", err))
 		return
 	}
 
 	if err := h.validateEmail(r.Context(), data.Email); err != nil {
-		httpTools.SendError(w, http.StatusConflict, fmt.Errorf("user.delivery.Handler.createAccount - validateEmail: %v", err))
+		tools.SendError(w, http.StatusConflict, fmt.Errorf("user.delivery.Handler.createAccount - validateEmail: %v", err))
 		return
 	}
 
 	if err := h.validateUsername(r.Context(), data.Username); err != nil {
-		httpTools.SendError(w, http.StatusConflict, fmt.Errorf("user.delivery.Handler.createAccount - validateUsername: %v", err))
+		tools.SendError(w, http.StatusConflict, fmt.Errorf("user.delivery.Handler.createAccount - validateUsername: %v", err))
 		return
 	}
 
 	if err := validatePassword(data.Password); err != nil {
-		httpTools.SendError(w, http.StatusConflict, fmt.Errorf("user.delivery.Handler.createAccount - validatePassword: %v", err))
+		tools.SendError(w, http.StatusConflict, fmt.Errorf("user.delivery.Handler.createAccount - validatePassword: %v", err))
 		return
 	}
 
-	hashPassword, err := hashPassword(data.Password)
+	hashPassword, err := tools.HashPassword(data.Password)
 	if err != nil {
-		httpTools.SendError(w, http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.createAccount - hashPassword: %v", err))
+		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.createAccount - hashPassword: %v", err))
 		return
 	}
 
@@ -86,7 +83,7 @@ func (h *Handler) createAccount(w http.ResponseWriter, r *http.Request) {
 
 	uid, err := h.userSvc.CreateUser(r.Context(), &data)
 	if err != nil {
-		httpTools.SendError(w, http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.createAccount - create user: %v", err))
+		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.createAccount - create user: %v", err))
 		return
 	}
 
@@ -94,7 +91,7 @@ func (h *Handler) createAccount(w http.ResponseWriter, r *http.Request) {
 		UserID: uid,
 	})
 	if err != nil {
-		httpTools.SendError(w, http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.createAccount - marshal: %v", err))
+		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.createAccount - marshal: %v", err))
 		return
 	}
 
@@ -103,63 +100,63 @@ func (h *Handler) createAccount(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write(b)
 }
 
-func (h *Handler) getIDByName(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) getUserByName(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		_ = r.Body.Close()
 	}()
 
 	var data dto.GetIDRq
 
-	err := httpTools.CheckBody(w, r, &data)
+	err := tools.CheckBody(w, r, &data)
 	if err != nil {
-		httpTools.SendError(w, http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.getIDByName - check body: %v", err))
+		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.getIDByName - check body: %v", err))
 		return
 	}
 
 	ctx := r.Context()
-	id, err := h.userSvc.GetIDByName(ctx, data.Value)
+	user, err := h.userSvc.GetUserByName(ctx, data.Value)
 	if err != nil {
-		httpTools.SendError(w, http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.getIDByName: %v", err))
+		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.getIDByName: %v", err))
 		return
 	}
 
 	userID := dto.UserIDRs{
-		ID: id,
+		ID: user.ID,
 	}
 	b, err := json.Marshal(userID)
 	if err != nil {
-		httpTools.SendError(w, http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.getIDByName - marshal: %v", err))
+		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.getIDByName - marshal: %v", err))
 		return
 	}
 	_, _ = w.Write(b)
 }
 
-func (h *Handler) getIDByEmail(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) getUserByEmail(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		_ = r.Body.Close()
 	}()
 
 	var data dto.GetIDRq
 
-	err := httpTools.CheckBody(w, r, &data)
+	err := tools.CheckBody(w, r, &data)
 	if err != nil {
-		httpTools.SendError(w, http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.getIDByEmail - check body: %v", err))
+		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.getIDByEmail - check body: %v", err))
 		return
 	}
 
 	ctx := r.Context()
-	id, err := h.userSvc.GetIDByEmail(ctx, data.Value)
+	user, err := h.userSvc.GetUserByEmail(ctx, data.Value)
 	if err != nil {
-		httpTools.SendError(w, http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.getIDByEmail: %v", err))
+		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.getIDByEmail: %v", err))
 		return
 	}
 
 	userID := dto.UserIDRs{
-		ID: id,
+		ID: user.ID,
 	}
 	b, err := json.Marshal(userID)
 	if err != nil {
-		httpTools.SendError(w, http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.getIDByEmail - marshal: %v", err))
+		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.getIDByEmail - marshal: %v", err))
 		return
 	}
 	_, _ = w.Write(b)
@@ -170,12 +167,12 @@ func (h *Handler) validateEmail(ctx context.Context, email string) error {
 		return entity.ErrEmailNotCorrect
 	}
 
-	uid, err := h.userSvc.GetIDByEmail(ctx, email)
+	user, err := h.userSvc.GetUserByEmail(ctx, email)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return err
-	} else if uid == uuid.Nil && err == nil {
+	} else if user.ID == uuid.Nil && err == nil {
 		return entity.ErrItIsAdmin
-	} else if uid != uuid.Nil {
+	} else if user.ID != uuid.Nil {
 		return entity.ErrEmailBusy
 	}
 
@@ -187,12 +184,12 @@ func (h *Handler) validateUsername(ctx context.Context, username string) error {
 		return entity.ErrUsernameLen
 	}
 
-	uid, err := h.userSvc.GetIDByName(ctx, username)
+	user, err := h.userSvc.GetUserByName(ctx, username)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return err
-	} else if uid == uuid.Nil && err == nil {
+	} else if user.ID == uuid.Nil && err == nil {
 		return entity.ErrItIsAdmin
-	} else if uid != uuid.Nil {
+	} else if user.ID != uuid.Nil {
 		return entity.ErrUsernameBusy
 	}
 
@@ -209,9 +206,4 @@ func validatePassword(password string) error {
 	}
 
 	return nil
-}
-
-func hashPassword(password string) (string, error) {
-	bytes, err := bcrypt.GenerateFromPassword([]byte(password), entity.PasswordSolt)
-	return string(bytes), err
 }

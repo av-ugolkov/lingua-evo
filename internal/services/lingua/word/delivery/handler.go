@@ -12,7 +12,7 @@ import (
 	serviceWord "lingua-evo/internal/services/lingua/word/service"
 
 	staticFiles "lingua-evo"
-	"lingua-evo/internal/tools"
+	"lingua-evo/pkg/tools"
 
 	"github.com/gorilla/mux"
 )

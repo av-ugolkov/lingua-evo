@@ -14,6 +14,8 @@ import (
 	"lingua-evo/internal/config"
 	repository "lingua-evo/internal/db"
 	authHandler "lingua-evo/internal/services/auth/delivery"
+	authRepository "lingua-evo/internal/services/auth/repository"
+	authService "lingua-evo/internal/services/auth/service"
 	accountHandler "lingua-evo/internal/services/lingua/account/delivery"
 	dictHandler "lingua-evo/internal/services/lingua/dictionary/delivery"
 	dictRepository "lingua-evo/internal/services/lingua/dictionary/repository"
@@ -120,6 +122,9 @@ func initServer(r *mux.Router, db *sql.DB) {
 	vocabularyRepo := vocabularyRepository.NewRepo(db)
 	vocabularySvc := vocabularyService.NewService(vocabularyRepo, wordSvc, exampleSvc, tagSvc)
 
+	authRepo := authRepository.NewRepo(db)
+	authSvc := authService.NewService(authRepo, userSvc)
+
 	slog.Info("<----- create handlers ----->")
 	slog.Info("index handler")
 	indexHandler.Create(r, wordSvc)
@@ -149,7 +154,7 @@ func initServer(r *mux.Router, db *sql.DB) {
 	vocabularyHandler.Create(r, vocabularySvc)
 
 	slog.Info("auth handler")
-	authHandler.Create(r, userSvc)
+	authHandler.Create(r, authSvc)
 
 	slog.Info("<----- end init services ----->")
 }
