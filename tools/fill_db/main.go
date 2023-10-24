@@ -15,7 +15,7 @@ import (
 	"golang.org/x/text/language"
 )
 
-//go:embed words.json
+//go:embed words_en.json
 var words embed.FS
 
 func main() {
