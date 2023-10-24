@@ -2,7 +2,9 @@ pprof_debug:
     enable: true
     port: 6060
 jwt:
-    secret: $3cr3t
+    secret: 5tV3so&v5Qzn
+    expire_access: 60*60
+    expire_refresh: 60*60*24*30
 service:
     type: tcp
     port: 5000
