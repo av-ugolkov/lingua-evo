@@ -47,7 +47,7 @@ func (h *Handler) get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	randomWord, err := h.wordSvc.GetRandomWord(r.Context(), &dtoWord.RandomWordRq{LanguageCode: "en-GB"})
+	randomWord, err := h.wordSvc.GetRandomWord(r.Context(), &dtoWord.RandomWordRq{LanguageCode: "en"})
 	if err != nil {
 		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("site.index.delivery.Handler.get - GetRandomWord: %v", err))
 		return
@@ -58,7 +58,7 @@ func (h *Handler) get(w http.ResponseWriter, r *http.Request) {
 	}{
 		//TODO нужно то ли с браузера, то ли еще откуда-то брать язык
 		Language: &entityLanguage.Language{
-			Code: "en-GB",
+			Code: "en",
 		},
 		Word: randomWord,
 	}
