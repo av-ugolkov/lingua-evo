@@ -1,9 +1,11 @@
 package delivery
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"lingua-evo/internal/services/auth/dto"
 	"lingua-evo/internal/services/auth/service"
@@ -43,8 +45,7 @@ func (h *Handler) createSession(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	var data dto.CreateSessionRq
-
-	err := tools.CheckBody(w, r, &data)
+	err := decodeBasicAuth(r.Header["Authorization"][0], &data)
 	if err != nil {
 		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.createSession - check body: %v", err))
 		return
@@ -75,4 +76,20 @@ func (h *Handler) createSession(w http.ResponseWriter, r *http.Request) {
 	})
 
 	_, _ = w.Write(b)
+}
+
+func decodeBasicAuth(auth string, data *dto.CreateSessionRq) error {
+	base, err := base64.StdEncoding.DecodeString(strings.Split(auth, " ")[1])
+	if err != nil {
+		return fmt.Errorf("auth.delivery.decodeBasicAuth - decode base64: %v", err)
+	}
+	authData := strings.Split(string(base), ":")
+	if len(authData) != 2 {
+		return fmt.Errorf("auth.delivery.decodeBasicAuth - invalid auth data")
+	}
+
+	data.User = authData[0]
+	data.Password = authData[1]
+
+	return nil
 }

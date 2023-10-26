@@ -46,18 +46,21 @@ func (s *AuthSvc) CreateSession(ctx context.Context, sessionRq *dto.CreateSessio
 		return nil, fmt.Errorf("auth.service.AuthSvc.CreateSession - incorrect password: %v", err)
 	}
 
+	additionalTime := config.GetConfig().JWT.ExpireAccess
+	duration := time.Duration(additionalTime) * time.Second
 	session := &entity.Session{
 		ID:           uuid.New(),
 		RefreshToken: uuid.New(),
-		ExpiresAt:    time.Now().UTC().Add(time.Duration(config.GetConfig().JWT.ExpireAccess)),
+		ExpiresAt:    time.Now().UTC().Add(duration),
 		CreatedAt:    time.Now().UTC(),
 		UserID:       u.ID,
 	}
 
-	err = s.repo.SetSession(ctx, session)
+	//TODO разобраться в refresh token
+	/*err = s.repo.SetSession(ctx, session)
 	if err != nil {
 		return nil, fmt.Errorf("auth.delivery.Handler.createSession - setSession: %v", err)
-	}
+	}*/
 
 	claims := &entity.Claims{
 		ID:        session.ID,
