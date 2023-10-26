@@ -9,7 +9,7 @@ type (
 	}
 
 	CreateSessionRs struct {
-		JWT          string    `json:"jwt"`
+		AccessToken  string    `json:"access_token"`
 		RefreshToken uuid.UUID `json:"refresh_token"`
 	}
 )

@@ -48,10 +48,10 @@ func (s *AuthSvc) CreateSession(ctx context.Context, sessionRq *dto.CreateSessio
 
 	session := &entity.Session{
 		ID:           uuid.New(),
-		UserID:       u.ID,
 		RefreshToken: uuid.New(),
 		ExpiresAt:    time.Now().UTC().Add(time.Duration(config.GetConfig().JWT.ExpireAccess)),
 		CreatedAt:    time.Now().UTC(),
+		UserID:       u.ID,
 	}
 
 	err = s.repo.SetSession(ctx, session)
