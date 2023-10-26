@@ -12,6 +12,7 @@ import (
 	"lingua-evo/internal/services/lingua/dictionary/dto"
 	"lingua-evo/internal/services/lingua/dictionary/service"
 
+	"lingua-evo/pkg/middleware"
 	"lingua-evo/pkg/tools"
 )
 
@@ -42,7 +43,7 @@ func newHandler(dictionarySvc *service.DictionarySvc) *Handler {
 func (h *Handler) register(r *mux.Router) {
 	r.HandleFunc(addDictionary, h.addDictionary).Methods(http.MethodPost)
 	r.HandleFunc(deleteDictionary, h.deleteDictionary).Methods(http.MethodDelete)
-	r.HandleFunc(getDictionary, h.getDictionary).Methods(http.MethodPost)
+	r.Handle(getDictionary, middleware.AuthMiddleware(http.HandlerFunc(h.getDictionary))).Methods(http.MethodPost)
 	r.HandleFunc(getAllDictionary, h.getAllDictionary).Methods(http.MethodPost)
 }
 
