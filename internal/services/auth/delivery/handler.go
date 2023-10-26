@@ -58,13 +58,21 @@ func (h *Handler) createSession(w http.ResponseWriter, r *http.Request) {
 	}
 
 	b, err := json.Marshal(&dto.CreateSessionRs{
-		JWT:          tokens.JWT,
+		AccessToken:  tokens.JWT,
 		RefreshToken: tokens.RefreshToken,
 	})
 	if err != nil {
 		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.createSession - marshal: %v", err))
 		return
 	}
+
+	w.Header().Set("Content-Type", "application/json")
+	http.SetCookie(w, &http.Cookie{
+		Name:     "refresh_token",
+		Value:    tokens.RefreshToken.String(),
+		HttpOnly: true,
+		Secure:   true,
+	})
 
 	_, _ = w.Write(b)
 }
