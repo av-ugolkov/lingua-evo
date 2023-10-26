@@ -2,6 +2,7 @@ package jwt
 
 import (
 	"fmt"
+	"log/slog"
 
 	"lingua-evo/internal/config"
 	entitySession "lingua-evo/internal/services/auth/entity"
@@ -17,7 +18,7 @@ const (
 
 type (
 	UserClaims struct {
-		ID uuid.UUID
+		ID uuid.UUID `json:"id"`
 		jwt.RegisteredClaims
 	}
 )
@@ -38,4 +39,26 @@ func NewJWTToken(u *entityUser.User, s *entitySession.Claims) (string, error) {
 		return emptyString, fmt.Errorf("pkg.jwt.token.NewJWTToken - can't signed token: %w", err)
 	}
 	return t, nil
+}
+
+func ValidateToken(tokenStr string, secret string) (bool, error) {
+	token, err := jwt.ParseWithClaims(tokenStr, &UserClaims{}, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
+		}
+
+		return []byte(secret), nil
+	})
+	if err != nil {
+		return false, fmt.Errorf("pkg.jwt.token.ValidateToken - can't parse token: %w", err)
+	}
+
+	claims, ok := token.Claims.(*UserClaims)
+	if !ok || !token.Valid {
+		return false, fmt.Errorf("pkg.jwt.token.ValidateToken - invalid token")
+	}
+
+	slog.Info("claims: %v", claims)
+
+	return true, nil
 }
