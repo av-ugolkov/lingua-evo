@@ -16,7 +16,8 @@ import (
 )
 
 const (
-	mainURL = "/"
+	mainURL  = "/"
+	indexURL = "/index"
 
 	indexPagePath = "website/index.html"
 )
@@ -38,6 +39,11 @@ func newHandler(wordSvc *wordSvc.WordSvc) *Handler {
 
 func (h *Handler) register(r *mux.Router) {
 	r.HandleFunc(mainURL, h.get).Methods(http.MethodGet)
+	r.HandleFunc(indexURL, h.getIndex).Methods(http.MethodGet)
+}
+
+func (h *Handler) getIndex(w http.ResponseWriter, r *http.Request) {
+	http.Redirect(w, r, mainURL, http.StatusPermanentRedirect)
 }
 
 func (h *Handler) get(w http.ResponseWriter, r *http.Request) {
