@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"fmt"
 	"lingua-evo/internal/services/auth/entity"
+
+	"github.com/google/uuid"
 )
 
 type SessionRepo struct {
@@ -18,10 +20,29 @@ func NewRepo(db *sql.DB) *SessionRepo {
 }
 
 func (r *SessionRepo) SetSession(ctx context.Context, s *entity.Session) error {
-	query := `INSERT INTO session (id, user_id, refresh_token, expires_at, created_at) VALUES ($1, $2, $3, $4, $5) ON CONFLICT DO NOTHING`
-	_, err := r.db.ExecContext(ctx, query, s.ID, s.UserID, s.RefreshToken, s.ExpiresAt, s.CreatedAt)
+	query := `INSERT INTO session (refresh_token, user_id, expires_at, created_at) VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING`
+	_, err := r.db.ExecContext(ctx, query, s.RefreshToken, s.UserID, s.ExpiresAt, s.CreatedAt)
 	if err != nil {
-		return fmt.Errorf("auths.repository.SessionRepo.CreateSession: %w", err)
+		return fmt.Errorf("auth.repository.SessionRepo.CreateSession: %w", err)
+	}
+	return nil
+}
+
+func (r *SessionRepo) GetCountSession(ctx context.Context, userID uuid.UUID) (int64, error) {
+	var count int64
+	query := `SELECT count(*) FROM session WHERE user_id=$1`
+	err := r.db.QueryRowContext(ctx, query, userID).Scan(&count)
+	if err != nil {
+		return -1, fmt.Errorf("auth.repository.SessionRepo.GetCountSession: %w", err)
+	}
+	return count, nil
+}
+
+func (r *SessionRepo) DeleteAllUserSessions(ctx context.Context, userID uuid.UUID) error {
+	query := `DELETE FROM session WHERE user_id=$1`
+	_, err := r.db.ExecContext(ctx, query, userID)
+	if err != nil {
+		return fmt.Errorf("auth.repository.SessionRepo.DeleteAllUserSessions: %w", err)
 	}
 	return nil
 }

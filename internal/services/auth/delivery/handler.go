@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
+	"lingua-evo/internal/config"
 	"lingua-evo/internal/services/auth/dto"
 	"lingua-evo/internal/services/auth/service"
 	"lingua-evo/pkg/tools"
@@ -59,7 +61,7 @@ func (h *Handler) createSession(w http.ResponseWriter, r *http.Request) {
 	}
 
 	b, err := json.Marshal(&dto.CreateSessionRs{
-		AccessToken:  tokens.JWT,
+		AccessToken:  tokens.AccessToken,
 		RefreshToken: tokens.RefreshToken,
 	})
 	if err != nil {
@@ -67,10 +69,13 @@ func (h *Handler) createSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	additionalTime := config.GetConfig().JWT.ExpireRefresh
+	duration := time.Duration(additionalTime) * time.Second
 	w.Header().Set("Content-Type", "application/json")
 	http.SetCookie(w, &http.Cookie{
 		Name:     "refresh_token",
 		Value:    tokens.RefreshToken.String(),
+		MaxAge:   int(duration.Seconds()),
 		HttpOnly: true,
 		Secure:   true,
 	})
