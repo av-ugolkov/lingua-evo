@@ -37,7 +37,6 @@ func newHandler(userSvc *service.UserSvc) *Handler {
 
 func (h *Handler) register(r *mux.Router) {
 	r.HandleFunc(signInURL, h.get).Methods(http.MethodGet)
-	r.HandleFunc(signInURL, h.post).Methods(http.MethodPost)
 }
 
 func (h *Handler) get(w http.ResponseWriter, r *http.Request) {
@@ -50,25 +49,4 @@ func (h *Handler) get(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write([]byte(file))
-}
-
-func (h *Handler) post(w http.ResponseWriter, r *http.Request) {
-	username := r.FormValue("username")
-	//email := r.FormValue("email")
-	//password := r.FormValue("password")
-
-	user, err := h.userSvc.GetUserByName(r.Context(), username)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		_, _ = w.Write([]byte(err.Error()))
-		return
-	}
-
-	fmt.Printf("find user: %v", user)
-	//TODO client to UserService and get user by username and password
-	//for now stub check
-	//if u.Username != "me" || u.Password != "pass" {
-	//	w.WriteHeader(http.StatusNotFound)
-	//	return
-	//}
 }
