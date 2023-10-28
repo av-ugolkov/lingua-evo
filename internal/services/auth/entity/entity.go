@@ -8,15 +8,14 @@ import (
 
 type (
 	Session struct {
-		ID           uuid.UUID
-		UserID       uuid.UUID
 		RefreshToken uuid.UUID
+		UserID       uuid.UUID
 		ExpiresAt    time.Time
 		CreatedAt    time.Time
 	}
 
 	Tokens struct {
-		JWT          string
+		AccessToken  string
 		RefreshToken uuid.UUID
 	}
 
