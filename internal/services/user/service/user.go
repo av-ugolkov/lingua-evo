@@ -16,6 +16,7 @@ import (
 type userRepo interface {
 	AddUser(ctx context.Context, u *entity.User) (uuid.UUID, error)
 	EditUser(ctx context.Context, u *entity.User) error
+	GetUserByID(ctx context.Context, uid uuid.UUID) (*entity.User, error)
 	GetUserByName(ctx context.Context, name string) (*entity.User, error)
 	GetUserByEmail(ctx context.Context, email string) (*entity.User, error)
 	RemoveUser(ctx context.Context, u *entity.User) error
@@ -69,6 +70,10 @@ func (s *UserSvc) GetUser(ctx context.Context, login string) (*entity.User, erro
 	}
 
 	return user, nil
+}
+
+func (s *UserSvc) GetUserByID(ctx context.Context, uid uuid.UUID) (*entity.User, error) {
+	return s.repo.GetUserByID(ctx, uid)
 }
 
 func (s *UserSvc) GetUserByName(ctx context.Context, name string) (*entity.User, error) {

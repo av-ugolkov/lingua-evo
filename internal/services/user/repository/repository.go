@@ -27,7 +27,7 @@ func (r *UserRepo) AddUser(ctx context.Context, u *entity.User) (uuid.UUID, erro
 
 	err := r.db.QueryRowContext(ctx, query, u.ID, u.Username, u.Email, u.PasswordHash, u.Role, u.LastVisitAt, u.CreatedAt).Scan(&uid)
 	if err != nil {
-		return uuid.Nil, fmt.Errorf("user.repository.AddUser: %w", err)
+		return uuid.Nil, fmt.Errorf("user.repository.UserRepo.AddUser: %w", err)
 	}
 
 	return uid, nil
@@ -37,6 +37,16 @@ func (r *UserRepo) EditUser(ctx context.Context, u *entity.User) error {
 	return nil
 }
 
+func (r *UserRepo) GetUserByID(ctx context.Context, uid uuid.UUID) (*entity.User, error) {
+	query := `SELECT id, name, email, password_hash, role, last_visit_at, created_at FROM users where id=$1`
+	var u entity.User
+	err := r.db.QueryRowContext(ctx, query, uid).Scan(&u.ID, &u.Username, &u.Email, &u.PasswordHash, &u.Role, &u.LastVisitAt, &u.CreatedAt)
+	if err != nil {
+		return nil, fmt.Errorf("user.repository.UserRepo.GetUserByID: %w", err)
+	}
+	return &u, nil
+}
+
 func (r *UserRepo) GetUserByName(ctx context.Context, name string) (*entity.User, error) {
 	query := `SELECT id, email, password_hash, role, last_visit_at, created_at FROM users where name=$1`
 
@@ -44,7 +54,7 @@ func (r *UserRepo) GetUserByName(ctx context.Context, name string) (*entity.User
 
 	err := r.db.QueryRowContext(ctx, query, name).Scan(&u.ID, &u.Email, &u.PasswordHash, &u.Role, &u.LastVisitAt, &u.CreatedAt)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("user.repository.UserRepo.GetUserByName: %w", err)
 	}
 
 	return &u, nil
@@ -57,7 +67,7 @@ func (r *UserRepo) GetUserByEmail(ctx context.Context, email string) (*entity.Us
 
 	err := r.db.QueryRowContext(ctx, query, email).Scan(&u.ID, &u.Username, &u.PasswordHash, &u.Role, &u.LastVisitAt, &u.CreatedAt)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("user.repository.UserRepo.GetUserByEmail: %w", err)
 	}
 
 	u.Email = email
