@@ -3,13 +3,12 @@ package config
 import (
 	"fmt"
 	"log/slog"
-	"sync"
 
 	"github.com/ilyakaznacheev/cleanenv"
 )
 
 const (
-	pathConfig = "./../configs/server_config.yaml"
+	pathConfig = "./../configs/%s.yaml"
 )
 
 type Config struct {
@@ -26,8 +25,8 @@ type PprofDebug struct {
 
 type JWT struct {
 	Secret        string `yaml:"secret" env-required:"true"`
-	ExpireAccess  int    `yaml:"expire_access" env-default:"60*60"`
-	ExpireRefresh int    `yaml:"expire_refresh" env-default:"60*60*24*30"`
+	ExpireAccess  int    `yaml:"expire_access" env-default:"1800"`
+	ExpireRefresh int    `yaml:"expire_refresh" env-default:"2592000"`
 }
 
 type Service struct {
@@ -48,16 +47,18 @@ func (db *Database) GetConnStr() string {
 }
 
 var instance *Config
-var once sync.Once
+
+func InitConfig(config string) *Config {
+	slog.Info("read application config")
+	instance = &Config{}
+	fullPathConfig := fmt.Sprintf(pathConfig, config)
+	if err := cleanenv.ReadConfig(fullPathConfig, instance); err != nil {
+		slog.Error(fmt.Errorf("Fail read config: %v", err).Error())
+		return nil
+	}
+	return instance
+}
 
 func GetConfig() *Config {
-	once.Do(func() {
-		slog.Info("read application config")
-		instance = &Config{}
-		if err := cleanenv.ReadConfig(pathConfig, instance); err != nil {
-			slog.Error(fmt.Errorf("Fail read config: %v", err).Error())
-			return
-		}
-	})
 	return instance
 }
