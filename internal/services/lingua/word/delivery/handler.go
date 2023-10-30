@@ -13,6 +13,7 @@ import (
 
 	staticFiles "lingua-evo"
 	"lingua-evo/pkg/http/handler"
+	"lingua-evo/pkg/middleware"
 
 	"github.com/gorilla/mux"
 )
@@ -47,7 +48,7 @@ func newHandler(wordSvc *serviceWord.WordSvc, langSvc *serviceLang.LanguageSvc) 
 
 func (h *Handler) register(r *mux.Router) {
 	r.HandleFunc(openPage, h.openPage).Methods(http.MethodGet)
-	r.HandleFunc(addWord, h.addWord).Methods(http.MethodPost)
+	r.HandleFunc(addWord, middleware.Auth(h.addWord)).Methods(http.MethodPost)
 	r.HandleFunc(getWord, h.getWord).Methods(http.MethodPost)
 	r.HandleFunc(getRandomWord, h.getRandomWord).Methods(http.MethodPost)
 }
