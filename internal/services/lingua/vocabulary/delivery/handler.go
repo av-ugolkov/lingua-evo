@@ -7,7 +7,7 @@ import (
 	"lingua-evo/internal/services/lingua/vocabulary/dto"
 	"lingua-evo/internal/services/lingua/vocabulary/service"
 
-	"lingua-evo/pkg/tools"
+	"lingua-evo/pkg/http/handler"
 
 	"github.com/gorilla/mux"
 )
@@ -49,15 +49,15 @@ func (h *Handler) addWord(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	var data dto.AddWordRq
 
-	err := tools.CheckBody(w, r, &data)
+	err := handler.CheckBody(w, r, &data)
 	if err != nil {
-		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.addWord - check body: %v", err))
+		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.addWord - check body: %v", err))
 		return
 	}
 
 	err = h.vocabularySvc.AddWordInVocabulary(ctx, &data)
 	if err != nil {
-		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.addWord: %v", err))
+		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.addWord: %v", err))
 		return
 	}
 
@@ -71,15 +71,15 @@ func (h *Handler) deleteWord(w http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
 	var data dto.RemoveWordRq
-	err := tools.CheckBody(w, r, &data)
+	err := handler.CheckBody(w, r, &data)
 	if err != nil {
-		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.deleteWord - check body: %v", err))
+		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.deleteWord - check body: %v", err))
 		return
 	}
 
 	err = h.vocabularySvc.DeleteWordFromVocabulary(ctx, &data)
 	if err != nil {
-		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.deleteWord: %v", err))
+		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.deleteWord: %v", err))
 		return
 	}
 

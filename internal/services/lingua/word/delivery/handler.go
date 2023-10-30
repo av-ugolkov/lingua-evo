@@ -12,7 +12,7 @@ import (
 	serviceWord "lingua-evo/internal/services/lingua/word/service"
 
 	staticFiles "lingua-evo"
-	"lingua-evo/pkg/tools"
+	"lingua-evo/pkg/http/handler"
 
 	"github.com/gorilla/mux"
 )
@@ -86,8 +86,8 @@ func (h *Handler) addWord(w http.ResponseWriter, r *http.Request) {
 		_ = r.Body.Close()
 	}()
 
-	if err := tools.CheckBody(w, r, &data); err != nil {
-		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.addWord - check body: %v", err))
+	if err := handler.CheckBody(w, r, &data); err != nil {
+		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.addWord - check body: %v", err))
 		return
 	}
 
@@ -95,13 +95,13 @@ func (h *Handler) addWord(w http.ResponseWriter, r *http.Request) {
 
 	err := h.langSvc.CheckLanguage(ctx, data.LanguageCode)
 	if err != nil {
-		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.addWord - check language: %v", err))
+		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.addWord - check language: %v", err))
 		return
 	}
 
 	wordUUID, err := h.wordSvc.AddWord(ctx, &data)
 	if err != nil {
-		tools.SendError(w, http.StatusInternalServerError, err)
+		handler.SendError(w, http.StatusInternalServerError, err)
 		return
 	}
 	_, _ = w.Write([]byte(wordUUID.String()))
@@ -114,21 +114,21 @@ func (h *Handler) getWord(w http.ResponseWriter, r *http.Request) {
 
 	var data dto.GetWordRq
 
-	if err := tools.CheckBody(w, r, &data); err != nil {
-		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getWord - check body: %v", err))
+	if err := handler.CheckBody(w, r, &data); err != nil {
+		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getWord - check body: %v", err))
 		return
 	}
 
 	ctx := r.Context()
 
 	if err := h.langSvc.CheckLanguage(ctx, data.LanguageCode); err != nil {
-		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getWord - check language: %v", err))
+		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getWord - check language: %v", err))
 		return
 	}
 
 	wordID, err := h.wordSvc.GetWord(ctx, &data)
 	if err != nil {
-		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getWord: %v", err))
+		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getWord: %v", err))
 		return
 	}
 	_, _ = w.Write([]byte(wordID.String()))
@@ -141,21 +141,21 @@ func (h *Handler) getRandomWord(w http.ResponseWriter, r *http.Request) {
 
 	var data dto.RandomWordRq
 
-	if err := tools.CheckBody(w, r, &data); err != nil {
-		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getRandomWord - check body: %v", err))
+	if err := handler.CheckBody(w, r, &data); err != nil {
+		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getRandomWord - check body: %v", err))
 		return
 	}
 
 	ctx := r.Context()
 
 	if err := h.langSvc.CheckLanguage(ctx, data.LanguageCode); err != nil {
-		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getRandomWord - check language: %v", err))
+		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getRandomWord - check language: %v", err))
 		return
 	}
 
 	word, err := h.wordSvc.GetRandomWord(ctx, &data)
 	if err != nil {
-		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getRandomWord: %v", err))
+		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getRandomWord: %v", err))
 		return
 	}
 
@@ -167,7 +167,7 @@ func (h *Handler) getRandomWord(w http.ResponseWriter, r *http.Request) {
 
 	b, err := json.Marshal(&randomWordRs)
 	if err != nil {
-		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getRandomWord - marshal: %v", err))
+		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getRandomWord - marshal: %v", err))
 		return
 	}
 	_, _ = w.Write(b)

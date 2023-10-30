@@ -12,8 +12,8 @@ import (
 	"lingua-evo/internal/services/lingua/dictionary/dto"
 	"lingua-evo/internal/services/lingua/dictionary/service"
 
+	"lingua-evo/pkg/http/handler"
 	"lingua-evo/pkg/middleware"
-	"lingua-evo/pkg/tools"
 )
 
 const (
@@ -53,16 +53,16 @@ func (h *Handler) addDictionary(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	var data dto.DictionaryRq
-	err := tools.CheckBody(w, r, &data)
+	err := handler.CheckBody(w, r, &data)
 	if err != nil {
-		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.addDictionary - check body: %v", err))
+		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.addDictionary - check body: %v", err))
 		return
 	}
 
 	ctx := r.Context()
 	dictID, err := h.dictionarySvc.AddDictionary(ctx, data)
 	if err != nil {
-		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.addDictionary: %v", err))
+		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.addDictionary: %v", err))
 	}
 
 	_, _ = w.Write([]byte(dictID.String()))
@@ -74,16 +74,16 @@ func (h *Handler) deleteDictionary(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	var data dto.DictionaryRq
-	err := tools.CheckBody(w, r, &data)
+	err := handler.CheckBody(w, r, &data)
 	if err != nil {
-		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.deleteDictionary - check body: %v", err))
+		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.deleteDictionary - check body: %v", err))
 		return
 	}
 
 	ctx := r.Context()
 	err = h.dictionarySvc.DeleteDictionary(ctx, data.UserID, data.Name)
 	if err != nil {
-		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.deleteDictionary: %v", err))
+		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.deleteDictionary: %v", err))
 	}
 
 	_, _ = w.Write([]byte("done"))
@@ -95,16 +95,16 @@ func (h *Handler) getDictionary(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	var data dto.DictionaryRq
-	err := tools.CheckBody(w, r, &data)
+	err := handler.CheckBody(w, r, &data)
 	if err != nil {
-		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.getDictionary - check body: %v", err))
+		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.getDictionary - check body: %v", err))
 		return
 	}
 
 	ctx := r.Context()
 	id, err := h.dictionarySvc.GetDictionary(ctx, data.UserID, data.Name)
 	if err != nil {
-		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.getDictionary: %v", err))
+		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.getDictionary: %v", err))
 		return
 	}
 
@@ -113,7 +113,7 @@ func (h *Handler) getDictionary(w http.ResponseWriter, r *http.Request) {
 	}
 	b, err := json.Marshal(&dictID)
 	if err != nil {
-		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.getDictionary - marshal: %v", err))
+		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.getDictionary - marshal: %v", err))
 		return
 	}
 	_, _ = w.Write(b)
@@ -125,16 +125,16 @@ func (h *Handler) getAllDictionary(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	var data uuid.UUID
-	err := tools.CheckBody(w, r, &data)
+	err := handler.CheckBody(w, r, &data)
 	if err != nil {
-		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.getAllDictionary - check body: %v", err))
+		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.getAllDictionary - check body: %v", err))
 		return
 	}
 
 	ctx := r.Context()
 	dictionaries, err := h.dictionarySvc.GetDictionaries(ctx, data)
 	if err != nil {
-		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.getAllDictionary: %v", err))
+		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.getAllDictionary: %v", err))
 	}
 
 	//TODO нужно возвращать сериализованные данные
