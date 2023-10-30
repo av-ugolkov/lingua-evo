@@ -11,7 +11,7 @@ import (
 	"lingua-evo/runtime"
 )
 
-func AuthMiddleware(next http.Handler) http.Handler {
+func Auth(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if _, ok := r.Header["Authorization"]; !ok {
 			handler.SendError(w, http.StatusUnauthorized, fmt.Errorf("token not found"))
@@ -26,6 +26,6 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		}
 
 		r = r.WithContext(runtime.SetUserIDInContext(r.Context(), claims.UserID))
-		next.ServeHTTP(w, r)
+		next(w, r)
 	})
 }
