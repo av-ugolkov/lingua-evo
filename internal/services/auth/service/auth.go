@@ -102,6 +102,7 @@ func (s *AuthSvc) CreateSession(ctx context.Context, sessionRq *dto.CreateSessio
 	return tokens, nil
 }
 
+// RefreshSessionToken - the method is called from the client
 func (s *AuthSvc) RefreshSessionToken(ctx context.Context, refreshToken uuid.UUID) (*entity.Tokens, error) {
 	oldRefreshSession, err := s.repo.GetSession(ctx, refreshToken)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
