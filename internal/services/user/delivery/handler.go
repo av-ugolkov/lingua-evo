@@ -11,6 +11,7 @@ import (
 	"lingua-evo/internal/services/user/dto"
 	"lingua-evo/internal/services/user/entity"
 	"lingua-evo/internal/services/user/service"
+	"lingua-evo/pkg/http/handler"
 	"lingua-evo/pkg/tools"
 
 	"github.com/google/uuid"
@@ -52,30 +53,30 @@ func (h *Handler) createAccount(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	var data dto.CreateUserRq
-	err := tools.CheckBody(w, r, &data)
+	err := handler.CheckBody(w, r, &data)
 	if err != nil {
-		tools.SendError(w, http.StatusBadRequest, fmt.Errorf("user.delivery.Handler.createAccount - check body: %v", err))
+		handler.SendError(w, http.StatusBadRequest, fmt.Errorf("user.delivery.Handler.createAccount - check body: %v", err))
 		return
 	}
 
 	if err := h.validateEmail(r.Context(), data.Email); err != nil {
-		tools.SendError(w, http.StatusConflict, fmt.Errorf("user.delivery.Handler.createAccount - validateEmail: %v", err))
+		handler.SendError(w, http.StatusConflict, fmt.Errorf("user.delivery.Handler.createAccount - validateEmail: %v", err))
 		return
 	}
 
 	if err := h.validateUsername(r.Context(), data.Username); err != nil {
-		tools.SendError(w, http.StatusConflict, fmt.Errorf("user.delivery.Handler.createAccount - validateUsername: %v", err))
+		handler.SendError(w, http.StatusConflict, fmt.Errorf("user.delivery.Handler.createAccount - validateUsername: %v", err))
 		return
 	}
 
 	if err := validatePassword(data.Password); err != nil {
-		tools.SendError(w, http.StatusConflict, fmt.Errorf("user.delivery.Handler.createAccount - validatePassword: %v", err))
+		handler.SendError(w, http.StatusConflict, fmt.Errorf("user.delivery.Handler.createAccount - validatePassword: %v", err))
 		return
 	}
 
 	hashPassword, err := tools.HashPassword(data.Password)
 	if err != nil {
-		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.createAccount - hashPassword: %v", err))
+		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.createAccount - hashPassword: %v", err))
 		return
 	}
 
@@ -83,7 +84,7 @@ func (h *Handler) createAccount(w http.ResponseWriter, r *http.Request) {
 
 	uid, err := h.userSvc.CreateUser(r.Context(), &data)
 	if err != nil {
-		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.createAccount - create user: %v", err))
+		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.createAccount - create user: %v", err))
 		return
 	}
 
@@ -91,7 +92,7 @@ func (h *Handler) createAccount(w http.ResponseWriter, r *http.Request) {
 		UserID: uid,
 	})
 	if err != nil {
-		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.createAccount - marshal: %v", err))
+		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.createAccount - marshal: %v", err))
 		return
 	}
 
@@ -107,16 +108,16 @@ func (h *Handler) getUserByName(w http.ResponseWriter, r *http.Request) {
 
 	var data dto.GetIDRq
 
-	err := tools.CheckBody(w, r, &data)
+	err := handler.CheckBody(w, r, &data)
 	if err != nil {
-		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.getIDByName - check body: %v", err))
+		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.getIDByName - check body: %v", err))
 		return
 	}
 
 	ctx := r.Context()
 	user, err := h.userSvc.GetUserByName(ctx, data.Value)
 	if err != nil {
-		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.getIDByName: %v", err))
+		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.getIDByName: %v", err))
 		return
 	}
 
@@ -125,7 +126,7 @@ func (h *Handler) getUserByName(w http.ResponseWriter, r *http.Request) {
 	}
 	b, err := json.Marshal(userID)
 	if err != nil {
-		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.getIDByName - marshal: %v", err))
+		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.getIDByName - marshal: %v", err))
 		return
 	}
 	_, _ = w.Write(b)
@@ -138,16 +139,16 @@ func (h *Handler) getUserByEmail(w http.ResponseWriter, r *http.Request) {
 
 	var data dto.GetIDRq
 
-	err := tools.CheckBody(w, r, &data)
+	err := handler.CheckBody(w, r, &data)
 	if err != nil {
-		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.getIDByEmail - check body: %v", err))
+		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.getIDByEmail - check body: %v", err))
 		return
 	}
 
 	ctx := r.Context()
 	user, err := h.userSvc.GetUserByEmail(ctx, data.Value)
 	if err != nil {
-		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.getIDByEmail: %v", err))
+		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.getIDByEmail: %v", err))
 		return
 	}
 
@@ -156,7 +157,7 @@ func (h *Handler) getUserByEmail(w http.ResponseWriter, r *http.Request) {
 	}
 	b, err := json.Marshal(userID)
 	if err != nil {
-		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.getIDByEmail - marshal: %v", err))
+		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.getIDByEmail - marshal: %v", err))
 		return
 	}
 	_, _ = w.Write(b)

@@ -11,7 +11,7 @@ import (
 	"lingua-evo/internal/config"
 	"lingua-evo/internal/services/auth/dto"
 	"lingua-evo/internal/services/auth/service"
-	"lingua-evo/pkg/tools"
+	"lingua-evo/pkg/http/handler"
 
 	"github.com/gorilla/mux"
 )
@@ -49,14 +49,14 @@ func (h *Handler) createSession(w http.ResponseWriter, r *http.Request) {
 	var data dto.CreateSessionRq
 	err := decodeBasicAuth(r.Header["Authorization"][0], &data)
 	if err != nil {
-		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.createSession - check body: %v", err))
+		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.createSession - check body: %v", err))
 		return
 	}
 
 	ctx := r.Context()
 	tokens, err := h.authSvc.CreateSession(ctx, &data)
 	if err != nil {
-		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.createSession - create session: %v", err))
+		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.createSession - create session: %v", err))
 		return
 	}
 
@@ -65,7 +65,7 @@ func (h *Handler) createSession(w http.ResponseWriter, r *http.Request) {
 		RefreshToken: tokens.RefreshToken,
 	})
 	if err != nil {
-		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.createSession - marshal: %v", err))
+		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.createSession - marshal: %v", err))
 		return
 	}
 
