@@ -12,7 +12,7 @@ import (
 	entityWord "lingua-evo/internal/services/lingua/word/entity"
 	wordSvc "lingua-evo/internal/services/lingua/word/service"
 
-	"lingua-evo/pkg/tools"
+	"lingua-evo/pkg/http/handler"
 )
 
 const (
@@ -49,14 +49,14 @@ func (h *Handler) getIndex(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) get(w http.ResponseWriter, r *http.Request) {
 	t, err := staticFiles.ParseFiles(indexPagePath)
 	if err != nil {
-		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("site.index.delivery.Handler.get - parseFiles: %v", err))
+		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("site.index.delivery.Handler.get - parseFiles: %v", err))
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 
 	randomWord, err := h.wordSvc.GetRandomWord(r.Context(), &dtoWord.RandomWordRq{LanguageCode: "en"})
 	if err != nil {
-		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("site.index.delivery.Handler.get - GetRandomWord: %v", err))
+		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("site.index.delivery.Handler.get - GetRandomWord: %v", err))
 		return
 	}
 	data := struct {
@@ -72,7 +72,7 @@ func (h *Handler) get(w http.ResponseWriter, r *http.Request) {
 
 	err = t.Execute(w, data)
 	if err != nil {
-		tools.SendError(w, http.StatusInternalServerError, fmt.Errorf("site.index.delivery.Handler.get - Execute: %v", err))
+		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("site.index.delivery.Handler.get - Execute: %v", err))
 		return
 	}
 }
