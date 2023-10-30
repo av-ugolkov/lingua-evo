@@ -12,7 +12,7 @@ import (
 	"lingua-evo/internal/services/auth/dto"
 	"lingua-evo/internal/services/auth/entity"
 	entityUser "lingua-evo/internal/services/user/entity"
-	"lingua-evo/pkg/jwt"
+	"lingua-evo/pkg/token"
 	"lingua-evo/pkg/tools"
 
 	"github.com/google/uuid"
@@ -89,7 +89,7 @@ func (s *AuthSvc) CreateSession(ctx context.Context, sessionRq *dto.CreateSessio
 		ExpiresAt: session.ExpiresAt,
 	}
 
-	accessToken, err := jwt.NewJWTToken(u, claims)
+	accessToken, err := token.NewJWTToken(u, claims)
 	if err != nil {
 		return nil, fmt.Errorf("auth.service.AuthSvc.CreateSession - jwt.NewToken: %v", err)
 	}
@@ -142,7 +142,7 @@ func (s *AuthSvc) RefreshSessionToken(ctx context.Context, refreshToken uuid.UUI
 		return nil, fmt.Errorf("auth.service.AuthSvc.CreateSession - get user by ID: %v", err)
 	}
 
-	accessToken, err := jwt.NewJWTToken(u, claims)
+	accessToken, err := token.NewJWTToken(u, claims)
 	if err != nil {
 		return nil, fmt.Errorf("auth.service.AuthSvc.CreateSession - create access token: %v", err)
 	}
@@ -186,45 +186,3 @@ func (s *AuthSvc) verifyRefreshSession(oldRefreshSession *entity.Session) error 
 	}
 	return nil
 }
-
-/*
-login
-  get user
-  check password
-  create refresh session
-  add refresh session
-    if valid session
-      add refresh session
-    else
-      wipe all refresh session
-      add refresh session
-  make access token use id, name, role, email
-  create data from acces token and refresh token
-
-
-const newRefreshSession = new RefreshSessionEntity({
-      refreshToken: uuidv4(),
-      userId: user.id,
-      ip: ctx.ip,
-      ua: ctx.headers['User-Agent'],
-      fingerprint: ctx.body.fingerprint,
-      expiresIn: refTokenExpiresInMilliseconds
-    })
-
-return this.result({
-      data: {
-        accessToken: await makeAccessToken(user),
-        refreshToken: newRefreshSession.refreshToken
-      },
-      cookies: [
-        new CookieEntity({
-          name: 'refreshToken',
-          value: newRefreshSession.refreshToken,
-          domain: 'localhost',
-          path: '/auth',
-          maxAge: refTokenExpiresInSeconds,
-          secure: false // temp: should be deleted
-        })
-      ]
-    })
-*/

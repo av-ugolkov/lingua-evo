@@ -2,13 +2,13 @@ package middleware
 
 import (
 	"fmt"
-	"log/slog"
 	"net/http"
 	"strings"
 
 	"lingua-evo/internal/config"
 	"lingua-evo/pkg/http/handler"
-	"lingua-evo/pkg/jwt"
+	"lingua-evo/pkg/token"
+	"lingua-evo/runtime"
 )
 
 func AuthMiddleware(next http.Handler) http.Handler {
@@ -18,20 +18,14 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 		auth := r.Header["Authorization"][0]
-		token := strings.Split(auth, " ")[1]
-		claims, err := jwt.ValidateToken(token, config.GetConfig().JWT.Secret)
+		tokenStr := strings.Split(auth, " ")[1]
+		claims, err := token.ValidateJWT(tokenStr, config.GetConfig().JWT.Secret)
 		if err != nil {
 			handler.SendError(w, http.StatusUnauthorized, err)
 			return
 		}
 
-		slog.Info(claims.ID.String())
-
-		c, err := r.Cookie("refresh_token")
-		if err != nil {
-			http.Redirect(w, r, "/signin", http.StatusFound)
-		}
-		fmt.Printf("token: %v\n", c)
+		r = r.WithContext(runtime.SetUserIDInContext(r.Context(), claims.UserID))
 		next.ServeHTTP(w, r)
 	})
 }
