@@ -4,8 +4,7 @@ import "github.com/google/uuid"
 
 type (
 	DictionaryRq struct {
-		UserID uuid.UUID `json:"user_id"`
-		Name   string    `json:"name"`
+		Name string `json:"name"`
 	}
 
 	DictionariesRs struct {

@@ -34,11 +34,11 @@ func NewService(repo repoDict) *DictionarySvc {
 	}
 }
 
-func (s *DictionarySvc) AddDictionary(ctx context.Context, dictionary dto.DictionaryRq) (uuid.UUID, error) {
-	dict := entity.Dictionary{
+func (s *DictionarySvc) AddDictionary(ctx context.Context, userID uuid.UUID, d *dto.DictionaryRq) (uuid.UUID, error) {
+	dictionary := entity.Dictionary{
 		ID:     uuid.New(),
-		UserID: dictionary.UserID,
-		Name:   dictionary.Name,
+		UserID: userID,
+		Name:   d.Name,
 	}
 
 	dictionaries, err := s.repo.GetDictionaries(ctx, dictionary.UserID)
@@ -50,18 +50,18 @@ func (s *DictionarySvc) AddDictionary(ctx context.Context, dictionary dto.Dictio
 		return uuid.Nil, fmt.Errorf("dictionary.service.DictionarySvc.AddDictionary - %w %v", errCountDictionary, dictionary.UserID)
 	}
 
-	err = s.repo.AddDictionary(ctx, dict)
+	err = s.repo.AddDictionary(ctx, dictionary)
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("dictionary.service.DictionarySvc.AddDictionary: %w", err)
 	}
 
-	return dict.ID, nil
+	return dictionary.ID, nil
 }
 
-func (s *DictionarySvc) DeleteDictionary(ctx context.Context, userID uuid.UUID, name string) error {
+func (s *DictionarySvc) DeleteDictionary(ctx context.Context, userID uuid.UUID, d *dto.DictionaryRq) error {
 	dict := entity.Dictionary{
 		UserID: userID,
-		Name:   name,
+		Name:   d.Name,
 	}
 
 	err := s.repo.DeleteDictionary(ctx, dict)

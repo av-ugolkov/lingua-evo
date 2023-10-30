@@ -1,6 +1,7 @@
-package jwt
+package token
 
 import (
+	"errors"
 	"fmt"
 
 	"lingua-evo/internal/config"
@@ -17,14 +18,14 @@ const (
 
 type (
 	UserClaims struct {
-		ID uuid.UUID `json:"id"`
+		UserID uuid.UUID `json:"user_id"`
 		jwt.RegisteredClaims
 	}
 )
 
 func NewJWTToken(u *entityUser.User, s *entitySession.Claims) (string, error) {
 	userClaims := UserClaims{
-		ID: u.ID,
+		UserID: u.ID,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ID:        s.ID.String(),
 			Audience:  []string{"users"},
@@ -40,7 +41,7 @@ func NewJWTToken(u *entityUser.User, s *entitySession.Claims) (string, error) {
 	return t, nil
 }
 
-func ValidateToken(tokenStr string, secret string) (*UserClaims, error) {
+func ValidateJWT(tokenStr string, secret string) (*UserClaims, error) {
 	token, err := jwt.ParseWithClaims(tokenStr, &UserClaims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
@@ -48,7 +49,9 @@ func ValidateToken(tokenStr string, secret string) (*UserClaims, error) {
 
 		return []byte(secret), nil
 	})
-	if err != nil {
+	if errors.Is(err, jwt.ErrTokenExpired) {
+		return nil, fmt.Errorf("pkg.jwt.token.ValidateToken - token expired")
+	} else if err != nil {
 		return nil, fmt.Errorf("pkg.jwt.token.ValidateToken - can't parse token: %w", err)
 	}
 
