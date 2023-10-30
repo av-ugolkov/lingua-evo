@@ -8,6 +8,7 @@ import (
 	"lingua-evo/internal/services/lingua/vocabulary/service"
 
 	"lingua-evo/pkg/http/handler"
+	"lingua-evo/pkg/middleware"
 
 	"github.com/gorilla/mux"
 )
@@ -37,8 +38,8 @@ func newHandler(vocabularySvc *service.VocabularySvc) *Handler {
 }
 
 func (h *Handler) register(r *mux.Router) {
-	r.HandleFunc(addVocabulary, h.addWord).Methods(http.MethodPost)
-	r.HandleFunc(deleteVocabulary, h.deleteWord).Methods(http.MethodDelete)
+	r.HandleFunc(addVocabulary, middleware.Auth(h.addWord)).Methods(http.MethodPost)
+	r.HandleFunc(deleteVocabulary, middleware.Auth(h.deleteWord)).Methods(http.MethodDelete)
 }
 
 func (h *Handler) addWord(w http.ResponseWriter, r *http.Request) {
