@@ -41,10 +41,10 @@ func newHandler(dictionarySvc *service.DictionarySvc) *Handler {
 }
 
 func (h *Handler) register(r *mux.Router) {
-	r.Handle(addDictionary, middleware.AuthMiddleware(http.HandlerFunc(h.addDictionary))).Methods(http.MethodPost)
-	r.Handle(deleteDictionary, middleware.AuthMiddleware(http.HandlerFunc(h.deleteDictionary))).Methods(http.MethodDelete)
-	r.Handle(getDictionary, middleware.AuthMiddleware(http.HandlerFunc(h.getDictionary))).Methods(http.MethodPost)
-	r.Handle(getAllDictionary, middleware.AuthMiddleware(http.HandlerFunc(h.getAllDictionary))).Methods(http.MethodPost)
+	r.HandleFunc(addDictionary, middleware.Auth(h.addDictionary)).Methods(http.MethodPost)
+	r.HandleFunc(deleteDictionary, middleware.Auth(h.deleteDictionary)).Methods(http.MethodDelete)
+	r.HandleFunc(getDictionary, middleware.Auth(h.getDictionary)).Methods(http.MethodPost)
+	r.HandleFunc(getAllDictionary, middleware.Auth(h.getAllDictionary)).Methods(http.MethodPost)
 }
 
 func (h *Handler) addDictionary(w http.ResponseWriter, r *http.Request) {
