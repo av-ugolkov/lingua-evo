@@ -13,29 +13,33 @@ import (
 
 	"lingua-evo/internal/config"
 	repository "lingua-evo/internal/db"
-	accountHandler "lingua-evo/internal/services/account/delivery"
-	signInHandler "lingua-evo/internal/services/auth/sign_in/delivery"
-	signUpHandler "lingua-evo/internal/services/auth/sign_up/delivery"
-	dictHandler "lingua-evo/internal/services/dictionary/delivery"
-	dictRepository "lingua-evo/internal/services/dictionary/repository"
-	dictService "lingua-evo/internal/services/dictionary/service"
-	exampleRepository "lingua-evo/internal/services/example/repository"
-	exampleService "lingua-evo/internal/services/example/service"
-	indexHandler "lingua-evo/internal/services/index/delivery"
-	languageHandler "lingua-evo/internal/services/language/delivery"
-	langRepository "lingua-evo/internal/services/language/repository"
-	langService "lingua-evo/internal/services/language/service"
-	tagRepository "lingua-evo/internal/services/tag/repository"
-	tagService "lingua-evo/internal/services/tag/service"
+	authHandler "lingua-evo/internal/services/auth/delivery"
+	authRepository "lingua-evo/internal/services/auth/repository"
+	authService "lingua-evo/internal/services/auth/service"
+	accountHandler "lingua-evo/internal/services/lingua/account/delivery"
+	dictHandler "lingua-evo/internal/services/lingua/dictionary/delivery"
+	dictRepository "lingua-evo/internal/services/lingua/dictionary/repository"
+	dictService "lingua-evo/internal/services/lingua/dictionary/service"
+	exampleRepository "lingua-evo/internal/services/lingua/example/repository"
+	exampleService "lingua-evo/internal/services/lingua/example/service"
+	languageHandler "lingua-evo/internal/services/lingua/language/delivery"
+	langRepository "lingua-evo/internal/services/lingua/language/repository"
+	langService "lingua-evo/internal/services/lingua/language/service"
+	tagRepository "lingua-evo/internal/services/lingua/tag/repository"
+	tagService "lingua-evo/internal/services/lingua/tag/service"
+	vocabularyHandler "lingua-evo/internal/services/lingua/vocabulary/delivery"
+	vocabularyRepository "lingua-evo/internal/services/lingua/vocabulary/repository"
+	vocabularyService "lingua-evo/internal/services/lingua/vocabulary/service"
+	wordHandler "lingua-evo/internal/services/lingua/word/delivery"
+	wordRepository "lingua-evo/internal/services/lingua/word/repository"
+	wordService "lingua-evo/internal/services/lingua/word/service"
 	userHandler "lingua-evo/internal/services/user/delivery"
 	userRepository "lingua-evo/internal/services/user/repository"
 	userService "lingua-evo/internal/services/user/service"
-	vocabularyHandler "lingua-evo/internal/services/vocabulary/delivery"
-	vocabularyRepository "lingua-evo/internal/services/vocabulary/repository"
-	vocabularyService "lingua-evo/internal/services/vocabulary/service"
-	wordHandler "lingua-evo/internal/services/word/delivery"
-	wordRepository "lingua-evo/internal/services/word/repository"
-	wordService "lingua-evo/internal/services/word/service"
+
+	signInHandler "lingua-evo/internal/services/site/auth/sign_in/delivery"
+	signUpHandler "lingua-evo/internal/services/site/auth/sign_up/delivery"
+	indexHandler "lingua-evo/internal/services/site/index/delivery"
 )
 
 const (
@@ -118,9 +122,12 @@ func initServer(r *mux.Router, db *sql.DB) {
 	vocabularyRepo := vocabularyRepository.NewRepo(db)
 	vocabularySvc := vocabularyService.NewService(vocabularyRepo, wordSvc, exampleSvc, tagSvc)
 
+	authRepo := authRepository.NewRepo(db)
+	authSvc := authService.NewService(authRepo, userSvc)
+
 	slog.Info("<----- create handlers ----->")
 	slog.Info("index handler")
-	indexHandler.Create(r)
+	indexHandler.Create(r, wordSvc)
 
 	slog.Info("user handler")
 	userHandler.Create(r, userSvc)
@@ -129,7 +136,7 @@ func initServer(r *mux.Router, db *sql.DB) {
 	signInHandler.Create(r, userSvc)
 
 	slog.Info("sign_up handler")
-	signUpHandler.Create(r, userSvc)
+	signUpHandler.Create(r)
 
 	slog.Info("account handler")
 	accountHandler.Create(r)
@@ -145,6 +152,9 @@ func initServer(r *mux.Router, db *sql.DB) {
 
 	slog.Info("vocabulary handler")
 	vocabularyHandler.Create(r, vocabularySvc)
+
+	slog.Info("auth handler")
+	authHandler.Create(r, authSvc)
 
 	slog.Info("<----- end init services ----->")
 }

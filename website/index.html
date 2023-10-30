@@ -2,15 +2,36 @@
 <html lang="en">
 
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lingua Evo</title>
-    <meta http-equiv="Content-Type" content="text/html" charset="utf-8">
-    <link rel="stylesheet" href="website/main/style.css">
+
+    <link rel="shortcut icon" type="image/png" href="/website/logo.png">
+    <link rel="stylesheet" href="/website/main/normalize.css">
+    <link rel="stylesheet" href="/website/main/style.css">
+
+    <script src="/website/main/script.js" type="module"></script>
 </head>
 
 <body>
-    <div><label>Lingua Evo</label></div>
-    <div><button type="login">Login</button> </div>
-    <div><button type="signin">Create Account</button> </div>
+    <header class="header">
+        <a href="/website/" class="header-brand">
+            <img src="/website/logo.png" alt="Lingua Evo" class="header-logo" />
+            Lingua Evo
+        </a>
+        <nav class="header-nav">
+            <a class="nav-link" href="#home">Home</a>
+            <a class="nav-link" href="#contact">Contact</a>
+            <a class="nav-link" href="#about">About</a>
+        </nav>
+    </header>
+    <div class="container">
+        <div class="grid-container">
+            <div>
+                <label id="lable-random" for="random">{{ .Word.Text }}</label>
+            </div>
+        </div>
+    </div>
 </body>
 
 </html>
