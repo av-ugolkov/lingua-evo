@@ -59,15 +59,26 @@ func (h *Handler) get(w http.ResponseWriter, r *http.Request) {
 		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("site.index.delivery.Handler.get - GetRandomWord: %v", err))
 		return
 	}
+
+	type userInfo struct {
+		IsLogin bool
+		Name    string
+	}
+
 	data := struct {
 		Language *entityLanguage.Language
 		Word     *entityWord.Word
+		User     *userInfo
 	}{
 		//TODO нужно то ли с браузера, то ли еще откуда-то брать язык
 		Language: &entityLanguage.Language{
 			Code: "en",
 		},
 		Word: randomWord,
+		User: &userInfo{
+			IsLogin: true,
+			Name:    "admin",
+		},
 	}
 
 	err = t.Execute(w, data)
