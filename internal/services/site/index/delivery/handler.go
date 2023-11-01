@@ -6,11 +6,11 @@ import (
 
 	"github.com/gorilla/mux"
 
-	staticFiles "lingua-evo"
 	entityLanguage "lingua-evo/internal/services/lingua/language/entity"
 	dtoWord "lingua-evo/internal/services/lingua/word/dto"
 	entityWord "lingua-evo/internal/services/lingua/word/entity"
 	wordSvc "lingua-evo/internal/services/lingua/word/service"
+	"lingua-evo/pkg/http/static"
 
 	"lingua-evo/pkg/http/handler"
 )
@@ -47,7 +47,7 @@ func (h *Handler) getIndex(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) get(w http.ResponseWriter, r *http.Request) {
-	t, err := staticFiles.ParseFiles(indexPagePath)
+	t, err := static.ParseFiles(indexPagePath)
 	if err != nil {
 		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("site.index.delivery.Handler.get - parseFiles: %v", err))
 		w.WriteHeader(http.StatusNotFound)
