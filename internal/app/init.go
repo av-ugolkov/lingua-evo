@@ -44,10 +44,9 @@ import (
 
 const (
 	filePath = "/website/"
-	rootPath = "./../website"
 )
 
-func ServerStart(cfg *config.Config) {
+func ServerStart(cfg *config.Config, webPath string) {
 	if cfg.PprofDebug.Enable {
 		go func() {
 			slog.Error("%v", http.ListenAndServe("localhost:6060", nil))
@@ -61,7 +60,7 @@ func ServerStart(cfg *config.Config) {
 	}
 
 	router := mux.NewRouter()
-	initServer(router, db)
+	initServer(router, db, webPath)
 
 	address := fmt.Sprintf(":%s", cfg.Service.Port)
 
@@ -89,8 +88,8 @@ func ServerStart(cfg *config.Config) {
 	}
 }
 
-func initServer(r *mux.Router, db *sql.DB) {
-	fs := http.FileServer(http.Dir(rootPath))
+func initServer(r *mux.Router, db *sql.DB, webPath string) {
+	fs := http.FileServer(http.Dir(webPath))
 	r.PathPrefix(filePath).Handler(http.StripPrefix(filePath, fs))
 
 	slog.Info("<----- create services ----->")
