@@ -17,7 +17,7 @@ let interval = setInterval(function () {
             lableRandom.textContent = error
             stopInterval()
         });
-}, 2000);
+}, 60000);
 
 
 function stopInterval() {

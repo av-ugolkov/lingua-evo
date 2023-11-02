@@ -2,36 +2,53 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lingua Evo</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lingua Evo</title>
 
-    <link rel="shortcut icon" type="image/png" href="/website/logo.png">
-    <link rel="stylesheet" href="/website/main/normalize.css">
-    <link rel="stylesheet" href="/website/main/style.css">
-
-    <script src="/website/main/script.js" type="module"></script>
+  <link rel="shortcut icon" type="image/png" href="/website/logo.png">
+  <link rel="stylesheet" href="/website/main/style.css">
 </head>
 
 <body>
-    <header class="header">
-        <a href="/website/" class="header-brand">
-            <img src="/website/logo.png" alt="Lingua Evo" class="header-logo" />
-            Lingua Evo
+  <header>
+    <nav class="navbar">
+      <div class="left-side">
+        <a href="/">
+          <img src="/website/logo.png" alt="Lingua Evo logo" class="logo">
+          <span class="brand">Lingua Evo</span>
         </a>
-        <nav class="header-nav">
-            <a class="nav-link" href="#home">Home</a>
-            <a class="nav-link" href="#contact">Contact</a>
-            <a class="nav-link" href="#about">About</a>
-        </nav>
-    </header>
+      </div>
+      <div class="right-side">
+        {{ if .User.IsLogin }}
+        <a href="/website/dictionary/dictionary.html">Dictionary</a>
+        {{ end }}
+        <a href="#">Contact</a>
+        <a href="#">About</a>
+        {{ if .User.IsLogin }}
+        <a href="/website/account/account.html" class="account">{{ .User.Name }}</a>
+        {{ else }}
+        <a href="/website/sign_up/signup.html">Sign Up</a>
+        <a href="/website/sign_in/signin.html">Sign In</a>
+        {{ end }}
+      </div>
+    </nav>
+  </header>
+
+  <main>
     <div class="container">
-        <div class="grid-container">
-            <div>
-                <label id="lable-random" for="random">{{ .Word.Text }}</label>
-            </div>
+      <div class="grid-container">
+        <div>
+          <label id="lable-random" for="random">{{ .Word.Text }}</label>
         </div>
+      </div>
     </div>
+  </main>
+
+  <footer>
+  </footer>
+
+  <script src="/website/main/script.js" type="module"></script>
 </body>
 
 </html>
