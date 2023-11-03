@@ -17,9 +17,29 @@ let interval = setInterval(function () {
             lableRandom.textContent = error
             stopInterval()
         });
-}, 2000);
+}, 60000);
 
 
 function stopInterval() {
     clearInterval(interval)
 }
+
+let bntSignIn = document.getElementById("btnSignup")
+bntSignIn.addEventListener("click", () => {
+    fetch("/signup", {
+        method: "get",
+    }).then((data) => {
+        window.open(data["url"], "_self")
+        console.log(data);
+    })
+})
+
+let bntLogin = document.getElementById("btnLogin")
+bntLogin.addEventListener("click", () => {
+    fetch("/login", {
+        method: "get",
+    }).then((data) => {
+        window.open(data["url"], "_self")
+        console.log(data);
+    })
+})

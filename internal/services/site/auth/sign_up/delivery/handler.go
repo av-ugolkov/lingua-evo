@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 
-	staticFiles "lingua-evo"
+	"lingua-evo/pkg/http/static"
 
 	"github.com/gorilla/mux"
 )
@@ -33,7 +33,7 @@ func (h *Handler) register(r *mux.Router) {
 }
 
 func (h *Handler) get(w http.ResponseWriter, r *http.Request) {
-	file, err := staticFiles.OpenFile(signupPage)
+	file, err := static.OpenFile(signupPage)
 	if err != nil {
 		slog.Error(fmt.Errorf("sign_up.get.OpenFile: %v", err).Error())
 		w.WriteHeader(http.StatusNotFound)

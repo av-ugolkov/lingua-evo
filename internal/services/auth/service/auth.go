@@ -49,7 +49,7 @@ func NewService(repo sessionRepo, userSvc userSvc) *AuthSvc {
 	}
 }
 
-func (s *AuthSvc) CreateSession(ctx context.Context, sessionRq *dto.CreateSessionRq) (*entity.Tokens, error) {
+func (s *AuthSvc) Login(ctx context.Context, sessionRq *dto.CreateSessionRq) (*entity.Tokens, error) {
 	u, err := s.userSvc.GetUser(ctx, sessionRq.User)
 	if err != nil {
 		return nil, fmt.Errorf("auth.service.AuthSvc.CreateSession - getUser: %v", err)
@@ -102,6 +102,7 @@ func (s *AuthSvc) CreateSession(ctx context.Context, sessionRq *dto.CreateSessio
 	return tokens, nil
 }
 
+// RefreshSessionToken - the method is called from the client
 func (s *AuthSvc) RefreshSessionToken(ctx context.Context, refreshToken uuid.UUID) (*entity.Tokens, error) {
 	oldRefreshSession, err := s.repo.GetSession(ctx, refreshToken)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
@@ -153,6 +154,15 @@ func (s *AuthSvc) RefreshSessionToken(ctx context.Context, refreshToken uuid.UUI
 	}
 
 	return tokens, nil
+}
+
+func (s *AuthSvc) Logout(ctx context.Context, uid uuid.UUID) error {
+	err := s.repo.DeleteSession(ctx, uid)
+	if err != nil {
+		return fmt.Errorf("auth.service.AuthSvc.logout - DeleteSession: %v", err)
+	}
+
+	return nil
 }
 
 func (s *AuthSvc) validSessionCount(ctx context.Context, uid uuid.UUID) bool {
