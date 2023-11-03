@@ -12,12 +12,17 @@ import (
 	"lingua-evo/internal/services/auth/dto"
 	"lingua-evo/internal/services/auth/service"
 	"lingua-evo/pkg/http/handler"
+	"lingua-evo/pkg/middleware"
+	"lingua-evo/runtime"
 
+	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 )
 
 const (
-	createSession = "/signin"
+	login   = "/auth/login"
+	refresh = "/auth/refresh"
+	logout  = "/auth/logout"
 )
 
 type (
@@ -38,10 +43,12 @@ func newHandler(authSvc *service.AuthSvc) *Handler {
 }
 
 func (h *Handler) register(r *mux.Router) {
-	r.HandleFunc(createSession, h.createSession).Methods(http.MethodPost)
+	r.HandleFunc(login, h.login).Methods(http.MethodPost)
+	r.HandleFunc(refresh, middleware.Auth(h.refresh)).Methods(http.MethodPost)
+	r.HandleFunc(logout, middleware.Auth(h.logout)).Methods(http.MethodPost)
 }
 
-func (h *Handler) createSession(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) login(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		_ = r.Body.Close()
 	}()
@@ -54,7 +61,7 @@ func (h *Handler) createSession(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := r.Context()
-	tokens, err := h.authSvc.CreateSession(ctx, &data)
+	tokens, err := h.authSvc.Login(ctx, &data)
 	if err != nil {
 		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.createSession - create session: %v", err))
 		return
@@ -78,9 +85,78 @@ func (h *Handler) createSession(w http.ResponseWriter, r *http.Request) {
 		MaxAge:   int(duration.Seconds()),
 		HttpOnly: true,
 		Secure:   true,
+		Path:     "/",
 	})
 
 	_, _ = w.Write(b)
+}
+
+func (h *Handler) refresh(w http.ResponseWriter, r *http.Request) {
+	defer func() {
+		_ = r.Body.Close()
+	}()
+
+	refreshToken, err := r.Cookie("refresh_token")
+	if err != nil {
+		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.refresh - get cookie: %v", err))
+		return
+	}
+
+	ctx := r.Context()
+
+	tokenID, err := uuid.Parse(refreshToken.Value)
+	if err != nil {
+		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.refresh - get cookie: %v", err))
+		return
+	}
+
+	tokens, err := h.authSvc.RefreshSessionToken(ctx, tokenID)
+	if err != nil {
+		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.refresh - RefreshSessionToken: %v", err))
+		return
+	}
+	b, err := json.Marshal(&dto.CreateSessionRs{
+		AccessToken:  tokens.AccessToken,
+		RefreshToken: tokens.RefreshToken,
+	})
+	if err != nil {
+		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.refresh - marshal: %v", err))
+		return
+	}
+
+	additionalTime := config.GetConfig().JWT.ExpireRefresh
+	duration := time.Duration(additionalTime) * time.Second
+	w.Header().Set("Content-Type", "application/json")
+	http.SetCookie(w, &http.Cookie{
+		Name:     "refresh_token",
+		Value:    tokens.RefreshToken.String(),
+		MaxAge:   int(duration.Seconds()),
+		HttpOnly: true,
+		Secure:   true,
+	})
+
+	_, _ = w.Write(b)
+}
+
+func (h *Handler) logout(w http.ResponseWriter, r *http.Request) {
+	defer func() {
+		_ = r.Body.Close()
+	}()
+
+	ctx := r.Context()
+	uid, err := runtime.UserIDFromContext(ctx)
+	if err != nil {
+		handler.SendError(w, http.StatusUnauthorized, fmt.Errorf("auth.delivery.Handler.logout - unauthorized: %v", err))
+		return
+	}
+
+	err = h.authSvc.Logout(ctx, uid)
+	if err != nil {
+		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.logout - logout: %v", err))
+		return
+	}
+
+	_, _ = w.Write([]byte("done"))
 }
 
 func decodeBasicAuth(auth string, data *dto.CreateSessionRq) error {

@@ -3,7 +3,7 @@ package delivery
 import (
 	"net/http"
 
-	staticFiles "lingua-evo"
+	"lingua-evo/pkg/http/static"
 
 	"github.com/gorilla/mux"
 )
@@ -31,7 +31,7 @@ func (h *Handler) register(r *mux.Router) {
 }
 
 func (h *Handler) account(w http.ResponseWriter, _ *http.Request) {
-	file, err := staticFiles.OpenFile(accountPagePath)
+	file, err := static.OpenFile(accountPagePath)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		return

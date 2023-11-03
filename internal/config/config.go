@@ -7,10 +7,6 @@ import (
 	"github.com/ilyakaznacheev/cleanenv"
 )
 
-const (
-	pathConfig = "./../configs/%s.yaml"
-)
-
 type Config struct {
 	PprofDebug PprofDebug `yaml:"pprof_debug"`
 	JWT        JWT        `yaml:"jwt"`
@@ -48,11 +44,10 @@ func (db *Database) GetConnStr() string {
 
 var instance *Config
 
-func InitConfig(config string) *Config {
+func InitConfig(pathConfig string) *Config {
 	slog.Info("read application config")
 	instance = &Config{}
-	fullPathConfig := fmt.Sprintf(pathConfig, config)
-	if err := cleanenv.ReadConfig(fullPathConfig, instance); err != nil {
+	if err := cleanenv.ReadConfig(pathConfig, instance); err != nil {
 		slog.Error(fmt.Errorf("Fail read config: %v", err).Error())
 		return nil
 	}

@@ -2,36 +2,63 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lingua Evo</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lingua Evo</title>
 
-    <link rel="shortcut icon" type="image/png" href="/website/logo.png">
-    <link rel="stylesheet" href="/website/main/normalize.css">
-    <link rel="stylesheet" href="/website/main/style.css">
-
-    <script src="/website/main/script.js" type="module"></script>
+  <link rel="shortcut icon" type="image/png" href="/website/logo.png">
+  <link rel="stylesheet" href="/website/main/style.css">
 </head>
 
 <body>
-    <header class="header">
-        <a href="/website/" class="header-brand">
-            <img src="/website/logo.png" alt="Lingua Evo" class="header-logo" />
-            Lingua Evo
+  <header>
+    <nav class="navbar">
+      <div class="left-side">
+        <a href="/">
+          <img src="/website/logo.png" alt="Lingua Evo logo" class="logo">
+          <span class="brand">Lingua Evo</span>
         </a>
-        <nav class="header-nav">
-            <a class="nav-link" href="#home">Home</a>
-            <a class="nav-link" href="#contact">Contact</a>
-            <a class="nav-link" href="#about">About</a>
-        </nav>
-    </header>
-    <div class="container">
-        <div class="grid-container">
-            <div>
-                <label id="lable-random" for="random">{{ .Word.Text }}</label>
-            </div>
+      </div>
+      <div class="right-side">
+        {{ if .User.IsLogin }}
+        <div class="border">
+          <button id="btnDictionary" type="button" class="accountBtn">Dictionary</button>
         </div>
+        {{ end }}
+        <div class="border">
+          <button id="btnContact" type="button" class="accountBtn">Contact</button>
+        </div>
+        <div class="border">
+          <button id="btnAbout" type="button" class="accountBtn">About</button>
+        </div>
+        <div class="vertical-line"></div>
+        {{ if .User.IsLogin }}
+        <button id="btnAccount" type="button" class="accountBtn" value="account">{{.User.Name}}</button>
+        {{ else }}
+        <div class="border">
+          <button id="btnSignup" type="button" class="accountBtn" value="signup">Sign Up</button>
+          |
+          <button id="btnLogin" type="button" class="accountBtn" value="login">Login</button>
+        </div>
+        {{ end }}
+      </div>
+    </nav>
+  </header>
+
+  <main>
+    <div class="container">
+      <div class="grid-container">
+        <div>
+          <label id="lable-random" for="random">{{ .Word.Text }}</label>
+        </div>
+      </div>
     </div>
+  </main>
+
+  <footer>
+  </footer>
+
+  <script src="/website/main/script.js" type="module"></script>
 </body>
 
 </html>
