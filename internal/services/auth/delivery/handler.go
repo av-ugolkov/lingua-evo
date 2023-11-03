@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	login   = "/auth/signin"
+	login   = "/auth/login"
 	refresh = "/auth/refresh"
 	logout  = "/auth/logout"
 )
@@ -85,6 +85,7 @@ func (h *Handler) login(w http.ResponseWriter, r *http.Request) {
 		MaxAge:   int(duration.Seconds()),
 		HttpOnly: true,
 		Secure:   true,
+		Path:     "/",
 	})
 
 	_, _ = w.Write(b)
