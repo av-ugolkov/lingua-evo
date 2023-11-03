@@ -11,8 +11,9 @@ import (
 	"lingua-evo/internal/services/lingua/word/dto"
 	serviceWord "lingua-evo/internal/services/lingua/word/service"
 
-	staticFiles "lingua-evo"
 	"lingua-evo/pkg/http/handler"
+	"lingua-evo/pkg/http/static"
+	"lingua-evo/pkg/middleware"
 
 	"github.com/gorilla/mux"
 )
@@ -47,13 +48,13 @@ func newHandler(wordSvc *serviceWord.WordSvc, langSvc *serviceLang.LanguageSvc) 
 
 func (h *Handler) register(r *mux.Router) {
 	r.HandleFunc(openPage, h.openPage).Methods(http.MethodGet)
-	r.HandleFunc(addWord, h.addWord).Methods(http.MethodPost)
+	r.HandleFunc(addWord, middleware.Auth(h.addWord)).Methods(http.MethodPost)
 	r.HandleFunc(getWord, h.getWord).Methods(http.MethodPost)
 	r.HandleFunc(getRandomWord, h.getRandomWord).Methods(http.MethodPost)
 }
 
 func (h *Handler) openPage(w http.ResponseWriter, r *http.Request) {
-	t, err := staticFiles.ParseFiles(addWordPage)
+	t, err := static.ParseFiles(addWordPage)
 	if err != nil {
 		slog.Error(fmt.Errorf("add_word.get.OpenFile: %v", err).Error())
 		w.WriteHeader(http.StatusNotFound)

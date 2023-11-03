@@ -16,7 +16,6 @@ import (
 	authHandler "lingua-evo/internal/services/auth/delivery"
 	authRepository "lingua-evo/internal/services/auth/repository"
 	authService "lingua-evo/internal/services/auth/service"
-	accountHandler "lingua-evo/internal/services/lingua/account/delivery"
 	dictHandler "lingua-evo/internal/services/lingua/dictionary/delivery"
 	dictRepository "lingua-evo/internal/services/lingua/dictionary/repository"
 	dictService "lingua-evo/internal/services/lingua/dictionary/service"
@@ -33,6 +32,7 @@ import (
 	wordHandler "lingua-evo/internal/services/lingua/word/delivery"
 	wordRepository "lingua-evo/internal/services/lingua/word/repository"
 	wordService "lingua-evo/internal/services/lingua/word/service"
+	accountHandler "lingua-evo/internal/services/site/account/delivery"
 	userHandler "lingua-evo/internal/services/user/delivery"
 	userRepository "lingua-evo/internal/services/user/repository"
 	userService "lingua-evo/internal/services/user/service"
@@ -44,10 +44,9 @@ import (
 
 const (
 	filePath = "/website/"
-	rootPath = "./../website"
 )
 
-func ServerStart(cfg *config.Config) {
+func ServerStart(cfg *config.Config, webPath string) {
 	if cfg.PprofDebug.Enable {
 		go func() {
 			slog.Error("%v", http.ListenAndServe("localhost:6060", nil))
@@ -61,7 +60,7 @@ func ServerStart(cfg *config.Config) {
 	}
 
 	router := mux.NewRouter()
-	initServer(router, db)
+	initServer(router, db, webPath)
 
 	address := fmt.Sprintf(":%s", cfg.Service.Port)
 
@@ -89,8 +88,8 @@ func ServerStart(cfg *config.Config) {
 	}
 }
 
-func initServer(r *mux.Router, db *sql.DB) {
-	fs := http.FileServer(http.Dir(rootPath))
+func initServer(r *mux.Router, db *sql.DB, webPath string) {
+	fs := http.FileServer(http.Dir(webPath))
 	r.PathPrefix(filePath).Handler(http.StripPrefix(filePath, fs))
 
 	slog.Info("<----- create services ----->")
@@ -127,7 +126,7 @@ func initServer(r *mux.Router, db *sql.DB) {
 
 	slog.Info("<----- create handlers ----->")
 	slog.Info("index handler")
-	indexHandler.Create(r, wordSvc)
+	indexHandler.Create(r, userSvc, wordSvc)
 
 	slog.Info("user handler")
 	userHandler.Create(r, userSvc)
