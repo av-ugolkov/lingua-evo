@@ -75,6 +75,18 @@ func (r *UserRepo) GetUserByEmail(ctx context.Context, email string) (*entity.Us
 	return &u, nil
 }
 
+func (r *UserRepo) GetUserBytoken(ctx context.Context, token uuid.UUID) (*entity.User, error) {
+	query := `SELECT id, name, email, password_hash, role, last_visit_at, created_at FROM users where id=(SELECT user_id FROM session WHERE refresh_token = $1)`
+
+	var u entity.User
+	err := r.db.QueryRowContext(ctx, query, token).Scan(&u.ID, &u.Username, &u.Email, &u.PasswordHash, &u.Role, &u.LastVisitAt, &u.CreatedAt)
+	if err != nil {
+		return nil, fmt.Errorf("user.repository.UserRepo.GetUserBytoken: %w", err)
+	}
+
+	return &u, nil
+}
+
 func (r *UserRepo) RemoveUser(ctx context.Context, u *entity.User) error {
 	return nil
 }

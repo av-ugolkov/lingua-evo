@@ -126,7 +126,7 @@ func initServer(r *mux.Router, db *sql.DB, webPath string) {
 
 	slog.Info("<----- create handlers ----->")
 	slog.Info("index handler")
-	indexHandler.Create(r, wordSvc)
+	indexHandler.Create(r, userSvc, wordSvc)
 
 	slog.Info("user handler")
 	userHandler.Create(r, userSvc)
