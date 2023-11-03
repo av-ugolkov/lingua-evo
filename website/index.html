@@ -21,15 +21,25 @@
       </div>
       <div class="right-side">
         {{ if .User.IsLogin }}
-        <a href="/website/dictionary/dictionary.html">Dictionary</a>
+        <div class="border">
+          <button id="btnDictionary" type="button" class="accountBtn">Dictionary</button>
+        </div>
         {{ end }}
-        <a href="#">Contact</a>
-        <a href="#">About</a>
+        <div class="border">
+          <button id="btnContact" type="button" class="accountBtn">Contact</button>
+        </div>
+        <div class="border">
+          <button id="btnAbout" type="button" class="accountBtn">About</button>
+        </div>
+        <div class="vertical-line"></div>
         {{ if .User.IsLogin }}
-        <a href="/website/account/account.html" class="account">{{ .User.Name }}</a>
+        <button id="btnAccount" type="button" class="accountBtn" value="account">{{.User.Name}}</button>
         {{ else }}
-        <a href="/website/sign_up/signup.html">Sign Up</a>
-        <a href="/website/sign_in/signin.html">Sign In</a>
+        <div class="border">
+          <button id="btnSignup" type="button" class="accountBtn" value="signup">Sign Up</button>
+          |
+          <button id="btnLogin" type="button" class="accountBtn" value="login">Login</button>
+        </div>
         {{ end }}
       </div>
     </nav>

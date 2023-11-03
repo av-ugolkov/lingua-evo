@@ -56,21 +56,37 @@ body {
 
 .right-side>a:hover {
     color: white;
-    font-size: 20px;
     transition: 200ms;
 }
 
-.right-side>a:ho {
-    color: white;
-    font-size: 20px;
-    transition: 200ms;
+.vertical-line {
+    border-left: 1px solid silver;
+    height: 26px;
+    border-radius: 6px;
+    margin: 0px 4px;
 }
 
-.account {
+.border {
     display: inherit;
     border: 1px solid black;
-    border-radius: 4px;
+    border-radius: 6px;
+    margin: 0px 8px;
+}
+
+.accountBtn {
+    display: inherit;
+    background-color: gray;
+    border: none;
+    margin: 0px 4px;
     padding: 2px 4px;
+    transition: 200ms;
+    font-size: 14px;
+}
+
+.accountBtn:hover {
+    color: slategray;
+    color: white;
+    transition: 200ms;
 }
 
 .container {

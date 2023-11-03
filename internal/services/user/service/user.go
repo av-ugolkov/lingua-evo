@@ -19,6 +19,7 @@ type userRepo interface {
 	GetUserByID(ctx context.Context, uid uuid.UUID) (*entity.User, error)
 	GetUserByName(ctx context.Context, name string) (*entity.User, error)
 	GetUserByEmail(ctx context.Context, email string) (*entity.User, error)
+	GetUserBytoken(ctx context.Context, token uuid.UUID) (*entity.User, error)
 	RemoveUser(ctx context.Context, u *entity.User) error
 }
 
@@ -82,6 +83,10 @@ func (s *UserSvc) GetUserByName(ctx context.Context, name string) (*entity.User,
 
 func (s *UserSvc) GetUserByEmail(ctx context.Context, email string) (*entity.User, error) {
 	return s.repo.GetUserByEmail(ctx, email)
+}
+
+func (s *UserSvc) GetUserByRefreshToken(ctx context.Context, token uuid.UUID) (*entity.User, error) {
+	return s.repo.GetUserBytoken(ctx, token)
 }
 
 func (s *UserSvc) RemoveUser(ctx context.Context, user *entity.User) error {
