@@ -20,8 +20,10 @@ type (
 	}
 
 	Claims struct {
-		ID        uuid.UUID
-		UserID    uuid.UUID
-		ExpiresAt time.Time
+		ID              uuid.UUID
+		UserID          uuid.UUID
+		Email           string
+		HashFingerprint string
+		ExpiresAt       time.Time
 	}
 )
