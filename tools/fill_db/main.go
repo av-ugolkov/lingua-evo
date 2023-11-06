@@ -9,7 +9,7 @@ import (
 	"log/slog"
 	"time"
 
-	repository "lingua-evo/internal/db"
+	pg "lingua-evo/internal/db/postgres"
 
 	"github.com/google/uuid"
 	"golang.org/x/text/language"
@@ -22,7 +22,7 @@ func main() {
 
 	connStr := "postgresql://lingua:ib6vACdec2Fmht4lnX153@localhost:6432/pg-lingua-evo"
 
-	db, err := repository.NewDB(connStr)
+	db, err := pg.NewDB(connStr)
 	if err != nil {
 		slog.Error(fmt.Errorf("can't create pg pool: %v", err).Error())
 		return

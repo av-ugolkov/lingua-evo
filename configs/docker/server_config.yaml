@@ -8,9 +8,16 @@ jwt:
 service:
     type: tcp
     port: 5000
-database:
-    name_db: pg-lingua-evo
+postgres:
+    name: pg-lingua-evo
     user: lingua
     password: ib6vACdec2Fmht4lnX153
-    host: postgres-lingua-evo
-    port: 5432
+    host: localhost
+    port: 6432
+redis:
+    name: redis-lingua-evo
+    host: localhost
+    port: 6379
+    user: lingua
+    password: itBg40drEvZsw2gbHyp0
+    db: 0

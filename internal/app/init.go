@@ -12,7 +12,8 @@ import (
 	"github.com/gorilla/mux"
 
 	"lingua-evo/internal/config"
-	repository "lingua-evo/internal/db"
+	pg "lingua-evo/internal/db/postgres"
+	"lingua-evo/internal/db/redis"
 	authHandler "lingua-evo/internal/services/auth/delivery"
 	authRepository "lingua-evo/internal/services/auth/repository"
 	authService "lingua-evo/internal/services/auth/service"
@@ -53,11 +54,14 @@ func ServerStart(cfg *config.Config, webPath string) {
 		}()
 	}
 
-	db, err := repository.NewDB(cfg.Database.GetConnStr())
+	db, err := pg.NewDB(cfg.DbSQL.GetConnStr())
 	if err != nil {
 		slog.Error(fmt.Errorf("can't create pg pool: %v", err).Error())
 		return
 	}
+
+	redis := redis.New(cfg)
+	fmt.Println(redis)
 
 	router := mux.NewRouter()
 	initServer(router, db, webPath)
