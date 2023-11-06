@@ -1,11 +1,9 @@
 package delivery
 
 import (
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strings"
 	"time"
 
 	"lingua-evo/internal/config"
@@ -53,15 +51,20 @@ func (h *Handler) login(w http.ResponseWriter, r *http.Request) {
 		_ = r.Body.Close()
 	}()
 
-	var data dto.CreateSessionRq
-	err := decodeBasicAuth(r.Header["Authorization"][0], &data)
-	if err != nil {
-		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.createSession - check body: %v", err))
+	user, password, ok := r.BasicAuth()
+	if !ok {
+		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.createSession - can't parse basic auth"))
 		return
 	}
 
 	ctx := r.Context()
-	tokens, err := h.authSvc.Login(ctx, &data)
+
+	fingerprint := handler.GetFingerprint(r)
+
+	tokens, err := h.authSvc.Login(ctx, &dto.CreateSessionRq{
+		User:     user,
+		Password: password,
+	}, fingerprint)
 	if err != nil {
 		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.createSession - create session: %v", err))
 		return
@@ -85,7 +88,8 @@ func (h *Handler) login(w http.ResponseWriter, r *http.Request) {
 		MaxAge:   int(duration.Seconds()),
 		HttpOnly: true,
 		Secure:   true,
-		Path:     "/",
+		SameSite: http.SameSiteStrictMode,
+		Path:     "/auth",
 	})
 
 	_, _ = w.Write(b)
@@ -95,7 +99,6 @@ func (h *Handler) refresh(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		_ = r.Body.Close()
 	}()
-
 	refreshToken, err := r.Cookie("refresh_token")
 	if err != nil {
 		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.refresh - get cookie: %v", err))
@@ -110,7 +113,9 @@ func (h *Handler) refresh(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tokens, err := h.authSvc.RefreshSessionToken(ctx, tokenID)
+	fingerprint := handler.GetFingerprint(r)
+
+	tokens, err := h.authSvc.RefreshSessionToken(ctx, tokenID, fingerprint)
 	if err != nil {
 		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.refresh - RefreshSessionToken: %v", err))
 		return
@@ -123,7 +128,6 @@ func (h *Handler) refresh(w http.ResponseWriter, r *http.Request) {
 		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.refresh - marshal: %v", err))
 		return
 	}
-
 	additionalTime := config.GetConfig().JWT.ExpireRefresh
 	duration := time.Duration(additionalTime) * time.Second
 	w.Header().Set("Content-Type", "application/json")
@@ -133,6 +137,8 @@ func (h *Handler) refresh(w http.ResponseWriter, r *http.Request) {
 		MaxAge:   int(duration.Seconds()),
 		HttpOnly: true,
 		Secure:   true,
+		SameSite: http.SameSiteStrictMode,
+		Path:     "/auth",
 	})
 
 	_, _ = w.Write(b)
@@ -157,20 +163,4 @@ func (h *Handler) logout(w http.ResponseWriter, r *http.Request) {
 	}
 
 	_, _ = w.Write([]byte("done"))
-}
-
-func decodeBasicAuth(auth string, data *dto.CreateSessionRq) error {
-	base, err := base64.StdEncoding.DecodeString(strings.Split(auth, " ")[1])
-	if err != nil {
-		return fmt.Errorf("auth.delivery.decodeBasicAuth - decode base64: %v", err)
-	}
-	authData := strings.Split(string(base), ":")
-	if len(authData) != 2 {
-		return fmt.Errorf("auth.delivery.decodeBasicAuth - invalid auth data")
-	}
-
-	data.User = authData[0]
-	data.Password = authData[1]
-
-	return nil
 }
