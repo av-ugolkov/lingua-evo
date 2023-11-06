@@ -49,7 +49,7 @@ func NewService(repo sessionRepo, userSvc userSvc) *AuthSvc {
 	}
 }
 
-func (s *AuthSvc) Login(ctx context.Context, sessionRq *dto.CreateSessionRq) (*entity.Tokens, error) {
+func (s *AuthSvc) Login(ctx context.Context, sessionRq *dto.CreateSessionRq, fingerprint string) (*entity.Tokens, error) {
 	u, err := s.userSvc.GetUser(ctx, sessionRq.User)
 	if err != nil {
 		return nil, fmt.Errorf("auth.service.AuthSvc.CreateSession - getUser: %v", err)
@@ -83,13 +83,16 @@ func (s *AuthSvc) Login(ctx context.Context, sessionRq *dto.CreateSessionRq) (*e
 		}
 	}
 
+	hashFingerPrint := tools.HashValue(fingerprint)
 	claims := &entity.Claims{
-		ID:        session.RefreshToken,
-		UserID:    u.ID,
-		ExpiresAt: session.ExpiresAt,
+		ID:              session.RefreshToken,
+		UserID:          u.ID,
+		Email:           u.Email,
+		HashFingerprint: hashFingerPrint,
+		ExpiresAt:       session.ExpiresAt,
 	}
 
-	accessToken, err := token.NewJWTToken(u, claims)
+	accessToken, err := token.NewJWTToken(claims)
 	if err != nil {
 		return nil, fmt.Errorf("auth.service.AuthSvc.CreateSession - jwt.NewToken: %v", err)
 	}
@@ -103,7 +106,7 @@ func (s *AuthSvc) Login(ctx context.Context, sessionRq *dto.CreateSessionRq) (*e
 }
 
 // RefreshSessionToken - the method is called from the client
-func (s *AuthSvc) RefreshSessionToken(ctx context.Context, refreshToken uuid.UUID) (*entity.Tokens, error) {
+func (s *AuthSvc) RefreshSessionToken(ctx context.Context, refreshToken uuid.UUID, fingerprint string) (*entity.Tokens, error) {
 	oldRefreshSession, err := s.repo.GetSession(ctx, refreshToken)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return nil, fmt.Errorf("auth.service.AuthSvc.RefreshSessionToken - GetSession: %v", err)
@@ -133,17 +136,21 @@ func (s *AuthSvc) RefreshSessionToken(ctx context.Context, refreshToken uuid.UUI
 		return nil, fmt.Errorf("auth.service.AuthSvc.RefreshSessionToken - addRefreshSession: %v", err)
 	}
 
-	claims := &entity.Claims{
-		ID:        newSession.RefreshToken,
-		UserID:    newSession.UserID,
-		ExpiresAt: newSession.ExpiresAt,
-	}
-	u, err := s.userSvc.GetUserByID(ctx, newSession.UserID)
+	u, err := s.userSvc.GetUserByID(ctx, oldRefreshSession.UserID)
 	if err != nil {
-		return nil, fmt.Errorf("auth.service.AuthSvc.CreateSession - get user by ID: %v", err)
+		return nil, fmt.Errorf("auth.service.AuthSvc.RefreshSessionToken - getUser: %v", err)
 	}
 
-	accessToken, err := token.NewJWTToken(u, claims)
+	hashFingerPrint := tools.HashValue(fingerprint)
+	claims := &entity.Claims{
+		ID:              newSession.RefreshToken,
+		UserID:          newSession.UserID,
+		Email:           u.Email,
+		HashFingerprint: hashFingerPrint,
+		ExpiresAt:       newSession.ExpiresAt,
+	}
+
+	accessToken, err := token.NewJWTToken(claims)
 	if err != nil {
 		return nil, fmt.Errorf("auth.service.AuthSvc.CreateSession - create access token: %v", err)
 	}
