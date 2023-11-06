@@ -8,6 +8,7 @@ import (
 	"lingua-evo/internal/config"
 	"lingua-evo/pkg/http/handler"
 	"lingua-evo/pkg/token"
+	"lingua-evo/pkg/tools"
 	"lingua-evo/runtime"
 
 	"github.com/google/uuid"
@@ -15,7 +16,7 @@ import (
 
 func Auth(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		tokenStr, ok := BearerAuth(r)
+		tokenStr, ok := bearerAuth(r)
 		if !ok {
 			handler.SendError(w, http.StatusUnauthorized, fmt.Errorf("token not found"))
 			return
@@ -26,12 +27,19 @@ func Auth(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
+		browserFingerprint := handler.GetFingerprint(r)
+		s := tools.HashValue(browserFingerprint)
+		if claims.HashFingerprint != s {
+			handler.SendError(w, http.StatusUnauthorized, fmt.Errorf("middleware.Auth - invalid token"))
+			return
+		}
+
 		r = r.WithContext(runtime.SetUserIDInContext(r.Context(), uuid.MustParse(claims.Subject)))
 		next(w, r)
 	})
 }
 
-func BearerAuth(r *http.Request) (token string, ok bool) {
+func bearerAuth(r *http.Request) (token string, ok bool) {
 	auth := r.Header.Get("Authorization")
 	if auth == "" {
 		return "", false
