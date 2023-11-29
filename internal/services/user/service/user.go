@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -13,23 +14,31 @@ import (
 	"lingua-evo/internal/services/user/entity"
 )
 
-type userRepo interface {
-	AddUser(ctx context.Context, u *entity.User) (uuid.UUID, error)
-	EditUser(ctx context.Context, u *entity.User) error
-	GetUserByID(ctx context.Context, uid uuid.UUID) (*entity.User, error)
-	GetUserByName(ctx context.Context, name string) (*entity.User, error)
-	GetUserByEmail(ctx context.Context, email string) (*entity.User, error)
-	GetUserBytoken(ctx context.Context, token uuid.UUID) (*entity.User, error)
-	RemoveUser(ctx context.Context, u *entity.User) error
-}
+type (
+	userRepo interface {
+		AddUser(ctx context.Context, u *entity.User) (uuid.UUID, error)
+		EditUser(ctx context.Context, u *entity.User) error
+		GetUserByID(ctx context.Context, uid uuid.UUID) (*entity.User, error)
+		GetUserByName(ctx context.Context, name string) (*entity.User, error)
+		GetUserByEmail(ctx context.Context, email string) (*entity.User, error)
+		GetUserByToken(ctx context.Context, token uuid.UUID) (*entity.User, error)
+		RemoveUser(ctx context.Context, u *entity.User) error
+	}
 
-type UserSvc struct {
-	repo userRepo
-}
+	redis interface {
+		Get(ctx context.Context, key string) (string, error)
+	}
 
-func NewService(repo userRepo) *UserSvc {
+	UserSvc struct {
+		repo  userRepo
+		redis redis
+	}
+)
+
+func NewService(repo userRepo, redis redis) *UserSvc {
 	return &UserSvc{
-		repo: repo,
+		repo:  repo,
+		redis: redis,
 	}
 }
 
@@ -86,7 +95,19 @@ func (s *UserSvc) GetUserByEmail(ctx context.Context, email string) (*entity.Use
 }
 
 func (s *UserSvc) GetUserByRefreshToken(ctx context.Context, token uuid.UUID) (*entity.User, error) {
-	return s.repo.GetUserBytoken(ctx, token)
+	sessionJson, err := s.redis.Get(ctx, token.String())
+	if err != nil {
+		return nil, fmt.Errorf("user.service.UserSvc.GetUserByRefreshToken: %w", err)
+	}
+
+	var session entity.Session
+
+	err = json.Unmarshal([]byte(sessionJson), &session)
+	if err != nil {
+		return nil, fmt.Errorf("user.service.UserSvc.GetUserByRefreshToken: %w", err)
+	}
+
+	return s.repo.GetUserByToken(ctx, session.UserID)
 }
 
 func (s *UserSvc) RemoveUser(ctx context.Context, user *entity.User) error {

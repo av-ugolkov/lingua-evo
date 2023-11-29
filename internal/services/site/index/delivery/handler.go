@@ -88,6 +88,7 @@ func (h *Handler) openPage(w http.ResponseWriter, r *http.Request) {
 	user := &userInfo{
 		IsLogin: false,
 	}
+
 	cookie, err := r.Cookie("refresh_token")
 	if errors.Is(err, http.ErrNoCookie) {
 		slog.Warn(fmt.Sprintf("not found cookie: %s", "token"))

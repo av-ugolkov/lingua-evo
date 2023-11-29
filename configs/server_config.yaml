@@ -18,6 +18,5 @@ redis:
     name: redis-lingua-evo
     host: localhost
     port: 6379
-    user: lingua
     password: itBg40drEvZsw2gbHyp0
     db: 0

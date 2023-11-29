@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"log/slog"
 	"time"
 
 	"lingua-evo/internal/config"
@@ -24,8 +23,8 @@ const (
 
 type (
 	sessionRepo interface {
-		SetSession(ctx context.Context, s *entity.Session) error
-		GetSession(ctx context.Context, refreshToken uuid.UUID) (*entity.Session, error)
+		SetSession(ctx context.Context, tokenID uuid.UUID, s *entity.Session, expiration time.Duration) error
+		GetSession(ctx context.Context, userID, refreshTokenID uuid.UUID) (*entity.Session, error)
 		GetCountSession(ctx context.Context, userID uuid.UUID) (int64, error)
 		DeleteSession(ctx context.Context, session uuid.UUID) error
 		DeleteAllUserSessions(ctx context.Context, userID uuid.UUID) error
@@ -60,33 +59,23 @@ func (s *AuthSvc) Login(ctx context.Context, sessionRq *dto.CreateSessionRq) (*e
 
 	additionalTime := config.GetConfig().JWT.ExpireAccess
 	duration := time.Duration(additionalTime) * time.Second
+	now := time.Now().UTC()
 	session := &entity.Session{
-		RefreshToken: uuid.New(),
-		ExpiresAt:    time.Now().UTC().Add(duration),
-		CreatedAt:    time.Now().UTC(),
-		UserID:       u.ID,
+		UserID:      u.ID,
+		Fingerprint: sessionRq.Fingerprint,
+		CreatedAt:   now,
 	}
 
-	if s.validSessionCount(ctx, session.UserID) {
-		err = s.addRefreshSession(ctx, session)
-		if err != nil {
-			return nil, fmt.Errorf("auth.service.AuthSvc.CreateSession - addRefreshSession: %v", err)
-		}
-	} else {
-		err := s.wipeAllUserRefreshSessions(ctx, session.UserID)
-		if err != nil {
-			return nil, fmt.Errorf("auth.service.AuthSvc.CreateSession - wipeAllUserRefreshSessions: %v", err)
-		}
-		err = s.addRefreshSession(ctx, session)
-		if err != nil {
-			return nil, fmt.Errorf("auth.service.AuthSvc.CreateSession - addRefreshSession after wipe: %v", err)
-		}
+	refreshTokenID := uuid.New()
+	err = s.addRefreshSession(ctx, refreshTokenID, session)
+	if err != nil {
+		return nil, fmt.Errorf("auth.service.AuthSvc.CreateSession - addRefreshSession: %v", err)
 	}
 
 	claims := &entity.Claims{
-		ID:        session.RefreshToken,
+		ID:        refreshTokenID,
 		UserID:    u.ID,
-		ExpiresAt: session.ExpiresAt,
+		ExpiresAt: now.Add(duration),
 	}
 
 	accessToken, err := token.NewJWTToken(u, claims)
@@ -96,15 +85,15 @@ func (s *AuthSvc) Login(ctx context.Context, sessionRq *dto.CreateSessionRq) (*e
 
 	tokens := &entity.Tokens{
 		AccessToken:  accessToken,
-		RefreshToken: session.RefreshToken,
+		RefreshToken: refreshTokenID,
 	}
 
 	return tokens, nil
 }
 
 // RefreshSessionToken - the method is called from the client
-func (s *AuthSvc) RefreshSessionToken(ctx context.Context, refreshToken uuid.UUID) (*entity.Tokens, error) {
-	oldRefreshSession, err := s.repo.GetSession(ctx, refreshToken)
+func (s *AuthSvc) RefreshSessionToken(ctx context.Context, uid, refreshToken uuid.UUID) (*entity.Tokens, error) {
+	oldRefreshSession, err := s.repo.GetSession(ctx, uid, refreshToken)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return nil, fmt.Errorf("auth.service.AuthSvc.RefreshSessionToken - GetSession: %v", err)
 	} else if errors.Is(err, sql.ErrNoRows) {
@@ -115,30 +104,31 @@ func (s *AuthSvc) RefreshSessionToken(ctx context.Context, refreshToken uuid.UUI
 		return nil, fmt.Errorf("auth.service.AuthSvc.RefreshSessionToken - DeleteSession: %v", err)
 	}
 
-	err = s.verifyRefreshSession(oldRefreshSession)
+	err = s.verifyRefreshSession(ctx, uid, oldRefreshSession)
 	if err != nil {
 		return nil, fmt.Errorf("auth.service.AuthSvc.RefreshSessionToken - verifyRefreshSession: %v", err)
 	}
 
-	duration := time.Second * time.Duration(config.GetConfig().JWT.ExpireRefresh)
+	tokenID := uuid.New()
 	newSession := &entity.Session{
-		RefreshToken: uuid.New(),
-		ExpiresAt:    time.Now().UTC().Add(duration),
-		CreatedAt:    time.Now().UTC(),
-		UserID:       oldRefreshSession.UserID,
+		UserID:      uid,
+		Fingerprint: oldRefreshSession.Fingerprint,
+		CreatedAt:   time.Now().UTC(),
 	}
 
-	err = s.addRefreshSession(ctx, newSession)
+	err = s.addRefreshSession(ctx, tokenID, newSession)
 	if err != nil {
 		return nil, fmt.Errorf("auth.service.AuthSvc.RefreshSessionToken - addRefreshSession: %v", err)
 	}
 
+	additionalTime := config.GetConfig().JWT.ExpireAccess
+	duration := time.Duration(additionalTime) * time.Second
 	claims := &entity.Claims{
-		ID:        newSession.RefreshToken,
-		UserID:    newSession.UserID,
-		ExpiresAt: newSession.ExpiresAt,
+		ID:        tokenID,
+		UserID:    uid,
+		ExpiresAt: time.Now().UTC().Add(duration),
 	}
-	u, err := s.userSvc.GetUserByID(ctx, newSession.UserID)
+	u, err := s.userSvc.GetUserByID(ctx, uid)
 	if err != nil {
 		return nil, fmt.Errorf("auth.service.AuthSvc.CreateSession - get user by ID: %v", err)
 	}
@@ -150,7 +140,7 @@ func (s *AuthSvc) RefreshSessionToken(ctx context.Context, refreshToken uuid.UUI
 
 	tokens := &entity.Tokens{
 		AccessToken:  accessToken,
-		RefreshToken: newSession.RefreshToken,
+		RefreshToken: tokenID,
 	}
 
 	return tokens, nil
@@ -165,34 +155,23 @@ func (s *AuthSvc) Logout(ctx context.Context, uid uuid.UUID) error {
 	return nil
 }
 
-func (s *AuthSvc) validSessionCount(ctx context.Context, uid uuid.UUID) bool {
-	i, err := s.repo.GetCountSession(ctx, uid)
-	if err != nil {
-		slog.Warn(fmt.Sprintf("auth.delivery.Handler.createSession - GetCountSession: %v", err))
-		return false
-	}
-	return i < MAX_REFRESH_SESSIONS_COUNT
-}
-
-func (s *AuthSvc) addRefreshSession(ctx context.Context, refreshSession *entity.Session) error {
-	err := s.repo.SetSession(ctx, refreshSession)
+func (s *AuthSvc) addRefreshSession(ctx context.Context, tokenID uuid.UUID, refreshSession *entity.Session) error {
+	expiration := time.Duration(config.GetConfig().JWT.ExpireRefresh) * time.Second
+	err := s.repo.SetSession(ctx, tokenID, refreshSession, expiration)
 	if err != nil {
 		return fmt.Errorf("auth.service.AuthSvc.addRefreshSession: %w", err)
 	}
 	return nil
 }
 
-func (s *AuthSvc) wipeAllUserRefreshSessions(ctx context.Context, uid uuid.UUID) error {
-	err := s.repo.DeleteAllUserSessions(ctx, uid)
+func (s *AuthSvc) verifyRefreshSession(ctx context.Context, uid uuid.UUID, oldRefreshSession *entity.Session) error {
+	//TODO нужно получить все сессии пользователя и проверить сессию с определеным ID
+	/*expireSession, err := s.repo.GetSessionExpire(ctx, uid, refreshTokenID)
 	if err != nil {
-		return fmt.Errorf("auth.service.AuthSvc.wipeAllUserRefreshSessions: %w", err)
+		return fmt.Errorf("auth.service.AuthSvc.verifyRefreshSession - GetSession: %v", err)
 	}
-	return nil
-}
-
-func (s *AuthSvc) verifyRefreshSession(oldRefreshSession *entity.Session) error {
 	if oldRefreshSession.ExpiresAt.Before(time.Now().UTC()) {
 		return fmt.Errorf("auth.service.AuthSvc.verifyRefreshSession - session expired")
-	}
+	}*/
 	return nil
 }

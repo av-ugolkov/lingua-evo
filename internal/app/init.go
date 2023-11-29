@@ -61,10 +61,9 @@ func ServerStart(cfg *config.Config, webPath string) {
 	}
 
 	redis := redis.New(cfg)
-	fmt.Println(redis)
 
 	router := mux.NewRouter()
-	initServer(router, db, webPath)
+	initServer(router, db, redis, webPath)
 
 	address := fmt.Sprintf(":%s", cfg.Service.Port)
 
@@ -92,14 +91,14 @@ func ServerStart(cfg *config.Config, webPath string) {
 	}
 }
 
-func initServer(r *mux.Router, db *sql.DB, webPath string) {
+func initServer(r *mux.Router, db *sql.DB, redis *redis.Redis, webPath string) {
 	fs := http.FileServer(http.Dir(webPath))
 	r.PathPrefix(filePath).Handler(http.StripPrefix(filePath, fs))
 
 	slog.Info("<----- create services ----->")
 	slog.Info("user service")
 	userRepo := userRepository.NewRepo(db)
-	userSvc := userService.NewService(userRepo)
+	userSvc := userService.NewService(userRepo, redis)
 
 	slog.Info("word service")
 	wordRepo := wordRepository.NewRepo(db)
@@ -125,7 +124,7 @@ func initServer(r *mux.Router, db *sql.DB, webPath string) {
 	vocabularyRepo := vocabularyRepository.NewRepo(db)
 	vocabularySvc := vocabularyService.NewService(vocabularyRepo, wordSvc, exampleSvc, tagSvc)
 
-	authRepo := authRepository.NewRepo(db)
+	authRepo := authRepository.NewRepo(redis)
 	authSvc := authService.NewService(authRepo, userSvc)
 
 	slog.Info("<----- create handlers ----->")
