@@ -45,7 +45,7 @@ func NewService(repo userRepo, redis redis) *UserSvc {
 func (s *UserSvc) CreateUser(ctx context.Context, u *dto.CreateUserRq) (uuid.UUID, error) {
 	user := &entity.User{
 		ID:           uuid.New(),
-		Username:     u.Username,
+		Name:         u.Username,
 		PasswordHash: u.Password,
 		Email:        u.Email,
 		Role:         "user",

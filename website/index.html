@@ -20,11 +20,7 @@
         </a>
       </div>
       <div class="right-side">
-        {{ if .User.IsLogin }}
-        <div class="border">
-          <button id="btnDictionary" type="button" class="accountBtn">Dictionary</button>
-        </div>
-        {{ end }}
+        <div id="dictionary_btn"></div>
         <div class="border">
           <button id="btnContact" type="button" class="accountBtn">Contact</button>
         </div>
@@ -32,15 +28,13 @@
           <button id="btnAbout" type="button" class="accountBtn">About</button>
         </div>
         <div class="vertical-line"></div>
-        {{ if .User.IsLogin }}
-        <button id="btnAccount" type="button" class="accountBtn" value="account">{{.User.Name}}</button>
-        {{ else }}
-        <div class="border">
-          <button id="btnSignup" type="button" class="accountBtn" value="signup">Sign Up</button>
-          |
-          <button id="btnLogin" type="button" class="accountBtn" value="login">Login</button>
+        <div id="account_panel" style="display: inherit;">
+          <div class="border">
+            <button id="btnSignup" type="button" class="accountBtn" value="signup">Sign Up</button>
+            |
+            <button id="btnLogin" type="button" class="accountBtn" value="login">Login</button>
+          </div>
         </div>
-        {{ end }}
       </div>
     </nav>
   </header>
