@@ -12,7 +12,7 @@ import (
 	"lingua-evo/internal/services/auth/entity"
 	entityUser "lingua-evo/internal/services/user/entity"
 	"lingua-evo/pkg/token"
-	"lingua-evo/pkg/tools"
+	"lingua-evo/pkg/utils"
 
 	"github.com/google/uuid"
 )
@@ -53,7 +53,7 @@ func (s *AuthSvc) Login(ctx context.Context, sessionRq *dto.CreateSessionRq) (*e
 	if err != nil {
 		return nil, fmt.Errorf("auth.service.AuthSvc.CreateSession - getUser: %v", err)
 	}
-	if err := tools.CheckPasswordHash(sessionRq.Password, u.PasswordHash); err != nil {
+	if err := utils.CheckPasswordHash(sessionRq.Password, u.PasswordHash); err != nil {
 		return nil, fmt.Errorf("auth.service.AuthSvc.CreateSession - incorrect password: %v", err)
 	}
 

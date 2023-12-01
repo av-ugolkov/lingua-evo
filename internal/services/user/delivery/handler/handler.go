@@ -12,7 +12,7 @@ import (
 	"lingua-evo/internal/services/user/entity"
 	"lingua-evo/internal/services/user/service"
 	"lingua-evo/pkg/http/handler"
-	"lingua-evo/pkg/tools"
+	"lingua-evo/pkg/utils"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
@@ -74,7 +74,7 @@ func (h *Handler) createAccount(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	hashPassword, err := tools.HashPassword(data.Password)
+	hashPassword, err := utils.HashPassword(data.Password)
 	if err != nil {
 		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.createAccount - hashPassword: %v", err))
 		return
@@ -164,7 +164,7 @@ func (h *Handler) getUserByEmail(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) validateEmail(ctx context.Context, email string) error {
-	if !tools.IsEmailValid(email) {
+	if !utils.IsEmailValid(email) {
 		return entity.ErrEmailNotCorrect
 	}
 
@@ -202,7 +202,7 @@ func validatePassword(password string) error {
 		return entity.ErrPasswordLen
 	}
 
-	if !tools.IsPasswordValid(password) {
+	if !utils.IsPasswordValid(password) {
 		return entity.ErrPasswordDifficult
 	}
 
