@@ -34,8 +34,8 @@ import (
 	wordRepository "lingua-evo/internal/services/lingua/word/repository"
 	wordService "lingua-evo/internal/services/lingua/word/service"
 	accountHandler "lingua-evo/internal/services/site/account/delivery"
-	userHandler "lingua-evo/internal/services/user/delivery"
-	userRepository "lingua-evo/internal/services/user/repository"
+	userHandler "lingua-evo/internal/services/user/delivery/handler"
+	userRepository "lingua-evo/internal/services/user/delivery/repository"
 	userService "lingua-evo/internal/services/user/service"
 
 	signInHandler "lingua-evo/internal/services/site/auth/sign_in/delivery"
