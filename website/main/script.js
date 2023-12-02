@@ -7,7 +7,7 @@ window.onload = function () {
         return
     }
 
-    fetch("/get-account-data", {
+    fetch("/get-account-panel", {
         method: "get",
         headers: {
             'Accept': 'application/json',
@@ -16,11 +16,11 @@ window.onload = function () {
             'Access-Token': token
         },
 
-    }).then((response) => response.json())
+    }).then((response) => response.text())
         .then((data) => {
-            document.getElementById("account_panel").innerHTML = data
+            document.getElementById("right-side").innerHTML = data;
         }).catch((error) => {
-            console.error(error)
+            console.log(error)
         })
 }
 

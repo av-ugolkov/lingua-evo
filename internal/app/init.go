@@ -80,7 +80,7 @@ func ServerStart(cfg *config.Config, webPath string) {
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 	}
-	slog.Info("<----- start sertver ----->")
+	slog.Info("start sertver")
 	if err := server.Serve(listener); err != nil {
 		switch {
 		case errors.Is(err, http.ErrServerClosed):
@@ -96,72 +96,36 @@ func initServer(r *mux.Router, db *sql.DB, redis *redis.Redis, webPath string) {
 	fs := http.FileServer(http.Dir(webPath))
 	r.PathPrefix(filePath).Handler(http.StripPrefix(filePath, fs))
 
-	slog.Info("<----- create services ----->")
-	slog.Info("user service")
+	slog.Info("create services")
 	userRepo := userRepository.NewRepo(db)
 	userSvc := userService.NewService(userRepo, redis)
-
-	slog.Info("word service")
 	wordRepo := wordRepository.NewRepo(db)
 	wordSvc := wordService.NewService(wordRepo)
-
-	slog.Info("user service")
 	langRepo := langRepository.NewRepo(db)
 	langSvc := langService.NewService(langRepo)
-
-	slog.Info("dictionary service")
 	dictRepo := dictRepository.NewRepo(db)
 	dictSvc := dictService.NewService(dictRepo)
-
-	slog.Info("example service")
 	exampleRepo := exampleRepository.NewRepo(db)
 	exampleSvc := exampleService.NewService(exampleRepo)
-
-	slog.Info("tag service")
 	tagRepo := tagRepository.NewRepo(db)
 	tagSvc := tagService.NewService(tagRepo)
-
-	slog.Info("vocabulary service")
 	vocabularyRepo := vocabularyRepository.NewRepo(db)
 	vocabularySvc := vocabularyService.NewService(vocabularyRepo, wordSvc, exampleSvc, tagSvc)
-
-	slog.Info("auth service")
 	authRepo := authRepository.NewRepo(redis)
 	authSvc := authService.NewService(authRepo, userSvc)
-
-	slog.Info("session service")
 	sessionSvc := sessionService.NewService(redis)
 
-	slog.Info("<----- create handlers ----->")
-	slog.Info("index handler")
+	slog.Info("create handlers")
 	indexHandler.Create(r, sessionSvc, userSvc, wordSvc)
-
-	slog.Info("user handler")
 	userHandler.Create(r, userSvc)
-
-	slog.Info("sign_in handler")
 	signInHandler.Create(r, userSvc)
-
-	slog.Info("sign_up handler")
 	signUpHandler.Create(r)
-
-	slog.Info("account handler")
 	accountHandler.Create(r)
-
-	slog.Info("language handler")
 	languageHandler.Create(r, langSvc)
-
-	slog.Info("word handler")
 	wordHandler.Create(r, wordSvc, langSvc)
-
-	slog.Info("dictionary handler")
 	dictHandler.Create(r, dictSvc)
-
-	slog.Info("vocabulary handler")
 	vocabularyHandler.Create(r, vocabularySvc)
-
-	slog.Info("auth handler")
 	authHandler.Create(r, authSvc)
 
-	slog.Info("<----- end init services ----->")
+	slog.Info("end init services")
 }

@@ -26,9 +26,10 @@ const (
 	mainURL  = "/"
 	indexURL = "/index"
 
-	getAccountDataURL = "/get-account-data"
+	getAccountPanelURL = "/get-account-panel"
 
-	indexPagePath = "website/index.html"
+	indexPagePath    = "website/index.html"
+	accountPanelPath = "website/components/account_panel.html"
 )
 
 type (
@@ -68,7 +69,7 @@ func (h *Handler) register(r *mux.Router) {
 	r.HandleFunc(mainURL, h.openPage).Methods(http.MethodGet)
 	r.HandleFunc(indexURL, h.openPageIndex).Methods(http.MethodGet)
 
-	r.HandleFunc(getAccountDataURL, h.getAccountData).Methods(http.MethodGet)
+	r.HandleFunc(getAccountPanelURL, h.getAccountPanel).Methods(http.MethodGet)
 }
 
 func (h *Handler) openPageIndex(w http.ResponseWriter, r *http.Request) {
@@ -116,7 +117,7 @@ func (h *Handler) openPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h *Handler) getAccountData(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) getAccountPanel(w http.ResponseWriter, r *http.Request) {
 	accessToken := r.Header.Get("Access-Token")
 	fingerprint := r.Header.Get("Fingerprint")
 
@@ -143,8 +144,22 @@ func (h *Handler) getAccountData(w http.ResponseWriter, r *http.Request) {
 		handler.SendError(w, http.StatusUnauthorized, err)
 		return
 	}
-	fmt.Print(u)
-	//static.ParseFiles(indexPagePath)
 
-	//_, _ = w.Write(b)
+	t, err := static.ParseFiles(accountPanelPath)
+	if err != nil {
+		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("site.index.delivery.Handler.getAccountPanel - parseFiles: %v", err))
+		return
+	}
+
+	user := struct {
+		Name string
+	}{
+		Name: u.Name,
+	}
+
+	err = t.Execute(w, user)
+	if err != nil {
+		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("site.index.delivery.Handler.getAccountPanel - Execute: %v", err))
+		return
+	}
 }
