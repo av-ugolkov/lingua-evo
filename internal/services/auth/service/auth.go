@@ -173,5 +173,5 @@ func (s *AuthSvc) verifyRefreshSession(ctx context.Context, uid uuid.UUID, oldRe
 	if oldRefreshSession.ExpiresAt.Before(time.Now().UTC()) {
 		return fmt.Errorf("auth.service.AuthSvc.verifyRefreshSession - session expired")
 	}*/
-	return nil
+	return fmt.Errorf("auth.service.AuthSvc.verifyRefreshSession - not implemented")
 }

@@ -2,7 +2,6 @@ package index
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -14,7 +13,8 @@ import (
 	entityLanguage "lingua-evo/internal/services/lingua/language/entity"
 	dtoWord "lingua-evo/internal/services/lingua/word/dto"
 	entityWord "lingua-evo/internal/services/lingua/word/entity"
-	"lingua-evo/internal/services/user/entity"
+	entitySession "lingua-evo/internal/services/session/entity"
+	entityUser "lingua-evo/internal/services/user/entity"
 
 	"lingua-evo/pkg/http/handler"
 	"lingua-evo/pkg/http/static"
@@ -32,34 +32,35 @@ const (
 )
 
 type (
+	sessionSvc interface {
+		GetSession(ctx context.Context, sid string) (*entitySession.Session, error)
+	}
+
 	userSvc interface {
-		GetUserByID(ctx context.Context, uid uuid.UUID) (*entity.User, error)
+		GetUserByID(ctx context.Context, uid uuid.UUID) (*entityUser.User, error)
 	}
 
 	wordSvc interface {
 		GetRandomWord(ctx context.Context, w *dtoWord.RandomWordRq) (*entityWord.Word, error)
 	}
 
-	userInfo struct {
-		IsLogin bool
-		Name    string
-	}
-
 	Handler struct {
-		userSvc userSvc
-		wordSvc wordSvc
+		sessionSvc sessionSvc
+		userSvc    userSvc
+		wordSvc    wordSvc
 	}
 )
 
-func Create(r *mux.Router, userSvc userSvc, wordSvc wordSvc) {
-	handler := newHandler(userSvc, wordSvc)
+func Create(r *mux.Router, sessionSvc sessionSvc, userSvc userSvc, wordSvc wordSvc) {
+	handler := newHandler(sessionSvc, userSvc, wordSvc)
 	handler.register(r)
 }
 
-func newHandler(userSvc userSvc, wordSvc wordSvc) *Handler {
+func newHandler(sessionSvc sessionSvc, userSvc userSvc, wordSvc wordSvc) *Handler {
 	return &Handler{
-		userSvc: userSvc,
-		wordSvc: wordSvc,
+		sessionSvc: sessionSvc,
+		userSvc:    userSvc,
+		wordSvc:    wordSvc,
 	}
 }
 
@@ -116,34 +117,34 @@ func (h *Handler) openPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) getAccountData(w http.ResponseWriter, r *http.Request) {
-	user := &userInfo{
-		IsLogin: false,
-		Name:    "",
-	}
+	accessToken := r.Header.Get("Access-Token")
+	fingerprint := r.Header.Get("Fingerprint")
 
-	if r.URL.Query().Has("access_token") {
-		tokenStr := r.URL.Query().Get("access_token")
-		claims, err := token.ValidateJWT(tokenStr, config.GetConfig().JWT.Secret)
-		if err != nil {
-			handler.SendError(w, http.StatusUnauthorized, err)
-			return
-		}
-
-		u, err := h.userSvc.GetUserByID(r.Context(), claims.UserID)
-		if err != nil {
-			handler.SendError(w, http.StatusUnauthorized, err)
-			return
-		}
-
-		user.IsLogin = true
-		user.Name = u.Name
-	}
-
-	b, err := json.Marshal(user)
+	claims, err := token.ValidateJWT(accessToken, config.GetConfig().JWT.Secret)
 	if err != nil {
-		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("site.index.delivery.Handler.get - Marshal: %v", err))
+		handler.SendError(w, http.StatusUnauthorized, err)
 		return
 	}
 
-	_, _ = w.Write(b)
+	ctx := r.Context()
+
+	session, err := h.sessionSvc.GetSession(ctx, claims.ID)
+	if err != nil {
+		handler.SendError(w, http.StatusUnauthorized, err)
+		return
+	}
+	if session.Fingerprint != fingerprint {
+		handler.SendError(w, http.StatusUnauthorized, err)
+		return
+	}
+
+	u, err := h.userSvc.GetUserByID(r.Context(), claims.UserID)
+	if err != nil {
+		handler.SendError(w, http.StatusUnauthorized, err)
+		return
+	}
+	fmt.Print(u)
+	//static.ParseFiles(indexPagePath)
+
+	//_, _ = w.Write(b)
 }

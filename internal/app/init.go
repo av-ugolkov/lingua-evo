@@ -33,6 +33,7 @@ import (
 	wordHandler "lingua-evo/internal/services/lingua/word/delivery"
 	wordRepository "lingua-evo/internal/services/lingua/word/repository"
 	wordService "lingua-evo/internal/services/lingua/word/service"
+	sessionService "lingua-evo/internal/services/session/service"
 	accountHandler "lingua-evo/internal/services/site/account/delivery"
 	userHandler "lingua-evo/internal/services/user/delivery/handler"
 	userRepository "lingua-evo/internal/services/user/delivery/repository"
@@ -124,12 +125,16 @@ func initServer(r *mux.Router, db *sql.DB, redis *redis.Redis, webPath string) {
 	vocabularyRepo := vocabularyRepository.NewRepo(db)
 	vocabularySvc := vocabularyService.NewService(vocabularyRepo, wordSvc, exampleSvc, tagSvc)
 
+	slog.Info("auth service")
 	authRepo := authRepository.NewRepo(redis)
 	authSvc := authService.NewService(authRepo, userSvc)
 
+	slog.Info("session service")
+	sessionSvc := sessionService.NewService(redis)
+
 	slog.Info("<----- create handlers ----->")
 	slog.Info("index handler")
-	indexHandler.Create(r, userSvc, wordSvc)
+	indexHandler.Create(r, sessionSvc, userSvc, wordSvc)
 
 	slog.Info("user handler")
 	userHandler.Create(r, userSvc)
