@@ -6,8 +6,10 @@ import (
 
 	"lingua-evo/internal/config"
 	entitySession "lingua-evo/internal/services/auth/entity"
+	entityUser "lingua-evo/internal/services/user/entity"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 )
 
 const (
@@ -16,27 +18,23 @@ const (
 
 type (
 	UserClaims struct {
-		Email           string
-		HashFingerprint string
-
+		UserID uuid.UUID `json:"user_id"`
 		jwt.RegisteredClaims
 	}
 )
 
-func NewJWTToken(s *entitySession.Claims) (string, error) {
+func NewJWTToken(u *entityUser.User, s *entitySession.Claims) (string, error) {
 	userClaims := UserClaims{
-		Email:           s.Email,
-		HashFingerprint: s.HashFingerprint,
+		UserID: u.ID,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ID:        s.ID.String(),
-			Subject:   s.UserID.String(),
 			Audience:  []string{"users"},
 			ExpiresAt: jwt.NewNumericDate(s.ExpiresAt),
 		},
 	}
+
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, userClaims)
-	secret := config.GetConfig().JWT.Secret
-	t, err := token.SignedString([]byte(secret))
+	t, err := token.SignedString([]byte(config.GetConfig().JWT.Secret))
 	if err != nil {
 		return emptyString, fmt.Errorf("pkg.jwt.token.NewJWTToken - can't signed token: %w", err)
 	}
@@ -44,26 +42,23 @@ func NewJWTToken(s *entitySession.Claims) (string, error) {
 }
 
 func ValidateJWT(tokenStr string, secret string) (*UserClaims, error) {
-	var claims UserClaims
-	token, err := jwt.ParseWithClaims(tokenStr, &claims, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.ParseWithClaims(tokenStr, &UserClaims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
 		}
 
 		return []byte(secret), nil
 	})
-
-	if !token.Valid {
-		return nil, fmt.Errorf("pkg.jwt.token.ValidateToken - invalid token")
-	} else if errors.Is(err, jwt.ErrTokenMalformed) {
-		return nil, fmt.Errorf("pkg.jwt.token.ValidateToken - malformed token")
-	} else if errors.Is(err, jwt.ErrTokenSignatureInvalid) {
-		return nil, fmt.Errorf("pkg.jwt.token.ValidateToken - invalid signature")
-	} else if errors.Is(err, jwt.ErrTokenExpired) || errors.Is(err, jwt.ErrTokenNotValidYet) {
-		return nil, fmt.Errorf("pkg.jwt.token.ValidateToken - expired token")
+	if errors.Is(err, jwt.ErrTokenExpired) {
+		return nil, fmt.Errorf("pkg.jwt.token.ValidateToken - token expired")
 	} else if err != nil {
-		return nil, fmt.Errorf("pkg.jwt.token.ValidateToken: %w", err)
+		return nil, fmt.Errorf("pkg.jwt.token.ValidateToken - can't parse token: %w", err)
 	}
 
-	return &claims, nil
+	claims, ok := token.Claims.(*UserClaims)
+	if !ok || !token.Valid {
+		return nil, fmt.Errorf("pkg.jwt.token.ValidateToken - invalid token")
+	}
+
+	return claims, nil
 }

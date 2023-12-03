@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	"strings"
 )
 
 var (
@@ -26,24 +25,10 @@ func CheckBody(w http.ResponseWriter, r *http.Request, body any) error {
 	return nil
 }
 
-func SendData(w http.ResponseWriter, data []byte) {
-	w.WriteHeader(http.StatusOK)
-	_, _ = w.Write(data)
-}
-
 func SendError(w http.ResponseWriter, httpStatus int, err error) {
 	w.WriteHeader(httpStatus)
 	_, err = w.Write([]byte(err.Error()))
 	if err != nil {
 		slog.Error(fmt.Errorf("internal.tools.handler.SendError: %v", err).Error())
 	}
-}
-
-func GetFingerprint(r *http.Request) string {
-	return strings.Join([]string{
-		r.Header.Get("user-agent"),
-		r.Header.Get("sec-ch-ua"),
-		r.Header.Get("accept-language"),
-		r.Header.Get("upgrade-insecure-req"),
-	}, ":")
 }

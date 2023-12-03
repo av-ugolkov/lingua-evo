@@ -1,6 +1,7 @@
 package entity
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/google/uuid"
@@ -8,10 +9,9 @@ import (
 
 type (
 	Session struct {
-		RefreshToken uuid.UUID
-		UserID       uuid.UUID
-		ExpiresAt    time.Time
-		CreatedAt    time.Time
+		UserID      uuid.UUID `json:"user_id"`
+		Fingerprint string    `json:"fingerprint"`
+		CreatedAt   time.Time `json:"created_at"`
 	}
 
 	Tokens struct {
@@ -20,10 +20,12 @@ type (
 	}
 
 	Claims struct {
-		ID              uuid.UUID
-		UserID          uuid.UUID
-		Email           string
-		HashFingerprint string
-		ExpiresAt       time.Time
+		ID        uuid.UUID
+		UserID    uuid.UUID
+		ExpiresAt time.Time
 	}
 )
+
+func (s *Session) MarshalBinary() ([]byte, error) {
+	return json.Marshal(s)
+}

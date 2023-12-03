@@ -18,7 +18,7 @@ docker-create-database:
 lint:
 	@go version
 	@golangci-lint --version
-	golangci-lint run ./...
+	GOWORK=off golangci-lint run ./...
 
 .PHONY: test
 test: 
