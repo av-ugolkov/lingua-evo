@@ -12,6 +12,7 @@ import (
 	"lingua-evo/internal/services/auth/dto"
 	"lingua-evo/internal/services/auth/service"
 	"lingua-evo/pkg/http/handler"
+	header "lingua-evo/pkg/http/handler/header"
 	"lingua-evo/pkg/middleware"
 	"lingua-evo/runtime"
 
@@ -53,18 +54,27 @@ func (h *Handler) login(w http.ResponseWriter, r *http.Request) {
 		_ = r.Body.Close()
 	}()
 
-	var data dto.CreateSessionRq
-	err := decodeBasicAuth(r.Header.Get("Authorization"), &data)
+	header := header.NewHeader(w, nil)
+	authorization, err := header.GetHeaderAuthorization()
 	if err != nil {
-		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.createSession - check body: %v", err))
+		handler.SendError(w, http.StatusBadRequest, fmt.Errorf("auth.delivery.Handler.login: %v", err))
 		return
 	}
-	data.Fingerprint = r.Header.Get("Fingerprint")
-
+	var data dto.CreateSessionRq
+	err = decodeBasicAuth(authorization, &data)
+	if err != nil {
+		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.login - check body: %v", err))
+		return
+	}
+	data.Fingerprint, err = header.GetHeaderFingerprint()
+	if err != nil {
+		handler.SendError(w, http.StatusBadRequest, fmt.Errorf("auth.delivery.Handler.login: %v", err))
+		return
+	}
 	ctx := r.Context()
 	tokens, err := h.authSvc.Login(ctx, &data)
 	if err != nil {
-		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.createSession - create session: %v", err))
+		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.login - create session: %v", err))
 		return
 	}
 
@@ -72,21 +82,14 @@ func (h *Handler) login(w http.ResponseWriter, r *http.Request) {
 		AccessToken: tokens.AccessToken,
 	})
 	if err != nil {
-		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.createSession - marshal: %v", err))
+		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.login - marshal: %v", err))
 		return
 	}
 
 	additionalTime := config.GetConfig().JWT.ExpireRefresh
 	duration := time.Duration(additionalTime) * time.Second
-	w.Header().Set("Content-Type", "application/json")
-	http.SetCookie(w, &http.Cookie{
-		Name:     "refresh_token",
-		Value:    tokens.RefreshToken.String(),
-		MaxAge:   int(duration.Seconds()),
-		HttpOnly: true,
-		Secure:   true,
-		Path:     "/auth",
-	})
+	header.SetHeader("Content-Type", "application/json")
+	header.SetCookieRefreshToken(tokens.RefreshToken, duration)
 
 	_, _ = w.Write(b)
 }
@@ -96,7 +99,8 @@ func (h *Handler) refresh(w http.ResponseWriter, r *http.Request) {
 		_ = r.Body.Close()
 	}()
 
-	refreshToken, err := handler.GetCookie(r, "refresh_token")
+	header := header.NewHeader(w, r)
+	refreshToken, err := header.GetCookieRefreshToken()
 	if err != nil {
 		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.refresh - get cookie: %v", err))
 		return
@@ -108,7 +112,7 @@ func (h *Handler) refresh(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fingerprint, err := handler.GetHeader(r, "Fingerprint")
+	fingerprint, err := header.GetHeaderFingerprint()
 	if err != nil {
 		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.refresh - get fingerprint: %v", err))
 		return
@@ -131,15 +135,8 @@ func (h *Handler) refresh(w http.ResponseWriter, r *http.Request) {
 
 	additionalTime := config.GetConfig().JWT.ExpireRefresh
 	duration := time.Duration(additionalTime) * time.Second
-	w.Header().Set("Content-Type", "application/json")
-	http.SetCookie(w, &http.Cookie{
-		Name:     "refresh_token",
-		Value:    tokens.RefreshToken.String(),
-		MaxAge:   int(duration.Seconds()),
-		HttpOnly: true,
-		Secure:   true,
-		Path:     "/auth",
-	})
+	header.SetHeader("Content-Type", "application/json")
+	header.SetCookieRefreshToken(tokens.RefreshToken, duration)
 
 	_, _ = w.Write(b)
 }
