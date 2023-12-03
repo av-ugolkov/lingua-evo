@@ -25,12 +25,19 @@ var (
 	ErrPasswordDifficult = errors.New("password must be more difficult")
 )
 
-type User struct {
-	ID           uuid.UUID
-	Username     string
-	Email        string
-	PasswordHash string
-	Role         string
-	CreatedAt    time.Time
-	LastVisitAt  time.Time
-}
+type (
+	User struct {
+		ID           uuid.UUID
+		Name         string
+		Email        string
+		PasswordHash string
+		Role         string
+		CreatedAt    time.Time
+		LastVisitAt  time.Time
+	}
+
+	Session struct {
+		UserID      uuid.UUID `json:"user_id"`
+		Fingerprint string    `json:"fingerprint"`
+	}
+)
