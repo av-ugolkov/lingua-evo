@@ -16,7 +16,7 @@ import (
 	entityUser "lingua-evo/internal/services/user/entity"
 
 	"lingua-evo/pkg/http/handler"
-	header "lingua-evo/pkg/http/handler/header"
+	"lingua-evo/pkg/http/handler/header"
 	"lingua-evo/pkg/http/static"
 	"lingua-evo/pkg/token"
 )

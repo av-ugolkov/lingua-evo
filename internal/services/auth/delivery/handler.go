@@ -11,8 +11,9 @@ import (
 	"lingua-evo/internal/config"
 	"lingua-evo/internal/services/auth/dto"
 	"lingua-evo/internal/services/auth/service"
+
 	"lingua-evo/pkg/http/handler"
-	header "lingua-evo/pkg/http/handler/header"
+	"lingua-evo/pkg/http/handler/header"
 	"lingua-evo/pkg/middleware"
 	"lingua-evo/runtime"
 
