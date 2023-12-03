@@ -1,4 +1,4 @@
-package handler
+package header
 
 import (
 	"errors"
@@ -37,13 +37,13 @@ func NewHeader(w http.ResponseWriter, r *http.Request) *Header {
 	}
 }
 
-func (c *Header) setCookie(name, value string) {
+func (h *Header) setCookie(name, value string) {
 	cookie := &http.Cookie{
 		Name:  name,
 		Value: value,
 		Path:  cookiePath,
 	}
-	http.SetCookie(c.responseWriter, cookie)
+	http.SetCookie(h.responseWriter, cookie)
 }
 
 func (h *Header) SetCookieLanguage(languageID string) {
