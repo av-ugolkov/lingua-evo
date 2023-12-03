@@ -560,6 +560,177 @@
         {
             "word": "violent",
             "pronunciation": "['vaɪələnt]"
+        },
+        {
+            "word": "mentality",
+            "pronunciation": "[men'tæliti]",
+            "translate": [
+                "менталитет"
+            ]
+        },
+        {
+            "word": "mind",
+            "pronunciation": "[maɪnd]",
+            "translate": [
+                "ум",
+                "разум"
+            ]
+        },
+        {
+            "word": "to converse",
+            "pronunciation": "[kənˈvɜːs]",
+            "translate": [
+                "общаться (с кем-либо)",
+                "беседовать (с кем-либо)"
+            ]
+        },
+        {
+            "word": "to raise",
+            "pronunciation": "[reɪz]",
+            "translate": [
+                "поднимать",
+                "повышать"
+            ]
+        },
+        {
+            "word": "concealing",
+            "translate": [
+                "укрывание",
+                "скрывание",
+                "утаивание",
+                "укрывательство"
+            ]
+        },
+        {
+            "word": "occasionally",
+            "pronunciation": "[ə'keɪʒ(ə)nəlɪ]",
+            "translate": [
+                "изредка",
+                "временами",
+                "время от времени",
+                "иногда"
+            ]
+        },
+        {
+            "word": "fellow",
+            "pronunciation": "['feləu]",
+            "translate": [
+                "товарищ",
+                "собрат"
+            ]
+        },
+        {
+            "word": "pretext",
+            "pronunciation": "['pri:'tekst]",
+            "translate": [
+                "отговорка",
+                "отмазка",
+                "предлог"
+            ]
+        },
+        {
+            "word": "gossip",
+            "pronunciation": "['gɔsɪp]",
+            "translate": [
+                "болтовня",
+                "разговоры"
+            ]
+        },
+        {
+            "word": "inherited",
+            "pronunciation": "[ɪn'herɪt]",
+            "translate": [
+                "получать в наследство",
+                "унаследовать",
+                "перенять (свойство, качество и т.п.)",
+                "наследовать"
+            ]
+        },
+        {
+            "word": "turn out",
+            "pronunciation": "['tɜ:n'aut]",
+            "translate": [
+                "выворачивать",
+                "выяснять",
+                "оказываться",
+                "получаться"
+            ]
+        },
+        {
+            "word": "intimately",
+            "pronunciation": "['ɪntɪmɪtlɪ]",
+            "translate": [
+                "очень хорошо",
+                "отлично",
+                "досконально",
+                "задушевно",
+                "интимно"
+            ]
+        },
+        {
+            "word": "confesses",
+            "pronunciation": "[kən'fes]",
+            "translate": [
+                "исповедаться",
+                "исповедовать (веру, кающегося)",
+                "признавать",
+                "сознаться"
+            ]
+        },
+        {
+            "word": "doubt",
+            "pronunciation": "[daut]",
+            "translate": [
+                "сомнение",
+                "нерешительность",
+                "неясность",
+                "раздумье"
+            ]
+        },
+        {
+            "word": "private security"
+        },
+        {
+            "word": "humidity"
+        },
+        {
+            "word": "to melt"
+        },
+        {
+            "word": "paw"
+        },
+        {
+            "word": "take care of"
+        },
+        {
+            "word": "enquire"
+        },
+        {
+            "word": "accumulation"
+        },
+        {
+            "word": "insulate"
+        },
+        {
+            "word": "stinks up"
+        },
+        {
+            "word": "solstice"
+        },
+        {
+            "word": "recharged"
+        },
+        {
+            "word": "grew out"
+        },
+        {
+            "word": "rehearsal"
+        },
+        {
+            "word": "self-employed"
+        },
+        {
+            "word": "spoil"
         }
     ]
 }

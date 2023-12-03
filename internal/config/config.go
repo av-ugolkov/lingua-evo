@@ -11,7 +11,8 @@ type Config struct {
 	PprofDebug PprofDebug `yaml:"pprof_debug"`
 	JWT        JWT        `yaml:"jwt"`
 	Service    Service    `yaml:"service"`
-	Database   Database   `yaml:"database"`
+	DbSQL      DbSQL      `yaml:"postgres"`
+	DbRedis    DbRedis    `yaml:"redis"`
 }
 
 type PprofDebug struct {
@@ -30,16 +31,24 @@ type Service struct {
 	Port string `yaml:"port" env-default:"8080"`
 }
 
-type Database struct {
-	NameDB   string `yaml:"name_db"`
+type DbSQL struct {
+	Name     string `yaml:"name"`
 	User     string `yaml:"user"`
 	Password string `yaml:"password"`
 	Host     string `yaml:"host"`
 	Port     string `yaml:"port"`
 }
 
-func (db *Database) GetConnStr() string {
-	return fmt.Sprintf("postgresql://%s:%s@%s:%s/%s", db.User, db.Password, db.Host, db.Port, db.NameDB)
+func (db *DbSQL) GetConnStr() string {
+	return fmt.Sprintf("postgresql://%s:%s@%s:%s/%s", db.User, db.Password, db.Host, db.Port, db.Name)
+}
+
+type DbRedis struct {
+	Name     string `yaml:"name"`
+	Password string `yaml:"password"`
+	Host     string `yaml:"host"`
+	Port     string `yaml:"port"`
+	DB       int    `yaml:"db"`
 }
 
 var instance *Config

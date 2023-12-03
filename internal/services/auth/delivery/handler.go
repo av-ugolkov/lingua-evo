@@ -44,7 +44,7 @@ func newHandler(authSvc *service.AuthSvc) *Handler {
 
 func (h *Handler) register(r *mux.Router) {
 	r.HandleFunc(login, h.login).Methods(http.MethodPost)
-	r.HandleFunc(refresh, middleware.Auth(h.refresh)).Methods(http.MethodPost)
+	r.HandleFunc(refresh, h.refresh).Methods(http.MethodPost)
 	r.HandleFunc(logout, middleware.Auth(h.logout)).Methods(http.MethodPost)
 }
 
@@ -54,11 +54,12 @@ func (h *Handler) login(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	var data dto.CreateSessionRq
-	err := decodeBasicAuth(r.Header["Authorization"][0], &data)
+	err := decodeBasicAuth(r.Header.Get("Authorization"), &data)
 	if err != nil {
 		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.createSession - check body: %v", err))
 		return
 	}
+	data.Fingerprint = r.Header.Get("Fingerprint")
 
 	ctx := r.Context()
 	tokens, err := h.authSvc.Login(ctx, &data)
@@ -68,8 +69,7 @@ func (h *Handler) login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	b, err := json.Marshal(&dto.CreateSessionRs{
-		AccessToken:  tokens.AccessToken,
-		RefreshToken: tokens.RefreshToken,
+		AccessToken: tokens.AccessToken,
 	})
 	if err != nil {
 		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.createSession - marshal: %v", err))
@@ -85,7 +85,7 @@ func (h *Handler) login(w http.ResponseWriter, r *http.Request) {
 		MaxAge:   int(duration.Seconds()),
 		HttpOnly: true,
 		Secure:   true,
-		Path:     "/",
+		Path:     "/auth",
 	})
 
 	_, _ = w.Write(b)
@@ -96,28 +96,33 @@ func (h *Handler) refresh(w http.ResponseWriter, r *http.Request) {
 		_ = r.Body.Close()
 	}()
 
-	refreshToken, err := r.Cookie("refresh_token")
+	refreshToken, err := handler.GetCookie(r, "refresh_token")
 	if err != nil {
 		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.refresh - get cookie: %v", err))
+		return
+	}
+
+	refreshID, err := uuid.Parse(refreshToken.Value)
+	if err != nil {
+		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.refresh - get cookie: %v", err))
+		return
+	}
+
+	fingerprint, err := handler.GetHeader(r, "Fingerprint")
+	if err != nil {
+		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.refresh - get fingerprint: %v", err))
 		return
 	}
 
 	ctx := r.Context()
 
-	tokenID, err := uuid.Parse(refreshToken.Value)
-	if err != nil {
-		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.refresh - get cookie: %v", err))
-		return
-	}
-
-	tokens, err := h.authSvc.RefreshSessionToken(ctx, tokenID)
+	tokens, err := h.authSvc.RefreshSessionToken(ctx, refreshID, fingerprint)
 	if err != nil {
 		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.refresh - RefreshSessionToken: %v", err))
 		return
 	}
 	b, err := json.Marshal(&dto.CreateSessionRs{
-		AccessToken:  tokens.AccessToken,
-		RefreshToken: tokens.RefreshToken,
+		AccessToken: tokens.AccessToken,
 	})
 	if err != nil {
 		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.refresh - marshal: %v", err))
@@ -133,6 +138,7 @@ func (h *Handler) refresh(w http.ResponseWriter, r *http.Request) {
 		MaxAge:   int(duration.Seconds()),
 		HttpOnly: true,
 		Secure:   true,
+		Path:     "/auth",
 	})
 
 	_, _ = w.Write(b)

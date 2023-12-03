@@ -12,7 +12,8 @@ import (
 	"github.com/gorilla/mux"
 
 	"lingua-evo/internal/config"
-	repository "lingua-evo/internal/db"
+	pg "lingua-evo/internal/db/postgres"
+	"lingua-evo/internal/db/redis"
 	authHandler "lingua-evo/internal/services/auth/delivery"
 	authRepository "lingua-evo/internal/services/auth/repository"
 	authService "lingua-evo/internal/services/auth/service"
@@ -32,9 +33,10 @@ import (
 	wordHandler "lingua-evo/internal/services/lingua/word/delivery"
 	wordRepository "lingua-evo/internal/services/lingua/word/repository"
 	wordService "lingua-evo/internal/services/lingua/word/service"
+	sessionService "lingua-evo/internal/services/session/service"
 	accountHandler "lingua-evo/internal/services/site/account/delivery"
-	userHandler "lingua-evo/internal/services/user/delivery"
-	userRepository "lingua-evo/internal/services/user/repository"
+	userHandler "lingua-evo/internal/services/user/delivery/handler"
+	userRepository "lingua-evo/internal/services/user/delivery/repository"
 	userService "lingua-evo/internal/services/user/service"
 
 	signInHandler "lingua-evo/internal/services/site/auth/sign_in/delivery"
@@ -53,14 +55,16 @@ func ServerStart(cfg *config.Config, webPath string) {
 		}()
 	}
 
-	db, err := repository.NewDB(cfg.Database.GetConnStr())
+	db, err := pg.NewDB(cfg.DbSQL.GetConnStr())
 	if err != nil {
 		slog.Error(fmt.Errorf("can't create pg pool: %v", err).Error())
 		return
 	}
 
+	redis := redis.New(cfg)
+
 	router := mux.NewRouter()
-	initServer(router, db, webPath)
+	initServer(router, db, redis, webPath)
 
 	address := fmt.Sprintf(":%s", cfg.Service.Port)
 
@@ -76,7 +80,7 @@ func ServerStart(cfg *config.Config, webPath string) {
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 	}
-	slog.Info("<----- start sertver ----->")
+	slog.Info("start sertver")
 	if err := server.Serve(listener); err != nil {
 		switch {
 		case errors.Is(err, http.ErrServerClosed):
@@ -88,72 +92,40 @@ func ServerStart(cfg *config.Config, webPath string) {
 	}
 }
 
-func initServer(r *mux.Router, db *sql.DB, webPath string) {
+func initServer(r *mux.Router, db *sql.DB, redis *redis.Redis, webPath string) {
 	fs := http.FileServer(http.Dir(webPath))
 	r.PathPrefix(filePath).Handler(http.StripPrefix(filePath, fs))
 
-	slog.Info("<----- create services ----->")
-	slog.Info("user service")
+	slog.Info("create services")
 	userRepo := userRepository.NewRepo(db)
-	userSvc := userService.NewService(userRepo)
-
-	slog.Info("word service")
+	userSvc := userService.NewService(userRepo, redis)
 	wordRepo := wordRepository.NewRepo(db)
 	wordSvc := wordService.NewService(wordRepo)
-
-	slog.Info("user service")
 	langRepo := langRepository.NewRepo(db)
 	langSvc := langService.NewService(langRepo)
-
-	slog.Info("dictionary service")
 	dictRepo := dictRepository.NewRepo(db)
 	dictSvc := dictService.NewService(dictRepo)
-
-	slog.Info("example service")
 	exampleRepo := exampleRepository.NewRepo(db)
 	exampleSvc := exampleService.NewService(exampleRepo)
-
-	slog.Info("tag service")
 	tagRepo := tagRepository.NewRepo(db)
 	tagSvc := tagService.NewService(tagRepo)
-
-	slog.Info("vocabulary service")
 	vocabularyRepo := vocabularyRepository.NewRepo(db)
 	vocabularySvc := vocabularyService.NewService(vocabularyRepo, wordSvc, exampleSvc, tagSvc)
-
-	authRepo := authRepository.NewRepo(db)
+	authRepo := authRepository.NewRepo(redis)
 	authSvc := authService.NewService(authRepo, userSvc)
+	sessionSvc := sessionService.NewService(redis)
 
-	slog.Info("<----- create handlers ----->")
-	slog.Info("index handler")
-	indexHandler.Create(r, userSvc, wordSvc)
-
-	slog.Info("user handler")
+	slog.Info("create handlers")
+	indexHandler.Create(r, sessionSvc, userSvc, wordSvc)
 	userHandler.Create(r, userSvc)
-
-	slog.Info("sign_in handler")
 	signInHandler.Create(r, userSvc)
-
-	slog.Info("sign_up handler")
 	signUpHandler.Create(r)
-
-	slog.Info("account handler")
 	accountHandler.Create(r)
-
-	slog.Info("language handler")
 	languageHandler.Create(r, langSvc)
-
-	slog.Info("word handler")
 	wordHandler.Create(r, wordSvc, langSvc)
-
-	slog.Info("dictionary handler")
 	dictHandler.Create(r, dictSvc)
-
-	slog.Info("vocabulary handler")
 	vocabularyHandler.Create(r, vocabularySvc)
-
-	slog.Info("auth handler")
 	authHandler.Create(r, authSvc)
 
-	slog.Info("<----- end init services ----->")
+	slog.Info("end init services")
 }

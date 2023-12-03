@@ -3,16 +3,24 @@ module lingua-evo
 go 1.21
 
 require (
+	github.com/golang-jwt/jwt/v5 v5.0.0
 	github.com/google/uuid v1.3.0
 	github.com/ilyakaznacheev/cleanenv v1.5.0
 	github.com/jackc/pgx/v4 v4.18.1
 	golang.org/x/crypto v0.11.0
-	github.com/golang-jwt/jwt/v5 v5.0.0
+)
+
+require (
+	github.com/cespare/xxhash/v2 v2.2.0 // indirect
+	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
+	github.com/gorilla/securecookie v1.1.2 // indirect
+	github.com/redis/go-redis/v9 v9.3.0 // indirect
 )
 
 require (
 	github.com/BurntSushi/toml v1.3.2 // indirect
 	github.com/gorilla/mux v1.8.0
+	github.com/gorilla/sessions v1.2.2
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
 	github.com/jackc/pgconn v1.14.1 // indirect
 	github.com/jackc/pgio v1.0.0 // indirect
