@@ -1,9 +1,11 @@
 package delivery
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"lingua-evo/internal/config"
@@ -42,7 +44,7 @@ func newHandler(authSvc *service.AuthSvc) *Handler {
 
 func (h *Handler) register(r *mux.Router) {
 	r.HandleFunc(login, h.login).Methods(http.MethodPost)
-	r.HandleFunc(refresh, middleware.Auth(h.refresh)).Methods(http.MethodPost)
+	r.HandleFunc(refresh, h.refresh).Methods(http.MethodPost)
 	r.HandleFunc(logout, middleware.Auth(h.logout)).Methods(http.MethodPost)
 }
 
@@ -51,28 +53,23 @@ func (h *Handler) login(w http.ResponseWriter, r *http.Request) {
 		_ = r.Body.Close()
 	}()
 
-	user, password, ok := r.BasicAuth()
-	if !ok {
-		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.createSession - can't parse basic auth"))
+	var data dto.CreateSessionRq
+	err := decodeBasicAuth(r.Header.Get("Authorization"), &data)
+	if err != nil {
+		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.createSession - check body: %v", err))
 		return
 	}
+	data.Fingerprint = r.Header.Get("Fingerprint")
 
 	ctx := r.Context()
-
-	fingerprint := handler.GetFingerprint(r)
-
-	tokens, err := h.authSvc.Login(ctx, &dto.CreateSessionRq{
-		User:     user,
-		Password: password,
-	}, fingerprint)
+	tokens, err := h.authSvc.Login(ctx, &data)
 	if err != nil {
 		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.createSession - create session: %v", err))
 		return
 	}
 
 	b, err := json.Marshal(&dto.CreateSessionRs{
-		AccessToken:  tokens.AccessToken,
-		RefreshToken: tokens.RefreshToken,
+		AccessToken: tokens.AccessToken,
 	})
 	if err != nil {
 		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.createSession - marshal: %v", err))
@@ -88,7 +85,6 @@ func (h *Handler) login(w http.ResponseWriter, r *http.Request) {
 		MaxAge:   int(duration.Seconds()),
 		HttpOnly: true,
 		Secure:   true,
-		SameSite: http.SameSiteStrictMode,
 		Path:     "/auth",
 	})
 
@@ -99,35 +95,40 @@ func (h *Handler) refresh(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		_ = r.Body.Close()
 	}()
-	refreshToken, err := r.Cookie("refresh_token")
+
+	refreshToken, err := handler.GetCookie(r, "refresh_token")
 	if err != nil {
 		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.refresh - get cookie: %v", err))
+		return
+	}
+
+	refreshID, err := uuid.Parse(refreshToken.Value)
+	if err != nil {
+		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.refresh - get cookie: %v", err))
+		return
+	}
+
+	fingerprint, err := handler.GetHeader(r, "Fingerprint")
+	if err != nil {
+		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.refresh - get fingerprint: %v", err))
 		return
 	}
 
 	ctx := r.Context()
 
-	tokenID, err := uuid.Parse(refreshToken.Value)
-	if err != nil {
-		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.refresh - get cookie: %v", err))
-		return
-	}
-
-	fingerprint := handler.GetFingerprint(r)
-
-	tokens, err := h.authSvc.RefreshSessionToken(ctx, tokenID, fingerprint)
+	tokens, err := h.authSvc.RefreshSessionToken(ctx, refreshID, fingerprint)
 	if err != nil {
 		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.refresh - RefreshSessionToken: %v", err))
 		return
 	}
 	b, err := json.Marshal(&dto.CreateSessionRs{
-		AccessToken:  tokens.AccessToken,
-		RefreshToken: tokens.RefreshToken,
+		AccessToken: tokens.AccessToken,
 	})
 	if err != nil {
 		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.refresh - marshal: %v", err))
 		return
 	}
+
 	additionalTime := config.GetConfig().JWT.ExpireRefresh
 	duration := time.Duration(additionalTime) * time.Second
 	w.Header().Set("Content-Type", "application/json")
@@ -137,7 +138,6 @@ func (h *Handler) refresh(w http.ResponseWriter, r *http.Request) {
 		MaxAge:   int(duration.Seconds()),
 		HttpOnly: true,
 		Secure:   true,
-		SameSite: http.SameSiteStrictMode,
 		Path:     "/auth",
 	})
 
@@ -163,4 +163,20 @@ func (h *Handler) logout(w http.ResponseWriter, r *http.Request) {
 	}
 
 	_, _ = w.Write([]byte("done"))
+}
+
+func decodeBasicAuth(auth string, data *dto.CreateSessionRq) error {
+	base, err := base64.StdEncoding.DecodeString(strings.Split(auth, " ")[1])
+	if err != nil {
+		return fmt.Errorf("auth.delivery.decodeBasicAuth - decode base64: %v", err)
+	}
+	authData := strings.Split(string(base), ":")
+	if len(authData) != 2 {
+		return fmt.Errorf("auth.delivery.decodeBasicAuth - invalid auth data")
+	}
+
+	data.User = authData[0]
+	data.Password = authData[1]
+
+	return nil
 }
