@@ -3,7 +3,6 @@ package index
 import (
 	"context"
 	"fmt"
-	"log/slog"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -17,9 +16,9 @@ import (
 	entityUser "lingua-evo/internal/services/user/entity"
 
 	"lingua-evo/pkg/http/handler"
+	header "lingua-evo/pkg/http/handler/header"
 	"lingua-evo/pkg/http/static"
 	"lingua-evo/pkg/token"
-	"lingua-evo/runtime"
 )
 
 const (
@@ -83,16 +82,8 @@ func (h *Handler) openPage(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
-
-	language := runtime.GetLanguage("en")
-	languageCookie, err := handler.GetCookie(r, "language")
-	if err != nil {
-		slog.Warn(err.Error())
-	}
-	if languageCookie != nil {
-		language = languageCookie.Value
-	}
-
+	header := header.NewHeader(w, r)
+	language := header.GetCookieLanguageOrDefault()
 	randomWord, err := h.wordSvc.GetRandomWord(r.Context(), &dtoWord.RandomWordRq{LanguageCode: language})
 	if err != nil {
 		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("site.index.delivery.Handler.get - GetRandomWord: %v", err))
@@ -108,8 +99,8 @@ func (h *Handler) openPage(w http.ResponseWriter, r *http.Request) {
 		},
 		Word: randomWord,
 	}
+	header.SetCookieLanguage(language)
 
-	handler.SetCookie(w, "language", language)
 	err = t.Execute(w, data)
 	if err != nil {
 		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("site.index.delivery.Handler.get - Execute: %v", err))
