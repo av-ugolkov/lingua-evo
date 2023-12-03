@@ -37,7 +37,7 @@ func (r *SessionRepo) SetSession(ctx context.Context, tokenID uuid.UUID, s *enti
 	return nil
 }
 
-func (r *SessionRepo) GetSession(ctx context.Context, uid, refreshToken uuid.UUID) (*entity.Session, error) {
+func (r *SessionRepo) GetSession(ctx context.Context, refreshToken uuid.UUID) (*entity.Session, error) {
 	var s entity.Session
 	s2, err := r.redis.Get(ctx, refreshToken.String())
 	if err != nil {

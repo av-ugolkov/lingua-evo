@@ -13,7 +13,6 @@ import (
 	"lingua-evo/internal/services/auth/service"
 	"lingua-evo/pkg/http/handler"
 	"lingua-evo/pkg/middleware"
-	"lingua-evo/pkg/token"
 	"lingua-evo/runtime"
 
 	"github.com/google/uuid"
@@ -45,7 +44,7 @@ func newHandler(authSvc *service.AuthSvc) *Handler {
 
 func (h *Handler) register(r *mux.Router) {
 	r.HandleFunc(login, h.login).Methods(http.MethodPost)
-	r.HandleFunc(refresh, middleware.Auth(h.refresh)).Methods(http.MethodPost)
+	r.HandleFunc(refresh, h.refresh).Methods(http.MethodPost)
 	r.HandleFunc(logout, middleware.Auth(h.logout)).Methods(http.MethodPost)
 }
 
@@ -103,27 +102,21 @@ func (h *Handler) refresh(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tokenID, err := uuid.Parse(refreshToken.Value)
+	refreshID, err := uuid.Parse(refreshToken.Value)
 	if err != nil {
 		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.refresh - get cookie: %v", err))
 		return
 	}
 
-	accessToken, err := handler.GetHeader(r, "access_token")
+	fingerprint, err := handler.GetHeader(r, "Fingerprint")
 	if err != nil {
-		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.refresh - get cookie: %v", err))
-		return
-	}
-
-	claims, err := token.ValidateJWT(accessToken, config.GetConfig().JWT.Secret)
-	if err != nil {
-		handler.SendError(w, http.StatusUnauthorized, err)
+		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.refresh - get fingerprint: %v", err))
 		return
 	}
 
 	ctx := r.Context()
 
-	tokens, err := h.authSvc.RefreshSessionToken(ctx, claims.UserID, tokenID)
+	tokens, err := h.authSvc.RefreshSessionToken(ctx, refreshID, fingerprint)
 	if err != nil {
 		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.refresh - RefreshSessionToken: %v", err))
 		return

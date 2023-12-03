@@ -20,7 +20,7 @@ authPanel.addEventListener("submit", async (e) => {
         .then((response) => response.json())
         .then((data) => {
             let token = data['access_token'];
-            sessionStorage.setItem('access_token', token);
+            localStorage.setItem('access_token', token);
 
             window.open("/", "_self");
         })

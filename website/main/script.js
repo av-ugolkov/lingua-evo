@@ -1,10 +1,33 @@
 import getBrowserFingerprint from '../tools/get-browser-fingerprint.js';
 
 
-window.onload = function () {
-    let token = sessionStorage.getItem('access_token')
+window.onload = async function () {
+    let token = localStorage.getItem('access_token')
     if (token == null) {
         return
+    }
+
+    let payload = JSON.parse(atob(token.split(".")[1]));
+    let exp = payload["exp"]
+    if (Date.now() > exp * 1000) {
+        await fetch("/auth/refresh", {
+            method: "post",
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'Fingerprint': getBrowserFingerprint(),
+            }
+        })
+            .then(response => {
+                return response.json()
+            })
+            .then(data => {
+                token = data['access_token'];
+                localStorage.setItem('access_token', token);
+            })
+            .catch(error => {
+                console.error('error:', error);
+            })
     }
 
     fetch("/get-account-panel", {
@@ -15,12 +38,14 @@ window.onload = function () {
             'Fingerprint': getBrowserFingerprint(),
             'Access-Token': token
         },
-
-    }).then((response) => response.text())
-        .then((data) => {
-            document.getElementById("right-side").innerHTML = data;
-        }).catch((error) => {
-            console.log(error)
+    })
+        .then(async (response) => {
+            if (response.status == 200) {
+                document.getElementById("right-side").innerHTML = await response.text()
+            }
+        })
+        .catch((error) => {
+            console.error(error)
         })
 }
 
@@ -35,7 +60,9 @@ let interval = setInterval(function () {
         },
         body: JSON.stringify({ language_code: 'en' })
     })
-        .then((response) => response.json())
+        .then((response) => {
+            return response.json()
+        })
         .then((data) => {
             lableRandom.textContent = data["text"]
         })
