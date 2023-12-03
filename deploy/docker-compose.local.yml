@@ -1,5 +1,17 @@
 version: '3.5'
 services:
+    redis:
+        container_name: redis-lingua-evo
+        image: redis:latest
+        expose:
+            - "6379"
+        ports:
+            - "6379:6379"
+        networks:
+            - lingua-evo-local
+        entrypoint:
+            - "redis-server --requirepass itBg40drEvZsw2gbHyp0"
+
     postgres:
         container_name: postgres-lingua-evo
         image: postgres:14.5-alpine3.16
@@ -13,9 +25,10 @@ services:
             - "5432"
         ports:
             - "6432:5432"
+        networks:
+            - lingua-evo-local
 
     lingua-evo:
-        
         container_name: lingua-evo
         build:
             context: .
@@ -30,6 +43,8 @@ services:
             - "5000"
         ports:
             - "5000:5000"
+        networks:
+            - lingua-evo-local
 
     migration:
         container_name: migration-lingua-evo
@@ -38,7 +53,13 @@ services:
         depends_on:
             - postgres
             - lingua-evo
+        networks:
+            - lingua-evo-local
         entrypoint:
             - "/bin/sh"
             - "-ecx"
             - "./migration -cmd up -url lingua:ib6vACdec2Fmht4lnX153@postgres-lingua-evo:5432/pg-lingua-evo?sslmode=disable"
+
+networks:
+    lingua-evo-local:
+        name: lingua-evo-local

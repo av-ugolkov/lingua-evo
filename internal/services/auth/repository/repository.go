@@ -2,66 +2,76 @@ package repository
 
 import (
 	"context"
-	"database/sql"
+	"encoding/json"
 	"fmt"
+	"time"
+
 	"lingua-evo/internal/services/auth/entity"
 
 	"github.com/google/uuid"
 )
 
-type SessionRepo struct {
-	db *sql.DB
-}
+type (
+	redis interface {
+		Get(ctx context.Context, key string) (string, error)
+		SetNX(ctx context.Context, key string, value any, expiration time.Duration) (bool, error)
+		ExpireAt(ctx context.Context, key string, tm time.Time) (bool, error)
+	}
 
-func NewRepo(db *sql.DB) *SessionRepo {
+	SessionRepo struct {
+		redis redis
+	}
+)
+
+func NewRepo(r redis) *SessionRepo {
 	return &SessionRepo{
-		db: db,
+		redis: r,
 	}
 }
 
-func (r *SessionRepo) SetSession(ctx context.Context, s *entity.Session) error {
-	query := `INSERT INTO session (refresh_token, user_id, expires_at, created_at) VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING`
-	_, err := r.db.ExecContext(ctx, query, s.RefreshToken, s.UserID, s.ExpiresAt, s.CreatedAt)
-	if err != nil {
-		return fmt.Errorf("auth.repository.SessionRepo.CreateSession: %w", err)
+func (r *SessionRepo) SetSession(ctx context.Context, tokenID uuid.UUID, s *entity.Session, expiration time.Duration) error {
+	b, err := r.redis.SetNX(ctx, tokenID.String(), s, expiration)
+	if !b {
+		return err
 	}
 	return nil
 }
 
 func (r *SessionRepo) GetSession(ctx context.Context, refreshToken uuid.UUID) (*entity.Session, error) {
 	var s entity.Session
-	query := `SELECT refresh_token, user_id, expires_at, created_at FROM session WHERE refresh_token=$1`
-	err := r.db.QueryRowContext(ctx, query, refreshToken).Scan(&s.RefreshToken, &s.UserID, &s.ExpiresAt, &s.CreatedAt)
+	s2, err := r.redis.Get(ctx, refreshToken.String())
 	if err != nil {
 		return nil, fmt.Errorf("auth.repository.SessionRepo.GetSession: %w", err)
+	}
+
+	err = json.Unmarshal([]byte(s2), &s)
+	if err != nil {
+		return nil, fmt.Errorf("auth.repository.SessionRepo.GetSession - unmarshal: %w", err)
 	}
 	return &s, nil
 }
 
+func (r *SessionRepo) GetSessionExpire(ctx context.Context, uid, refreshTokenID uuid.UUID) (time.Time, error) {
+	b, err := r.redis.ExpireAt(ctx, uid.String(), time.Now())
+	if err != nil {
+		return time.Now(), fmt.Errorf("auth.repository.SessionRepo.GetSessionExpire: %w", err)
+	}
+
+	//TODO check b
+	fmt.Println(b)
+
+	return time.Now(), nil
+}
+
 func (r *SessionRepo) GetCountSession(ctx context.Context, userID uuid.UUID) (int64, error) {
 	var count int64
-	query := `SELECT count(*) FROM session WHERE user_id=$1`
-	err := r.db.QueryRowContext(ctx, query, userID).Scan(&count)
-	if err != nil {
-		return -1, fmt.Errorf("auth.repository.SessionRepo.GetCountSession: %w", err)
-	}
 	return count, nil
 }
 
 func (r *SessionRepo) DeleteSession(ctx context.Context, session uuid.UUID) error {
-	query := `DELETE FROM session WHERE refresh_token=$1`
-	_, err := r.db.ExecContext(ctx, query, session)
-	if err != nil {
-		return fmt.Errorf("auth.repository.SessionRepo.DeleteSession: %w", err)
-	}
 	return nil
 }
 
 func (r *SessionRepo) DeleteAllUserSessions(ctx context.Context, userID uuid.UUID) error {
-	query := `DELETE FROM session WHERE user_id=$1`
-	_, err := r.db.ExecContext(ctx, query, userID)
-	if err != nil {
-		return fmt.Errorf("auth.repository.SessionRepo.DeleteAllUserSessions: %w", err)
-	}
 	return nil
 }
