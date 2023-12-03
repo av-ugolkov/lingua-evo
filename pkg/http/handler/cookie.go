@@ -26,3 +26,11 @@ func GetCookie(r *http.Request, name string) (*http.Cookie, error) {
 		return cookie, nil
 	}
 }
+
+func GetHeader(r *http.Request, name string) (string, error) {
+	value := r.Header.Get(name)
+	if value == "" {
+		return "", fmt.Errorf("tools.GetHeader: %w", errors.New("header not found"))
+	}
+	return value, nil
+}

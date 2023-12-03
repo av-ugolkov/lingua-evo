@@ -1,6 +1,8 @@
+import getBrowserFingerprint from '../tools/get-browser-fingerprint.js';
+
 let authPanel = document.getElementById("sign_in_panel");
 
-authPanel.addEventListener("submit", (e) => {
+authPanel.addEventListener("submit", async (e) => {
     e.preventDefault()
 
     let username = document.getElementById("username")
@@ -10,14 +12,18 @@ authPanel.addEventListener("submit", (e) => {
         headers: {
             'Accept': 'application/json',
             'Content-Type': 'application/json',
-            'Authorization': "Basic " + btoa(username.value + ':' + password.value)
+            'Authorization': "Basic " + btoa(username.value + ':' + password.value),
+            'Fingerprint': getBrowserFingerprint()
         }
     })
         .then((response) => response.json())
         .then((data) => {
-            window.open("/", "_self")
+            let token = data['access_token'];
+            localStorage.setItem('access_token', token);
+
+            window.open("/", "_self");
         })
         .catch((error) => {
-            console.error('Error:', error);
+            console.error('error:', error);
         });
 })
