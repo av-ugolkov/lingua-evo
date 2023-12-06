@@ -13,6 +13,7 @@ import (
 	"lingua-evo/internal/services/auth/service"
 
 	"lingua-evo/pkg/http/handler"
+	"lingua-evo/pkg/http/handler/common"
 	"lingua-evo/pkg/middleware"
 	"lingua-evo/runtime"
 
@@ -99,7 +100,7 @@ func (h *Handler) refresh(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	handler := handler.NewHandler(w, r)
-	refreshToken, err := handler.GetCookieRefreshToken()
+	refreshToken, err := handler.Cookie(common.RefreshToken)
 	if err != nil {
 		handler.SendError(http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.refresh - get cookie: %v", err))
 		return

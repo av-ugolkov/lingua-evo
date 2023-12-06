@@ -15,8 +15,9 @@ import (
 	entitySession "lingua-evo/internal/services/session/entity"
 	entityUser "lingua-evo/internal/services/user/entity"
 
+	"lingua-evo/pkg/files"
 	"lingua-evo/pkg/http/handler"
-	"lingua-evo/pkg/http/static"
+	"lingua-evo/pkg/http/handler/common"
 	"lingua-evo/pkg/token"
 )
 
@@ -77,12 +78,16 @@ func (h *Handler) openPageIndex(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) openPage(w http.ResponseWriter, r *http.Request) {
 	handler := handler.NewHandler(w, r)
 
-	t, err := static.ParseFiles(indexPagePath)
+	t, err := files.ParseFiles(indexPagePath)
 	if err != nil {
 		handler.SendError(http.StatusInternalServerError, fmt.Errorf("site.index.delivery.Handler.get - parseFiles: %v", err))
 		return
 	}
 	language := handler.GetCookieLanguageOrDefault()
+	if err != nil {
+		handler.SendError(http.StatusInternalServerError, fmt.Errorf("site.index.delivery.Handler.get - Cookie: %v", err))
+		return
+	}
 	randomWord, err := h.wordSvc.GetRandomWord(r.Context(), &dtoWord.RandomWordRq{LanguageCode: language})
 	if err != nil {
 		handler.SendError(http.StatusInternalServerError, fmt.Errorf("site.index.delivery.Handler.get - GetRandomWord: %v", err))
@@ -94,11 +99,11 @@ func (h *Handler) openPage(w http.ResponseWriter, r *http.Request) {
 		Word     *entityWord.Word
 	}{
 		Language: &entityLanguage.Language{
-			Code: language,
+			Code: common.Language,
 		},
 		Word: randomWord,
 	}
-	handler.SetCookieLanguage(language)
+	handler.SetCookieLanguage(common.Language)
 
 	err = t.Execute(w, data)
 	if err != nil {
@@ -143,7 +148,7 @@ func (h *Handler) getAccountPanel(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	t, err := static.ParseFiles(accountPanelPath)
+	t, err := files.ParseFiles(accountPanelPath)
 	if err != nil {
 		handler.SendError(http.StatusInternalServerError, fmt.Errorf("site.index.delivery.Handler.getAccountPanel - parseFiles: %v", err))
 		return
