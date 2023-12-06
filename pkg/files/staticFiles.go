@@ -1,4 +1,4 @@
-package static
+package files
 
 import (
 	"fmt"
@@ -16,7 +16,7 @@ func InitStaticFiles(path string) {
 func OpenFile(fileName string) ([]byte, error) {
 	content, err := os.ReadFile(fmt.Sprintf("%s%s", additionalPath, fileName))
 	if err != nil {
-		return []byte{}, fmt.Errorf("templates.OpenFile.ReadFile: %w", err)
+		return []byte{}, fmt.Errorf("pkg.files.OpenFile.ReadFile: %w", err)
 	}
 
 	return content, nil

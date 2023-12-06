@@ -4,19 +4,16 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"lingua-evo/pkg/http/handler/common"
+	"lingua-evo/runtime"
 	"log/slog"
 	"net/http"
 	"time"
-
-	"lingua-evo/runtime"
 
 	"github.com/google/uuid"
 )
 
 const (
-	language     = "language"
-	refreshToken = "refresh_token"
-
 	cookiePath     = "/"
 	cookiePathAuth = "/auth"
 
@@ -81,12 +78,12 @@ func (h *Handler) setCookie(name, value string) {
 }
 
 func (h *Handler) SetCookieLanguage(languageID string) {
-	h.setCookie(language, languageID)
+	h.setCookie(common.Language, languageID)
 }
 
 func (h *Handler) SetCookieRefreshToken(token uuid.UUID, maxAge time.Duration) {
 	cookie := &http.Cookie{
-		Name:     refreshToken,
+		Name:     common.RefreshToken,
 		Value:    token.String(),
 		MaxAge:   int(maxAge.Seconds()),
 		HttpOnly: true,
@@ -96,8 +93,8 @@ func (h *Handler) SetCookieRefreshToken(token uuid.UUID, maxAge time.Duration) {
 	http.SetCookie(h.responseWriter, cookie)
 }
 
-func (h *Handler) GetCookieRefreshToken() (*http.Cookie, error) {
-	cookie, err := h.request.Cookie(refreshToken)
+func (h *Handler) Cookie(name string) (*http.Cookie, error) {
+	cookie, err := h.request.Cookie(name)
 	switch {
 	case errors.Is(err, http.ErrNoCookie):
 		return nil, nil
@@ -109,7 +106,7 @@ func (h *Handler) GetCookieRefreshToken() (*http.Cookie, error) {
 }
 
 func (h *Handler) GetCookieLanguageOrDefault() string {
-	cookie, err := h.request.Cookie(language)
+	cookie, err := h.request.Cookie(common.Language)
 	switch {
 	case errors.Is(err, http.ErrNoCookie):
 		return runtime.GetLanguage("en")

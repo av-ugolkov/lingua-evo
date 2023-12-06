@@ -5,7 +5,7 @@ import (
 
 	"lingua-evo/internal/app"
 	"lingua-evo/internal/config"
-	"lingua-evo/pkg/http/static"
+	"lingua-evo/pkg/files"
 )
 
 func main() {
@@ -18,7 +18,7 @@ func main() {
 
 	flag.Parse()
 
-	static.InitStaticFiles(staticFilePath)
+	files.InitStaticFiles(staticFilePath)
 	cfg := config.InitConfig(configPath)
 	app.ServerStart(cfg, webPath)
 }
