@@ -11,6 +11,7 @@ import (
 	"lingua-evo/internal/config"
 	"lingua-evo/internal/services/auth/dto"
 	"lingua-evo/internal/services/auth/service"
+
 	"lingua-evo/pkg/http/handler"
 	"lingua-evo/pkg/middleware"
 	"lingua-evo/runtime"
@@ -53,18 +54,27 @@ func (h *Handler) login(w http.ResponseWriter, r *http.Request) {
 		_ = r.Body.Close()
 	}()
 
-	var data dto.CreateSessionRq
-	err := decodeBasicAuth(r.Header.Get("Authorization"), &data)
+	handler := handler.NewHandler(w, r)
+	authorization, err := handler.GetHeaderAuthorization()
 	if err != nil {
-		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.createSession - check body: %v", err))
+		handler.SendError(http.StatusBadRequest, fmt.Errorf("auth.delivery.Handler.login: %v", err))
 		return
 	}
-	data.Fingerprint = r.Header.Get("Fingerprint")
-
+	var data dto.CreateSessionRq
+	err = decodeBasicAuth(authorization, &data)
+	if err != nil {
+		handler.SendError(http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.login - check body: %v", err))
+		return
+	}
+	data.Fingerprint, err = handler.GetHeaderFingerprint()
+	if err != nil {
+		handler.SendError(http.StatusBadRequest, fmt.Errorf("auth.delivery.Handler. - GetHeaderFingerprint: %v", err))
+		return
+	}
 	ctx := r.Context()
 	tokens, err := h.authSvc.Login(ctx, &data)
 	if err != nil {
-		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.createSession - create session: %v", err))
+		handler.SendError(http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.login - create session: %v", err))
 		return
 	}
 
@@ -72,23 +82,15 @@ func (h *Handler) login(w http.ResponseWriter, r *http.Request) {
 		AccessToken: tokens.AccessToken,
 	})
 	if err != nil {
-		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.createSession - marshal: %v", err))
+		handler.SendError(http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.login - marshal: %v", err))
 		return
 	}
 
 	additionalTime := config.GetConfig().JWT.ExpireRefresh
 	duration := time.Duration(additionalTime) * time.Second
-	w.Header().Set("Content-Type", "application/json")
-	http.SetCookie(w, &http.Cookie{
-		Name:     "refresh_token",
-		Value:    tokens.RefreshToken.String(),
-		MaxAge:   int(duration.Seconds()),
-		HttpOnly: true,
-		Secure:   true,
-		Path:     "/auth",
-	})
-
-	_, _ = w.Write(b)
+	handler.SetHeader("Content-Type", "application/json")
+	handler.SetCookieRefreshToken(tokens.RefreshToken, duration)
+	handler.SendData(b)
 }
 
 func (h *Handler) refresh(w http.ResponseWriter, r *http.Request) {
@@ -96,21 +98,22 @@ func (h *Handler) refresh(w http.ResponseWriter, r *http.Request) {
 		_ = r.Body.Close()
 	}()
 
-	refreshToken, err := handler.GetCookie(r, "refresh_token")
+	handler := handler.NewHandler(w, r)
+	refreshToken, err := handler.GetCookieRefreshToken()
 	if err != nil {
-		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.refresh - get cookie: %v", err))
+		handler.SendError(http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.refresh - get cookie: %v", err))
 		return
 	}
 
 	refreshID, err := uuid.Parse(refreshToken.Value)
 	if err != nil {
-		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.refresh - get cookie: %v", err))
+		handler.SendError(http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.refresh - get cookie: %v", err))
 		return
 	}
 
-	fingerprint, err := handler.GetHeader(r, "Fingerprint")
+	fingerprint, err := handler.GetHeaderFingerprint()
 	if err != nil {
-		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.refresh - get fingerprint: %v", err))
+		handler.SendError(http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.refresh - get fingerprint: %v", err))
 		return
 	}
 
@@ -118,30 +121,22 @@ func (h *Handler) refresh(w http.ResponseWriter, r *http.Request) {
 
 	tokens, err := h.authSvc.RefreshSessionToken(ctx, refreshID, fingerprint)
 	if err != nil {
-		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.refresh - RefreshSessionToken: %v", err))
+		handler.SendError(http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.refresh - RefreshSessionToken: %v", err))
 		return
 	}
 	b, err := json.Marshal(&dto.CreateSessionRs{
 		AccessToken: tokens.AccessToken,
 	})
 	if err != nil {
-		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.refresh - marshal: %v", err))
+		handler.SendError(http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.refresh - marshal: %v", err))
 		return
 	}
 
 	additionalTime := config.GetConfig().JWT.ExpireRefresh
 	duration := time.Duration(additionalTime) * time.Second
-	w.Header().Set("Content-Type", "application/json")
-	http.SetCookie(w, &http.Cookie{
-		Name:     "refresh_token",
-		Value:    tokens.RefreshToken.String(),
-		MaxAge:   int(duration.Seconds()),
-		HttpOnly: true,
-		Secure:   true,
-		Path:     "/auth",
-	})
-
-	_, _ = w.Write(b)
+	handler.SetHeader("Content-Type", "application/json")
+	handler.SetCookieRefreshToken(tokens.RefreshToken, duration)
+	handler.SendData(b)
 }
 
 func (h *Handler) logout(w http.ResponseWriter, r *http.Request) {
@@ -149,20 +144,20 @@ func (h *Handler) logout(w http.ResponseWriter, r *http.Request) {
 		_ = r.Body.Close()
 	}()
 
+	handler := handler.NewHandler(w, r)
 	ctx := r.Context()
 	uid, err := runtime.UserIDFromContext(ctx)
 	if err != nil {
-		handler.SendError(w, http.StatusUnauthorized, fmt.Errorf("auth.delivery.Handler.logout - unauthorized: %v", err))
+		handler.SendError(http.StatusUnauthorized, fmt.Errorf("auth.delivery.Handler.logout - unauthorized: %v", err))
 		return
 	}
 
 	err = h.authSvc.Logout(ctx, uid)
 	if err != nil {
-		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.logout - logout: %v", err))
+		handler.SendError(http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.logout - logout: %v", err))
 		return
 	}
-
-	_, _ = w.Write([]byte("done"))
+	handler.SendData([]byte("done"))
 }
 
 func decodeBasicAuth(auth string, data *dto.CreateSessionRq) error {

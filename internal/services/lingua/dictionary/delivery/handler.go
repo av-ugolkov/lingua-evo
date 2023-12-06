@@ -51,26 +51,27 @@ func (h *Handler) addDictionary(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		_ = r.Body.Close()
 	}()
+	handler := handler.NewHandler(w, r)
 	ctx := r.Context()
 	userID, err := runtime.UserIDFromContext(ctx)
 	if err != nil {
-		handler.SendError(w, http.StatusUnauthorized, fmt.Errorf("dictionary.delivery.Handler.addDictionary - unauthorized: %v", err))
+		handler.SendError(http.StatusUnauthorized, fmt.Errorf("dictionary.delivery.Handler.addDictionary - unauthorized: %v", err))
 		return
 
 	}
 
 	var data dto.DictionaryRq
-	if err := handler.CheckBody(w, r, &data); err != nil {
-		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.addDictionary - check body: %v", err))
+	if err := handler.CheckBody(&data); err != nil {
+		handler.SendError(http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.addDictionary - check body: %v", err))
 		return
 	}
 
 	dictID, err := h.dictionarySvc.AddDictionary(ctx, userID, &data)
 	if err != nil {
-		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.addDictionary: %v", err))
+		handler.SendError(http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.addDictionary: %v", err))
 	}
 
-	_, _ = w.Write([]byte(dictID.String()))
+	handler.SendData([]byte(dictID.String()))
 }
 
 func (h *Handler) deleteDictionary(w http.ResponseWriter, r *http.Request) {
@@ -78,24 +79,24 @@ func (h *Handler) deleteDictionary(w http.ResponseWriter, r *http.Request) {
 		_ = r.Body.Close()
 	}()
 	ctx := r.Context()
+	handler := handler.NewHandler(w, r)
 	userID, err := runtime.UserIDFromContext(ctx)
 	if err != nil {
-		handler.SendError(w, http.StatusUnauthorized, fmt.Errorf("dictionary.delivery.Handler.deleteDictionary - unauthorized: %v", err))
+		handler.SendError(http.StatusUnauthorized, fmt.Errorf("dictionary.delivery.Handler.deleteDictionary - unauthorized: %v", err))
 		return
 	}
 
 	var data dto.DictionaryRq
-	if err := handler.CheckBody(w, r, &data); err != nil {
-		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.deleteDictionary - check body: %v", err))
+	if err := handler.CheckBody(&data); err != nil {
+		handler.SendError(http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.deleteDictionary - check body: %v", err))
 		return
 	}
 
 	err = h.dictionarySvc.DeleteDictionary(ctx, userID, &data)
 	if err != nil {
-		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.deleteDictionary: %v", err))
+		handler.SendError(http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.deleteDictionary: %v", err))
 	}
-
-	_, _ = w.Write([]byte("done"))
+	handler.SendData([]byte("done"))
 }
 
 func (h *Handler) getDictionary(w http.ResponseWriter, r *http.Request) {
@@ -103,21 +104,22 @@ func (h *Handler) getDictionary(w http.ResponseWriter, r *http.Request) {
 		_ = r.Body.Close()
 	}()
 	ctx := r.Context()
+	handler := handler.NewHandler(w, r)
 	userID, err := runtime.UserIDFromContext(ctx)
 	if err != nil {
-		handler.SendError(w, http.StatusUnauthorized, fmt.Errorf("dictionary.delivery.Handler.getDictionary - unauthorized: %v", err))
+		handler.SendError(http.StatusUnauthorized, fmt.Errorf("dictionary.delivery.Handler.getDictionary - unauthorized: %v", err))
 		return
 	}
 
 	var data dto.DictionaryRq
-	if err := handler.CheckBody(w, r, &data); err != nil {
-		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.getDictionary - check body: %v", err))
+	if err := handler.CheckBody(&data); err != nil {
+		handler.SendError(http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.getDictionary - check body: %v", err))
 		return
 	}
 
 	id, err := h.dictionarySvc.GetDictionary(ctx, userID, data.Name)
 	if err != nil {
-		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.getDictionary: %v", err))
+		handler.SendError(http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.getDictionary: %v", err))
 		return
 	}
 
@@ -126,30 +128,31 @@ func (h *Handler) getDictionary(w http.ResponseWriter, r *http.Request) {
 	}
 	b, err := json.Marshal(&dictID)
 	if err != nil {
-		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.getDictionary - marshal: %v", err))
+		handler.SendError(http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.getDictionary - marshal: %v", err))
 		return
 	}
-	_, _ = w.Write(b)
+	handler.SendData(b)
 }
 
 func (h *Handler) getAllDictionary(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		_ = r.Body.Close()
 	}()
+	handler := handler.NewHandler(w, r)
 	userID, err := runtime.UserIDFromContext(r.Context())
 	if err != nil {
-		handler.SendError(w, http.StatusUnauthorized, fmt.Errorf("dictionary.delivery.Handler.getAllDictionary - unauthorized: %v", err))
+		handler.SendError(http.StatusUnauthorized, fmt.Errorf("dictionary.delivery.Handler.getAllDictionary - unauthorized: %v", err))
 		return
 	}
 
 	ctx := r.Context()
 	dictionaries, err := h.dictionarySvc.GetDictionaries(ctx, userID)
 	if err != nil {
-		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.getAllDictionary: %v", err))
+		handler.SendError(http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.getAllDictionary: %v", err))
 	}
 
 	//TODO нужно возвращать сериализованные данные
 	slog.Info(fmt.Sprintf("count dictionaries: %d", len(dictionaries)))
 
-	_, _ = w.Write([]byte("done"))
+	handler.SendData([]byte("done"))
 }
