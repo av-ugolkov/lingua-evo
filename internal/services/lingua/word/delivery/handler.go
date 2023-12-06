@@ -11,8 +11,8 @@ import (
 	"lingua-evo/internal/services/lingua/word/dto"
 	serviceWord "lingua-evo/internal/services/lingua/word/service"
 
+	"lingua-evo/pkg/files"
 	"lingua-evo/pkg/http/handler"
-	"lingua-evo/pkg/http/static"
 	"lingua-evo/pkg/middleware"
 
 	"github.com/gorilla/mux"
@@ -54,7 +54,7 @@ func (h *Handler) register(r *mux.Router) {
 }
 
 func (h *Handler) openPage(w http.ResponseWriter, r *http.Request) {
-	t, err := static.ParseFiles(addWordPage)
+	t, err := files.ParseFiles(addWordPage)
 	if err != nil {
 		slog.Error(fmt.Errorf("add_word.get.OpenFile: %v", err).Error())
 		w.WriteHeader(http.StatusNotFound)
