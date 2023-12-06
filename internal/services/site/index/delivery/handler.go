@@ -16,7 +16,6 @@ import (
 	entityUser "lingua-evo/internal/services/user/entity"
 
 	"lingua-evo/pkg/http/handler"
-	"lingua-evo/pkg/http/handler/header"
 	"lingua-evo/pkg/http/static"
 	"lingua-evo/pkg/token"
 )
@@ -76,17 +75,17 @@ func (h *Handler) openPageIndex(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) openPage(w http.ResponseWriter, r *http.Request) {
+	handler := handler.NewHandler(w, r)
+
 	t, err := static.ParseFiles(indexPagePath)
 	if err != nil {
-		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("site.index.delivery.Handler.get - parseFiles: %v", err))
-		w.WriteHeader(http.StatusNotFound)
+		handler.SendError(http.StatusInternalServerError, fmt.Errorf("site.index.delivery.Handler.get - parseFiles: %v", err))
 		return
 	}
-	header := header.NewHeader(w, r)
-	language := header.GetCookieLanguageOrDefault()
+	language := handler.GetCookieLanguageOrDefault()
 	randomWord, err := h.wordSvc.GetRandomWord(r.Context(), &dtoWord.RandomWordRq{LanguageCode: language})
 	if err != nil {
-		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("site.index.delivery.Handler.get - GetRandomWord: %v", err))
+		handler.SendError(http.StatusInternalServerError, fmt.Errorf("site.index.delivery.Handler.get - GetRandomWord: %v", err))
 		return
 	}
 
@@ -99,22 +98,30 @@ func (h *Handler) openPage(w http.ResponseWriter, r *http.Request) {
 		},
 		Word: randomWord,
 	}
-	header.SetCookieLanguage(language)
+	handler.SetCookieLanguage(language)
 
 	err = t.Execute(w, data)
 	if err != nil {
-		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("site.index.delivery.Handler.get - Execute: %v", err))
+		handler.SendError(http.StatusInternalServerError, fmt.Errorf("site.index.delivery.Handler.get - Execute: %v", err))
 		return
 	}
 }
 
 func (h *Handler) getAccountPanel(w http.ResponseWriter, r *http.Request) {
-	accessToken := r.Header.Get("Access-Token")
-	fingerprint := r.Header.Get("Fingerprint")
+	handler := handler.NewHandler(w, r)
 
+	accessToken, err := handler.GetHeaderAccessToken()
+	if err != nil {
+		handler.SendError(http.StatusBadRequest, fmt.Errorf("site.index.delivery.Handler.getAccountPanel - GetHeaderAccessToken: %v", err))
+		return
+	}
+	fingerprint, err := handler.GetHeaderFingerprint()
+	if err != nil {
+		handler.SendError(http.StatusBadRequest, fmt.Errorf("site.index.delivery.Handler.getAccountPanel - GetHeaderFingerprint: %v", err))
+	}
 	claims, err := token.ValidateJWT(accessToken, config.GetConfig().JWT.Secret)
 	if err != nil {
-		handler.SendError(w, http.StatusUnauthorized, err)
+		handler.SendError(http.StatusBadRequest, fmt.Errorf("site.index.delivery.Handler.getAccountPanel - ValidateJWT: %v", err))
 		return
 	}
 
@@ -122,23 +129,23 @@ func (h *Handler) getAccountPanel(w http.ResponseWriter, r *http.Request) {
 
 	session, err := h.sessionSvc.GetSession(ctx, claims.ID)
 	if err != nil {
-		handler.SendError(w, http.StatusUnauthorized, err)
+		handler.SendError(http.StatusUnauthorized, err)
 		return
 	}
 	if session.Fingerprint != fingerprint {
-		handler.SendError(w, http.StatusUnauthorized, err)
+		handler.SendError(http.StatusUnauthorized, err)
 		return
 	}
 
 	u, err := h.userSvc.GetUserByID(r.Context(), claims.UserID)
 	if err != nil {
-		handler.SendError(w, http.StatusUnauthorized, err)
+		handler.SendError(http.StatusUnauthorized, err)
 		return
 	}
 
 	t, err := static.ParseFiles(accountPanelPath)
 	if err != nil {
-		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("site.index.delivery.Handler.getAccountPanel - parseFiles: %v", err))
+		handler.SendError(http.StatusInternalServerError, fmt.Errorf("site.index.delivery.Handler.getAccountPanel - parseFiles: %v", err))
 		return
 	}
 
@@ -150,7 +157,7 @@ func (h *Handler) getAccountPanel(w http.ResponseWriter, r *http.Request) {
 
 	err = t.Execute(w, user)
 	if err != nil {
-		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("site.index.delivery.Handler.getAccountPanel - Execute: %v", err))
+		handler.SendError(http.StatusInternalServerError, fmt.Errorf("site.index.delivery.Handler.getAccountPanel - Execute: %v", err))
 		return
 	}
 }

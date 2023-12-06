@@ -48,21 +48,21 @@ func (h *Handler) addWord(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	ctx := r.Context()
-	var data dto.AddWordRq
+	handler := handler.NewHandler(w, r)
 
-	err := handler.CheckBody(w, r, &data)
+	var data dto.AddWordRq
+	err := handler.CheckBody(&data)
 	if err != nil {
-		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.addWord - check body: %v", err))
+		handler.SendError(http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.addWord - check body: %v", err))
 		return
 	}
 
 	err = h.vocabularySvc.AddWordInVocabulary(ctx, &data)
 	if err != nil {
-		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.addWord: %v", err))
+		handler.SendError(http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.addWord: %v", err))
 		return
 	}
-
-	_, _ = w.Write([]byte("done"))
+	handler.SendData([]byte("done"))
 }
 
 func (h *Handler) deleteWord(w http.ResponseWriter, r *http.Request) {
@@ -71,18 +71,19 @@ func (h *Handler) deleteWord(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	ctx := r.Context()
+	handler := handler.NewHandler(w, r)
+
 	var data dto.RemoveWordRq
-	err := handler.CheckBody(w, r, &data)
+	err := handler.CheckBody(&data)
 	if err != nil {
-		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.deleteWord - check body: %v", err))
+		handler.SendError(http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.deleteWord - check body: %v", err))
 		return
 	}
 
 	err = h.vocabularySvc.DeleteWordFromVocabulary(ctx, &data)
 	if err != nil {
-		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.deleteWord: %v", err))
+		handler.SendError(http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.deleteWord: %v", err))
 		return
 	}
-
-	_, _ = w.Write([]byte("done"))
+	handler.SendData([]byte("done"))
 }
