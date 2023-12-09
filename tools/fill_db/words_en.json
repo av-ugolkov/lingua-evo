@@ -688,49 +688,165 @@
             ]
         },
         {
-            "word": "private security"
+            "word": "private security",
+            "pronunciation": "['praɪvɪt] [sɪ'kju(ə)rɪtɪ]",
+            "translate": [
+                "безопасность частной собственности",
+                "безопасность частных лиц",
+                "личная безопасность"
+            ]
         },
         {
-            "word": "humidity"
+            "word": "humidity",
+            "pronunciation": "[hju:'mɪdɪtɪ]",
+            "translate": [
+                "влажность",
+                "влагостойкость",
+                "сырость",
+                "влага"
+            ]
         },
         {
-            "word": "to melt"
+            "word": "to melt",
+            "pronunciation": "[tu:] [melt]",
+            "translate": [
+                "плавить",
+                "растапливать",
+                "плавиться",
+                "умиляться",
+                "трогать",
+                "смягчать",
+                "слабеть",
+                "уменьшаться",
+                "исчезать"
+            ]
         },
         {
-            "word": "paw"
+            "word": "paw",
+            "pronunciation": "[pɔ:]",
+            "translate": [
+                "лапа",
+                "почерк",
+                "пятерня",
+                "скрестись",
+                "рука",
+                "лапка"
+            ]
         },
         {
-            "word": "take care of"
+            "word": "take care of",
+            "pronunciation": "[tək] [kɛr] [ɔf]",
+            "translate": [
+                "заботиться (о ком-либо)",
+                "обеспечить (кого-либо)",
+                "пригреть (кого-либо)",
+                "приютить (кого-либо)"
+            ]
         },
         {
-            "word": "enquire"
+            "word": "enquire",
+            "pronunciation": "[ɪn'kwaɪə]",
+            "translate": [
+                "спрашивать",
+                "узнавать",
+                "наводить справки",
+                "добиваться сведений",
+                "спросить",
+                "следовать",
+                "посылать запрос"
+            ]
         },
         {
-            "word": "accumulation"
+            "word": "accumulation",
+            "pronunciation": "[ə'kju:mju'leɪʃ(ə)n]",
+            "translate": [
+                "накопление",
+                "аккумуляция",
+                "груда",
+                "масса",
+                "скопление",
+                "собирание",
+                "аккумулирование"
+            ]
         },
         {
-            "word": "insulate"
+            "word": "insulate",
+            "pronunciation": "['ɪnsjuleɪt]",
+            "translate": [
+                "отделять",
+                "обособлять",
+                "разобщать",
+                "ограждать"
+            ]
         },
         {
-            "word": "stinks up"
+            "word": "stinks up",
+            "pronunciation": "[stɪŋk] [ʌp]",
+            "translate": [
+                "провонять"
+            ]
         },
         {
-            "word": "solstice"
+            "word": "solstice",
+            "pronunciation": "['sɔlstɪs]",
+            "translate": [
+                "солнцестояние",
+                "точка солнцестояния"
+            ]
         },
         {
-            "word": "recharged"
+            "word": "recharged",
+            "pronunciation": "['ri:'ʧɑ:ʤ]",
+            "translate": [
+                "подкрепиться",
+                "подпитывать",
+                "перезарядиться",
+                "перезаряжаться",
+                "набираться сил",
+                "заряжать"
+            ]
         },
         {
-            "word": "grew out"
+            "word": "grew out",
+            "pronunciation": "[ɡrɛw] [aʊt]",
+            "translate": [
+                "отрастить",
+                "распространяться",
+                "распускаться",
+                "прорастать",
+                "вырастать"
+            ]
         },
         {
-            "word": "rehearsal"
+            "word": "rehearsal",
+            "pronunciation": "[rɪ'hɜ:s(ə)l]",
+            "translate": [
+                "репетиция",
+                "повторение",
+                "перечисление",
+                "пересказ",
+                "спевка",
+                "рассказ",
+                "повествование"
+            ]
         },
         {
-            "word": "self-employed"
+            "word": "self-employed",
+            "pronunciation": "['selfɪm'plɔɪd]",
+            "translate": [
+                "мелкий предприниматель",
+                "владелец собственного бизнеса"
+            ]
         },
         {
-            "word": "spoil"
+            "word": "spoil",
+            "pronunciation": "[spɔɪl]",
+            "translate": [
+                "прибыль (полученная в результате конкуренции с кем-либо)",
+                "военная добыча",
+                "трофеи",
+                "выгода"
+            ]
         }
     ]
 }
