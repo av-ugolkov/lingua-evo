@@ -35,7 +35,7 @@ func main() {
 }
 
 func fillWord(db *sql.DB) error {
-	file, err := words.Open("words.json")
+	file, err := words.Open("words_en.json")
 	if err != nil {
 		return fmt.Errorf("fildDB.fillWord - Open: %w", err)
 	}
@@ -57,9 +57,9 @@ func fillWord(db *sql.DB) error {
 		return fmt.Errorf("fildDB.fillWord - unmarshal: %w", err)
 	}
 
-	insertQuery := fmt.Sprintf(`INSERT INTO "word_%s" (id, text, pronunciation, lang_code, created_at) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (text) DO UPDATE SET pronunciation=$3, created_at=$5;`, language.BritishEnglish.String())
+	insertQuery := fmt.Sprintf(`INSERT INTO "word_%s" (id, text, pronunciation, lang_code, created_at) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (text) DO UPDATE SET pronunciation=$3, created_at=$5;`, language.English.String())
 	for _, d := range data.Dictionary {
-		_, err := db.Exec(insertQuery, uuid.New(), d.Word, d.Pronunciation, language.BritishEnglish, time.Now().UTC())
+		_, err := db.Exec(insertQuery, uuid.New(), d.Word, d.Pronunciation, language.English, time.Now().UTC())
 		if err != nil {
 			slog.Error(fmt.Errorf("fail insert word [%s]: %v", d.Word, err).Error())
 		}
