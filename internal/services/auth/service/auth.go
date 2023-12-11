@@ -31,7 +31,6 @@ type (
 		GetSession(ctx context.Context, refreshTokenID uuid.UUID) (*entity.Session, error)
 		GetCountSession(ctx context.Context, userID uuid.UUID) (int64, error)
 		DeleteSession(ctx context.Context, session uuid.UUID) error
-		DeleteAllUserSessions(ctx context.Context, userID uuid.UUID) error
 	}
 
 	userSvc interface {
@@ -108,11 +107,6 @@ func (s *AuthSvc) RefreshSessionToken(ctx context.Context, refreshToken uuid.UUI
 		return nil, fmt.Errorf("auth.service.AuthSvc.RefreshSessionToken: %w", errNotEqualFingerprints)
 	}
 
-	err = s.repo.DeleteSession(ctx, refreshToken)
-	if err != nil {
-		return nil, fmt.Errorf("auth.service.AuthSvc.RefreshSessionToken - delete session: %v", err)
-	}
-
 	tokenID := uuid.New()
 	newSession := &entity.Session{
 		UserID:      oldRefreshSession.UserID,
@@ -123,6 +117,11 @@ func (s *AuthSvc) RefreshSessionToken(ctx context.Context, refreshToken uuid.UUI
 	err = s.addRefreshSession(ctx, tokenID, newSession)
 	if err != nil {
 		return nil, fmt.Errorf("auth.service.AuthSvc.RefreshSessionToken - addRefreshSession: %v", err)
+	}
+
+	err = s.repo.DeleteSession(ctx, refreshToken)
+	if err != nil {
+		return nil, fmt.Errorf("auth.service.AuthSvc.RefreshSessionToken - delete session: %v", err)
 	}
 
 	additionalTime := config.GetConfig().JWT.ExpireAccess

@@ -17,7 +17,6 @@ import (
 
 	"lingua-evo/pkg/files"
 	"lingua-evo/pkg/http/handler"
-	"lingua-evo/pkg/http/handler/common"
 	"lingua-evo/pkg/token"
 )
 
@@ -83,11 +82,13 @@ func (h *Handler) openPage(w http.ResponseWriter, r *http.Request) {
 		handler.SendError(http.StatusInternalServerError, fmt.Errorf("site.index.delivery.Handler.get - parseFiles: %v", err))
 		return
 	}
+
 	language := handler.GetCookieLanguageOrDefault()
 	if err != nil {
 		handler.SendError(http.StatusInternalServerError, fmt.Errorf("site.index.delivery.Handler.get - Cookie: %v", err))
 		return
 	}
+
 	randomWord, err := h.wordSvc.GetRandomWord(r.Context(), &dtoWord.RandomWordRq{LanguageCode: language})
 	if err != nil {
 		handler.SendError(http.StatusInternalServerError, fmt.Errorf("site.index.delivery.Handler.get - GetRandomWord: %v", err))
@@ -99,11 +100,11 @@ func (h *Handler) openPage(w http.ResponseWriter, r *http.Request) {
 		Word     *entityWord.Word
 	}{
 		Language: &entityLanguage.Language{
-			Code: common.Language,
+			Code: language,
 		},
 		Word: randomWord,
 	}
-	handler.SetCookieLanguage(common.Language)
+	handler.SetCookieLanguage(language)
 
 	err = t.Execute(w, data)
 	if err != nil {
