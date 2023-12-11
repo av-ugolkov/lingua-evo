@@ -16,6 +16,7 @@ type (
 		Get(ctx context.Context, key string) (string, error)
 		SetNX(ctx context.Context, key string, value any, expiration time.Duration) (bool, error)
 		ExpireAt(ctx context.Context, key string, tm time.Time) (bool, error)
+		Delete(ctx context.Context, key string) (int64, error)
 	}
 
 	SessionRepo struct {
@@ -69,6 +70,10 @@ func (r *SessionRepo) GetCountSession(ctx context.Context, userID uuid.UUID) (in
 }
 
 func (r *SessionRepo) DeleteSession(ctx context.Context, session uuid.UUID) error {
+	_, err := r.redis.Delete(ctx, session.String())
+	if err != nil {
+		return fmt.Errorf("auth.repository.SessionRepo.DeleteSession: %w", err)
+	}
 	return nil
 }
 
