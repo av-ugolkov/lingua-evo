@@ -8,4 +8,14 @@
     <button id="btnAbout" type="button" class="accountBtn">About</button>
 </div>
 <div class="vertical-line"></div>
-<button id="btnAccount" type="button" class="accountBtn" value="account">{{ .Name }}</button>
+<nav>
+    <div class="dropdown">
+        <button onclick='document.getElementById("account-panel").classList.toggle("show");'
+            class="accountBtn">{{.Name}}</button>
+        <div id="account-panel" class="dropdown-content">
+            <a href="#">account</a>
+            <a href="#">settings</a>
+            <a href="#">logout</a>
+        </div>
+    </div>
+</nav>

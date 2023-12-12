@@ -73,22 +73,6 @@ body {
     margin: 0px 8px;
 }
 
-.accountBtn {
-    display: inherit;
-    background-color: gray;
-    border: none;
-    margin: 0px 4px;
-    padding: 2px 4px;
-    transition: 200ms;
-    font-size: 14px;
-}
-
-.accountBtn:hover {
-    color: slategray;
-    color: white;
-    transition: 200ms;
-}
-
 .container {
     width: 100%;
     justify-content: center;
@@ -100,4 +84,52 @@ body {
     display: grid;
     place-items: center;
     height: 100vh;
+}
+
+
+.accountBtn {
+    display: inherit;
+    background-color: gray;
+    border: none;
+    margin: 0px 4px;
+    padding: 2px 4px;
+    transition: 200ms;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.accountBtn:hover {
+    color: white;
+    transition: 200ms;
+}
+
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    padding-top: 7px;
+    z-index: 1;
+    min-width: auto;
+}
+
+.dropdown-content a {
+    color: black;
+    padding: 6px 4px;
+    text-decoration: none;
+    display: block;
+    transition: 200ms;
+}
+
+.dropdown-content a:hover {
+    background-color: rgb(153, 152, 152);
+    color: white;
+    transition: 200ms;
+}
+
+.show {
+    display: block;
 }
