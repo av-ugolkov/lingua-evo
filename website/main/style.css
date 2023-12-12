@@ -73,6 +73,22 @@ body {
     margin: 0px 8px;
 }
 
+.accountBtn {
+    display: inherit;
+    background-color: gray;
+    border: none;
+    margin: 0px 4px;
+    padding: 2px 4px;
+    transition: 200ms;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.accountBtn:hover {
+    color: white;
+    transition: 200ms;
+}
+
 .container {
     width: 100%;
     justify-content: center;
