@@ -10,8 +10,7 @@
 <div class="vertical-line"></div>
 <nav>
     <div class="dropdown">
-        <button onclick='document.getElementById("account-panel").classList.toggle("show");'
-            class="accountBtn">{{.Name}}</button>
+        <button onclick="onClickShow()" class="accountBtn">{{.Name}}</button>
         <div id="account-panel" class="dropdown-content">
             <a href="#">account</a>
             <a href="#">settings</a>
