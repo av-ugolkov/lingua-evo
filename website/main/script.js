@@ -41,6 +41,16 @@ window.onload = async function () {
     })
         .then(async (response) => {
             if (response.status == 200) {
+                let scriptElement = document.createElement('script');
+                scriptElement.type = 'text/javascript';
+                scriptElement.src = 'website/components/script.js';
+                document.head.appendChild(scriptElement);
+
+                let styleElement = document.createElement('link');
+                styleElement.rel = 'stylesheet';
+                styleElement.href = 'website/components/style.css';
+                document.head.appendChild(styleElement);
+
                 document.getElementById("right-side").innerHTML = await response.text()
             }
         })
