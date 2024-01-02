@@ -61,10 +61,10 @@ func ServerStart(cfg *config.Config, webPath string) {
 		return
 	}
 
-	redis := redis.New(cfg)
+	redisDB := redis.New(cfg)
 
 	router := mux.NewRouter()
-	initServer(router, db, redis, webPath)
+	initServer(router, db, redisDB, webPath)
 
 	address := fmt.Sprintf(":%s", cfg.Service.Port)
 
