@@ -1,16 +1,18 @@
 <div class="border">
-    <button id="btnDictionary" type="button" class="accountBtn">Dictionary</button>
-</div>
-<div class="border">
     <button id="btnContact" type="button" class="accountBtn">Contact</button>
 </div>
 <div class="border">
     <button id="btnAbout" type="button" class="accountBtn">About</button>
 </div>
 <div class="vertical-line"></div>
+<div class="border">
+    <button id="btnDictionary" type="button" class="accountBtn">Dictionary</button>
+</div>
 <nav>
     <div class="dropdown">
-        <button onclick="onClickShow()" class="accountBtn">{{.Name}}</button>
+        <div class="border">
+            <button onclick="onClickShow()" class="accountBtn">{{.Name}}</button>
+        </div>
         <div id="account-panel" class="dropdown-content">
             <a href="#">account</a>
             <a href="#">settings</a>

@@ -84,6 +84,10 @@ body {
     cursor: pointer;
 }
 
+.accountBtnDiv {
+    text-overflow: ellipsis;
+}
+
 .accountBtn:hover {
     color: white;
     transition: 200ms;
