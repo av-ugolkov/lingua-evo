@@ -8,8 +8,7 @@ import (
 	"time"
 
 	"lingua-evo/internal/config"
-	"lingua-evo/internal/services/auth/dto"
-	"lingua-evo/internal/services/auth/entity"
+	entity "lingua-evo/internal/services/auth"
 	entityUser "lingua-evo/internal/services/user/entity"
 	"lingua-evo/pkg/token"
 	"lingua-evo/pkg/utils"
@@ -51,12 +50,12 @@ func NewService(repo sessionRepo, userSvc userSvc) *AuthSvc {
 	}
 }
 
-func (s *AuthSvc) Login(ctx context.Context, sessionRq *dto.CreateSessionRq) (*entity.Tokens, error) {
-	u, err := s.userSvc.GetUser(ctx, sessionRq.User)
+func (s *AuthSvc) Login(ctx context.Context, user, password, fingerprint string) (*entity.Tokens, error) {
+	u, err := s.userSvc.GetUser(ctx, user)
 	if err != nil {
 		return nil, fmt.Errorf("auth.service.AuthSvc.CreateSession - getUser: %v", err)
 	}
-	if err := utils.CheckPasswordHash(sessionRq.Password, u.PasswordHash); err != nil {
+	if err := utils.CheckPasswordHash(password, u.PasswordHash); err != nil {
 		return nil, fmt.Errorf("auth.service.AuthSvc.CreateSession - incorrect password: %v", err)
 	}
 
@@ -65,7 +64,7 @@ func (s *AuthSvc) Login(ctx context.Context, sessionRq *dto.CreateSessionRq) (*e
 	now := time.Now().UTC()
 	session := &entity.Session{
 		UserID:      u.ID,
-		Fingerprint: sessionRq.Fingerprint,
+		Fingerprint: fingerprint,
 		CreatedAt:   now,
 	}
 

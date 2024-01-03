@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"lingua-evo/internal/services/auth/entity"
+	authEntity "lingua-evo/internal/services/auth"
 
 	"github.com/google/uuid"
 )
@@ -30,7 +30,7 @@ func NewRepo(r redis) *SessionRepo {
 	}
 }
 
-func (r *SessionRepo) SetSession(ctx context.Context, tokenID uuid.UUID, s *entity.Session, expiration time.Duration) error {
+func (r *SessionRepo) SetSession(ctx context.Context, tokenID uuid.UUID, s *authEntity.Session, expiration time.Duration) error {
 	b, err := r.redis.SetNX(ctx, tokenID.String(), s, expiration)
 	if !b {
 		return err
@@ -38,8 +38,8 @@ func (r *SessionRepo) SetSession(ctx context.Context, tokenID uuid.UUID, s *enti
 	return nil
 }
 
-func (r *SessionRepo) GetSession(ctx context.Context, refreshToken uuid.UUID) (*entity.Session, error) {
-	var s entity.Session
+func (r *SessionRepo) GetSession(ctx context.Context, refreshToken uuid.UUID) (*authEntity.Session, error) {
+	var s authEntity.Session
 	s2, err := r.redis.Get(ctx, refreshToken.String())
 	if err != nil {
 		return nil, fmt.Errorf("auth.repository.SessionRepo.GetSession: %w", err)
