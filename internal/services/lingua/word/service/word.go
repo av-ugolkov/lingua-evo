@@ -9,8 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 
-	"lingua-evo/internal/services/lingua/word/dto"
-	"lingua-evo/internal/services/lingua/word/entity"
+	entity "lingua-evo/internal/services/lingua/word"
 )
 
 type repoWord interface {
@@ -33,12 +32,12 @@ func NewService(repo repoWord) *WordSvc {
 	}
 }
 
-func (s *WordSvc) AddWord(ctx context.Context, w *dto.AddWordRq) (uuid.UUID, error) {
+func (s *WordSvc) AddWord(ctx context.Context, text, langCode, pronunciation string) (uuid.UUID, error) {
 	word := &entity.Word{
 		ID:            uuid.New(),
-		Text:          w.Text,
-		LanguageCode:  w.LanguageCode,
-		Pronunciation: w.Pronunciation,
+		Text:          text,
+		LanguageCode:  langCode,
+		Pronunciation: pronunciation,
 	}
 
 	wordID, err := s.repo.GetWord(ctx, word)
@@ -56,10 +55,10 @@ func (s *WordSvc) AddWord(ctx context.Context, w *dto.AddWordRq) (uuid.UUID, err
 	return wordID, nil
 }
 
-func (s *WordSvc) GetWord(ctx context.Context, w *dto.GetWordRq) (uuid.UUID, error) {
+func (s *WordSvc) GetWord(ctx context.Context, text, langCode string) (uuid.UUID, error) {
 	word := entity.Word{
-		Text:         w.Text,
-		LanguageCode: w.LanguageCode,
+		Text:         text,
+		LanguageCode: langCode,
 	}
 
 	wordID, err := s.repo.GetWord(ctx, &word)
@@ -69,14 +68,20 @@ func (s *WordSvc) GetWord(ctx context.Context, w *dto.GetWordRq) (uuid.UUID, err
 	return wordID, nil
 }
 
-func (s *WordSvc) EditWord(ctx context.Context, w *dto.GetWordRq) error {
+func (s *WordSvc) EditWord(ctx context.Context, text, langCode string) error {
+	word := entity.Word{
+		Text:         text,
+		LanguageCode: langCode,
+	}
+	fmt.Println(word)
+
 	return nil
 }
 
-func (s *WordSvc) FindWords(ctx context.Context, w *dto.GetWordRq) ([]uuid.UUID, error) {
+func (s *WordSvc) FindWords(ctx context.Context, text, langCode string) ([]uuid.UUID, error) {
 	word := entity.Word{
-		Text:         w.Text,
-		LanguageCode: w.LanguageCode,
+		Text:         text,
+		LanguageCode: langCode,
 	}
 
 	wordIDs, err := s.repo.FindWords(ctx, &word)
@@ -87,10 +92,10 @@ func (s *WordSvc) FindWords(ctx context.Context, w *dto.GetWordRq) ([]uuid.UUID,
 	return wordIDs, nil
 }
 
-func (s *WordSvc) DeleteWord(ctx context.Context, w *dto.GetWordRq) error {
+func (s *WordSvc) DeleteWord(ctx context.Context, text, langCode string) error {
 	word := entity.Word{
-		Text:         w.Text,
-		LanguageCode: w.LanguageCode,
+		Text:         text,
+		LanguageCode: langCode,
 	}
 
 	i, err := s.repo.DeleteWord(ctx, &word)
@@ -103,9 +108,9 @@ func (s *WordSvc) DeleteWord(ctx context.Context, w *dto.GetWordRq) error {
 	return nil
 }
 
-func (s *WordSvc) GetRandomWord(ctx context.Context, w *dto.RandomWordRq) (*entity.Word, error) {
+func (s *WordSvc) GetRandomWord(ctx context.Context, langCode string) (*entity.Word, error) {
 	word := &entity.Word{
-		LanguageCode: w.LanguageCode,
+		LanguageCode: langCode,
 	}
 
 	return s.repo.GetRandomWord(ctx, word)
