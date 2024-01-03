@@ -5,8 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"lingua-evo/internal/services/lingua/dictionary/dto"
-	"lingua-evo/internal/services/lingua/dictionary/entity"
+	entity "lingua-evo/internal/services/lingua/dictionary"
 
 	"github.com/google/uuid"
 )
@@ -34,11 +33,11 @@ func NewService(repo repoDict) *DictionarySvc {
 	}
 }
 
-func (s *DictionarySvc) AddDictionary(ctx context.Context, userID uuid.UUID, d *dto.DictionaryRq) (uuid.UUID, error) {
+func (s *DictionarySvc) AddDictionary(ctx context.Context, userID uuid.UUID, name string) (uuid.UUID, error) {
 	dictionary := entity.Dictionary{
 		ID:     uuid.New(),
 		UserID: userID,
-		Name:   d.Name,
+		Name:   name,
 	}
 
 	dictionaries, err := s.repo.GetDictionaries(ctx, dictionary.UserID)
@@ -58,10 +57,10 @@ func (s *DictionarySvc) AddDictionary(ctx context.Context, userID uuid.UUID, d *
 	return dictionary.ID, nil
 }
 
-func (s *DictionarySvc) DeleteDictionary(ctx context.Context, userID uuid.UUID, d *dto.DictionaryRq) error {
+func (s *DictionarySvc) DeleteDictionary(ctx context.Context, userID uuid.UUID, name string) error {
 	dict := entity.Dictionary{
 		UserID: userID,
-		Name:   d.Name,
+		Name:   name,
 	}
 
 	err := s.repo.DeleteDictionary(ctx, dict)
