@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"lingua-evo/internal/services/lingua/tag/entity"
+	entity "lingua-evo/internal/services/lingua/tag"
 
 	"github.com/google/uuid"
 )

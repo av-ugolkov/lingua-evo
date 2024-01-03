@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"lingua-evo/internal/services/lingua/language/entity"
+	entity "lingua-evo/internal/services/lingua/language"
 )
 
 type langRepo interface {
