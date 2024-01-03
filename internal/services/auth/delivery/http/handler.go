@@ -1,4 +1,4 @@
-package delivery
+package http
 
 import (
 	"encoding/base64"
@@ -9,9 +9,7 @@ import (
 	"time"
 
 	"lingua-evo/internal/config"
-	"lingua-evo/internal/services/auth/dto"
 	"lingua-evo/internal/services/auth/service"
-
 	"lingua-evo/pkg/http/handler"
 	"lingua-evo/pkg/http/handler/common"
 	"lingua-evo/pkg/middleware"
@@ -28,6 +26,16 @@ const (
 )
 
 type (
+	CreateSessionRq struct {
+		User        string `json:"user"`
+		Password    string `json:"password"`
+		Fingerprint string `json:"fingerprint"`
+	}
+
+	CreateSessionRs struct {
+		AccessToken string `json:"access_token"`
+	}
+
 	Handler struct {
 		authSvc *service.AuthSvc
 	}
@@ -61,7 +69,7 @@ func (h *Handler) login(w http.ResponseWriter, r *http.Request) {
 		handler.SendError(http.StatusBadRequest, fmt.Errorf("auth.delivery.Handler.login: %v", err))
 		return
 	}
-	var data dto.CreateSessionRq
+	var data CreateSessionRq
 	err = decodeBasicAuth(authorization, &data)
 	if err != nil {
 		handler.SendError(http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.login - check body: %v", err))
@@ -73,13 +81,13 @@ func (h *Handler) login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	ctx := r.Context()
-	tokens, err := h.authSvc.Login(ctx, &data)
+	tokens, err := h.authSvc.Login(ctx, data.User, data.Password, data.Fingerprint)
 	if err != nil {
 		handler.SendError(http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.login - create session: %v", err))
 		return
 	}
 
-	b, err := json.Marshal(&dto.CreateSessionRs{
+	b, err := json.Marshal(&CreateSessionRs{
 		AccessToken: tokens.AccessToken,
 	})
 	if err != nil {
@@ -125,7 +133,7 @@ func (h *Handler) refresh(w http.ResponseWriter, r *http.Request) {
 		handler.SendError(http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.refresh - RefreshSessionToken: %v", err))
 		return
 	}
-	b, err := json.Marshal(&dto.CreateSessionRs{
+	b, err := json.Marshal(&CreateSessionRs{
 		AccessToken: tokens.AccessToken,
 	})
 	if err != nil {
@@ -161,7 +169,7 @@ func (h *Handler) logout(w http.ResponseWriter, r *http.Request) {
 	handler.SendData([]byte("done"))
 }
 
-func decodeBasicAuth(auth string, data *dto.CreateSessionRq) error {
+func decodeBasicAuth(auth string, data *CreateSessionRq) error {
 	base, err := base64.StdEncoding.DecodeString(strings.Split(auth, " ")[1])
 	if err != nil {
 		return fmt.Errorf("auth.delivery.decodeBasicAuth - decode base64: %v", err)
