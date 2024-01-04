@@ -847,6 +847,491 @@
                 "трофеи",
                 "выгода"
             ]
+        },
+        {
+            "word": "light fixture",
+            "translate": [
+                "светильник",
+                "светящийся предмет"
+            ],
+            "pronunciation": "[laɪt] ['fɪksʧə]"
+        },
+        {
+            "word": "honk",
+            "pronunciation": "[hɔŋk]",
+            "translate": [
+                "сигналить",
+                "бибикать"
+            ]
+        },
+        {
+            "word": "pebbles",
+            "pronunciation": "['peb(ə)lz]",
+            "translate": [
+                "галька",
+                "булыжник",
+                "мелкий камень",
+                "щебень",
+                "гравий"
+            ]
+        },
+        {
+            "word": "mannerism",
+            "pronunciation": "['mænərɪz(ə)m]",
+            "translate": [
+                "особенность (присущая кому-либо)",
+                "манерность",
+                "характерная черта",
+                "привычка",
+                "причуда"
+            ]
+        },
+        {
+            "word": "sneeze",
+            "pronunciation": "[sni:z]",
+            "translate": [
+                "чиханье",
+                "чих",
+                "чихание"
+            ]
+        },
+        {
+            "word": "afraid off",
+            "pronunciation": "[ə'freɪd] [ɒf]",
+            "translate": [
+                "бояться",
+                "опасаться"
+            ]
+        },
+        {
+            "word": "ask for",
+            "pronunciation": "[ɑ:sk] [fɔ:]",
+            "translate": [
+                "просить (sth., у кого-л., что-л.)",
+                "хотеть видеть",
+                "просить о (чём-л.)",
+                "спрашивать о (ком-л.)",
+                "попросить"
+            ]
+        },
+        {
+            "word": "famous for",
+            "pronunciation": "['feɪməs] [fɔ:]",
+            "translate": [
+                "известный (чем-либо)",
+                "знаменит (чем-то)"
+            ]
+        },
+        {
+            "word": "proud off",
+            "pronunciation": "[praud] [ɒf]",
+            "translate": [
+                "гордиться"
+            ]
+        },
+        {
+            "word": "excited about",
+            "pronunciation": "[ɪk'saɪtɪd] [ə'baut]",
+            "translate": [
+                "полный энтузиазма",
+                "взволнованный (кем-л., чем-л.)"
+            ]
+        },
+        {
+            "word": "argue with",
+            "pronunciation": "['ɑ:gju:] [wɪð]",
+            "translate": [
+                "спорить с (кем-либо)",
+                "ссориться с (someone – кем-либо)"
+            ]
+        },
+        {
+            "word": "take care of",
+            "pronunciation": "[teɪk] [keə] [ɔv]",
+            "translate": [
+                "заботиться (о ком-либо)",
+                "обеспечить (кого-либо)",
+                "пригреть (кого-либо)",
+                "приютить (кого-либо)"
+            ]
+        },
+        {
+            "word": "familiar",
+            "pronunciation": "[fə'mɪlɪə]",
+            "translate": [
+                "знакомый",
+                "домовой (дух)"
+            ],
+            "example": [
+                "It sounds familiar"
+            ]
+        },
+        {
+            "word": "revive",
+            "pronunciation": "[rɪ'vaɪv]",
+            "translate": [
+                "вновь обретать бодрость",
+                "возвращаться к жизни",
+                "обновлять"
+            ]
+        },
+        {
+            "word": "numerous",
+            "pronunciation": "['nju:m(ə)rəs]",
+            "translate": [
+                "многочисленный",
+                "обширный",
+                "неоднократный"
+            ]
+        },
+        {
+            "word": "variety",
+            "pronunciation": "[və'raɪətɪ]",
+            "translate": [
+                "разнообразие",
+                "множество",
+                "многосторонность"
+            ]
+        },
+        {
+            "word": "rinse off",
+            "pronunciation": "[rɪns] [ɒf]",
+            "translate": [
+                "смыть (с себя в душе грязь и т.п.)",
+                "смывать (с себя в душе грязь и т.п.)",
+                "сполоснуться"
+            ]
+        },
+        {
+            "word": "pest",
+            "pronunciation": "[pest]",
+            "translate": [
+                "сельскохозяйственный вредитель",
+                "вредное насекомое",
+                "надоедливый человек",
+                "зараза",
+                "надоеда",
+                "несносный человек",
+                "вредитель"
+            ]
+        },
+        {
+            "word": "cope",
+            "pronunciation": "[kəup]",
+            "translate": [
+                "покров",
+                "будка",
+                "кабина"
+            ]
+        },
+        {
+            "word": "postpone",
+            "pronunciation": "[pə(u)'spəun]",
+            "translate": [
+                "откладывать",
+                "отсрочивать",
+                "относить в конец предложения",
+                "подчинять"
+            ]
+        },
+        {
+            "word": "homie",
+            "pronunciation": "[ˈhəʊmi]",
+            "translate": [
+                "земляк",
+                "приятель"
+            ]
+        },
+        {
+            "word": "counseling",
+            "pronunciation": "['kaʊnsǝlɪŋ]",
+            "translate": [
+                "напоминания",
+                "выдача рекомендаций",
+                "консультирование"
+            ]
+        },
+        {
+            "word": "clown",
+            "pronunciation": "[klaun]",
+            "translate": [
+                "шут",
+                "неотёсанный парень",
+                "деревенщина"
+            ]
+        },
+        {
+            "word": "cagey",
+            "pronunciation": "['keɪʤɪ]",
+            "translate": [
+                "осторожный",
+                "осмотрительный",
+                "неразговорчивый",
+                "скрытный"
+            ]
+        },
+        {
+            "word": "nasty",
+            "pronunciation": "['nɑ:stɪ]",
+            "translate": [
+                "тошнотворный",
+                "противный",
+                "мерзкий",
+                "грязный",
+                "непристойный",
+                "неприятный",
+                "скверный",
+                "злобный",
+                "угрожающий",
+                "опасный"
+            ]
+        },
+        {
+            "word": "shabby",
+            "pronunciation": "['ʃæbɪ]",
+            "translate": [
+                "поношенный",
+                "потрёпанный",
+                "потёртый",
+                "убогий",
+                "захудалый"
+            ]
+        },
+        {
+            "word": "fool",
+            "pronunciation": "[fu:l]",
+            "translate": [
+                "дурак",
+                "глупец",
+                "посмешище"
+            ]
+        },
+        {
+            "word": "urge",
+            "pronunciation": "[ɜ:ʤ]",
+            "translate": [
+                "побуждение",
+                "толчок",
+                "натиск",
+                "стремление",
+                "тяга (к чему-либо plushkina)",
+                "сильное желание",
+                "потребность"
+            ]
+        },
+        {
+            "word": "bulk",
+            "pronunciation": "[bʌlk]",
+            "translate": [
+                "основная масса (чего-либо, кого-либо)",
+                "величина",
+                "масса",
+                "объём",
+                "большие размеры",
+                "большое количество"
+            ],
+            "example": [
+                "The bulk of consumers are based in towns."
+            ]
+        },
+        {
+            "word": "addicted",
+            "pronunciation": "[ə'dɪktɪd]",
+            "translate": [
+                "помешанный"
+            ]
+        },
+        {
+            "word": "neither",
+            "pronunciation": "['naɪðə]",
+            "translate": [
+                "ни тот, ни другой",
+                "никто",
+                "ничто",
+                "ни один (из двух)"
+            ]
+        },
+        {
+            "word": "competent",
+            "pronunciation": "['kɔmpɪt(ə)nt]",
+            "translate": [
+                "компетентный",
+                "достаточный",
+                "правомочный",
+                "установленный",
+                "законный"
+            ]
+        },
+        {
+            "word": "consider",
+            "pronunciation": "[kən'sɪdə]",
+            "translate": [
+                "подумать",
+                "пораскинуть мозгом",
+                "пораскинуть умом",
+                "посоображать",
+                "раздумать",
+                "раскинуть мозгом"
+            ]
+        },
+        {
+            "word": "miserable",
+            "pronunciation": "['mɪz(ə)rəb(ə)l]",
+            "translate": [
+                "несчастный",
+                "тяжело"
+            ]
+        },
+        {
+            "word": "dough",
+            "pronunciation": "[dəu]",
+            "translate": [
+                "тесто",
+                "паста",
+                "густая масса",
+                "деньги",
+                "капуста"
+            ]
+        },
+        {
+            "word": "collar",
+            "pronunciation": "['kɔlə]",
+            "translate": [
+                "воротник",
+                "воротничок",
+                "ожерелье",
+                "ошейник"
+            ]
+        },
+        {
+            "word": "strip",
+            "pronunciation": "[strɪp]",
+            "translate": [
+                "узкая полоска (бумаги, материи и т.п.)"
+            ]
+        },
+        {
+            "word": "blow",
+            "pronunciation": "[bləu]",
+            "translate": [
+                "удар"
+            ]
+        },
+        {
+            "word": "tough",
+            "pronunciation": "[tʌf]",
+            "translate": [
+                "хулиган",
+                "бандит",
+                "драчун"
+            ]
+        },
+        {
+            "word": "chap",
+            "pronunciation": "[ʧæp]",
+            "translate": [
+                "малый",
+                "щель",
+                "челюсть (у скота)",
+                "щека"
+            ],
+            "example": [
+                "He a was short agreeable chap."
+            ]
+        },
+        {
+            "word": "turd",
+            "pronunciation": "[tɜ:d]",
+            "translate": [
+                "какашка",
+                "дерьмо",
+                "кал"
+            ]
+        },
+        {
+            "word": "fame",
+            "pronunciation": "[feɪm]",
+            "translate": [
+                "слава",
+                "известность",
+                "знаменитость",
+                "молва",
+                "репутация"
+            ]
+        },
+        {
+            "word": "shame",
+            "pronunciation": "[ʃeɪm]",
+            "translate": [
+                "стыд",
+                "скандал",
+                "позор",
+                "срам"
+            ]
+        },
+        {
+            "word": "endure",
+            "pronunciation": "[ɪn'djuə]",
+            "translate": [
+                "вынести",
+                "выдержать",
+                "вытерпеть",
+                "переносить"
+            ]
+        },
+        {
+            "word": "worth",
+            "pronunciation": "[wɜ:θ]",
+            "translate": [
+                "ценность",
+                "значение",
+                "достоинство"
+            ]
+        },
+        {
+            "word": "worthlessness",
+            "pronunciation": "['wɜːθləsnəs]",
+            "translate": [
+                "никчёмность",
+                "недостойность",
+                "низость",
+                "подлость"
+            ]
+        },
+        {
+            "word": "pissed",
+            "pronunciation": "[pɪst]",
+            "translate": [
+                "раздражённый",
+                "пьяный",
+                "сильно пьяный",
+                "пьянущий",
+                "обоссанный",
+                "злой"
+            ]
+        },
+        {
+            "word": "seizure",
+            "pronunciation": "['si:ʒə]",
+            "translate": [
+                "овладение",
+                "конфискация",
+                "наложение ареста",
+                "припадок",
+                "приступ",
+                "взятие",
+                "опись"
+            ]
+        },
+        {
+            "word": "fair enough",
+            "pronunciation": "[feə] [ɪ'nʌf]",
+            "translate": [
+                "ладно",
+                "согласен",
+                "принимается",
+                "приемлемо"
+            ]
         }
     ]
 }
