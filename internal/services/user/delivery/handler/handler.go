@@ -52,31 +52,32 @@ func (h *Handler) createAccount(w http.ResponseWriter, r *http.Request) {
 		_ = r.Body.Close()
 	}()
 
+	handler := handler.NewHandler(w, r)
 	var data dto.CreateUserRq
-	err := handler.CheckBody(w, r, &data)
+	err := handler.CheckBody(&data)
 	if err != nil {
-		handler.SendError(w, http.StatusBadRequest, fmt.Errorf("user.delivery.Handler.createAccount - check body: %v", err))
+		handler.SendError(http.StatusBadRequest, fmt.Errorf("user.delivery.Handler.createAccount - check body: %v", err))
 		return
 	}
 
 	if err := h.validateEmail(r.Context(), data.Email); err != nil {
-		handler.SendError(w, http.StatusConflict, fmt.Errorf("user.delivery.Handler.createAccount - validateEmail: %v", err))
+		handler.SendError(http.StatusConflict, fmt.Errorf("user.delivery.Handler.createAccount - validateEmail: %v", err))
 		return
 	}
 
 	if err := h.validateUsername(r.Context(), data.Username); err != nil {
-		handler.SendError(w, http.StatusConflict, fmt.Errorf("user.delivery.Handler.createAccount - validateUsername: %v", err))
+		handler.SendError(http.StatusConflict, fmt.Errorf("user.delivery.Handler.createAccount - validateUsername: %v", err))
 		return
 	}
 
 	if err := validatePassword(data.Password); err != nil {
-		handler.SendError(w, http.StatusConflict, fmt.Errorf("user.delivery.Handler.createAccount - validatePassword: %v", err))
+		handler.SendError(http.StatusConflict, fmt.Errorf("user.delivery.Handler.createAccount - validatePassword: %v", err))
 		return
 	}
 
 	hashPassword, err := utils.HashPassword(data.Password)
 	if err != nil {
-		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.createAccount - hashPassword: %v", err))
+		handler.SendError(http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.createAccount - hashPassword: %v", err))
 		return
 	}
 
@@ -84,7 +85,7 @@ func (h *Handler) createAccount(w http.ResponseWriter, r *http.Request) {
 
 	uid, err := h.userSvc.CreateUser(r.Context(), &data)
 	if err != nil {
-		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.createAccount - create user: %v", err))
+		handler.SendError(http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.createAccount - create user: %v", err))
 		return
 	}
 
@@ -92,13 +93,13 @@ func (h *Handler) createAccount(w http.ResponseWriter, r *http.Request) {
 		UserID: uid,
 	})
 	if err != nil {
-		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.createAccount - marshal: %v", err))
+		handler.SendError(http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.createAccount - marshal: %v", err))
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	_, _ = w.Write(b)
+	handler.SetHeader("Content-Type", "application/json")
+	handler.WriteHeader(http.StatusCreated)
+	handler.SendData(b)
 }
 
 func (h *Handler) getUserByName(w http.ResponseWriter, r *http.Request) {
@@ -106,18 +107,19 @@ func (h *Handler) getUserByName(w http.ResponseWriter, r *http.Request) {
 		_ = r.Body.Close()
 	}()
 
+	handler := handler.NewHandler(w, r)
 	var data dto.GetIDRq
 
-	err := handler.CheckBody(w, r, &data)
+	err := handler.CheckBody(&data)
 	if err != nil {
-		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.getIDByName - check body: %v", err))
+		handler.SendError(http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.getIDByName - check body: %v", err))
 		return
 	}
 
 	ctx := r.Context()
 	user, err := h.userSvc.GetUserByName(ctx, data.Value)
 	if err != nil {
-		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.getIDByName: %v", err))
+		handler.SendError(http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.getIDByName: %v", err))
 		return
 	}
 
@@ -126,29 +128,29 @@ func (h *Handler) getUserByName(w http.ResponseWriter, r *http.Request) {
 	}
 	b, err := json.Marshal(userID)
 	if err != nil {
-		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.getIDByName - marshal: %v", err))
+		handler.SendError(http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.getIDByName - marshal: %v", err))
 		return
 	}
-	_, _ = w.Write(b)
+	handler.SendData(b)
 }
 
 func (h *Handler) getUserByEmail(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		_ = r.Body.Close()
 	}()
+	handler := handler.NewHandler(w, r)
 
 	var data dto.GetIDRq
 
-	err := handler.CheckBody(w, r, &data)
-	if err != nil {
-		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.getIDByEmail - check body: %v", err))
+	if err := handler.CheckBody(&data); err != nil {
+		handler.SendError(http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.getIDByEmail - check body: %v", err))
 		return
 	}
 
 	ctx := r.Context()
 	user, err := h.userSvc.GetUserByEmail(ctx, data.Value)
 	if err != nil {
-		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.getIDByEmail: %v", err))
+		handler.SendError(http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.getIDByEmail: %v", err))
 		return
 	}
 
@@ -157,10 +159,10 @@ func (h *Handler) getUserByEmail(w http.ResponseWriter, r *http.Request) {
 	}
 	b, err := json.Marshal(userID)
 	if err != nil {
-		handler.SendError(w, http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.getIDByEmail - marshal: %v", err))
+		handler.SendError(http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.getIDByEmail - marshal: %v", err))
 		return
 	}
-	_, _ = w.Write(b)
+	handler.SendData(b)
 }
 
 func (h *Handler) validateEmail(ctx context.Context, email string) error {

@@ -7,7 +7,7 @@ authPanel.addEventListener("submit", async (e) => {
 
     let username = document.getElementById("username")
     let password = document.getElementById("password")
-    fetch("/auth/login", {
+    fetch("/auth/signin", {
         method: "post",
         headers: {
             'Accept': 'application/json',

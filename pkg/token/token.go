@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"lingua-evo/internal/config"
-	entitySession "lingua-evo/internal/services/auth/entity"
+	entityAuth "lingua-evo/internal/services/auth"
 	entityUser "lingua-evo/internal/services/user/entity"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -23,7 +23,7 @@ type (
 	}
 )
 
-func NewJWTToken(u *entityUser.User, s *entitySession.Claims) (string, error) {
+func NewJWTToken(u *entityUser.User, s *entityAuth.Claims) (string, error) {
 	userClaims := UserClaims{
 		UserID: u.ID,
 		RegisteredClaims: jwt.RegisteredClaims{
