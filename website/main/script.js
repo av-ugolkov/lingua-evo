@@ -36,7 +36,7 @@ window.onload = async function () {
             'Accept': 'application/json',
             'Content-Type': 'application/json',
             'Fingerprint': getBrowserFingerprint(),
-            'Access-Token': token
+            'Authorization': "Bearer " + token,
         },
     })
         .then(async (response) => {

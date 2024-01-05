@@ -99,7 +99,7 @@ func (h *Handler) createAccount(w http.ResponseWriter, r *http.Request) {
 
 	handler.SetHeader("Content-Type", "application/json")
 	handler.WriteHeader(http.StatusCreated)
-	handler.SendData(b)
+	handler.SendData(http.StatusOK, b)
 }
 
 func (h *Handler) getUserByName(w http.ResponseWriter, r *http.Request) {
@@ -131,7 +131,7 @@ func (h *Handler) getUserByName(w http.ResponseWriter, r *http.Request) {
 		handler.SendError(http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.getIDByName - marshal: %v", err))
 		return
 	}
-	handler.SendData(b)
+	handler.SendData(http.StatusOK, b)
 }
 
 func (h *Handler) getUserByEmail(w http.ResponseWriter, r *http.Request) {
@@ -162,7 +162,7 @@ func (h *Handler) getUserByEmail(w http.ResponseWriter, r *http.Request) {
 		handler.SendError(http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.getIDByEmail - marshal: %v", err))
 		return
 	}
-	handler.SendData(b)
+	handler.SendData(http.StatusOK, b)
 }
 
 func (h *Handler) validateEmail(ctx context.Context, email string) error {

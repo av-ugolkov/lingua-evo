@@ -64,7 +64,7 @@ func (h *Handler) signin(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	handler := handler.NewHandler(w, r)
-	authorization, err := handler.GetHeaderAuthorization()
+	authorization, err := handler.GetHeaderAuthorization(common.AuthTypeBasic)
 	if err != nil {
 		handler.SendError(http.StatusBadRequest, fmt.Errorf("auth.delivery.Handler.signin: %v", err))
 		return
@@ -99,7 +99,7 @@ func (h *Handler) signin(w http.ResponseWriter, r *http.Request) {
 	duration := time.Duration(additionalTime) * time.Second
 	handler.SetHeader("Content-Type", "application/json")
 	handler.SetCookieRefreshToken(tokens.RefreshToken, duration)
-	handler.SendData(b)
+	handler.SendData(http.StatusOK, b)
 }
 
 func (h *Handler) refresh(w http.ResponseWriter, r *http.Request) {
@@ -145,7 +145,7 @@ func (h *Handler) refresh(w http.ResponseWriter, r *http.Request) {
 	duration := time.Duration(additionalTime) * time.Second
 	handler.SetHeader("Content-Type", "application/json")
 	handler.SetCookieRefreshToken(tokens.RefreshToken, duration)
-	handler.SendData(b)
+	handler.SendData(http.StatusOK, b)
 }
 
 func (h *Handler) logout(w http.ResponseWriter, r *http.Request) {
@@ -166,11 +166,14 @@ func (h *Handler) logout(w http.ResponseWriter, r *http.Request) {
 		handler.SendError(http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.logout - logout: %v", err))
 		return
 	}
-	handler.SendData([]byte("done"))
+
+	handler.DeleteCookie(common.RefreshToken)
+
+	handler.SendData(http.StatusOK, []byte("done"))
 }
 
-func decodeBasicAuth(auth string, data *CreateSessionRq) error {
-	base, err := base64.StdEncoding.DecodeString(strings.Split(auth, " ")[1])
+func decodeBasicAuth(basicToken string, data *CreateSessionRq) error {
+	base, err := base64.StdEncoding.DecodeString(basicToken)
 	if err != nil {
 		return fmt.Errorf("auth.delivery.decodeBasicAuth - decode base64: %v", err)
 	}
