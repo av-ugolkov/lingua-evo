@@ -1,4 +1,4 @@
-package sign_up
+package handler
 
 import (
 	"fmt"

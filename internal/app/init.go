@@ -34,13 +34,13 @@ import (
 	wordRepository "lingua-evo/internal/services/lingua/word/delivery/repository"
 	wordService "lingua-evo/internal/services/lingua/word/service"
 	sessionService "lingua-evo/internal/services/session/service"
-	accountHandler "lingua-evo/internal/services/site/account/delivery/http"
+	accountHandler "lingua-evo/internal/services/site/account/delivery/handler"
 	userHandler "lingua-evo/internal/services/user/delivery/handler"
 	userRepository "lingua-evo/internal/services/user/delivery/repository"
 	userService "lingua-evo/internal/services/user/service"
 
-	signInHandler "lingua-evo/internal/services/site/auth/sign_in/delivery"
-	signUpHandler "lingua-evo/internal/services/site/auth/sign_up/delivery"
+	signInHandler "lingua-evo/internal/services/site/auth/sign_in/delivery/handler"
+	signUpHandler "lingua-evo/internal/services/site/auth/sign_up/delivery/handler"
 	indexHandler "lingua-evo/internal/services/site/index/delivery/handler"
 )
 
