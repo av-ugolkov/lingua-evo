@@ -16,6 +16,7 @@ import (
 
 	"lingua-evo/pkg/files"
 	"lingua-evo/pkg/http/handler"
+	"lingua-evo/pkg/http/handler/common"
 	"lingua-evo/pkg/token"
 )
 
@@ -115,7 +116,7 @@ func (h *Handler) openPage(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) getAccountPanel(w http.ResponseWriter, r *http.Request) {
 	handler := handler.NewHandler(w, r)
 
-	accessToken, err := handler.GetHeaderAccessToken()
+	accessToken, err := handler.GetHeaderAuthorization(common.AuthTypeBearer)
 	if err != nil {
 		handler.SendError(http.StatusBadRequest, fmt.Errorf("site.index.delivery.Handler.getAccountPanel - GetHeaderAccessToken: %v", err))
 		return

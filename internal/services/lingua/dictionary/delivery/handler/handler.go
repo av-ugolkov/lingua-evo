@@ -87,7 +87,7 @@ func (h *Handler) addDictionary(w http.ResponseWriter, r *http.Request) {
 		handler.SendError(http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.addDictionary: %v", err))
 	}
 
-	handler.SendData([]byte(dictID.String()))
+	handler.SendData(http.StatusOK, []byte(dictID.String()))
 }
 
 func (h *Handler) deleteDictionary(w http.ResponseWriter, r *http.Request) {
@@ -112,7 +112,7 @@ func (h *Handler) deleteDictionary(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		handler.SendError(http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.deleteDictionary: %v", err))
 	}
-	handler.SendData([]byte("done"))
+	handler.SendData(http.StatusOK, []byte("done"))
 }
 
 func (h *Handler) getDictionary(w http.ResponseWriter, r *http.Request) {
@@ -147,7 +147,7 @@ func (h *Handler) getDictionary(w http.ResponseWriter, r *http.Request) {
 		handler.SendError(http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.getDictionary - marshal: %v", err))
 		return
 	}
-	handler.SendData(b)
+	handler.SendData(http.StatusOK, b)
 }
 
 func (h *Handler) getAllDictionary(w http.ResponseWriter, r *http.Request) {
@@ -170,5 +170,5 @@ func (h *Handler) getAllDictionary(w http.ResponseWriter, r *http.Request) {
 	//TODO нужно возвращать сериализованные данные
 	slog.Info(fmt.Sprintf("count dictionaries: %d", len(dictionaries)))
 
-	handler.SendData([]byte("done"))
+	handler.SendData(http.StatusOK, []byte("done"))
 }
