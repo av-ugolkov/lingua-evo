@@ -129,7 +129,7 @@ func (h *Handler) addWord(w http.ResponseWriter, r *http.Request) {
 		handler.SendError(http.StatusInternalServerError, err)
 		return
 	}
-	handler.SendData([]byte(wordUUID.String()))
+	handler.SendData(http.StatusOK, []byte(wordUUID.String()))
 }
 
 func (h *Handler) getWord(w http.ResponseWriter, r *http.Request) {
@@ -156,7 +156,7 @@ func (h *Handler) getWord(w http.ResponseWriter, r *http.Request) {
 		handler.SendError(http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getWord: %v", err))
 		return
 	}
-	handler.SendData([]byte(wordID.String()))
+	handler.SendData(http.StatusOK, []byte(wordID.String()))
 }
 
 func (h *Handler) getRandomWord(w http.ResponseWriter, r *http.Request) {
@@ -195,5 +195,5 @@ func (h *Handler) getRandomWord(w http.ResponseWriter, r *http.Request) {
 		handler.SendError(http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getRandomWord - marshal: %v", err))
 		return
 	}
-	handler.SendData(b)
+	handler.SendData(http.StatusOK, b)
 }
