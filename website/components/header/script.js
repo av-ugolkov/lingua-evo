@@ -1,6 +1,6 @@
-let bntSignIn = document.getElementById("btnSignUp")
-bntSignIn.addEventListener("click", () => {
-    fetch("/signup", {
+let btnDictionary = document.getElementById("btnDictionary")
+btnDictionary.addEventListener("click", () => {
+    fetch("/account/dictionary", {
         method: "get",
     }).then((data) => {
         window.open(data["url"], "_self")
@@ -8,10 +8,20 @@ bntSignIn.addEventListener("click", () => {
     })
 })
 
-let bntLogin = document.getElementById("btnSignIn")
-bntLogin.addEventListener("click", () => {
-    fetch("/signin", {
+let btnAccount = document.getElementById("btnAccount")
+btnAccount.addEventListener("click", () => {
+    fetch("/account", {
         method: "get",
+    }).then((data) => {
+        window.open(data["url"], "_self")
+        console.log(data);
+    })
+})
+
+let btnLogout = document.getElementById("btnLogout")
+btnLogout.addEventListener("click", () => {
+    fetch("/logout", {
+        method: "post",
     }).then((data) => {
         window.open(data["url"], "_self")
         console.log(data);
