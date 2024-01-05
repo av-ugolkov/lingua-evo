@@ -11,7 +11,7 @@
 </head>
 
 <body>
-  <header>
+  <header class="header">
     <nav class="navbar">
       <div class="left-side">
         <a href="/">
@@ -20,21 +20,18 @@
         </a>
       </div>
       <div id="right-side" class="right-side">
-        <div id="dictionary_btn"></div>
         <div class="border">
-          <button id="btnContact" type="button" class="accountBtn">Contact</button>
+          <button id="btnContact" type="button" class="panelBtn">Contact</button>
+          |
+          <button id="btnAbout" type="button" class="panelBtn">About</button>
         </div>
-        <div class="border">
-          <button id="btnAbout" type="button" class="accountBtn">About</button>
+        <div id="account-panel" class="border">
+          <button id="btnSignUp" type="button" class="panelBtn" value="signup">Sign Up</button>
+          |
+          <button id="btnSignIn" type="button" class="panelBtn" value="login">Sign In</button>
         </div>
-        <div class="vertical-line"></div>
-        <div id="account_panel" style="display: inherit;">
-          <div class="border">
-            <button id="btnSignup" type="button" class="accountBtn" value="signup">Sign Up</button>
-            |
-            <button id="btnLogin" type="button" class="accountBtn" value="login">Login</button>
-          </div>
-        </div>
+      </div>
+      </div>
       </div>
     </nav>
   </header>
@@ -43,7 +40,7 @@
     <div class="container">
       <div class="grid-container">
         <div>
-          <label id="lable-random" for="random">{{ .Word.Text }}</label>
+          <div id="random-field">{{ .Word.Text }}</div>
         </div>
       </div>
     </div>

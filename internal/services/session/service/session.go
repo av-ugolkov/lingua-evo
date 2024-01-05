@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"lingua-evo/internal/db/redis"
-	"lingua-evo/internal/services/session/entity"
+	sessionEntity "lingua-evo/internal/services/session"
 )
 
 type SessionSvc struct {
@@ -19,13 +19,13 @@ func NewService(redis *redis.Redis) *SessionSvc {
 	}
 }
 
-func (s *SessionSvc) GetSession(ctx context.Context, sid string) (*entity.Session, error) {
+func (s *SessionSvc) GetSession(ctx context.Context, sid string) (*sessionEntity.Session, error) {
 	data, err := s.redis.Get(ctx, sid)
 	if err != nil {
 		return nil, fmt.Errorf("session.service.SessionSvc.GetSession: %w", err)
 	}
 
-	var session entity.Session
+	var session sessionEntity.Session
 	err = json.Unmarshal([]byte(data), &session)
 	if err != nil {
 		return nil, fmt.Errorf("session.service.SessionSvc.GetSession - umarshal: %w", err)
