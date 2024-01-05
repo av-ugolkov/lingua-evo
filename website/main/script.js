@@ -1,6 +1,5 @@
 import getBrowserFingerprint from '../tools/get-browser-fingerprint.js';
 
-
 window.onload = async function () {
     let token = localStorage.getItem('access_token')
     if (token == null) {
@@ -26,11 +25,12 @@ window.onload = async function () {
                 localStorage.setItem('access_token', token);
             })
             .catch(error => {
+                localStorage.removeItem('access_token')
                 console.error('error:', error);
             })
     }
 
-    fetch("/get-account-panel", {
+    await fetch("/get-account-panel", {
         method: "get",
         headers: {
             'Accept': 'application/json',
@@ -41,7 +41,12 @@ window.onload = async function () {
     })
         .then(async (response) => {
             if (response.status == 200) {
-                document.getElementById("right-side").innerHTML = await response.text()
+                let scriptElement = document.createElement('script');
+                scriptElement.type = 'module';
+                scriptElement.src = 'website/components/header/script.js';
+                document.head.appendChild(scriptElement);
+
+                document.getElementById("account-panel").innerHTML = await response.text()
             }
         })
         .catch((error) => {
@@ -50,7 +55,7 @@ window.onload = async function () {
 }
 
 
-let lableRandom = document.getElementById("lable-random")
+let lableRandom = document.getElementById("random-field")
 let interval = setInterval(function () {
     fetch("/word/get_random", {
         method: "post",
@@ -77,7 +82,7 @@ function stopInterval() {
     clearInterval(interval)
 }
 
-let bntSignIn = document.getElementById("btnSignup")
+let bntSignIn = document.getElementById("btnSignUp")
 bntSignIn.addEventListener("click", () => {
     fetch("/signup", {
         method: "get",
@@ -87,9 +92,9 @@ bntSignIn.addEventListener("click", () => {
     })
 })
 
-let bntLogin = document.getElementById("btnLogin")
+let bntLogin = document.getElementById("btnSignIn")
 bntLogin.addEventListener("click", () => {
-    fetch("/login", {
+    fetch("/signin", {
         method: "get",
     }).then((data) => {
         window.open(data["url"], "_self")

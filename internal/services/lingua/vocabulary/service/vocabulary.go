@@ -4,9 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"lingua-evo/internal/services/lingua/vocabulary/dto"
-	"lingua-evo/internal/services/lingua/vocabulary/entity"
-	dtoWord "lingua-evo/internal/services/lingua/word/dto"
+	entity "lingua-evo/internal/services/lingua/vocabulary"
 
 	"github.com/google/uuid"
 )
@@ -26,7 +24,7 @@ type (
 	}
 
 	wordSvc interface {
-		AddWord(ctx context.Context, word *dtoWord.AddWordRq) (uuid.UUID, error)
+		AddWord(ctx context.Context, text, langCode, pronunciation string) (uuid.UUID, error)
 	}
 )
 
@@ -51,42 +49,38 @@ func NewService(
 	}
 }
 
-func (s *VocabularySvc) AddWordInVocabulary(ctx context.Context, v *dto.AddWordRq) error {
-	word := dtoWord.AddWordRq{
-		Text:          v.NativeWord.Text,
-		Pronunciation: v.NativeWord.Pronunciation,
-		LanguageCode:  v.NativeWord.LangCode,
-	}
-	nativeWordID, err := s.wordSvc.AddWord(ctx, &word)
+func (s *VocabularySvc) AddWordInVocabulary(
+	ctx context.Context,
+	dictID uuid.UUID,
+	nativeWord entity.VocabularyWord,
+	tanslateWords []entity.VocabularyWord,
+	examples []string,
+	tags []string) error {
+	nativeWordID, err := s.wordSvc.AddWord(ctx, nativeWord.Text, nativeWord.LangCode, nativeWord.Pronunciation)
 	if err != nil {
 		return fmt.Errorf("vocabulary.service.VocabularuSvc.AddWordInVocabulary - add native word in dictionary: %w", err)
 	}
 
-	translateWordIDs := make([]uuid.UUID, 0, len(v.TanslateWords))
-	for _, translateWord := range v.TanslateWords {
-		word = dtoWord.AddWordRq{
-			Text:          translateWord.Text,
-			Pronunciation: translateWord.Pronunciation,
-			LanguageCode:  translateWord.LangCode,
-		}
-		translateWordID, err := s.wordSvc.AddWord(ctx, &word)
+	translateWordIDs := make([]uuid.UUID, 0, len(tanslateWords))
+	for _, translateWord := range tanslateWords {
+		translateWordID, err := s.wordSvc.AddWord(ctx, translateWord.Text, translateWord.LangCode, translateWord.Pronunciation)
 		if err != nil {
 			return fmt.Errorf("vocabulary.service.VocabularuSvc.AddWordInVocabulary - add translate word in dictionary: %w", err)
 		}
 		translateWordIDs = append(translateWordIDs, translateWordID)
 	}
 
-	exampleIDs := make([]uuid.UUID, 0, len(v.Examples))
-	for _, example := range v.Examples {
-		exampleID, err := s.exampleSvc.AddExample(ctx, example, v.NativeWord.LangCode)
+	exampleIDs := make([]uuid.UUID, 0, len(examples))
+	for _, example := range examples {
+		exampleID, err := s.exampleSvc.AddExample(ctx, example, nativeWord.LangCode)
 		if err != nil {
 			return fmt.Errorf("vocabulary.service.VocabularuSvc.AddWordInVocabulary - add example: %w", err)
 		}
 		exampleIDs = append(exampleIDs, exampleID)
 	}
 
-	tagIDs := make([]uuid.UUID, 0, len(v.Tags))
-	for _, tag := range v.Tags {
+	tagIDs := make([]uuid.UUID, 0, len(tags))
+	for _, tag := range tags {
 		tagID, err := s.tagSvc.AddTag(ctx, tag)
 		if err != nil {
 			return fmt.Errorf("vocabulary.service.VocabularuSvc.AddWordInVocabulary - add tag: %w", err)
@@ -95,7 +89,7 @@ func (s *VocabularySvc) AddWordInVocabulary(ctx context.Context, v *dto.AddWordR
 	}
 
 	vocabulary := entity.Vocabulary{
-		DictionaryId:   v.DictionaryID,
+		DictionaryId:   dictID,
 		NativeWord:     nativeWordID,
 		TranslateWords: translateWordIDs,
 		Examples:       exampleIDs,
@@ -110,10 +104,10 @@ func (s *VocabularySvc) AddWordInVocabulary(ctx context.Context, v *dto.AddWordR
 	return nil
 }
 
-func (s *VocabularySvc) DeleteWordFromVocabulary(ctx context.Context, v *dto.RemoveWordRq) error {
+func (s *VocabularySvc) DeleteWordFromVocabulary(ctx context.Context, dictID, nativeWordID uuid.UUID) error {
 	vocabulary := entity.Vocabulary{
-		DictionaryId: v.DictionaryID,
-		NativeWord:   v.NativeWordID,
+		DictionaryId: dictID,
+		NativeWord:   nativeWordID,
 	}
 
 	_, err := s.repo.DeleteWord(ctx, vocabulary)

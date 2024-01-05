@@ -8,8 +8,7 @@ import (
 	"time"
 
 	"lingua-evo/internal/config"
-	"lingua-evo/internal/services/auth/dto"
-	"lingua-evo/internal/services/auth/entity"
+	entity "lingua-evo/internal/services/auth"
 	entityUser "lingua-evo/internal/services/user/entity"
 	"lingua-evo/pkg/token"
 	"lingua-evo/pkg/utils"
@@ -31,7 +30,6 @@ type (
 		GetSession(ctx context.Context, refreshTokenID uuid.UUID) (*entity.Session, error)
 		GetCountSession(ctx context.Context, userID uuid.UUID) (int64, error)
 		DeleteSession(ctx context.Context, session uuid.UUID) error
-		DeleteAllUserSessions(ctx context.Context, userID uuid.UUID) error
 	}
 
 	userSvc interface {
@@ -52,12 +50,12 @@ func NewService(repo sessionRepo, userSvc userSvc) *AuthSvc {
 	}
 }
 
-func (s *AuthSvc) Login(ctx context.Context, sessionRq *dto.CreateSessionRq) (*entity.Tokens, error) {
-	u, err := s.userSvc.GetUser(ctx, sessionRq.User)
+func (s *AuthSvc) Login(ctx context.Context, user, password, fingerprint string) (*entity.Tokens, error) {
+	u, err := s.userSvc.GetUser(ctx, user)
 	if err != nil {
 		return nil, fmt.Errorf("auth.service.AuthSvc.CreateSession - getUser: %v", err)
 	}
-	if err := utils.CheckPasswordHash(sessionRq.Password, u.PasswordHash); err != nil {
+	if err := utils.CheckPasswordHash(password, u.PasswordHash); err != nil {
 		return nil, fmt.Errorf("auth.service.AuthSvc.CreateSession - incorrect password: %v", err)
 	}
 
@@ -66,7 +64,7 @@ func (s *AuthSvc) Login(ctx context.Context, sessionRq *dto.CreateSessionRq) (*e
 	now := time.Now().UTC()
 	session := &entity.Session{
 		UserID:      u.ID,
-		Fingerprint: sessionRq.Fingerprint,
+		Fingerprint: fingerprint,
 		CreatedAt:   now,
 	}
 
@@ -108,11 +106,6 @@ func (s *AuthSvc) RefreshSessionToken(ctx context.Context, refreshToken uuid.UUI
 		return nil, fmt.Errorf("auth.service.AuthSvc.RefreshSessionToken: %w", errNotEqualFingerprints)
 	}
 
-	err = s.repo.DeleteSession(ctx, refreshToken)
-	if err != nil {
-		return nil, fmt.Errorf("auth.service.AuthSvc.RefreshSessionToken - delete session: %v", err)
-	}
-
 	tokenID := uuid.New()
 	newSession := &entity.Session{
 		UserID:      oldRefreshSession.UserID,
@@ -123,6 +116,11 @@ func (s *AuthSvc) RefreshSessionToken(ctx context.Context, refreshToken uuid.UUI
 	err = s.addRefreshSession(ctx, tokenID, newSession)
 	if err != nil {
 		return nil, fmt.Errorf("auth.service.AuthSvc.RefreshSessionToken - addRefreshSession: %v", err)
+	}
+
+	err = s.repo.DeleteSession(ctx, refreshToken)
+	if err != nil {
+		return nil, fmt.Errorf("auth.service.AuthSvc.RefreshSessionToken - delete session: %v", err)
 	}
 
 	additionalTime := config.GetConfig().JWT.ExpireAccess

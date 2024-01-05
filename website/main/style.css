@@ -7,86 +7,67 @@ body {
     font-family: 'Times New Roman', Times, serif
 }
 
-.navbar {
-    display: flex;
-    justify-content: space-between;
-    background-color: gray;
-    padding: 2px 6px;
-}
+.header {
+    .navbar {
+        display: flex;
+        justify-content: space-between;
+        background-color: gray;
+        padding: 2px 6px;
 
-.left-side {
-    display: inherit;
-    align-items: center;
-    white-space: nowrap;
-}
+        .left-side {
+            display: inherit;
+            align-items: center;
+            white-space: nowrap;
 
-.left-side>a {
-    display: inherit;
-    text-decoration: none;
-    color: black;
-    font-size: large;
-}
+            a {
+                display: inherit;
+                text-decoration: none;
+                color: black;
+                font-size: large;
 
-.logo {
-    display: inherit;
-    margin-right: 6px;
-    width: 30px;
-}
+                .logo {
+                    display: inherit;
+                    margin-right: 6px;
+                    width: 30px;
+                }
 
-.brand {
-    display: inherit;
-    align-items: center;
-    font-weight: 800;
-    font-size: larger;
-}
+                .brand {
+                    display: inherit;
+                    align-items: center;
+                    font-weight: 800;
+                    font-size: larger;
+                }
+            }
+        }
 
-.right-side {
-    display: inherit;
-    align-items: center;
-}
+        .right-side {
+            display: inherit;
+            align-items: center;
 
-.right-side>a {
-    text-decoration: none;
-    margin: 0px 10px;
-    color: black;
-    font-size: 18px;
-    text-transform: uppercase;
-    transition: 200ms;
-}
+            .border {
+                display: inherit;
+                border: 1px solid black;
+                border-radius: 6px;
+                margin: 0px 8px;
 
-.right-side>a:hover {
-    color: white;
-    transition: 200ms;
-}
+                .panelBtn {
+                    display: inherit;
+                    background-color: gray;
+                    border: none;
+                    margin: 0px 4px;
+                    padding: 2px 4px;
+                    transition: 200ms;
+                    font-size: 14px;
+                    cursor: pointer;
 
-.vertical-line {
-    border-left: 1px solid silver;
-    height: 26px;
-    border-radius: 6px;
-    margin: 0px 4px;
-}
-
-.border {
-    display: inherit;
-    border: 1px solid black;
-    border-radius: 6px;
-    margin: 0px 8px;
-}
-
-.accountBtn {
-    display: inherit;
-    background-color: gray;
-    border: none;
-    margin: 0px 4px;
-    padding: 2px 4px;
-    transition: 200ms;
-    font-size: 14px;
-}
-
-.accountBtn:hover {
-    color: slategray;
-    color: white;
-    transition: 200ms;
+                    &:hover {
+                        color: white;
+                        transition: 200ms;
+                    }
+                }
+            }
+        }
+    }
 }
 
 .container {
@@ -94,10 +75,10 @@ body {
     justify-content: center;
     align-items: center;
     height: 100vh;
-}
 
-.grid-container {
-    display: grid;
-    place-items: center;
-    height: 100vh;
+    .grid-container {
+        display: grid;
+        place-items: center;
+        height: 100vh;
+    }
 }
