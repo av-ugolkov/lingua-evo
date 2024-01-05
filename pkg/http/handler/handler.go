@@ -8,6 +8,7 @@ import (
 	"lingua-evo/runtime"
 	"log/slog"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -53,7 +54,8 @@ func (h *Handler) CheckBody(body any) error {
 	return nil
 }
 
-func (h *Handler) SendData(data []byte) {
+func (h *Handler) SendData(httpStatus int, data []byte) {
+	h.responseWriter.WriteHeader(httpStatus)
 	_, err := h.responseWriter.Write(data)
 	if err != nil {
 		slog.Error(fmt.Errorf("http.handler.SendError: %v", err).Error())
@@ -105,6 +107,17 @@ func (h *Handler) Cookie(name string) (*http.Cookie, error) {
 	}
 }
 
+func (h *Handler) DeleteCookie(name string) {
+	cookie := &http.Cookie{
+		Name:     name,
+		Value:    "",
+		MaxAge:   0,
+		HttpOnly: true,
+		Secure:   true,
+	}
+	http.SetCookie(h.responseWriter, cookie)
+}
+
 func (h *Handler) GetCookieLanguageOrDefault() string {
 	cookie, err := h.request.Cookie(common.Language)
 	switch {
@@ -134,12 +147,17 @@ func (h *Handler) getHeader(name string) (string, error) {
 	return value, nil
 }
 
-func (h *Handler) GetHeaderAuthorization() (string, error) {
-	return h.getHeader("Authorization")
-}
+func (h *Handler) GetHeaderAuthorization(typeAuth common.TypeAuth) (string, error) {
+	token, err := h.getHeader("Authorization")
+	if err != nil {
+		return "", fmt.Errorf("http.handler.GetHeaderAuthorization: %w", err)
+	}
 
-func (h *Handler) GetHeaderAccessToken() (string, error) {
-	return h.getHeader("Access-Token")
+	if !strings.HasPrefix(token, string(typeAuth)) {
+		return "", fmt.Errorf("http.handler.GetHeaderAuthorization - invalid type auth [%s]: %s", typeAuth, token)
+	}
+
+	return token[len(string(typeAuth))+1:], nil
 }
 
 func (h *Handler) GetHeaderFingerprint() (string, error) {

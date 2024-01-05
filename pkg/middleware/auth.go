@@ -3,10 +3,10 @@ package middleware
 import (
 	"errors"
 	"net/http"
-	"strings"
 
 	"lingua-evo/internal/config"
 	"lingua-evo/pkg/http/handler"
+	"lingua-evo/pkg/http/handler/common"
 	"lingua-evo/pkg/token"
 	"lingua-evo/runtime"
 )
@@ -18,14 +18,13 @@ var (
 func Auth(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		handler := handler.NewHandler(w, r)
-		var auth string
+		var bearerToken string
 		var err error
-		if auth, err = handler.GetHeaderAuthorization(); err != nil {
+		if bearerToken, err = handler.GetHeaderAuthorization(common.AuthTypeBearer); err != nil {
 			handler.SendError(http.StatusUnauthorized, errNotFoundToken)
 			return
 		}
-		tokenStr := strings.Split(auth, " ")[1]
-		claims, err := token.ValidateJWT(tokenStr, config.GetConfig().JWT.Secret)
+		claims, err := token.ValidateJWT(bearerToken, config.GetConfig().JWT.Secret)
 		if err != nil {
 			handler.SendError(http.StatusUnauthorized, err)
 			return
