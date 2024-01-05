@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	login   = "/auth/login"
+	signin  = "/auth/signin"
 	refresh = "/auth/refresh"
 	logout  = "/auth/logout"
 )
@@ -53,12 +53,12 @@ func newHandler(authSvc *service.AuthSvc) *Handler {
 }
 
 func (h *Handler) register(r *mux.Router) {
-	r.HandleFunc(login, h.login).Methods(http.MethodPost)
+	r.HandleFunc(signin, h.signin).Methods(http.MethodPost)
 	r.HandleFunc(refresh, h.refresh).Methods(http.MethodPost)
 	r.HandleFunc(logout, middleware.Auth(h.logout)).Methods(http.MethodPost)
 }
 
-func (h *Handler) login(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) signin(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		_ = r.Body.Close()
 	}()
@@ -66,24 +66,24 @@ func (h *Handler) login(w http.ResponseWriter, r *http.Request) {
 	handler := handler.NewHandler(w, r)
 	authorization, err := handler.GetHeaderAuthorization()
 	if err != nil {
-		handler.SendError(http.StatusBadRequest, fmt.Errorf("auth.delivery.Handler.login: %v", err))
+		handler.SendError(http.StatusBadRequest, fmt.Errorf("auth.delivery.Handler.signin: %v", err))
 		return
 	}
 	var data CreateSessionRq
 	err = decodeBasicAuth(authorization, &data)
 	if err != nil {
-		handler.SendError(http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.login - check body: %v", err))
+		handler.SendError(http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.signin - check body: %v", err))
 		return
 	}
 	data.Fingerprint, err = handler.GetHeaderFingerprint()
 	if err != nil {
-		handler.SendError(http.StatusBadRequest, fmt.Errorf("auth.delivery.Handler. - GetHeaderFingerprint: %v", err))
+		handler.SendError(http.StatusBadRequest, fmt.Errorf("auth.delivery.Handler.signin - GetHeaderFingerprint: %v", err))
 		return
 	}
 	ctx := r.Context()
 	tokens, err := h.authSvc.Login(ctx, data.User, data.Password, data.Fingerprint)
 	if err != nil {
-		handler.SendError(http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.login - create session: %v", err))
+		handler.SendError(http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.signin - create session: %v", err))
 		return
 	}
 
@@ -91,7 +91,7 @@ func (h *Handler) login(w http.ResponseWriter, r *http.Request) {
 		AccessToken: tokens.AccessToken,
 	})
 	if err != nil {
-		handler.SendError(http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.login - marshal: %v", err))
+		handler.SendError(http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.signin - marshal: %v", err))
 		return
 	}
 

@@ -41,17 +41,7 @@ window.onload = async function () {
     })
         .then(async (response) => {
             if (response.status == 200) {
-                let scriptElement = document.createElement('script');
-                scriptElement.type = 'text/javascript';
-                scriptElement.src = 'website/components/script.js';
-                document.head.appendChild(scriptElement);
-
-                let styleElement = document.createElement('link');
-                styleElement.rel = 'stylesheet';
-                styleElement.href = 'website/components/style.css';
-                document.head.appendChild(styleElement);
-
-                document.getElementById("right-side").innerHTML = await response.text()
+                document.getElementById("account-panel").innerHTML = await response.text()
             }
         })
         .catch((error) => {
@@ -86,23 +76,3 @@ let interval = setInterval(function () {
 function stopInterval() {
     clearInterval(interval)
 }
-
-let bntSignIn = document.getElementById("btnSignup")
-bntSignIn.addEventListener("click", () => {
-    fetch("/signup", {
-        method: "get",
-    }).then((data) => {
-        window.open(data["url"], "_self")
-        console.log(data);
-    })
-})
-
-let bntLogin = document.getElementById("btnLogin")
-bntLogin.addEventListener("click", () => {
-    fetch("/login", {
-        method: "get",
-    }).then((data) => {
-        window.open(data["url"], "_self")
-        console.log(data);
-    })
-})
