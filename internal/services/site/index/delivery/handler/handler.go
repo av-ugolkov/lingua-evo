@@ -26,7 +26,7 @@ const (
 	getAccountPanelURL = "/get-account-panel"
 
 	indexPagePath    = "website/index.html"
-	accountPanelPath = "website/components/account_panel.html"
+	accountPanelPath = "website/components/header/account_panel.html"
 )
 
 type (
@@ -120,10 +120,7 @@ func (h *Handler) getAccountPanel(w http.ResponseWriter, r *http.Request) {
 		handler.SendError(http.StatusBadRequest, fmt.Errorf("site.index.delivery.Handler.getAccountPanel - GetHeaderAccessToken: %v", err))
 		return
 	}
-	fingerprint, err := handler.GetHeaderFingerprint()
-	if err != nil {
-		handler.SendError(http.StatusBadRequest, fmt.Errorf("site.index.delivery.Handler.getAccountPanel - GetHeaderFingerprint: %v", err))
-	}
+
 	claims, err := token.ValidateJWT(accessToken, config.GetConfig().JWT.Secret)
 	if err != nil {
 		handler.SendError(http.StatusBadRequest, fmt.Errorf("site.index.delivery.Handler.getAccountPanel - ValidateJWT: %v", err))
@@ -137,6 +134,12 @@ func (h *Handler) getAccountPanel(w http.ResponseWriter, r *http.Request) {
 		handler.SendError(http.StatusUnauthorized, err)
 		return
 	}
+
+	fingerprint, err := handler.GetHeaderFingerprint()
+	if err != nil {
+		handler.SendError(http.StatusBadRequest, fmt.Errorf("site.index.delivery.Handler.getAccountPanel - GetHeaderFingerprint: %v", err))
+	}
+
 	if session.Fingerprint != fingerprint {
 		handler.SendError(http.StatusUnauthorized, err)
 		return
