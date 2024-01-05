@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	signInURL = "/login"
+	signInURL = "/signin"
 
 	signInPage = "website/sign_in/signin.html"
 )
