@@ -2,6 +2,7 @@
     "dictionary": [
         {
             "word": "get by",
+            "pronunciation": "['get'baɪ]",
             "translate": [
                 "получить"
             ],
@@ -11,6 +12,7 @@
         },
         {
             "word": "get away",
+            "pronunciation": "['getə'weɪ]",
             "translate": [
                 "уходить"
             ],
@@ -20,6 +22,7 @@
         },
         {
             "word": "get into",
+            "pronunciation": "[get] ['ɪntu:]",
             "translate": [
                 "попасть в"
             ],
@@ -29,6 +32,7 @@
         },
         {
             "word": "get together",
+            "pronunciation": "['gettə'geðə]",
             "translate": [
                 "собираться"
             ],
@@ -38,6 +42,7 @@
         },
         {
             "word": "get away with it",
+            "pronunciation": "['getə'weɪ] [wɪð] [ɪt]",
             "translate": [
                 "сходить с рук"
             ],
@@ -47,6 +52,7 @@
         },
         {
             "word": "get up to",
+            "pronunciation": "['get'ʌp] [tu:]",
             "translate": [
                 "вставать",
                 "заниматься"
@@ -57,6 +63,7 @@
         },
         {
             "word": "get up",
+            "pronunciation": "['get'ʌp]",
             "translate": [
                 "вставать"
             ],
@@ -67,6 +74,7 @@
         },
         {
             "word": "get rid of",
+            "pronunciation": "[get] [rɪd] [ɔv]",
             "translate": [
                 "избавляться от"
             ],
@@ -76,6 +84,7 @@
         },
         {
             "word": "get to",
+            "pronunciation": "[get] [tu:]",
             "translate": [
                 "добраться до"
             ],
@@ -85,6 +94,7 @@
         },
         {
             "word": "get over",
+            "pronunciation": "['get'əuvə]",
             "translate": [
                 "забыть",
                 "пережить"
@@ -95,6 +105,7 @@
         },
         {
             "word": "get through to",
+            "pronunciation": "['get'θru:] [tu:]",
             "translate": [
                 "пройти к",
                 "дозвониться"
@@ -105,6 +116,7 @@
         },
         {
             "word": "get off",
+            "pronunciation": "['get'ɔf]",
             "translate": [
                 "отправиться",
                 "отделаться"
@@ -115,6 +127,7 @@
         },
         {
             "word": "get wound up",
+            "pronunciation": "[get] [wu:nd] [ʌp]",
             "translate": [
                 "заводиться"
             ],
@@ -124,6 +137,7 @@
         },
         {
             "word": "get out of",
+            "pronunciation": "['get'aut] [ɔv]",
             "translate": [
                 "убираться из",
                 "избежать"
@@ -134,6 +148,7 @@
         },
         {
             "word": "get down",
+            "pronunciation": "['get'daun]",
             "translate": [
                 "спускаться"
             ],
@@ -143,6 +158,7 @@
         },
         {
             "word": "get on with",
+            "pronunciation": "['get'ɔn] [wɪð]",
             "translate": [
                 "ужиться",
                 "ладить"
@@ -153,147 +169,145 @@
         },
         {
             "word": "count on",
+            "pronunciation": "[kaunt] [ɔn]",
             "translate": [
                 "рассчитывать на"
-            ],
-            "example": []
+            ]
         },
         {
             "word": "calm down",
+            "pronunciation": "[kɑ:m] [daun]",
             "translate": [
                 "успокоиться"
-            ],
-            "example": []
+            ]
         },
         {
             "word": "over yonder",
-            "translate": [],
-            "example": []
+            "pronunciation": "['əuvə] ['jɔndə]",
+            "translate": []
         },
         {
             "word": "on a roll",
-            "translate": [],
-            "example": []
+            "pronunciation": "[ɔn] [ə] [rəul]"
         },
         {
             "word": "till the cows come home",
+            "pronunciation": "[tɪl] [ðə] [kauz] [kʌm] [həum]",
             "translate": [
-                "повторять до посинения"
-            ],
-            "example": []
+                "повторять до посинения",
+                "после дождичка в четверг",
+                "когда рак свистнет"
+            ]
         },
         {
             "word": "as all get out",
-            "translate": [],
-            "example": []
+            "pronunciation": "[æs] ['ɔ:l] ['get] [aut]",
+            "translate": [
+                "ужас как",
+                "адски",
+                "ужасно",
+                "чертовски"
+            ]
         },
         {
             "word": "flake out",
-            "translate": [],
-            "example": []
+            "pronunciation": "['fleɪk'aut]",
+            "translate": [
+                "улизнуть",
+                "смыться"
+            ]
         },
         {
             "word": "figure out",
+            "pronunciation": "['fɪgə(r)'aut]",
             "translate": [
                 "понимать",
                 "вычислять"
-            ],
-            "example": []
+            ]
         },
         {
             "word": "turn down",
+            "pronunciation": "['tɜ:n'daun]",
             "translate": [
                 "отказываться",
                 "отклонять"
-            ],
-            "example": []
+            ]
         },
         {
             "word": "put off",
+            "pronunciation": "['put'ɔf]",
             "translate": [
                 "откладывать"
-            ],
-            "example": []
+            ]
         },
         {
             "word": "come up with",
+            "pronunciation": "['kʌm] ['ʌp] [wɪð]",
             "translate": [
                 "придумывать"
-            ],
-            "example": []
+            ]
         },
         {
             "word": "mess up",
+            "pronunciation": "['mes'ʌp]",
             "translate": [
                 "испортить",
                 "портачить"
-            ],
-            "example": []
+            ]
         },
         {
             "word": "miss out",
+            "pronunciation": "['mɪs'aut]",
             "translate": [
                 "пропустить"
-            ],
-            "example": []
+            ]
         },
         {
             "word": "knuckle down",
+            "pronunciation": "['nʌk(ə)l'daun]",
             "translate": [
                 "решительно взяться"
-            ],
-            "example": [
-                ""
             ]
         },
         {
             "word": "fucked out",
+            "pronunciation": "['fʌkt'aut]",
             "translate": [
                 "разбитый",
                 "уставший"
-            ],
-            "example": [],
-            "pronunciation": "['fʌkt'aut]"
+            ]
         },
         {
             "word": "clue",
+            "pronunciation": "[klu:]",
             "translate": [
                 "зацепка"
-            ],
-            "pronunciation": "[klu:]"
+            ]
         },
         {
             "word": "muggy",
+            "pronunciation": "['mʌgɪ]",
             "translate": [
                 "душный"
-            ],
-            "pronunciation": "['mʌgɪ]"
+            ]
         },
         {
             "word": "dump",
+            "pronunciation": "[dʌmp]",
             "translate": [
                 "бросать"
-            ],
-            "pronunciation": "[dʌmp]"
+            ]
         },
         {
             "word": "murder",
+            "pronunciation": "['mɜ:də]",
             "translate": [
                 "убийца"
-            ],
-            "pronunciation": "['mɜ:də]"
+            ]
         },
         {
             "word": "droopy",
-            "translate": [
-                "упавший духом",
-                "впавший в уныние",
-                "разбитый"
-            ],
-            "pronunciation": "['dru:pɪ]"
-        },
-        {
-            "word": "solve a task/problem",
+            "pronunciation": "['dru:pɪ]",
             "translate": [
                 "упавший духом",
                 "впавший в уныние",
@@ -301,54 +315,78 @@
             ]
         },
         {
-            "word": "widespread"
+            "word": "solve a task/problem",
+            "pronunciation": "[sɔlv] [ə] [tɑ:sk]/['prɔbləm]",
+            "translate": [
+                "упавший духом",
+                "впавший в уныние",
+                "разбитый"
+            ]
+        },
+        {
+            "word": "widespread",
+            "pronunciation": "['waɪdsprεd]",
+            "translate": [
+                "распространённый",
+                "раскинувшийся",
+                "масштабный",
+                "обширный",
+                "повсеместный"
+            ]
         },
         {
             "word": "surroundings",
+            "pronunciation": "[sə'raundɪŋz]",
             "translate": [
                 "среда",
                 "окрестности"
-            ],
-            "pronunciation": "[sə'raundɪŋz]"
+            ]
         },
         {
             "word": "depend on",
+            "pronunciation": "[dɪ'pend] [ɔn]",
             "translate": [
                 "зависит от"
             ]
         },
         {
             "word": "surrounded by",
+            "pronunciation": "[sə'raund] [baɪ]",
             "translate": [
                 "окружен"
             ]
         },
         {
             "word": "under development",
+            "pronunciation": "['ʌndə] [dɪ'veləpmənt]",
             "translate": [
                 "в разработке"
             ]
         },
         {
             "word": "pick us up",
+            "pronunciation": "[pɪk] [ʌs] [ʌp]",
             "translate": [
                 "подбери нас"
             ]
         },
         {
             "word": "it stand for",
+            "pronunciation": "[ɪt] [stænd] [fɔ:]",
             "translate": [
                 "это означает"
             ]
         },
         {
             "word": "explanation",
+            "pronunciation": "['eksplə'neɪʃ(ə)n]",
             "translate": [
                 "объяснение"
             ]
         },
         {
             "word": "operate",
+            "pronunciation": "['ɔpəreɪt]",
             "translate": [
                 "работать",
                 "управлять",
@@ -357,6 +395,7 @@
         },
         {
             "word": "foundational",
+            "pronunciation": "[faun'deɪʃ(ə)nəl]",
             "translate": [
                 "основополагающий"
             ]
@@ -373,6 +412,7 @@
         },
         {
             "word": "impact",
+            "pronunciation": "['ɪmpækt]",
             "translate": [
                 "влияние",
                 "воздействие",
@@ -381,6 +421,7 @@
         },
         {
             "word": "decrease",
+            "pronunciation": "['di:kri:s]",
             "translate": [
                 "уменьшение",
                 "понижение",
@@ -389,6 +430,7 @@
         },
         {
             "word": "introduce",
+            "pronunciation": "['ɪntrə'dju:s]",
             "translate": [
                 "вводить",
                 "вносить",
@@ -397,6 +439,7 @@
         },
         {
             "word": "relevant",
+            "pronunciation": "['relɪv(ə)nt]",
             "translate": [
                 "релевантный",
                 "уместный"
@@ -425,6 +468,7 @@
         },
         {
             "word": "allocate",
+            "pronunciation": "['æləkeɪt]",
             "translate": [
                 "распределять",
                 "предназначать"
@@ -450,6 +494,7 @@
         },
         {
             "word": "entire",
+            "pronunciation": "[ɪn'taɪə]",
             "translate": [
                 "весь",
                 "целый",
@@ -472,17 +517,17 @@
         },
         {
             "word": "abdomen",
+            "pronunciation": "['æbdəmən]",
             "translate": [
                 "живот"
-            ],
-            "pronunciation": "['æbdəmən]"
+            ]
         },
         {
             "word": "appendicitis",
+            "pronunciation": "[əˌpendɪˈsaɪtɪs]",
             "translate": [
                 "аппендицит"
-            ],
-            "pronunciation": "[əˌpendɪˈsaɪtɪs]"
+            ]
         },
         {
             "word": "dismiss",
@@ -497,69 +542,189 @@
         },
         {
             "word": "required",
+            "pronunciation": "[rɪ'kwaɪəd]",
             "translate": [
                 "необходимый"
             ]
         },
         {
-            "word": "capable"
+            "word": "capable",
+            "pronunciation": "['keɪpəb(ə)l]",
+            "translate": [
+                "способный",
+                "одарённый",
+                "умелый"
+            ]
         },
         {
-            "word": "response"
+            "word": "response",
+            "pronunciation": "[rɪ'spɔns]",
+            "translate": [
+                "отклик",
+                "ответ",
+                "реакция",
+                "реагирование",
+                "ответное чувство"
+            ]
         },
         {
-            "word": "explore"
+            "word": "explore",
+            "pronunciation": "[ɪk'splɔ:]",
+            "translate": [
+                "изучать",
+                "исследовать",
+                "выяснять",
+                "обследовать",
+                "изучить"
+            ]
         },
         {
-            "word": "artificial"
+            "word": "artificial",
+            "pronunciation": "['ɑ:tɪ'fɪʃ(ə)l]",
+            "translate": [
+                "фальшивый",
+                "искусственный",
+                "не природный",
+                "притворный",
+                "надуманный"
+            ]
         },
         {
-            "word": "consume"
+            "word": "consume",
+            "pronunciation": "[kən'sju:m]",
+            "translate": [
+                "потреблять",
+                "расходовать",
+                "поглощать",
+                "израсходовать"
+            ]
         },
         {
-            "word": "keep track"
+            "word": "keep track of",
+            "pronunciation": "[ki:p] [træk] [ɔv]",
+            "translate": [
+                "следить за развитием",
+                "постоянно отслеживать",
+                "следить",
+                "следить за"
+            ]
         },
         {
-            "word": "gain"
+            "word": "gain",
+            "pronunciation": "[geɪn]",
+            "translate": [
+                "барыши",
+                "прибыль",
+                "положительный эффект"
+            ]
         },
         {
-            "word": "mental"
+            "word": "mental",
+            "pronunciation": "[mentl]",
+            "translate": [
+                "мысленный",
+                "психический",
+                "душевный"
+            ]
         },
         {
-            "word": "decrease"
+            "word": "strengthen",
+            "pronunciation": "['streŋθ(ə)n]",
+            "translate": [
+                "усиливать",
+                "усилить",
+                "укреплять"
+            ]
         },
         {
-            "word": "strengthen"
+            "word": "widen",
+            "pronunciation": "['waɪdn]",
+            "translate": [
+                "расширять",
+                "расширяться",
+                "распространять",
+                "набирать обороты",
+                "пополниться"
+            ]
         },
         {
-            "word": "widen"
+            "word": "heighten",
+            "pronunciation": "[haɪtn]",
+            "translate": [
+                "повысить",
+                "усиливать",
+                "повышаться",
+                "усиливаться"
+            ]
         },
         {
-            "word": "heighten"
+            "word": "lengthen",
+            "pronunciation": "['leŋθ(ə)n]",
+            "translate": [
+                "затягивать",
+                "прибавить",
+                "прибавлять",
+                "продлевать",
+                "надвивать"
+            ]
         },
         {
-            "word": "lengthen"
+            "word": "shorten",
+            "pronunciation": "['ʃɔ:tn]",
+            "translate": [
+                "урезать",
+                "сокращать",
+                "уменьшать"
+            ]
         },
         {
-            "word": "shorten"
-        },
-        {
-            "word": "weaken"
+            "word": "weaken",
+            "pronunciation": "['wi:kən]",
+            "translate": [
+                "слабеть",
+                "поддаваться",
+                "сдаваться",
+                "расслаблять"
+            ]
         },
         {
             "word": "dedicate",
-            "pronunciation": "['dedɪkeɪt]"
+            "pronunciation": "['dedɪkeɪt]",
+            "translate": [
+                "посвящать (чему-либо)",
+                "отдавать",
+                "заполнять время",
+                "надписывать",
+                "освящать"
+            ]
         },
         {
-            "word": "dig, dug, dug"
+            "word": "dig",
+            "pronunciation": "[dɪg]",
+            "translate": [
+                "копать",
+                "выкапывать"
+            ]
         },
         {
             "word": "renovation",
-            "pronunciation": "['renə'veɪʃ(ə)n]"
+            "pronunciation": "['renə'veɪʃ(ə)n]",
+            "translate": [
+                "реставрация",
+                "освежение",
+                "обновление",
+                "реставрирование"
+            ]
         },
         {
             "word": "violent",
-            "pronunciation": "['vaɪələnt]"
+            "pronunciation": "['vaɪələnt]",
+            "translate": [
+                "ожесточённый",
+                "яростный",
+                "неистовый",
+                "отчаянный"
+            ]
         },
         {
             "word": "mentality",
@@ -578,7 +743,7 @@
         },
         {
             "word": "to converse",
-            "pronunciation": "[kənˈvɜːs]",
+            "pronunciation": "[kən'vɜ:s]",
             "translate": [
                 "общаться (с кем-либо)",
                 "беседовать (с кем-либо)"
@@ -594,6 +759,7 @@
         },
         {
             "word": "concealing",
+            "pronunciation": "[kən'si:lɪŋ]",
             "translate": [
                 "укрывание",
                 "скрывание",
@@ -1564,6 +1730,359 @@
                 "необъективность",
                 "пристрастие",
                 "склонность"
+            ]
+        },
+        {
+            "word": "expression",
+            "pronunciation": "[ɪk'spreʃ(ə)n]",
+            "translate": [
+                "выражение (лица, глаз и т.п.)",
+                "выразительность",
+                "экспрессия",
+                "выжимание (сока, масла и т. п.)"
+            ]
+        },
+        {
+            "word": "fire",
+            "pronunciation": "['faɪə]",
+            "translate": [
+                "огонь",
+                "пожар",
+                "костёр",
+                "воодушевление",
+                "пламя",
+                "орудийный огонь"
+            ]
+        },
+        {
+            "word": "pure",
+            "pronunciation": "[pjuə]",
+            "translate": [
+                "очищать",
+                "чистить",
+                "очищать",
+                "чистить"
+            ]
+        },
+        {
+            "word": "worthless",
+            "pronunciation": "['wɜ:θlɪs]",
+            "translate": [
+                "ничего не стоящий",
+                "не имеющий никакой ценности",
+                "бесполезный",
+                "никчёмный",
+                "никудышный"
+            ]
+        },
+        {
+            "word": "prove",
+            "pronunciation": "[pru:v]",
+            "translate": [
+                "доказать",
+                "удостоверять",
+                "удостоверить",
+                "подтверждать",
+                "подтвердить"
+            ]
+        },
+        {
+            "word": "garment",
+            "pronunciation": "['gɑ:mənt]",
+            "translate": [
+                "предмет одежды",
+                "одежда",
+                "покров",
+                "одеяние",
+                "наряд"
+            ]
+        },
+        {
+            "word": "hood",
+            "pronunciation": "[hud]",
+            "translate": [
+                "капюшон (плаща)",
+                "чепец",
+                "чепчик"
+            ]
+        },
+        {
+            "word": "unpredictable",
+            "pronunciation": "['ʌnprɪ'dɪktəb(ə)l]",
+            "translate": [
+                "непредсказуемый",
+                "непредвиденный"
+            ]
+        },
+        {
+            "word": "grand",
+            "pronunciation": "[grænd]",
+            "translate": [
+                "тысяча долларов",
+                "тысячедолларовая банкнота"
+            ]
+        },
+        {
+            "word": "clarity",
+            "pronunciation": "['klærɪtɪ]",
+            "translate": [
+                "чистота",
+                "прозрачность",
+                "ясность",
+                "разборчивость",
+                "наглядность",
+                "понятность (о манере изложения, стиле)",
+                "чёткость"
+            ]
+        },
+        {
+            "word": "bury",
+            "pronunciation": "['berɪ]",
+            "translate": [
+                "совершать погребальный обряд",
+                "зарыть в землю",
+                "похоронить",
+                "предать забвению"
+            ]
+        },
+        {
+            "word": "shoot out",
+            "pronunciation": "['ʃu:t'aut]",
+            "translate": [
+                "распускаться",
+                "извергать",
+                "выбрасывать",
+                "выбрасывать (ростки)"
+            ]
+        },
+        {
+            "word": "vantage",
+            "pronunciation": "['vɑ:ntɪʤ]",
+            "translate": [
+                "выгода",
+                "преимущество",
+                "польза",
+                "удобство"
+            ]
+        },
+        {
+            "word": "smash",
+            "pronunciation": "[smæʃ]",
+            "translate": [
+                "грохот",
+                "стук при падении",
+                "столкновении",
+                "столкновение",
+                "катастрофа"
+            ]
+        },
+        {
+            "word": "amauters",
+            "pronunciation": "['æmət(ʃ)ə]",
+            "translate": [
+                "любитель",
+                "непрофессионал",
+                "дилетант"
+            ]
+        },
+        {
+            "word": "funeral",
+            "pronunciation": "['fju:n(ə)rəl]",
+            "translate": [
+                "похороны",
+                "похоронная процессия",
+                "заупокойная служба",
+                "панихида"
+            ]
+        },
+        {
+            "word": "crews",
+            "pronunciation": "[kru:]",
+            "translate": [
+                "судовая команда",
+                "бригада",
+                "шайка",
+                "команда",
+                "экипаж корабля"
+            ]
+        },
+        {
+            "word": "van",
+            "pronunciation": "[væn]",
+            "translate": [
+                "фургон",
+                "багажный или товарный вагон"
+            ]
+        },
+        {
+            "word": "awkward",
+            "pronunciation": "['ɔ:kwəd]",
+            "translate": [
+                "неловкий",
+                "неуклюжий",
+                "нескладный"
+            ]
+        },
+        {
+            "word": "vouch",
+            "pronunciation": "[vauʧ]",
+            "translate": [
+                "ручаться",
+                "подтверждать",
+                "подкреплять"
+            ]
+        },
+        {
+            "word": "guidance",
+            "pronunciation": "['gaɪd(ə)ns]",
+            "translate": [
+                "руководство",
+                "водительство",
+                "наставничество",
+                "руководящее участие"
+            ]
+        },
+        {
+            "word": "borrow",
+            "pronunciation": "['bɔrəu]",
+            "translate": [
+                "поручительство",
+                "гарантия"
+            ]
+        },
+        {
+            "word": "bonding",
+            "pronunciation": "['bɔndɪŋ]",
+            "translate": [
+                "пайка",
+                "единение",
+                "сближение",
+                "сближающее общение "
+            ]
+        },
+        {
+            "word": "midlife",
+            "pronunciation": "['mɪdˌlaɪf]",
+            "translate": [
+                "зрелый возраст"
+            ]
+        },
+        {
+            "word": "jerk",
+            "pronunciation": "[ʤɜ:k]",
+            "translate": [
+                "рывок",
+                "толчок",
+                "вяленое мясо",
+                "вяленая говядина",
+                "козлина",
+                "недоносок",
+                "дурачок",
+                "глупый человек"
+            ]
+        },
+        {
+            "word": "cab",
+            "pronunciation": "[kæb]",
+            "translate": [
+                "будка машиниста",
+                "извозчик",
+                "такси",
+                "будка"
+            ]
+        },
+        {
+            "word": "mad",
+            "pronunciation": "[mæd]",
+            "translate": [
+                "совсем из ума выжил",
+                "быть без ума",
+                "помешанный на"
+            ]
+        },
+        {
+            "word": "stake",
+            "pronunciation": "[steɪk]",
+            "translate": [
+                "ставка",
+                "куш",
+                "заклад"
+            ]
+        },
+        {
+            "word": "pitch",
+            "pronunciation": "[pɪʧ]",
+            "translate": [
+                "высота (тона, звука, голоса)",
+                "питч",
+                "обычное место (уличного торговца)"
+            ]
+        },
+        {
+            "word": "penetrate",
+            "pronunciation": "['penɪtreɪt]",
+            "translate": [
+                "проникать",
+                "проникать внутрь",
+                "проходить",
+                "вторгаться",
+                "постигать"
+            ]
+        },
+        {
+            "word": "vent for",
+            "pronunciation": "[vent] [fɔ:]",
+            "translate": [
+                "дать выход"
+            ]
+        },
+        {
+            "word": "suspect",
+            "pronunciation": "['sʌspekt]",
+            "translate": [
+                "подозреваемый",
+                "подозреваемый человек",
+                "подозреваемое лицо"
+            ]
+        },
+        {
+            "word": "lurking",
+            "pronunciation": "['lɜ:kɪŋ]",
+            "translate": [
+                "сокрытие",
+                "скрытное наблюдение",
+                "пассивное участие"
+            ]
+        },
+        {
+            "word": "pounce",
+            "pronunciation": "[pauns]",
+            "translate": [
+                "внезапный налёт",
+                "наскок",
+                "прыжок",
+                "внезапный прыжок"
+            ]
+        },
+        {
+            "word": "faith",
+            "pronunciation": "[feɪθ]",
+            "translate": [
+                "вера",
+                "доверие",
+                "религия",
+                "вероисповедание",
+                "верность",
+                "лояльность"
+            ]
+        },
+        {
+            "word": "fragile",
+            "pronunciation": "['fræʤaɪl]]",
+            "translate": [
+                "ломкий",
+                "слабый",
+                "недолговечный"
             ]
         }
     ]
