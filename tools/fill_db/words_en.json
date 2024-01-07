@@ -1896,7 +1896,7 @@
             ]
         },
         {
-            "word": "crews",
+            "word": "crew",
             "pronunciation": "[kru:]",
             "translate": [
                 "судовая команда",
@@ -2078,11 +2078,73 @@
         },
         {
             "word": "fragile",
-            "pronunciation": "['fræʤaɪl]]",
+            "pronunciation": "['fræʤaɪl]",
             "translate": [
                 "ломкий",
                 "слабый",
                 "недолговечный"
+            ]
+        },
+        {
+            "word": "fraud",
+            "pronunciation": "[frɔ:d]",
+            "translate": [
+                "мошенничество",
+                "мошеннические действия",
+                "мошенник"
+            ]
+        },
+        {
+            "word": "deserve",
+            "pronunciation": "[dɪ'zɜ:v]",
+            "translate": [
+                "быть достойным (чего-либо)",
+                "заслуживать (чего-либо)"
+            ]
+        },
+        {
+            "word": "owe",
+            "pronunciation": "[əu]",
+            "translate": [
+                "быть должным",
+                "быть в долгу"
+            ]
+        },
+        {
+            "word": "accurate",
+            "pronunciation": "['ækjərət]",
+            "translate": [
+                "точный",
+                "правильный",
+                "тщательный",
+                "прилежный"
+            ]
+        },
+        {
+            "word": "nurture",
+            "pronunciation": "['nɜ:ʧə]",
+            "translate": [
+                "вынашивать (план и т.п.)"
+            ]
+        },
+        {
+            "word": "guilty",
+            "pronunciation": "['gɪltɪ]",
+            "translate": [
+                "виновный",
+                "преступный",
+                "виноватый"
+            ]
+        },
+        {
+            "word": "concede",
+            "pronunciation": "[kən'si:d]",
+            "translate": [
+                "уступать (что-либо)",
+                "допускать",
+                "уступить",
+                "допустить",
+                "признавать"
             ]
         }
     ]
