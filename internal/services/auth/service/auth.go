@@ -9,7 +9,7 @@ import (
 
 	"lingua-evo/internal/config"
 	entity "lingua-evo/internal/services/auth"
-	entityUser "lingua-evo/internal/services/user/entity"
+	entityUser "lingua-evo/internal/services/user"
 	"lingua-evo/pkg/token"
 	"lingua-evo/pkg/utils"
 

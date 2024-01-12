@@ -1,8 +1,9 @@
-package entity
+package user
 
 import (
 	"errors"
 	"fmt"
+	"lingua-evo/runtime"
 	"time"
 
 	"github.com/google/uuid"
@@ -31,7 +32,7 @@ type (
 		Name         string
 		Email        string
 		PasswordHash string
-		Role         string
+		Role         runtime.Role
 		CreatedAt    time.Time
 		LastVisitAt  time.Time
 	}
