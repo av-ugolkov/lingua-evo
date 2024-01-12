@@ -8,11 +8,11 @@ import (
 	"fmt"
 	"net/http"
 
-	"lingua-evo/internal/services/user/dto"
-	"lingua-evo/internal/services/user/entity"
+	entity "lingua-evo/internal/services/user"
 	"lingua-evo/internal/services/user/service"
 	"lingua-evo/pkg/http/handler"
 	"lingua-evo/pkg/utils"
+	"lingua-evo/runtime"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
@@ -25,6 +25,24 @@ const (
 )
 
 type (
+	CreateUserRq struct {
+		Username string `json:"username"`
+		Password string `json:"password"`
+		Email    string `json:"email"`
+	}
+
+	CreateUserRs struct {
+		UserID uuid.UUID `json:"user_id"`
+	}
+
+	GetIDRq struct {
+		Value string `json:"value"`
+	}
+
+	UserIDRs struct {
+		ID uuid.UUID `json:"id"`
+	}
+
 	Handler struct {
 		userSvc *service.UserSvc
 	}
@@ -53,7 +71,7 @@ func (h *Handler) createAccount(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	handler := handler.NewHandler(w, r)
-	var data dto.CreateUserRq
+	var data CreateUserRq
 	err := handler.CheckBody(&data)
 	if err != nil {
 		handler.SendError(http.StatusBadRequest, fmt.Errorf("user.delivery.Handler.createAccount - check body: %v", err))
@@ -83,13 +101,13 @@ func (h *Handler) createAccount(w http.ResponseWriter, r *http.Request) {
 
 	data.Password = hashPassword
 
-	uid, err := h.userSvc.CreateUser(r.Context(), &data)
+	uid, err := h.userSvc.CreateUser(r.Context(), data.Username, data.Password, data.Email, runtime.User)
 	if err != nil {
 		handler.SendError(http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.createAccount - create user: %v", err))
 		return
 	}
 
-	b, err := json.Marshal(&dto.CreateUserRs{
+	b, err := json.Marshal(&CreateUserRs{
 		UserID: uid,
 	})
 	if err != nil {
@@ -108,7 +126,7 @@ func (h *Handler) getUserByName(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	handler := handler.NewHandler(w, r)
-	var data dto.GetIDRq
+	var data GetIDRq
 
 	err := handler.CheckBody(&data)
 	if err != nil {
@@ -123,7 +141,7 @@ func (h *Handler) getUserByName(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userID := dto.UserIDRs{
+	userID := UserIDRs{
 		ID: user.ID,
 	}
 	b, err := json.Marshal(userID)
@@ -140,7 +158,7 @@ func (h *Handler) getUserByEmail(w http.ResponseWriter, r *http.Request) {
 	}()
 	handler := handler.NewHandler(w, r)
 
-	var data dto.GetIDRq
+	var data GetIDRq
 
 	if err := handler.CheckBody(&data); err != nil {
 		handler.SendError(http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.getIDByEmail - check body: %v", err))
@@ -154,7 +172,7 @@ func (h *Handler) getUserByEmail(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userID := dto.UserIDRs{
+	userID := UserIDRs{
 		ID: user.ID,
 	}
 	b, err := json.Marshal(userID)

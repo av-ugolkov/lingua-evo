@@ -6,7 +6,7 @@ import (
 
 	"lingua-evo/internal/config"
 	entityAuth "lingua-evo/internal/services/auth"
-	entityUser "lingua-evo/internal/services/user/entity"
+	entityUser "lingua-evo/internal/services/user"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
