@@ -136,7 +136,7 @@ func (h *Handler) WriteHeader(httpStatus int) {
 }
 
 func (h *Handler) SetHeader(ney, value string) {
-	h.request.Header.Set(ney, value)
+	h.responseWriter.Header().Set(ney, value)
 }
 
 func (h *Handler) getHeader(name string) (string, error) {
