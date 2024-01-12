@@ -3,13 +3,10 @@ package handler
 import (
 	"encoding/json"
 	"fmt"
-	"log/slog"
 	"net/http"
 
-	entityLanguage "lingua-evo/internal/services/lingua/language"
 	serviceLang "lingua-evo/internal/services/lingua/language/service"
 	serviceWord "lingua-evo/internal/services/lingua/word/service"
-	"lingua-evo/pkg/files"
 	"lingua-evo/pkg/http/handler"
 	"lingua-evo/pkg/middleware"
 
@@ -18,13 +15,10 @@ import (
 )
 
 const (
-	openPage      = "/word/openPage"
 	addWord       = "/word/add"
 	getWord       = "/word/get"
 	getRandomWord = "/word/get_random"
 )
-
-const addWordPage = "dictionary/add_word/add_word.html"
 
 type (
 	AddWordRq struct {
@@ -70,38 +64,9 @@ func newHandler(wordSvc *serviceWord.WordSvc, langSvc *serviceLang.LanguageSvc) 
 }
 
 func (h *Handler) register(r *mux.Router) {
-	r.HandleFunc(openPage, h.openPage).Methods(http.MethodGet)
 	r.HandleFunc(addWord, middleware.Auth(h.addWord)).Methods(http.MethodPost)
 	r.HandleFunc(getWord, h.getWord).Methods(http.MethodPost)
 	r.HandleFunc(getRandomWord, h.getRandomWord).Methods(http.MethodPost)
-}
-
-func (h *Handler) openPage(w http.ResponseWriter, r *http.Request) {
-	t, err := files.ParseFiles(addWordPage)
-	if err != nil {
-		slog.Error(fmt.Errorf("add_word.get.OpenFile: %v", err).Error())
-		w.WriteHeader(http.StatusNotFound)
-		return
-	}
-
-	languages, err := h.langSvc.GetAvailableLanguages(r.Context())
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		_, _ = w.Write([]byte(err.Error()))
-		return
-	}
-	data := struct {
-		Languages []*entityLanguage.Language
-	}{
-		Languages: languages,
-	}
-
-	err = t.Execute(w, data)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		_, _ = w.Write([]byte(err.Error()))
-		return
-	}
 }
 
 func (h *Handler) addWord(w http.ResponseWriter, r *http.Request) {
@@ -195,5 +160,6 @@ func (h *Handler) getRandomWord(w http.ResponseWriter, r *http.Request) {
 		handler.SendError(http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getRandomWord - marshal: %v", err))
 		return
 	}
+	handler.SetHeader("Content-Type", "application/json")
 	handler.SendData(http.StatusOK, b)
 }
