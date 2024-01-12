@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 
-	"lingua-evo/internal/services/user/entity"
+	entity "lingua-evo/internal/services/user"
 
 	"github.com/google/uuid"
 )
