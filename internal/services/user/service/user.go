@@ -10,8 +10,8 @@ import (
 
 	"github.com/google/uuid"
 
-	"lingua-evo/internal/services/user/dto"
-	"lingua-evo/internal/services/user/entity"
+	entity "lingua-evo/internal/services/user"
+	"lingua-evo/runtime"
 )
 
 type (
@@ -42,13 +42,13 @@ func NewService(repo userRepo, redis redis) *UserSvc {
 	}
 }
 
-func (s *UserSvc) CreateUser(ctx context.Context, u *dto.CreateUserRq) (uuid.UUID, error) {
+func (s *UserSvc) CreateUser(ctx context.Context, username, password, email string, role runtime.Role) (uuid.UUID, error) {
 	user := &entity.User{
 		ID:           uuid.New(),
-		Name:         u.Username,
-		PasswordHash: u.Password,
-		Email:        u.Email,
-		Role:         "user",
+		Name:         username,
+		PasswordHash: password,
+		Email:        email,
+		Role:         role,
 		CreatedAt:    time.Now().UTC(),
 		LastVisitAt:  time.Now().UTC(),
 	}
