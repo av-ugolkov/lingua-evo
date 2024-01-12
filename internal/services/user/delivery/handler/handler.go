@@ -11,6 +11,7 @@ import (
 	entity "lingua-evo/internal/services/user"
 	"lingua-evo/internal/services/user/service"
 	"lingua-evo/pkg/http/handler"
+	"lingua-evo/pkg/middleware"
 	"lingua-evo/pkg/utils"
 	"lingua-evo/runtime"
 
@@ -20,6 +21,7 @@ import (
 
 const (
 	createAccount  = "/signup"
+	getUserByID    = "/user/get_by_id"
 	getUserByName  = "/user/get_by_name"
 	getUserByEmail = "/user/get_by_email"
 )
@@ -35,12 +37,15 @@ type (
 		UserID uuid.UUID `json:"user_id"`
 	}
 
-	GetIDRq struct {
+	GetValueRq struct {
 		Value string `json:"value"`
 	}
 
-	UserIDRs struct {
-		ID uuid.UUID `json:"id"`
+	UserRs struct {
+		ID    uuid.UUID    `json:"id"`
+		Name  string       `json:"name"`
+		Email string       `json:"email"`
+		Role  runtime.Role `json:"role"`
 	}
 
 	Handler struct {
@@ -61,8 +66,9 @@ func newHandler(userSvc *service.UserSvc) *Handler {
 
 func (h *Handler) register(r *mux.Router) {
 	r.HandleFunc(createAccount, h.createAccount).Methods(http.MethodPost)
-	r.HandleFunc(getUserByName, h.getUserByName).Methods(http.MethodGet)
-	r.HandleFunc(getUserByEmail, h.getUserByEmail).Methods(http.MethodGet)
+	r.HandleFunc(getUserByID, middleware.Auth(h.getUserByID)).Methods(http.MethodGet)
+	r.HandleFunc(getUserByName, middleware.Auth(h.getUserByName)).Methods(http.MethodPost)
+	r.HandleFunc(getUserByEmail, middleware.Auth(h.getUserByEmail)).Methods(http.MethodPost)
 }
 
 func (h *Handler) createAccount(w http.ResponseWriter, r *http.Request) {
@@ -120,13 +126,43 @@ func (h *Handler) createAccount(w http.ResponseWriter, r *http.Request) {
 	handler.SendData(http.StatusOK, b)
 }
 
+func (h *Handler) getUserByID(w http.ResponseWriter, r *http.Request) {
+	handler := handler.NewHandler(w, r)
+
+	ctx := r.Context()
+	userID, err := runtime.UserIDFromContext(ctx)
+	if err != nil {
+		handler.SendError(http.StatusUnauthorized, fmt.Errorf("user.delivery.Handler.getUserByID - unauthorized: %v", err))
+		return
+	}
+	user, err := h.userSvc.GetUserByID(ctx, userID)
+	if err != nil {
+		handler.SendError(http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.getUserByID: %v", err))
+		return
+	}
+
+	userRs := UserRs{
+		ID:    user.ID,
+		Name:  user.Name,
+		Email: user.Email,
+		Role:  user.Role,
+	}
+	b, err := json.Marshal(userRs)
+	if err != nil {
+		handler.SendError(http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.getUserByID - marshal: %v", err))
+		return
+	}
+	handler.SetHeader("Content-Type", "application/json")
+	handler.SendData(http.StatusOK, b)
+}
+
 func (h *Handler) getUserByName(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		_ = r.Body.Close()
 	}()
 
 	handler := handler.NewHandler(w, r)
-	var data GetIDRq
+	var data GetValueRq
 
 	err := handler.CheckBody(&data)
 	if err != nil {
@@ -141,14 +177,18 @@ func (h *Handler) getUserByName(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userID := UserIDRs{
-		ID: user.ID,
+	userID := UserRs{
+		ID:    user.ID,
+		Name:  user.Name,
+		Email: user.Email,
+		Role:  user.Role,
 	}
 	b, err := json.Marshal(userID)
 	if err != nil {
 		handler.SendError(http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.getIDByName - marshal: %v", err))
 		return
 	}
+	handler.SetHeader("Content-Type", "application/json")
 	handler.SendData(http.StatusOK, b)
 }
 
@@ -158,7 +198,7 @@ func (h *Handler) getUserByEmail(w http.ResponseWriter, r *http.Request) {
 	}()
 	handler := handler.NewHandler(w, r)
 
-	var data GetIDRq
+	var data GetValueRq
 
 	if err := handler.CheckBody(&data); err != nil {
 		handler.SendError(http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.getIDByEmail - check body: %v", err))
@@ -172,14 +212,18 @@ func (h *Handler) getUserByEmail(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userID := UserIDRs{
-		ID: user.ID,
+	userID := UserRs{
+		ID:    user.ID,
+		Name:  user.Name,
+		Email: user.Email,
+		Role:  user.Role,
 	}
 	b, err := json.Marshal(userID)
 	if err != nil {
 		handler.SendError(http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.getIDByEmail - marshal: %v", err))
 		return
 	}
+	handler.SetHeader("Content-Type", "application/json")
 	handler.SendData(http.StatusOK, b)
 }
 
