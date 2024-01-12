@@ -97,6 +97,7 @@ func (h *Handler) signin(w http.ResponseWriter, r *http.Request) {
 
 	additionalTime := config.GetConfig().JWT.ExpireRefresh
 	duration := time.Duration(additionalTime) * time.Second
+
 	handler.SetHeader("Content-Type", "application/json")
 	handler.SetCookieRefreshToken(tokens.RefreshToken, duration)
 	handler.SendData(http.StatusOK, b)

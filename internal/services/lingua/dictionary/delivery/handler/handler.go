@@ -16,10 +16,10 @@ import (
 )
 
 const (
-	addDictionary    = "/dictionary/add"
-	deleteDictionary = "/dictionary/delete"
-	getDictionary    = "/dictionary/get"
-	getAllDictionary = "/dictionary/get_all"
+	addDictionary    = "/account/dictionary/add"
+	deleteDictionary = "/account/dictionary/delete"
+	getDictionary    = "/account/dictionary/get"
+	getAllDictionary = "/account/dictionary"
 )
 
 type (
@@ -60,7 +60,7 @@ func (h *Handler) register(r *mux.Router) {
 	r.HandleFunc(addDictionary, middleware.Auth(h.addDictionary)).Methods(http.MethodPost)
 	r.HandleFunc(deleteDictionary, middleware.Auth(h.deleteDictionary)).Methods(http.MethodDelete)
 	r.HandleFunc(getDictionary, middleware.Auth(h.getDictionary)).Methods(http.MethodPost)
-	r.HandleFunc(getAllDictionary, middleware.Auth(h.getAllDictionary)).Methods(http.MethodPost)
+	r.HandleFunc(getAllDictionary, middleware.Auth(h.getDictionaries)).Methods(http.MethodGet)
 }
 
 func (h *Handler) addDictionary(w http.ResponseWriter, r *http.Request) {
@@ -150,7 +150,7 @@ func (h *Handler) getDictionary(w http.ResponseWriter, r *http.Request) {
 	handler.SendData(http.StatusOK, b)
 }
 
-func (h *Handler) getAllDictionary(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) getDictionaries(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		_ = r.Body.Close()
 	}()
