@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/rs/cors"
 
 	"lingua-evo/internal/config"
 	pg "lingua-evo/internal/db/postgres"
@@ -33,22 +34,12 @@ import (
 	wordHandler "lingua-evo/internal/services/lingua/word/delivery/handler"
 	wordRepository "lingua-evo/internal/services/lingua/word/delivery/repository"
 	wordService "lingua-evo/internal/services/lingua/word/service"
-	sessionService "lingua-evo/internal/services/session/service"
-	accountHandler "lingua-evo/internal/services/site/account/delivery/handler"
 	userHandler "lingua-evo/internal/services/user/delivery/handler"
 	userRepository "lingua-evo/internal/services/user/delivery/repository"
 	userService "lingua-evo/internal/services/user/service"
-
-	signInHandler "lingua-evo/internal/services/site/auth/sign_in/delivery/handler"
-	signUpHandler "lingua-evo/internal/services/site/auth/sign_up/delivery/handler"
-	indexHandler "lingua-evo/internal/services/site/index/delivery/handler"
 )
 
-const (
-	filePath = "/website/"
-)
-
-func ServerStart(cfg *config.Config, webPath string) {
+func ServerStart(cfg *config.Config) {
 	if cfg.PprofDebug.Enable {
 		go func() {
 			slog.Error("%v", http.ListenAndServe("localhost:6060", nil))
@@ -64,7 +55,7 @@ func ServerStart(cfg *config.Config, webPath string) {
 	redisDB := redis.New(cfg)
 
 	router := mux.NewRouter()
-	initServer(router, db, redisDB, webPath)
+	initServer(router, db, redisDB)
 
 	address := fmt.Sprintf(":%s", cfg.Service.Port)
 
@@ -75,8 +66,16 @@ func ServerStart(cfg *config.Config, webPath string) {
 	}
 	slog.Info(fmt.Sprintf("web address: %s", listener.Addr()))
 
+	c := cors.New(cors.Options{
+		AllowedOrigins:   []string{"http://localhost:5173"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowCredentials: true,
+		AllowedHeaders:   []string{"Authorization", "Content-Type", "Fingerprint"},
+	})
+	handler := c.Handler(router)
+
 	server := &http.Server{
-		Handler:      router,
+		Handler:      handler,
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 	}
@@ -92,10 +91,7 @@ func ServerStart(cfg *config.Config, webPath string) {
 	}
 }
 
-func initServer(r *mux.Router, db *sql.DB, redis *redis.Redis, webPath string) {
-	fs := http.FileServer(http.Dir(webPath))
-	r.PathPrefix(filePath).Handler(http.StripPrefix(filePath, fs))
-
+func initServer(r *mux.Router, db *sql.DB, redis *redis.Redis) {
 	slog.Info("create services")
 	userRepo := userRepository.NewRepo(db)
 	userSvc := userService.NewService(userRepo, redis)
@@ -113,14 +109,9 @@ func initServer(r *mux.Router, db *sql.DB, redis *redis.Redis, webPath string) {
 	vocabularySvc := vocabularyService.NewService(vocabularyRepo, wordSvc, exampleSvc, tagSvc)
 	authRepo := authRepository.NewRepo(redis)
 	authSvc := authService.NewService(authRepo, userSvc)
-	sessionSvc := sessionService.NewService(redis)
 
 	slog.Info("create handlers")
-	indexHandler.Create(r, sessionSvc, userSvc, wordSvc)
 	userHandler.Create(r, userSvc)
-	signInHandler.Create(r, userSvc)
-	signUpHandler.Create(r)
-	accountHandler.Create(r)
 	languageHandler.Create(r, langSvc)
 	wordHandler.Create(r, wordSvc, langSvc)
 	dictHandler.Create(r, dictSvc)
