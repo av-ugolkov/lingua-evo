@@ -13,7 +13,6 @@ import (
 	"lingua-evo/pkg/http/handler"
 	"lingua-evo/pkg/http/handler/common"
 	"lingua-evo/pkg/middleware"
-	"lingua-evo/runtime"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
@@ -54,8 +53,8 @@ func newHandler(authSvc *service.AuthSvc) *Handler {
 
 func (h *Handler) register(r *mux.Router) {
 	r.HandleFunc(signin, h.signin).Methods(http.MethodPost)
-	r.HandleFunc(refresh, h.refresh).Methods(http.MethodPost)
-	r.HandleFunc(logout, middleware.Auth(h.logout)).Methods(http.MethodPost)
+	r.HandleFunc(refresh, h.refresh).Methods(http.MethodGet)
+	r.HandleFunc(logout, middleware.Auth(h.logout)).Methods(http.MethodGet)
 }
 
 func (h *Handler) signin(w http.ResponseWriter, r *http.Request) {
@@ -104,14 +103,14 @@ func (h *Handler) signin(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) refresh(w http.ResponseWriter, r *http.Request) {
-	defer func() {
-		_ = r.Body.Close()
-	}()
-
 	handler := handler.NewHandler(w, r)
 	refreshToken, err := handler.Cookie(common.RefreshToken)
 	if err != nil {
 		handler.SendError(http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.refresh - get cookie: %v", err))
+		return
+	}
+	if refreshToken == nil {
+		handler.SendError(http.StatusUnauthorized, fmt.Errorf("auth.delivery.Handler.refresh: %v", err))
 		return
 	}
 
@@ -150,19 +149,32 @@ func (h *Handler) refresh(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) logout(w http.ResponseWriter, r *http.Request) {
-	defer func() {
-		_ = r.Body.Close()
-	}()
-
 	handler := handler.NewHandler(w, r)
-	ctx := r.Context()
-	uid, err := runtime.UserIDFromContext(ctx)
+
+	refreshToken, err := handler.Cookie(common.RefreshToken)
 	if err != nil {
-		handler.SendError(http.StatusUnauthorized, fmt.Errorf("auth.delivery.Handler.logout - unauthorized: %v", err))
+		handler.SendError(http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.logout - get cookie: %v", err))
+		return
+	}
+	if refreshToken == nil {
+		handler.SendError(http.StatusUnauthorized, fmt.Errorf("auth.delivery.Handler.logout: %v", err))
 		return
 	}
 
-	err = h.authSvc.Logout(ctx, uid)
+	refreshID, err := uuid.Parse(refreshToken.Value)
+	if err != nil {
+		handler.SendError(http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.logout - parse: %v", err))
+		return
+	}
+
+	fingerprint, err := handler.GetHeaderFingerprint()
+	if err != nil {
+		handler.SendError(http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.logout - get fingerprint: %v", err))
+		return
+	}
+
+	ctx := r.Context()
+	err = h.authSvc.Logout(ctx, refreshID, fingerprint)
 	if err != nil {
 		handler.SendError(http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.logout - logout: %v", err))
 		return

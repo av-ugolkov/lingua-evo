@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"time"
@@ -96,9 +95,7 @@ func (s *AuthSvc) Login(ctx context.Context, user, password, fingerprint string)
 // RefreshSessionToken - the method is called from the client
 func (s *AuthSvc) RefreshSessionToken(ctx context.Context, refreshToken uuid.UUID, fingerprint string) (*entity.Tokens, error) {
 	oldRefreshSession, err := s.repo.GetSession(ctx, refreshToken)
-	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		return nil, fmt.Errorf("auth.service.AuthSvc.RefreshSessionToken - GetSession: %v", err)
-	} else if errors.Is(err, sql.ErrNoRows) {
+	if err != nil {
 		return nil, fmt.Errorf("auth.service.AuthSvc.RefreshSessionToken - GetSession: %v", err)
 	}
 
@@ -148,10 +145,19 @@ func (s *AuthSvc) RefreshSessionToken(ctx context.Context, refreshToken uuid.UUI
 	return tokens, nil
 }
 
-func (s *AuthSvc) Logout(ctx context.Context, uid uuid.UUID) error {
-	err := s.repo.DeleteSession(ctx, uid)
+func (s *AuthSvc) Logout(ctx context.Context, refreshToken uuid.UUID, fingerprint string) error {
+	oldRefreshSession, err := s.repo.GetSession(ctx, refreshToken)
 	if err != nil {
-		return fmt.Errorf("auth.service.AuthSvc.logout - DeleteSession: %v", err)
+		return fmt.Errorf("auth.service.AuthSvc.Logout - GetSession: %v", err)
+	}
+
+	if oldRefreshSession.Fingerprint != fingerprint {
+		return fmt.Errorf("auth.service.AuthSvc.Logout: %w", errNotEqualFingerprints)
+	}
+
+	err = s.repo.DeleteSession(ctx, refreshToken)
+	if err != nil {
+		return fmt.Errorf("auth.service.AuthSvc.Logout - DeleteSession: %v", err)
 	}
 
 	return nil
