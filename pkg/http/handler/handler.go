@@ -4,14 +4,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"lingua-evo/pkg/http/handler/common"
-	"lingua-evo/runtime"
 	"log/slog"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/google/uuid"
+
+	"lingua-evo/pkg/http/handler/common"
+	"lingua-evo/runtime"
 )
 
 const (
@@ -27,7 +28,7 @@ var (
 )
 
 var (
-	emptyJson = []byte("{}")
+	emptyJson = []byte(runtime.EmptyJson)
 )
 
 type Handler struct {
