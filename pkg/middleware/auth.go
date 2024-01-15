@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 
 	"lingua-evo/internal/config"
@@ -21,7 +22,7 @@ func Auth(next http.HandlerFunc) http.HandlerFunc {
 		var bearerToken string
 		var err error
 		if bearerToken, err = handler.GetHeaderAuthorization(common.AuthTypeBearer); err != nil {
-			handler.SendError(http.StatusUnauthorized, errNotFoundToken)
+			handler.SendError(http.StatusUnauthorized, fmt.Errorf("middleware.Auth: %w", errNotFoundToken))
 			return
 		}
 		claims, err := token.ValidateJWT(bearerToken, config.GetConfig().JWT.Secret)

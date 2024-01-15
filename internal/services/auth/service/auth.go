@@ -96,7 +96,7 @@ func (s *AuthSvc) Login(ctx context.Context, user, password, fingerprint string)
 func (s *AuthSvc) RefreshSessionToken(ctx context.Context, refreshToken uuid.UUID, fingerprint string) (*entity.Tokens, error) {
 	oldRefreshSession, err := s.repo.GetSession(ctx, refreshToken)
 	if err != nil {
-		return nil, fmt.Errorf("auth.service.AuthSvc.RefreshSessionToken - GetSession: %v", err)
+		return nil, fmt.Errorf("auth.service.AuthSvc.RefreshSessionToken - get session: %v", err)
 	}
 
 	if oldRefreshSession.Fingerprint != fingerprint {
