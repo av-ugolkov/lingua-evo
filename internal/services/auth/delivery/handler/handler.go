@@ -130,7 +130,7 @@ func (h *Handler) refresh(w http.ResponseWriter, r *http.Request) {
 
 	tokens, err := h.authSvc.RefreshSessionToken(ctx, refreshID, fingerprint)
 	if err != nil {
-		handler.SendError(http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.refresh - RefreshSessionToken: %v", err))
+		handler.SendError(http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.refresh - refresh token: %v", err))
 		return
 	}
 	b, err := json.Marshal(&CreateSessionRs{
@@ -181,8 +181,7 @@ func (h *Handler) logout(w http.ResponseWriter, r *http.Request) {
 	}
 
 	handler.DeleteCookie(common.RefreshToken)
-
-	handler.SendData(http.StatusOK, []byte("done"))
+	handler.SendEmptyData(http.StatusOK)
 }
 
 func decodeBasicAuth(basicToken string, data *CreateSessionRq) error {

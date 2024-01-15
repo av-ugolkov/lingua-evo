@@ -3,7 +3,6 @@ package handler
 import (
 	"encoding/json"
 	"fmt"
-	"log/slog"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -18,13 +17,14 @@ import (
 const (
 	addDictionary    = "/account/dictionary/add"
 	deleteDictionary = "/account/dictionary/delete"
-	getDictionary    = "/account/dictionary/get"
-	getAllDictionary = "/account/dictionary"
+	getDictionary    = "/account/dictionary/{name}"
+	getAllDictionary = "/account/dictionaries"
 )
 
 type (
 	DictionaryRq struct {
-		Name string `json:"name"`
+		Name     string `json:"name"`
+		Capacity int    `json:"cap"`
 	}
 
 	DictionariesRs struct {
@@ -112,7 +112,7 @@ func (h *Handler) deleteDictionary(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		handler.SendError(http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.deleteDictionary: %v", err))
 	}
-	handler.SendData(http.StatusOK, []byte("done"))
+	handler.SendEmptyData(http.StatusOK)
 }
 
 func (h *Handler) getDictionary(w http.ResponseWriter, r *http.Request) {
@@ -167,8 +167,11 @@ func (h *Handler) getDictionaries(w http.ResponseWriter, r *http.Request) {
 		handler.SendError(http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.getAllDictionary: %v", err))
 	}
 
-	//TODO нужно возвращать сериализованные данные
-	slog.Info(fmt.Sprintf("count dictionaries: %d", len(dictionaries)))
+	b, err := json.Marshal(dictionaries)
+	if err != nil {
+		handler.SendError(http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.getAllDictionary - marshal: %v", err))
+		return
+	}
 
-	handler.SendData(http.StatusOK, []byte("done"))
+	handler.SendData(http.StatusOK, b)
 }

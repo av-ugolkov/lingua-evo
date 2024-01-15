@@ -75,7 +75,7 @@ func (h *Handler) addWord(w http.ResponseWriter, r *http.Request) {
 		handler.SendError(http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.addWord: %v", err))
 		return
 	}
-	handler.SendData(http.StatusOK, []byte("done"))
+	handler.SendEmptyData(http.StatusOK)
 }
 
 func (h *Handler) deleteWord(w http.ResponseWriter, r *http.Request) {
@@ -98,5 +98,5 @@ func (h *Handler) deleteWord(w http.ResponseWriter, r *http.Request) {
 		handler.SendError(http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.deleteWord: %v", err))
 		return
 	}
-	handler.SendData(http.StatusOK, []byte("done"))
+	handler.SendEmptyData(http.StatusOK)
 }

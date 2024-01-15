@@ -22,11 +22,12 @@ const (
 )
 
 var (
-	errEmptyBody = errors.New("body is empty")
+	errEmptyBody      = errors.New("body is empty")
+	errHeaderNotFound = errors.New("header not found")
 )
 
 var (
-	errHeaderNotFound = errors.New("header not found")
+	emptyJson = []byte("{}")
 )
 
 type Handler struct {
@@ -62,8 +63,17 @@ func (h *Handler) SendData(httpStatus int, data []byte) {
 	}
 }
 
+func (h *Handler) SendEmptyData(httpStatus int) {
+	h.responseWriter.WriteHeader(httpStatus)
+	_, err := h.responseWriter.Write(emptyJson)
+	if err != nil {
+		slog.Error(fmt.Errorf("http.handler.SendError: %v", err).Error())
+	}
+}
+
 func (h *Handler) SendError(httpStatus int, err error) {
 	h.responseWriter.WriteHeader(httpStatus)
+	slog.Error(fmt.Errorf("http.handler.SendError: %v", err).Error())
 	_, err = h.responseWriter.Write([]byte(err.Error()))
 	if err != nil {
 		slog.Error(fmt.Errorf("http.handler.SendError: %v", err).Error())
