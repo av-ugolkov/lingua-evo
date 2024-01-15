@@ -7,13 +7,10 @@ import (
 	"lingua-evo/internal/config"
 	entityAuth "lingua-evo/internal/services/auth"
 	entityUser "lingua-evo/internal/services/user"
+	"lingua-evo/runtime"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
-)
-
-const (
-	emptyString = ""
 )
 
 type (
@@ -36,7 +33,7 @@ func NewJWTToken(u *entityUser.User, s *entityAuth.Claims) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, userClaims)
 	t, err := token.SignedString([]byte(config.GetConfig().JWT.Secret))
 	if err != nil {
-		return emptyString, fmt.Errorf("pkg.jwt.token.NewJWTToken - can't signed token: %w", err)
+		return runtime.EmptyString, fmt.Errorf("pkg.jwt.token.NewJWTToken - can't signed token: %w", err)
 	}
 	return t, nil
 }
