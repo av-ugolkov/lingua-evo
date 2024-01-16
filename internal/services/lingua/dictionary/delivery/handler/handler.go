@@ -37,7 +37,8 @@ type (
 	}
 
 	DictionaryIDRs struct {
-		ID uuid.UUID `json:"dictionary_id"`
+		ID    uuid.UUID `json:"dictionary_id"`
+		Words []string  `json:"words"`
 	}
 
 	Handler struct {
@@ -133,14 +134,19 @@ func (h *Handler) getDictionary(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := h.dictionarySvc.GetDictionary(ctx, userID, data.Name)
+	id, words, err := h.dictionarySvc.GetDictionary(ctx, userID, data.Name, data.Capacity)
 	if err != nil {
 		handler.SendError(http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.getDictionary: %v", err))
 		return
 	}
+	if id == uuid.Nil {
+		handler.SendError(http.StatusNotFound, fmt.Errorf("dictionary.delivery.Handler.getDictionary - dictionary not found: %v", err))
+		return
+	}
 
 	dictID := DictionaryIDRs{
-		ID: id,
+		ID:    id,
+		Words: words,
 	}
 	b, err := json.Marshal(&dictID)
 	if err != nil {

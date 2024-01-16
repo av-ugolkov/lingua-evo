@@ -22,11 +22,11 @@ const (
 
 type (
 	AddWordRq struct {
-		DictionaryID  uuid.UUID               `json:"dictionary_id"`
-		NativeWord    entity.VocabularyWord   `json:"native_word"`
-		TanslateWords []entity.VocabularyWord `json:"translate_words"`
-		Examples      []string                `json:"examples"`
-		Tags          []string                `json:"tags"`
+		DictionaryID  uuid.UUID     `json:"dictionary_id"`
+		NativeWord    entity.Word   `json:"native_word"`
+		TanslateWords []entity.Word `json:"translate_words"`
+		Examples      []string      `json:"examples"`
+		Tags          []string      `json:"tags"`
 	}
 
 	RemoveWordRq struct {
