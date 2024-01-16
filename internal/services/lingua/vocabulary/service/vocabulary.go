@@ -52,8 +52,8 @@ func NewService(
 func (s *VocabularySvc) AddWordInVocabulary(
 	ctx context.Context,
 	dictID uuid.UUID,
-	nativeWord entity.VocabularyWord,
-	tanslateWords []entity.VocabularyWord,
+	nativeWord entity.Word,
+	tanslateWords []entity.Word,
 	examples []string,
 	tags []string) error {
 	nativeWordID, err := s.wordSvc.AddWord(ctx, nativeWord.Text, nativeWord.LangCode, nativeWord.Pronunciation)

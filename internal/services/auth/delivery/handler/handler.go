@@ -127,7 +127,6 @@ func (h *Handler) refresh(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := r.Context()
-
 	tokens, err := h.authSvc.RefreshSessionToken(ctx, refreshID, fingerprint)
 	if err != nil {
 		handler.SendError(http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.refresh - refresh token: %v", err))
