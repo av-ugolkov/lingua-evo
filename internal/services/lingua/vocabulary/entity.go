@@ -9,7 +9,7 @@ import (
 )
 
 type (
-	VocabularyWord struct {
+	Word struct {
 		Text          string `json:"text"`
 		Pronunciation string `json:"pronunciation,omitempty"`
 		LangCode      string `json:"language"`

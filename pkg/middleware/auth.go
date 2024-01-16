@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 
@@ -12,17 +11,13 @@ import (
 	"lingua-evo/runtime"
 )
 
-var (
-	errNotFoundToken = errors.New("token not found")
-)
-
 func Auth(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		handler := handler.NewHandler(w, r)
 		var bearerToken string
 		var err error
 		if bearerToken, err = handler.GetHeaderAuthorization(common.AuthTypeBearer); err != nil {
-			handler.SendError(http.StatusUnauthorized, fmt.Errorf("middleware.Auth: %w", errNotFoundToken))
+			handler.SendError(http.StatusUnauthorized, fmt.Errorf("middleware.Auth: %w", err))
 			return
 		}
 		claims, err := token.ValidateJWT(bearerToken, config.GetConfig().JWT.Secret)

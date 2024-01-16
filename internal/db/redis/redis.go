@@ -31,7 +31,11 @@ func (r *Redis) Close() error {
 }
 
 func (r *Redis) Get(ctx context.Context, key string) (string, error) {
-	return r.client.Get(ctx, key).Result()
+	value, err := r.client.Get(ctx, key).Result()
+	if err != nil {
+		return "", fmt.Errorf("redis.Get - key [%s]: %w", key, err)
+	}
+	return value, nil
 }
 
 func (r *Redis) SetNX(ctx context.Context, key string, value any, expiration time.Duration) (bool, error) {

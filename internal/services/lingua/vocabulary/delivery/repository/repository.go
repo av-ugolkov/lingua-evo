@@ -6,6 +6,8 @@ import (
 	"fmt"
 
 	entity "lingua-evo/internal/services/lingua/vocabulary"
+
+	"github.com/google/uuid"
 )
 
 type VocabularyRepo struct {
@@ -32,8 +34,31 @@ func (r *VocabularyRepo) EditVocabulary(ctx context.Context, vocabulary entity.V
 	return 0, nil
 }
 
-func (r *VocabularyRepo) GetWords(ctx context.Context, dictID string) ([]*entity.Vocabulary, error) {
-	return []*entity.Vocabulary{}, nil
+func (r *VocabularyRepo) GetWordsFromDictionary(ctx context.Context, dictID uuid.UUID, capacity int) ([]string, error) {
+	const query = `
+	SELECT text 
+	FROM word 
+	WHERE id=any(
+		SELECT native_word 
+		FROM vocabulary 
+		WHERE dictionary_id=$1
+			ORDER BY random() LIMIT $2)`
+	rows, err := r.db.QueryContext(ctx, query, dictID, capacity)
+	if err != nil {
+		return nil, fmt.Errorf("vocabulary.repository.VocabularyRepo.GetWordsFromDictionary: %w", err)
+	}
+
+	words := make([]string, 0, capacity)
+	for rows.Next() {
+		var word string
+		err = rows.Scan(&word)
+		if err != nil {
+			return nil, fmt.Errorf("vocabulary.repository.VocabularyRepo.GetWordsFromDictionary - scan: %w", err)
+		}
+		words = append(words, word)
+	}
+
+	return words, nil
 }
 
 func (r *VocabularyRepo) GetRandomWord(ctx context.Context, vocadulary *entity.Vocabulary) (*entity.Vocabulary, error) {
