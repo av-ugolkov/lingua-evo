@@ -121,7 +121,7 @@ func (h *Handler) Cookie(name string) (*http.Cookie, error) {
 func (h *Handler) DeleteCookie(name string) {
 	cookie := &http.Cookie{
 		Name:     name,
-		Value:    "",
+		Value:    runtime.EmptyString,
 		MaxAge:   0,
 		HttpOnly: true,
 		Secure:   true,
@@ -152,8 +152,8 @@ func (h *Handler) SetHeader(ney, value string) {
 
 func (h *Handler) getHeader(name string) (string, error) {
 	value := h.request.Header.Get(name)
-	if value == "" {
-		return "", fmt.Errorf("http.handler.getHeader: %w", errHeaderNotFound)
+	if value == runtime.EmptyString {
+		return runtime.EmptyString, fmt.Errorf("http.handler.getHeader: %w", errHeaderNotFound)
 	}
 	return value, nil
 }
@@ -161,11 +161,11 @@ func (h *Handler) getHeader(name string) (string, error) {
 func (h *Handler) GetHeaderAuthorization(typeAuth common.TypeAuth) (string, error) {
 	token, err := h.getHeader("Authorization")
 	if err != nil {
-		return "", fmt.Errorf("http.handler.GetHeaderAuthorization: %w", err)
+		return runtime.EmptyString, fmt.Errorf("http.handler.GetHeaderAuthorization: %w", err)
 	}
 
 	if !strings.HasPrefix(token, string(typeAuth)) {
-		return "", fmt.Errorf("http.handler.GetHeaderAuthorization - invalid type auth [%s]: %s", typeAuth, token)
+		return runtime.EmptyString, fmt.Errorf("http.handler.GetHeaderAuthorization - invalid type auth [%s]: %s", typeAuth, token)
 	}
 
 	return token[len(string(typeAuth))+1:], nil
@@ -173,4 +173,12 @@ func (h *Handler) GetHeaderAuthorization(typeAuth common.TypeAuth) (string, erro
 
 func (h *Handler) GetHeaderFingerprint() (string, error) {
 	return h.getHeader(headerFingerprint)
+}
+
+func (h *Handler) GetQuery(key string) (string, error) {
+	if h.request.URL.Query().Has(key) {
+		return runtime.EmptyString, fmt.Errorf("http.handler.Handler: not found query for key [%s]", key)
+	}
+	s := h.request.URL.Query().Get(key)
+	return s, nil
 }
