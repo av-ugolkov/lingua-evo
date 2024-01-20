@@ -88,3 +88,23 @@ func (r *VocabularyRepo) DeleteWord(ctx context.Context, vocabulary entity.Vocab
 	}
 	return rows, nil
 }
+
+func (r *VocabularyRepo) GetWords(ctx context.Context, dictID uuid.UUID) ([]entity.Vocabulary, error) {
+	query := `SELECT native_word, translate_word, examples, tags FROM vocabulary WHERE dictionary_id=$1`
+	rows, err := r.db.QueryContext(ctx, query, dictID)
+	if err != nil {
+		return nil, fmt.Errorf("vocabulary.repository.VocabularyRepo.GetWords: %w", err)
+	}
+
+	words := make([]entity.Vocabulary, 0, 50)
+	for rows.Next() {
+		var word entity.Vocabulary
+		err = rows.Scan(&word.NativeWord, &word.TranslateWords, &word.Examples, &word.Tags)
+		if err != nil {
+			return nil, fmt.Errorf("vocabulary.repository.VocabularyRepo.GetWords - scan: %w", err)
+		}
+		words = append(words, word)
+	}
+
+	return words, nil
+}

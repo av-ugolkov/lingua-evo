@@ -13,6 +13,7 @@ type (
 	repoVocabulary interface {
 		AddWord(ctx context.Context, vocabulary entity.Vocabulary) error
 		DeleteWord(ctx context.Context, vocabulary entity.Vocabulary) (int64, error)
+		GetWords(ctx context.Context, dictID uuid.UUID) ([]entity.Vocabulary, error)
 	}
 
 	exampleSvc interface {
@@ -115,4 +116,12 @@ func (s *VocabularySvc) DeleteWordFromVocabulary(ctx context.Context, dictID, na
 		return fmt.Errorf("vocabulary.service.VocabularySvc.DeleteWordFromVocabulary - delete word: %w", err)
 	}
 	return nil
+}
+
+func (s *VocabularySvc) GetWords(ctx context.Context, dictID uuid.UUID) ([]entity.Vocabulary, error) {
+	words, err := s.repo.GetWords(ctx, dictID)
+	if err != nil {
+		return nil, fmt.Errorf("vocabulary.service.VocabularySvc.GetWords - get words: %w", err)
+	}
+	return words, nil
 }
