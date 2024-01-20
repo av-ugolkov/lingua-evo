@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -53,6 +54,8 @@ func newHandler(vocabularySvc *service.VocabularySvc) *Handler {
 func (h *Handler) register(r *mux.Router) {
 	r.HandleFunc(addVocabulary, middleware.Auth(h.addWord)).Methods(http.MethodPost)
 	r.HandleFunc(deleteVocabulary, middleware.Auth(h.deleteWord)).Methods(http.MethodDelete)
+	r.HandleFunc(getVocabulary, middleware.Auth(h.getWord)).Methods(http.MethodGet)
+	r.HandleFunc(getAllVocabulary, middleware.Auth(h.getWords)).Methods(http.MethodGet)
 }
 
 func (h *Handler) addWord(w http.ResponseWriter, r *http.Request) {
@@ -99,4 +102,39 @@ func (h *Handler) deleteWord(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	handler.SendEmptyData(http.StatusOK)
+}
+
+func (h *Handler) getWord(w http.ResponseWriter, r *http.Request) {
+
+}
+
+func (h *Handler) getWords(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	handler := handler.NewHandler(w, r)
+
+	dictID, err := handler.GetQuery("dictionary_id")
+	if err != nil {
+		handler.SendError(http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.getWords - get query: %w", err))
+		return
+	}
+
+	did, err := uuid.Parse(dictID)
+	if err != nil {
+		handler.SendError(http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.getWords - parse query: %w", err))
+		return
+	}
+
+	words, err := h.vocabularySvc.GetWords(ctx, did)
+	if err != nil {
+		handler.SendError(http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.getWords: %w", err))
+		return
+	}
+
+	b, err := json.Marshal(words)
+	if err != nil {
+		handler.SendError(http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.getWords - marshal: %w", err))
+		return
+	}
+
+	handler.SendData(http.StatusOK, b)
 }
