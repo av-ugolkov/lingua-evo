@@ -9,6 +9,7 @@ import (
 
 	"lingua-evo/internal/services/lingua/language/service"
 	"lingua-evo/pkg/http/handler"
+	"lingua-evo/pkg/http/handler/common"
 )
 
 const (
@@ -54,6 +55,7 @@ func (h *Handler) getCurrentLanguage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	handler.SetContentType(common.ContentTypeJSON)
 	handler.SetCookieLanguage(lang.Code)
 	handler.SendData(http.StatusOK, b)
 }
@@ -72,6 +74,6 @@ func (h *Handler) getAvailableLanguages(w http.ResponseWriter, r *http.Request) 
 		handler.SendError(http.StatusInternalServerError, fmt.Errorf("lingua.language.delivery.Handler.getAvailableLanguages - marshal: %v", err))
 		return
 	}
-	handler.SetHeader("Content-Type", "application/json")
+	handler.SetContentType(common.ContentTypeJSON)
 	handler.SendData(http.StatusOK, jsonLanguages)
 }
