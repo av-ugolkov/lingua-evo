@@ -12,3 +12,9 @@ const (
 	AuthTypeBearer TypeAuth = "Bearer"
 	AuthTypeBasic  TypeAuth = "Basic"
 )
+
+type ContentType string
+
+const (
+	ContentTypeJSON ContentType = "application/json"
+)
