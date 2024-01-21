@@ -4,7 +4,7 @@ INSERT INTO
 VALUES
     (
         gen_random_uuid (),
-        'admin',
+        'makedonskiy',
         'makedonskiy07@gmail.com',
         '$2a$11$Br7apwhrxr1yvfCSzsz3rec0m9MXRUiyBeY6V543cBXVwl/TKd.fO',
         'admin',
@@ -36,56 +36,6 @@ INSERT INTO
 VALUES
     ('fi', 'Finnish') ON CONFLICT
 DO NOTHING;
-
-INSERT INTO
-    "word_en" (id, text, pronunciation, lang_code, created_at)
-VALUES
-    (gen_random_uuid (), 'get by', '', 'en', now());
-
-INSERT INTO
-    "word_en" (id, text, pronunciation, lang_code, created_at)
-VALUES
-    (gen_random_uuid (), 'get away', '', 'en', now());
-
-INSERT INTO
-    "word_en" (id, text, pronunciation, lang_code, created_at)
-VALUES
-    (gen_random_uuid (), 'get into', '', 'en', now());
-
-INSERT INTO
-    "word_en" (id, text, pronunciation, lang_code, created_at)
-VALUES
-    (gen_random_uuid (), 'get together', '', 'en', now());
-
-INSERT INTO
-    "word_en" (id, text, pronunciation, lang_code, created_at)
-VALUES
-    (gen_random_uuid (), 'get away with it', '', 'en', now());
-
-INSERT INTO
-    "word_en" (id, text, pronunciation, lang_code, created_at)
-VALUES
-    (gen_random_uuid (), 'get up to', '', 'en', now());
-
-INSERT INTO
-    "word_en" (id, text, pronunciation, lang_code, created_at)
-VALUES
-    (gen_random_uuid (), 'get up', '', 'en', now());
-
-INSERT INTO
-    "word_en" (id, text, pronunciation, lang_code, created_at)
-VALUES
-    (gen_random_uuid (), 'get rid of', '', 'en', now());
-
-INSERT INTO
-    "word_en" (id, text, pronunciation, lang_code, created_at)
-VALUES
-    (gen_random_uuid (), 'get to', '', 'en', now());
-
-INSERT INTO
-    "word_en" (id, text, pronunciation, lang_code, created_at)
-VALUES
-    (gen_random_uuid (), 'get over', '', 'en', now());
 
 -- +goose Down
 TRUNCATE TABLE users RESTART IDENTITY CASCADE;

@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"log/slog"
 
 	entity "lingua-evo/internal/services/lingua/vocabulary"
 
@@ -86,6 +87,7 @@ func (s *VocabularySvc) AddWordInVocabulary(
 		if err != nil {
 			return fmt.Errorf("vocabulary.service.VocabularuSvc.AddWordInVocabulary - add tag: %w", err)
 		}
+		slog.Info(fmt.Sprintf("tagID: %s", tagID))
 		tagIDs = append(tagIDs, tagID)
 	}
 
