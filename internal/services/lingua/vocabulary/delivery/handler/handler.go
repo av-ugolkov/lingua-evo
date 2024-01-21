@@ -8,6 +8,7 @@ import (
 	entity "lingua-evo/internal/services/lingua/vocabulary"
 	"lingua-evo/internal/services/lingua/vocabulary/service"
 	"lingua-evo/pkg/http/handler"
+	"lingua-evo/pkg/http/handler/common"
 	"lingua-evo/pkg/middleware"
 
 	"github.com/google/uuid"
@@ -136,5 +137,6 @@ func (h *Handler) getWords(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	handler.SetContentType(common.ContentTypeJSON)
 	handler.SendData(http.StatusOK, b)
 }

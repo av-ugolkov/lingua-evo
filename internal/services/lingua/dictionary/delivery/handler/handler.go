@@ -10,6 +10,7 @@ import (
 
 	"lingua-evo/internal/services/lingua/dictionary/service"
 	"lingua-evo/pkg/http/handler"
+	"lingua-evo/pkg/http/handler/common"
 	"lingua-evo/pkg/middleware"
 	"lingua-evo/runtime"
 )
@@ -88,6 +89,7 @@ func (h *Handler) addDictionary(w http.ResponseWriter, r *http.Request) {
 		handler.SendError(http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.addDictionary: %v", err))
 	}
 
+	handler.SetContentType(common.ContentTypeJSON)
 	handler.SendData(http.StatusOK, []byte(dictID.String()))
 }
 
@@ -153,6 +155,8 @@ func (h *Handler) getDictionary(w http.ResponseWriter, r *http.Request) {
 		handler.SendError(http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.getDictionary - marshal: %v", err))
 		return
 	}
+
+	handler.SetContentType(common.ContentTypeJSON)
 	handler.SendData(http.StatusOK, b)
 }
 
@@ -179,6 +183,6 @@ func (h *Handler) getDictionaries(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	handler.SetHeader("Content-Type", "application/json")
+	handler.SetContentType(common.ContentTypeJSON)
 	handler.SendData(http.StatusOK, b)
 }

@@ -11,6 +11,7 @@ import (
 	entity "lingua-evo/internal/services/user"
 	"lingua-evo/internal/services/user/service"
 	"lingua-evo/pkg/http/handler"
+	"lingua-evo/pkg/http/handler/common"
 	"lingua-evo/pkg/middleware"
 	"lingua-evo/pkg/utils"
 	"lingua-evo/runtime"
@@ -121,9 +122,8 @@ func (h *Handler) createAccount(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	handler.SetHeader("Content-Type", "application/json")
-	handler.WriteHeader(http.StatusCreated)
-	handler.SendData(http.StatusOK, b)
+	handler.SetContentType(common.ContentTypeJSON)
+	handler.SendData(http.StatusCreated, b)
 }
 
 func (h *Handler) getUserByID(w http.ResponseWriter, r *http.Request) {
@@ -152,7 +152,7 @@ func (h *Handler) getUserByID(w http.ResponseWriter, r *http.Request) {
 		handler.SendError(http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.getUserByID - marshal: %v", err))
 		return
 	}
-	handler.SetHeader("Content-Type", "application/json")
+	handler.SetContentType(common.ContentTypeJSON)
 	handler.SendData(http.StatusOK, b)
 }
 
@@ -188,7 +188,7 @@ func (h *Handler) getUserByName(w http.ResponseWriter, r *http.Request) {
 		handler.SendError(http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.getIDByName - marshal: %v", err))
 		return
 	}
-	handler.SetHeader("Content-Type", "application/json")
+	handler.SetContentType(common.ContentTypeJSON)
 	handler.SendData(http.StatusOK, b)
 }
 
@@ -223,7 +223,7 @@ func (h *Handler) getUserByEmail(w http.ResponseWriter, r *http.Request) {
 		handler.SendError(http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.getIDByEmail - marshal: %v", err))
 		return
 	}
-	handler.SetHeader("Content-Type", "application/json")
+	handler.SetContentType(common.ContentTypeJSON)
 	handler.SendData(http.StatusOK, b)
 }
 
