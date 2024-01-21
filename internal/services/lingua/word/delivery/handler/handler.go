@@ -8,6 +8,7 @@ import (
 	serviceLang "lingua-evo/internal/services/lingua/language/service"
 	serviceWord "lingua-evo/internal/services/lingua/word/service"
 	"lingua-evo/pkg/http/handler"
+	"lingua-evo/pkg/http/handler/common"
 	"lingua-evo/pkg/middleware"
 
 	"github.com/google/uuid"
@@ -94,6 +95,7 @@ func (h *Handler) addWord(w http.ResponseWriter, r *http.Request) {
 		handler.SendError(http.StatusInternalServerError, err)
 		return
 	}
+	handler.SetContentType(common.ContentTypeJSON)
 	handler.SendData(http.StatusOK, []byte(wordUUID.String()))
 }
 
@@ -121,6 +123,7 @@ func (h *Handler) getWord(w http.ResponseWriter, r *http.Request) {
 		handler.SendError(http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getWord: %v", err))
 		return
 	}
+	handler.SetContentType(common.ContentTypeJSON)
 	handler.SendData(http.StatusOK, []byte(wordID.String()))
 }
 
@@ -160,6 +163,6 @@ func (h *Handler) getRandomWord(w http.ResponseWriter, r *http.Request) {
 		handler.SendError(http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getRandomWord - marshal: %v", err))
 		return
 	}
-	handler.SetHeader("Content-Type", "application/json")
+	handler.SetContentType(common.ContentTypeJSON)
 	handler.SendData(http.StatusOK, b)
 }

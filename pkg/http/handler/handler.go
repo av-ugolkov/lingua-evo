@@ -90,6 +90,10 @@ func (h *Handler) setCookie(name, value string) {
 	http.SetCookie(h.responseWriter, cookie)
 }
 
+func (h *Handler) SetContentType(contentType common.ContentType) {
+	h.SetHeader("Content-Type", string(contentType))
+}
+
 func (h *Handler) SetCookieLanguage(languageID string) {
 	h.setCookie(common.Language, languageID)
 }
@@ -140,10 +144,6 @@ func (h *Handler) GetCookieLanguageOrDefault() string {
 	default:
 		return cookie.Value
 	}
-}
-
-func (h *Handler) WriteHeader(httpStatus int) {
-	h.responseWriter.WriteHeader(httpStatus)
 }
 
 func (h *Handler) SetHeader(ney, value string) {
