@@ -179,5 +179,6 @@ func (h *Handler) getDictionaries(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	handler.SetHeader("Content-Type", "application/json")
 	handler.SendData(http.StatusOK, b)
 }

@@ -24,7 +24,7 @@ func (r *VocabularyRepo) AddWord(ctx context.Context, vocabulary entity.Vocabula
 	const query = `INSERT INTO vocabulary (dictionary_id, native_word, translate_word, examples, tags) VALUES($1, $2, $3, $4, $5) ON CONFLICT DO NOTHING;`
 	_, err := r.db.QueryContext(ctx, query, vocabulary.DictionaryId, vocabulary.NativeWord, vocabulary.TranslateWords, vocabulary.Examples, vocabulary.Tags)
 	if err != nil {
-		return err
+		return fmt.Errorf("vocabulary.repository.VocabularyRepo.AddWord: %w", err)
 	}
 
 	return nil

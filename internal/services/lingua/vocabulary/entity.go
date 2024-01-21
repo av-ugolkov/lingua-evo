@@ -4,6 +4,7 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"errors"
+	"fmt"
 
 	"github.com/google/uuid"
 )
@@ -29,12 +30,17 @@ type (
 )
 
 func (w *TranslateWords) Scan(value interface{}) error {
-	b, ok := value.([]byte)
+	b, ok := value.(string)
 	if !ok {
-		return errors.New("type assertion to []byte failed")
+		return errors.New("type assertion to string failed")
 	}
 
-	return json.Unmarshal(b, &w)
+	err := json.Unmarshal([]byte(b), &w)
+	if err != nil {
+		return fmt.Errorf("vocabulary.entity.Word.Scan: %w", err)
+	}
+
+	return nil
 }
 
 func (w *TranslateWords) Value() (driver.Value, error) {
