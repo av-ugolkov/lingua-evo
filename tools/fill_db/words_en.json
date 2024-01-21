@@ -2146,6 +2146,394 @@
                 "допустить",
                 "признавать"
             ]
+        },
+        {
+            "word": "by the way",
+            "translate": [
+                "впрочем",
+                "к слову сказать",
+                "по дороге",
+                "по пути",
+                "ах да",
+                "между прочим",
+                "к слову",
+                "кстати"
+            ],
+            "description": "Used to change the subject, to say something that you have just thought about and that doesn't have to be connected to what was being said before.",
+            "example": [
+                "Well, it has been a very productive meeting, don't you think? By the way/Incidentally, what time is it?",
+                "I'll try to fix my car this afternoon. By the way/Incidentally, do you still have that screwdriver that I lent you?"
+            ]
+        },
+        {
+            "word": "incidentally",
+            "pronunciation": "['ɪnsɪ'dent(ə)lɪ]",
+            "translate": [
+                "время от времени",
+                "между прочим",
+                "кстати",
+                "мимоходом",
+                "периодически",
+                "в данном случае",
+                "несущественно"
+            ],
+            "description": "Used to change the subject, to say something that you have just thought about and that doesn't have to be connected to what was being said before.",
+            "example": [
+                "Well, it has been a very productive meeting, don't you think? By the way/Incidentally, what time is it?",
+                "I'll try to fix my car this afternoon. By the way/Incidentally, do you still have that screwdriver that I lent you?"
+            ]
+        },
+        {
+            "word": "actually",
+            "pronunciation": "['ækʧ(u)əlɪ]",
+            "translate": [
+                "в настоящее время",
+                "в данный момент",
+                "в действительности",
+                "в натуре"
+            ],
+            "description": "Used to introduce information that might be in some way surprising or unexpected.",
+            "example": [
+                "I don't really like chicken. Actually a matter of fact I have only eaten chicken once in my life.",
+                "Everybody thinks he has a very bad temper, but actually a matter of fact he is very kind."
+            ]
+        },
+        {
+            "word": "in fact",
+            "translate": [
+                "собственно",
+                "если точнее",
+                "на самом деле",
+                "и вообще",
+                "по сути дела",
+                "в действительности"
+            ],
+            "description": "Used to introduce information that might be in some way surprising or unexpected.",
+            "example": [
+                "I don't really like chicken. In fact I have only eaten chicken once in my life.",
+                "Everybody thinks he has a very bad temper, but in fact he is very kind."
+            ]
+        },
+        {
+            "word": "as a matter of fact",
+            "translate": [
+                "на самом деле",
+                "собственно говоря",
+                "фактически",
+                "действительно",
+                "по сути",
+                "в действительности"
+            ],
+            "description": "Used to introduce information that might be in some way surprising or unexpected.",
+            "example": [
+                "I don't really like chicken. As a matter of fact I have only eaten chicken once in my life.",
+                "Everybody thinks he has a very bad temper, but as a matter of fact he is very kind."
+            ]
+        },
+        {
+            "word": "anyway",
+            "pronunciation": "['enɪweɪ]",
+            "translate": [
+                "как придётся",
+                "что бы то ни было",
+                "так или иначе"
+            ],
+            "description": "Used to return to an earlier subject after a digression, or to get to the most interesting point. Used to give a more important reason for something you are saying.",
+            "example": [
+                "It's not so strange to lose documents. It happens to lots of people all the time. Anyway, we finally found the passports in …",
+                "I'm too tired to go and it's too late, and anyway it's too expensive."
+            ]
+        },
+        {
+            "word": "in any case",
+            "translate": [
+                "как бы там ни было",
+                "во всяком случае",
+                "при любых обстоятельствах",
+                "в любом случае",
+                "при любом раскладе",
+                "как бы то ни было"
+            ],
+            "description": "Used to return to an earlier subject after a digression, or to get to the most interesting point. Used to give a more important reason for something you are saying.",
+            "example": [
+                "It's not so strange to lose documents. It happens to lots of people all the time. In any case, we finally found the passports in …",
+                "I'm too tired to go and it's too late, and in any case it's too expensive."
+            ]
+        },
+        {
+            "word": "as I was saying",
+            "translate": [
+                "как я сказал ранее",
+                "как было сказано ранее",
+                "как я уже сказал"
+            ],
+            "description": "Used to return to an earlier subject in the conversation after an interruption or digression.",
+            "example": [
+                "As I was saying, we could get up early and spend the whole day there."
+            ]
+        },
+        {
+            "word": "after all",
+            "translate": [
+                "ведь",
+                "несмотря на",
+                "напоследок",
+                "пожалуй",
+                "в сущности",
+                "а ведь",
+                "к тому же",
+                "как-никак",
+                "всё-таки"
+            ],
+            "description": "Used to introduce an additional point that supports or explains what you have just said. Used to say that something is true despite what is believed or said.",
+            "example": [
+                "I might understand her better than you, after all, she is my wife.",
+                "Don't be too hard on him. After all, he is just a kid.",
+                "He is not such a bad professional after all."
+            ]
+        },
+        {
+            "word": "at least",
+            "translate": [
+                "минимум",
+                "минимально",
+                "хотя бы",
+                "по крайней мере",
+                "почти"
+            ],
+            "description": "Used to introduce positive information when talking about something negative. Used to reduce the effect of something we have said, or to make something less certain or definite.",
+            "example": [
+                "Lots of people got injured in the accident, but at least nobody died.",
+                "I finished last in the race, but at least I finished.",
+                "He knows the president, or at least that's what he says."
+            ]
+        },
+        {
+            "word": "all in all",
+            "pronunciation": "[ˌɔ:lɪn'ɔ:l]",
+            "translate": [
+                "в общем",
+                "итого",
+                "подводя итог изложенному выше, отметим следующее"
+            ],
+            "description": "Taking into consideration all the parts of a situation.",
+            "example": [
+                "There were some mistakes, but all in all, you did a pretty good job.",
+                "Both TVs are great, but all in all, I think this one is better for you."
+            ]
+        },
+        {
+            "word": "on the whole",
+            "translate": [
+                "вообще",
+                "в среднем",
+                "в общем",
+                "в целом",
+                "в итоге",
+                "в конечном счёте",
+                "в общем и целом",
+                "в большинстве своём"
+            ],
+            "description": "Generally",
+            "example": [
+                "On the whole, men tend to avoid talking about feelings.",
+                "There has been some criticism, but on the whole, customers like what we offer."
+            ]
+        },
+        {
+            "word": "besides",
+            "pronunciation": "[bɪ'saɪdz]",
+            "translate": [
+                "помимо того",
+                "также",
+                "вдобавок к тому",
+                "кроме",
+                "помимо",
+                "мало того",
+                "притом",
+                "заодно",
+                "наряду с",
+                "если не принимать во внимание"
+            ],
+            "description": "Used to add additional information (informal)",
+            "example": [
+                "I think it's a wonderful place, besides, it's very cheap."
+            ]
+        },
+        {
+            "word": "furthermore",
+            "pronunciation": "['fɜ:ðə'mɔ:]",
+            "translate": [
+                "также",
+                "к тому же",
+                "ещё",
+                "сверх того",
+                "притом",
+                "кроме того",
+                "более того"
+            ],
+            "description": "Used to add additional (an often more important) information (formal)",
+            "example": [
+                "Electric cars are becoming more powerful and energy-efficient. Furthermore, they are much cheaper than a few years ago."
+            ]
+        },
+        {
+            "word": "what's more",
+            "translate": [
+                "кроме этого",
+                "помимо этого",
+                "более того",
+                "к тому же"
+            ],
+            "description": "We use what's more to add something interesting to what we have just said. It's similar to furthermore but more informal.",
+            "example": [
+                "Scientists have found a big body of water under the surface of the planet. What's more, they think it's not the only body of water they are going to find.",
+                "He said that the new season is going to be premiered this September and, what's more, he confirmed that it's not going to be the last."
+            ]
+        },
+        {
+            "word": "obviously",
+            "pronunciation": "['ɔbvɪəslɪ]",
+            "translate": [
+                "безусловно",
+                "конечно",
+                "неуместно",
+                "чересчур открыто",
+                "разумеется",
+                "по всему видно"
+            ],
+            "description": "Used to introduce a fact that is easy to see or understand.",
+            "example": [
+                "Obviously, without qualifications it's harder to get a good job."
+            ]
+        },
+        {
+            "word": "basically",
+            "pronunciation": "['beɪsɪk(ə)lɪ]",
+            "translate": [
+                "в своей основе",
+                "по сути",
+                "собственно",
+                "попросту говоря"
+            ],
+            "description": "Used to introduce the most important point or characteristic of something.",
+            "example": [
+                "Basically, what we do here is produce the plastic parts of the phone."
+            ]
+        },
+        {
+            "word": "in other words",
+            "translate": [
+                "иначе говоря",
+                "то есть",
+                "другими словами",
+                "то есть"
+            ],
+            "description": "Used to say what has been said in simpler words.",
+            "example": [
+                "She said we should take a break and have time to ourselves, in other words, she dumped me."
+            ]
+        },
+        {
+            "word": "that is to say",
+            "translate": [
+                "другими словами",
+                "иначе говоря",
+                "иными словами",
+                "то есть"
+            ],
+            "description": "Used to explain or be more precise about something we have said. Similar to in other words.",
+            "example": [
+                "The best thing about music is its repeatability, that is to say, you can listen to the same songs again and again and never get bored."
+            ]
+        },
+        {
+            "word": "otherwise",
+            "pronunciation": "['ʌðəwaɪz]",
+            "translate": [
+                "иначе",
+                "иным способом",
+                "иным образом",
+                "или же"
+            ],
+            "description": "Used after an order or suggestion to say what will happen if that order or suggestion is not followed.",
+            "example": [
+                "Be here at 8 o'clock, otherwise, you will miss your turn."
+            ]
+        },
+        {
+            "word": "regarding",
+            "pronunciation": "[regarding]",
+            "translate": [
+                "рассмотрение",
+                "по вопросам",
+                "говоря о",
+                "по вопросу",
+                "на тему",
+                "в области",
+                "относящийся к"
+            ],
+            "description": "About. Used to introduce a topic of conversation.",
+            "example": [
+                "Regarding the new player, we'll have to decide if or when to sell him."
+            ]
+        },
+        {
+            "word": "as regards",
+            "translate": [
+                "касательно",
+                "если говорить о ...",
+                "что касается",
+                "по поводу",
+                "по отношению"
+            ],
+            "description": "About. Used to introduce a topic of conversation.",
+            "example": [
+                "As regards the new player, we'll have to decide if or when to sell him."
+            ]
+        },
+        {
+            "word": "as far as … is concerned",
+            "translate": [
+                "что касается",
+                "когда речь идёт о"
+            ],
+            "description": "About. Used to introduce a topic of conversation.",
+            "example": [
+                "As far as the new player is concerned, …"
+            ]
+        },
+        {
+            "word": "on the other hand",
+            "translate": [
+                "хотя",
+                "с другой стороны"
+            ],
+            "description": "Used to introduce a contrasting fact. It can be preceded by on the one hand.",
+            "example": [
+                "Cycling is good for your health, and it's a sport that is gentle with your muscles and joints. But on the other hand, there are many fatal accidents among cyclists.",
+                "On the one hand, cycling is good for your health, and it's a sport that is gentle with your muscles and joints. But on the other hand, there are many fatal accidents among cyclists."
+            ]
+        },
+        {
+            "word": "whereas",
+            "pronunciation": "[we(ə)'ræz]",
+            "translate": [
+                "потому что",
+                "так как",
+                "тогда как",
+                "принимая во внимание",
+                "поскольку",
+                "между тем как"
+            ],
+            "description": "We use whereas to compare and contrast two things or ideas. It means 'while' when it is used to express contrast.",
+            "example": [
+                "The north is cold whereas the south is very hot.",
+                "Whereas people used to aspire to have a big house, kids, dog etc., nowadays preferences are tending more towards apartments."
+            ]
+        },
+        {
+            "word": "coherent"
         }
     ]
 }
