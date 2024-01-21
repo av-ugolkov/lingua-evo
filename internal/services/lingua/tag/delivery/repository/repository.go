@@ -21,13 +21,25 @@ func NewRepo(db *sql.DB) *TagRepo {
 }
 
 func (r *TagRepo) AddTag(ctx context.Context, id uuid.UUID, text string) (uuid.UUID, error) {
-	query := `INSERT INTO tag (id, text) VALUES ($1, $2) ON CONFLICT DO NOTHING RETURNING id`
-	var tagID uuid.UUID
-	err := r.db.QueryRowContext(ctx, query, id, text).Scan(&tagID)
+	query := `
+	WITH s AS (
+    SELECT id, text FROM tag WHERE text = $2),
+	i AS (
+    INSERT INTO tag (id, text)
+    SELECT $1, $2
+    WHERE NOT EXISTS (SELECT 1 FROM s)
+    RETURNING id)
+	SELECT id
+	FROM i
+	UNION ALL
+		SELECT id
+		FROM s;`
+	var tid uuid.UUID
+	err := r.db.QueryRowContext(ctx, query, id, text).Scan(&tid)
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("example.repository.TagRepo.AddTag: %w", err)
 	}
-	return tagID, nil
+	return tid, nil
 }
 
 func (r *TagRepo) FindTag(ctx context.Context, text string) ([]*entity.Tag, error) {
