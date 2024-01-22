@@ -113,7 +113,7 @@ func (h *Handler) getWords(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	handler := handler.NewHandler(w, r)
 
-	dictID, err := handler.GetQuery("dictionary_id")
+	dictID, err := handler.QueryParams("dictionary_id")
 	if err != nil {
 		handler.SendError(http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.getWords - get query: %w", err))
 		return

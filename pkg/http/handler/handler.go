@@ -175,7 +175,7 @@ func (h *Handler) GetHeaderFingerprint() (string, error) {
 	return h.getHeader(headerFingerprint)
 }
 
-func (h *Handler) GetQuery(key string) (string, error) {
+func (h *Handler) QueryParams(key string) (string, error) {
 	if !h.request.URL.Query().Has(key) {
 		return runtime.EmptyString, fmt.Errorf("http.handler.Handler: not found query for key [%s]", key)
 	}

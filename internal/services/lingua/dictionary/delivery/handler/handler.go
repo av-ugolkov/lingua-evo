@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
@@ -18,7 +19,7 @@ import (
 const (
 	addDictionary    = "/account/dictionary/add"
 	deleteDictionary = "/account/dictionary/delete"
-	getDictionary    = "/account/dictionary/{name}"
+	getDictionary    = "/account/dictionary"
 	getAllDictionary = "/account/dictionaries"
 )
 
@@ -61,7 +62,7 @@ func newHandler(dictionarySvc *service.DictionarySvc) *Handler {
 func (h *Handler) register(r *mux.Router) {
 	r.HandleFunc(addDictionary, middleware.Auth(h.addDictionary)).Methods(http.MethodPost)
 	r.HandleFunc(deleteDictionary, middleware.Auth(h.deleteDictionary)).Methods(http.MethodDelete)
-	r.HandleFunc(getDictionary, middleware.Auth(h.getDictionary)).Methods(http.MethodPost)
+	r.HandleFunc(getDictionary, middleware.Auth(h.getDictionary)).Methods(http.MethodGet)
 	r.HandleFunc(getAllDictionary, middleware.Auth(h.getDictionaries)).Methods(http.MethodGet)
 }
 
@@ -119,9 +120,6 @@ func (h *Handler) deleteDictionary(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) getDictionary(w http.ResponseWriter, r *http.Request) {
-	defer func() {
-		_ = r.Body.Close()
-	}()
 	ctx := r.Context()
 	handler := handler.NewHandler(w, r)
 	userID, err := runtime.UserIDFromContext(ctx)
@@ -130,13 +128,24 @@ func (h *Handler) getDictionary(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var data DictionaryRq
-	if err := handler.CheckBody(&data); err != nil {
-		handler.SendError(http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.getDictionary - check body: %v", err))
+	name, err := handler.QueryParams("name")
+	if err != nil {
+		handler.SendError(http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.getDictionary - get query [name]: %v", err))
 		return
 	}
 
-	id, words, err := h.dictionarySvc.GetDictionary(ctx, userID, data.Name, data.Capacity)
+	cap, err := handler.QueryParams("cap")
+	if err != nil {
+		handler.SendError(http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.getDictionary - get query [cap]: %v", err))
+		return
+	}
+	capacity, err := strconv.Atoi(cap)
+	if err != nil {
+		handler.SendError(http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.getDictionary - parse str to int: %v", err))
+		return
+	}
+
+	id, words, err := h.dictionarySvc.GetDictionary(ctx, userID, name, capacity)
 	if err != nil {
 		handler.SendError(http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.getDictionary: %v", err))
 		return
@@ -161,9 +170,6 @@ func (h *Handler) getDictionary(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) getDictionaries(w http.ResponseWriter, r *http.Request) {
-	defer func() {
-		_ = r.Body.Close()
-	}()
 	handler := handler.NewHandler(w, r)
 	userID, err := runtime.UserIDFromContext(r.Context())
 	if err != nil {
