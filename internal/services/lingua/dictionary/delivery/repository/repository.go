@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"fmt"
 
 	entity "lingua-evo/internal/services/lingua/dictionary"
 
@@ -24,17 +25,21 @@ func (r *DictRepo) AddDictionary(ctx context.Context, dict entity.Dictionary) er
 
 	_, err := r.db.QueryContext(ctx, query, dict.ID, dict.UserID, dict.Name)
 	if err != nil {
-		return err
+		return fmt.Errorf("dictionary.repository.DictRepo.AddDictionary: %w", err)
 	}
 	return nil
 }
 
 func (r *DictRepo) DeleteDictionary(ctx context.Context, dict entity.Dictionary) error {
 	query := `DELETE FROM dictionary WHERE user_id=$1 AND name=$2;`
-	_, err := r.db.QueryContext(ctx, query, dict.UserID, dict.Name)
+	result, err := r.db.ExecContext(ctx, query, dict.UserID, dict.Name)
 	if err != nil {
-		return err
+		return fmt.Errorf("dictionary.repository.DictRepo.DeleteDictionary: %w", err)
 	}
+	if rowsAffected, _ := result.RowsAffected(); rowsAffected == 0 {
+		return fmt.Errorf("dictionary.repository.DictRepo.DeleteDictionary: %w", entity.ErrDictionaryNotFound)
+	}
+
 	return nil
 }
 

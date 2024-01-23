@@ -87,9 +87,12 @@ func (s *DictionarySvc) GetDictionary(ctx context.Context, userID uuid.UUID, nam
 		return uuid.Nil, nil, fmt.Errorf("dictionary.service.DictionarySvc.GetDictionary: %w", err)
 	}
 
-	words, err := s.repoVocab.GetWordsFromDictionary(ctx, dictID, capacity)
-	if err != nil {
-		return uuid.Nil, nil, fmt.Errorf("dictionary.service.DictionarySvc.GetDictionary - get words: %w", err)
+	var words []string
+	if capacity > 0 {
+		words, err = s.repoVocab.GetWordsFromDictionary(ctx, dictID, capacity)
+		if err != nil {
+			return uuid.Nil, nil, fmt.Errorf("dictionary.service.DictionarySvc.GetDictionary - get words: %w", err)
+		}
 	}
 
 	return dictID, words, nil
