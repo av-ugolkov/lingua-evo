@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -175,10 +176,41 @@ func (h *Handler) GetHeaderFingerprint() (string, error) {
 	return h.getHeader(headerFingerprint)
 }
 
-func (h *Handler) QueryParams(key string) (string, error) {
+func (h *Handler) QueryParamString(key string) (string, error) {
 	if !h.request.URL.Query().Has(key) {
-		return runtime.EmptyString, fmt.Errorf("http.handler.Handler: not found query for key [%s]", key)
+		return runtime.EmptyString, fmt.Errorf("http.handler.Handler.QueryParamString: not found query for key [%s]", key)
 	}
+
 	s := h.request.URL.Query().Get(key)
 	return s, nil
+}
+
+func (h *Handler) QueryParamInt(key string) (int, error) {
+	if !h.hasQueryParam(key) {
+		return 0, fmt.Errorf("http.handler.Handler.QueryParamInt: not found query for key [%s]", key)
+	}
+
+	s := h.request.URL.Query().Get(key)
+	v, err := strconv.Atoi(s)
+	if err != nil {
+		return 0, fmt.Errorf("http.handler.Handler.QueryParamInt - cann't parse query param [%s]: %w", key, err)
+	}
+	return v, nil
+}
+
+func (h *Handler) QueryParamBool(key string) (bool, error) {
+	if !h.hasQueryParam(key) {
+		return false, fmt.Errorf("http.handler.Handler.QueryParamBool: not found query for key [%s]", key)
+	}
+
+	s := h.request.URL.Query().Get(key)
+	v, err := strconv.ParseBool(s)
+	if err != nil {
+		return false, fmt.Errorf("http.handler.Handler.QueryParamBool - cann't parse query param [%s]: %w", key, err)
+	}
+	return v, nil
+}
+
+func (h *Handler) hasQueryParam(key string) bool {
+	return h.request.URL.Query().Has(key)
 }

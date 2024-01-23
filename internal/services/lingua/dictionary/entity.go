@@ -1,6 +1,14 @@
 package dictionary
 
-import "github.com/google/uuid"
+import (
+	"errors"
+
+	"github.com/google/uuid"
+)
+
+var (
+	ErrDictionaryNotFound = errors.New("dictionary not found")
+)
 
 type Dictionary struct {
 	ID     uuid.UUID `json:"id"`
