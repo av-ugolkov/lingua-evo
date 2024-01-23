@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log/slog"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -34,8 +33,8 @@ type (
 	}
 
 	DictionaryIDRs struct {
-		ID    uuid.UUID `json:"dictionary_id"`
-		Words []string  `json:"words"`
+		ID   uuid.UUID   `json:"dictionary_id"`
+		Tags []uuid.UUID `json:"tags"`
 	}
 
 	Handler struct {
@@ -134,12 +133,7 @@ func (h *Handler) getDictionary(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	capacity, err := handler.QueryParamInt(ParamsCapacity)
-	if err != nil {
-		slog.Warn(fmt.Sprintf("dictionary.delivery.Handler.getDictionary - get query [cap]: %v", err))
-	}
-
-	id, words, err := h.dictionarySvc.GetDictionary(ctx, userID, name, capacity)
+	id, tags, err := h.dictionarySvc.GetDictionary(ctx, userID, name)
 	if err != nil {
 		handler.SendError(http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.getDictionary: %v", err))
 		return
@@ -150,8 +144,8 @@ func (h *Handler) getDictionary(w http.ResponseWriter, r *http.Request) {
 	}
 
 	dictID := DictionaryIDRs{
-		ID:    id,
-		Words: words,
+		ID:   id,
+		Tags: tags,
 	}
 	b, err := json.Marshal(&dictID)
 	if err != nil {
