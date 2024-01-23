@@ -18,7 +18,7 @@ type (
 	repoDict interface {
 		AddDictionary(ctx context.Context, dict entity.Dictionary) error
 		DeleteDictionary(ctx context.Context, dict entity.Dictionary) error
-		GetDictionary(ctx context.Context, dict entity.Dictionary) (uuid.UUID, error)
+		GetDictionaryByName(ctx context.Context, dict entity.Dictionary) (uuid.UUID, []uuid.UUID, error)
 		GetDictionaries(ctx context.Context, userID uuid.UUID) ([]*entity.Dictionary, error)
 	}
 
@@ -76,26 +76,18 @@ func (s *DictionarySvc) DeleteDictionary(ctx context.Context, userID uuid.UUID, 
 	return nil
 }
 
-func (s *DictionarySvc) GetDictionary(ctx context.Context, userID uuid.UUID, name string, capacity int) (uuid.UUID, []string, error) {
+func (s *DictionarySvc) GetDictionary(ctx context.Context, userID uuid.UUID, name string) (uuid.UUID, []uuid.UUID, error) {
 	dict := entity.Dictionary{
 		UserID: userID,
 		Name:   name,
 	}
 
-	dictID, err := s.repoDict.GetDictionary(ctx, dict)
+	dictID, tags, err := s.repoDict.GetDictionaryByName(ctx, dict)
 	if err != nil {
 		return uuid.Nil, nil, fmt.Errorf("dictionary.service.DictionarySvc.GetDictionary: %w", err)
 	}
 
-	var words []string
-	if capacity > 0 {
-		words, err = s.repoVocab.GetWordsFromDictionary(ctx, dictID, capacity)
-		if err != nil {
-			return uuid.Nil, nil, fmt.Errorf("dictionary.service.DictionarySvc.GetDictionary - get words: %w", err)
-		}
-	}
-
-	return dictID, words, nil
+	return dictID, tags, nil
 }
 
 func (s *DictionarySvc) GetDictionaries(ctx context.Context, userID uuid.UUID) ([]*entity.Dictionary, error) {
