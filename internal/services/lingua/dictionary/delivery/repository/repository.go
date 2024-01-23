@@ -8,6 +8,7 @@ import (
 	entity "lingua-evo/internal/services/lingua/dictionary"
 
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 )
 
 type DictRepo struct {
@@ -21,9 +22,9 @@ func NewRepo(db *sql.DB) *DictRepo {
 }
 
 func (r *DictRepo) AddDictionary(ctx context.Context, dict entity.Dictionary) error {
-	query := `INSERT INTO dictionary (id, user_id, name) VALUES($1, $2, $3)`
+	query := `INSERT INTO dictionary (id, user_id, name, tags) VALUES($1, $2, $3, $4)`
 
-	_, err := r.db.QueryContext(ctx, query, dict.ID, dict.UserID, dict.Name)
+	_, err := r.db.QueryContext(ctx, query, dict.ID, dict.UserID, dict.Name, []uuid.UUID{uuid.New(), uuid.New()})
 	if err != nil {
 		return fmt.Errorf("dictionary.repository.DictRepo.AddDictionary: %w", err)
 	}
@@ -43,14 +44,15 @@ func (r *DictRepo) DeleteDictionary(ctx context.Context, dict entity.Dictionary)
 	return nil
 }
 
-func (r *DictRepo) GetDictionary(ctx context.Context, dict entity.Dictionary) (uuid.UUID, error) {
-	query := `SELECT id FROM dictionary WHERE user_id=$1 AND name=$2;`
+func (r *DictRepo) GetDictionaryByName(ctx context.Context, dict entity.Dictionary) (uuid.UUID, []uuid.UUID, error) {
+	query := `SELECT id, tags FROM dictionary WHERE user_id=$1 AND name=$2;`
 	var dictID uuid.UUID
-	err := r.db.QueryRowContext(ctx, query, dict.UserID, dict.Name).Scan(&dictID)
+	var tags []uuid.UUID
+	err := r.db.QueryRowContext(ctx, query, dict.UserID, dict.Name).Scan(&dictID, pq.Array(&tags))
 	if err != nil {
-		return uuid.Nil, err
+		return uuid.Nil, nil, err
 	}
-	return dictID, nil
+	return dictID, tags, nil
 }
 
 func (r *DictRepo) GetDictionaries(ctx context.Context, userID uuid.UUID) ([]*entity.Dictionary, error) {
