@@ -2,13 +2,15 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
-	"strconv"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 
+	entity "lingua-evo/internal/services/lingua/dictionary"
 	"lingua-evo/internal/services/lingua/dictionary/service"
 	"lingua-evo/pkg/http/handler"
 	"lingua-evo/pkg/http/handler/common"
@@ -17,25 +19,18 @@ import (
 )
 
 const (
-	addDictionary    = "/account/dictionary/add"
-	deleteDictionary = "/account/dictionary/delete"
-	getDictionary    = "/account/dictionary"
+	dictionaryOp     = "/account/dictionary"
 	getAllDictionary = "/account/dictionaries"
 )
 
+const (
+	ParamsName     = "name"
+	ParamsCapacity = "cap"
+)
+
 type (
-	DictionaryRq struct {
-		Name     string `json:"name"`
-		Capacity int    `json:"cap"`
-	}
-
-	DictionariesRs struct {
-		Dictionaries []Dictionary
-	}
-
-	Dictionary struct {
-		ID   uuid.UUID
-		Name string
+	DictionaryRs struct {
+		DictionaryID uuid.UUID `json:"dictionary_id"`
 	}
 
 	DictionaryIDRs struct {
@@ -60,44 +55,43 @@ func newHandler(dictionarySvc *service.DictionarySvc) *Handler {
 }
 
 func (h *Handler) register(r *mux.Router) {
-	r.HandleFunc(addDictionary, middleware.Auth(h.addDictionary)).Methods(http.MethodPost)
-	r.HandleFunc(deleteDictionary, middleware.Auth(h.deleteDictionary)).Methods(http.MethodDelete)
-	r.HandleFunc(getDictionary, middleware.Auth(h.getDictionary)).Methods(http.MethodGet)
+	r.HandleFunc(dictionaryOp, middleware.Auth(h.addDictionary)).Methods(http.MethodPost)
+	r.HandleFunc(dictionaryOp, middleware.Auth(h.deleteDictionary)).Methods(http.MethodDelete)
+	r.HandleFunc(dictionaryOp, middleware.Auth(h.getDictionary)).Methods(http.MethodGet)
 	r.HandleFunc(getAllDictionary, middleware.Auth(h.getDictionaries)).Methods(http.MethodGet)
 }
 
 func (h *Handler) addDictionary(w http.ResponseWriter, r *http.Request) {
-	defer func() {
-		_ = r.Body.Close()
-	}()
 	handler := handler.NewHandler(w, r)
 	ctx := r.Context()
 	userID, err := runtime.UserIDFromContext(ctx)
 	if err != nil {
 		handler.SendError(http.StatusUnauthorized, fmt.Errorf("dictionary.delivery.Handler.addDictionary - unauthorized: %v", err))
 		return
-
 	}
 
-	var data DictionaryRq
-	if err := handler.CheckBody(&data); err != nil {
-		handler.SendError(http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.addDictionary - check body: %v", err))
+	name, err := handler.QueryParamString(ParamsName)
+	if err != nil {
+		handler.SendError(http.StatusUnauthorized, fmt.Errorf("dictionary.delivery.Handler.addDictionary - get query [name]: %v", err))
 		return
 	}
 
-	dictID, err := h.dictionarySvc.AddDictionary(ctx, userID, data.Name)
+	dictID, err := h.dictionarySvc.AddDictionary(ctx, userID, name)
 	if err != nil {
 		handler.SendError(http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.addDictionary: %v", err))
 	}
 
+	b, err := json.Marshal(DictionaryRs{dictID})
+	if err != nil {
+		handler.SendError(http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.addDictionary - marshal: %v", err))
+		return
+	}
+
 	handler.SetContentType(common.ContentTypeJSON)
-	handler.SendData(http.StatusOK, []byte(dictID.String()))
+	handler.SendData(http.StatusOK, b)
 }
 
 func (h *Handler) deleteDictionary(w http.ResponseWriter, r *http.Request) {
-	defer func() {
-		_ = r.Body.Close()
-	}()
 	ctx := r.Context()
 	handler := handler.NewHandler(w, r)
 	userID, err := runtime.UserIDFromContext(ctx)
@@ -106,16 +100,22 @@ func (h *Handler) deleteDictionary(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var data DictionaryRq
-	if err := handler.CheckBody(&data); err != nil {
-		handler.SendError(http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.deleteDictionary - check body: %v", err))
+	name, err := handler.QueryParamString(ParamsName)
+	if err != nil {
+		handler.SendError(http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.deleteDictionary - get query [name]: %v", err))
 		return
 	}
 
-	err = h.dictionarySvc.DeleteDictionary(ctx, userID, data.Name)
-	if err != nil {
+	err = h.dictionarySvc.DeleteDictionary(ctx, userID, name)
+	switch {
+	case errors.Is(err, entity.ErrDictionaryNotFound):
+		handler.SendError(http.StatusNotFound, fmt.Errorf("dictionary.delivery.Handler.deleteDictionary: %v", err))
+		return
+	case err != nil:
 		handler.SendError(http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.deleteDictionary: %v", err))
+		return
 	}
+
 	handler.SendEmptyData(http.StatusOK)
 }
 
@@ -128,21 +128,15 @@ func (h *Handler) getDictionary(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	name, err := handler.QueryParams("name")
+	name, err := handler.QueryParamString(ParamsName)
 	if err != nil {
 		handler.SendError(http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.getDictionary - get query [name]: %v", err))
 		return
 	}
 
-	cap, err := handler.QueryParams("cap")
+	capacity, err := handler.QueryParamInt(ParamsCapacity)
 	if err != nil {
-		handler.SendError(http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.getDictionary - get query [cap]: %v", err))
-		return
-	}
-	capacity, err := strconv.Atoi(cap)
-	if err != nil {
-		handler.SendError(http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.getDictionary - parse str to int: %v", err))
-		return
+		slog.Warn(fmt.Sprintf("dictionary.delivery.Handler.getDictionary - get query [cap]: %v", err))
 	}
 
 	id, words, err := h.dictionarySvc.GetDictionary(ctx, userID, name, capacity)
