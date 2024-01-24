@@ -10,8 +10,7 @@ import (
 
 	"lingua-evo/internal/config"
 	"lingua-evo/internal/services/auth/service"
-	"lingua-evo/pkg/http/handler"
-	"lingua-evo/pkg/http/handler/common"
+	"lingua-evo/pkg/http/exchange"
 	"lingua-evo/pkg/middleware"
 
 	"github.com/google/uuid"
@@ -41,8 +40,8 @@ type (
 )
 
 func Create(r *mux.Router, authSvc *service.AuthSvc) {
-	handler := newHandler(authSvc)
-	handler.register(r)
+	h := newHandler(authSvc)
+	h.register(r)
 }
 
 func newHandler(authSvc *service.AuthSvc) *Handler {
@@ -62,27 +61,27 @@ func (h *Handler) signin(w http.ResponseWriter, r *http.Request) {
 		_ = r.Body.Close()
 	}()
 
-	handler := handler.NewHandler(w, r)
-	authorization, err := handler.GetHeaderAuthorization(common.AuthTypeBasic)
+	ex := exchange.NewExchanger(w, r)
+	authorization, err := ex.GetHeaderAuthorization(exchange.AuthTypeBasic)
 	if err != nil {
-		handler.SendError(http.StatusBadRequest, fmt.Errorf("auth.delivery.Handler.signin: %v", err))
+		ex.SendError(http.StatusBadRequest, fmt.Errorf("auth.delivery.Handler.signin: %v", err))
 		return
 	}
 	var data CreateSessionRq
 	err = decodeBasicAuth(authorization, &data)
 	if err != nil {
-		handler.SendError(http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.signin - check body: %v", err))
+		ex.SendError(http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.signin - check body: %v", err))
 		return
 	}
-	data.Fingerprint, err = handler.GetHeaderFingerprint()
+	data.Fingerprint, err = ex.GetHeaderFingerprint()
 	if err != nil {
-		handler.SendError(http.StatusBadRequest, fmt.Errorf("auth.delivery.Handler.signin - GetHeaderFingerprint: %v", err))
+		ex.SendError(http.StatusBadRequest, fmt.Errorf("auth.delivery.Handler.signin - GetHeaderFingerprint: %v", err))
 		return
 	}
 	ctx := r.Context()
 	tokens, err := h.authSvc.Login(ctx, data.User, data.Password, data.Fingerprint)
 	if err != nil {
-		handler.SendError(http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.signin - create session: %v", err))
+		ex.SendError(http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.signin - create session: %v", err))
 		return
 	}
 
@@ -90,97 +89,97 @@ func (h *Handler) signin(w http.ResponseWriter, r *http.Request) {
 		AccessToken: tokens.AccessToken,
 	})
 	if err != nil {
-		handler.SendError(http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.signin - marshal: %v", err))
+		ex.SendError(http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.signin - marshal: %v", err))
 		return
 	}
 
 	additionalTime := config.GetConfig().JWT.ExpireRefresh
 	duration := time.Duration(additionalTime) * time.Second
 
-	handler.SetContentType(common.ContentTypeJSON)
-	handler.SetCookieRefreshToken(tokens.RefreshToken, duration)
-	handler.SendData(http.StatusOK, b)
+	ex.SetContentType(exchange.ContentTypeJSON)
+	ex.SetCookieRefreshToken(tokens.RefreshToken, duration)
+	ex.SendData(http.StatusOK, b)
 }
 
 func (h *Handler) refresh(w http.ResponseWriter, r *http.Request) {
-	handler := handler.NewHandler(w, r)
-	refreshToken, err := handler.Cookie(common.RefreshToken)
+	ex := exchange.NewExchanger(w, r)
+	refreshToken, err := ex.Cookie(exchange.RefreshToken)
 	if err != nil {
-		handler.SendError(http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.refresh - get cookie: %v", err))
+		ex.SendError(http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.refresh - get cookie: %v", err))
 		return
 	}
 	if refreshToken == nil {
-		handler.SendError(http.StatusUnauthorized, fmt.Errorf("auth.delivery.Handler.refresh: %v", err))
+		ex.SendError(http.StatusUnauthorized, fmt.Errorf("auth.delivery.Handler.refresh: %v", err))
 		return
 	}
 
 	refreshID, err := uuid.Parse(refreshToken.Value)
 	if err != nil {
-		handler.SendError(http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.refresh - get cookie: %v", err))
+		ex.SendError(http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.refresh - get cookie: %v", err))
 		return
 	}
 
-	fingerprint, err := handler.GetHeaderFingerprint()
+	fingerprint, err := ex.GetHeaderFingerprint()
 	if err != nil {
-		handler.SendError(http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.refresh - get fingerprint: %v", err))
+		ex.SendError(http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.refresh - get fingerprint: %v", err))
 		return
 	}
 
 	ctx := r.Context()
 	tokens, err := h.authSvc.RefreshSessionToken(ctx, refreshID, fingerprint)
 	if err != nil {
-		handler.SendError(http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.refresh - refresh token: %v", err))
+		ex.SendError(http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.refresh - refresh token: %v", err))
 		return
 	}
 	b, err := json.Marshal(&CreateSessionRs{
 		AccessToken: tokens.AccessToken,
 	})
 	if err != nil {
-		handler.SendError(http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.refresh - marshal: %v", err))
+		ex.SendError(http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.refresh - marshal: %v", err))
 		return
 	}
 
 	additionalTime := config.GetConfig().JWT.ExpireRefresh
 	duration := time.Duration(additionalTime) * time.Second
-	handler.SetContentType(common.ContentTypeJSON)
-	handler.SetCookieRefreshToken(tokens.RefreshToken, duration)
-	handler.SendData(http.StatusOK, b)
+	ex.SetContentType(exchange.ContentTypeJSON)
+	ex.SetCookieRefreshToken(tokens.RefreshToken, duration)
+	ex.SendData(http.StatusOK, b)
 }
 
 func (h *Handler) logout(w http.ResponseWriter, r *http.Request) {
-	handler := handler.NewHandler(w, r)
+	ex := exchange.NewExchanger(w, r)
 
-	refreshToken, err := handler.Cookie(common.RefreshToken)
+	refreshToken, err := ex.Cookie(exchange.RefreshToken)
 	if err != nil {
-		handler.SendError(http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.logout - get cookie: %v", err))
+		ex.SendError(http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.logout - get cookie: %v", err))
 		return
 	}
 	if refreshToken == nil {
-		handler.SendError(http.StatusUnauthorized, fmt.Errorf("auth.delivery.Handler.logout: %v", err))
+		ex.SendError(http.StatusUnauthorized, fmt.Errorf("auth.delivery.Handler.logout: %v", err))
 		return
 	}
 
 	refreshID, err := uuid.Parse(refreshToken.Value)
 	if err != nil {
-		handler.SendError(http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.logout - parse: %v", err))
+		ex.SendError(http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.logout - parse: %v", err))
 		return
 	}
 
-	fingerprint, err := handler.GetHeaderFingerprint()
+	fingerprint, err := ex.GetHeaderFingerprint()
 	if err != nil {
-		handler.SendError(http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.logout - get fingerprint: %v", err))
+		ex.SendError(http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.logout - get fingerprint: %v", err))
 		return
 	}
 
 	ctx := r.Context()
 	err = h.authSvc.Logout(ctx, refreshID, fingerprint)
 	if err != nil {
-		handler.SendError(http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.logout - logout: %v", err))
+		ex.SendError(http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.logout - logout: %v", err))
 		return
 	}
 
-	handler.DeleteCookie(common.RefreshToken)
-	handler.SendEmptyData(http.StatusOK)
+	ex.DeleteCookie(exchange.RefreshToken)
+	ex.SendEmptyData(http.StatusOK)
 }
 
 func decodeBasicAuth(basicToken string, data *CreateSessionRq) error {

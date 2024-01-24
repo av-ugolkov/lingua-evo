@@ -7,8 +7,7 @@ import (
 
 	entity "lingua-evo/internal/services/vocabulary"
 	"lingua-evo/internal/services/vocabulary/service"
-	"lingua-evo/pkg/http/handler"
-	"lingua-evo/pkg/http/handler/common"
+	"lingua-evo/pkg/http/exchange"
 	"lingua-evo/pkg/middleware"
 
 	"github.com/google/uuid"
@@ -42,8 +41,8 @@ type (
 )
 
 func Create(r *mux.Router, vocabularySvc *service.VocabularySvc) {
-	handler := newHandler(vocabularySvc)
-	handler.register(r)
+	h := newHandler(vocabularySvc)
+	h.register(r)
 }
 
 func newHandler(vocabularySvc *service.VocabularySvc) *Handler {
@@ -60,26 +59,22 @@ func (h *Handler) register(r *mux.Router) {
 }
 
 func (h *Handler) addWord(w http.ResponseWriter, r *http.Request) {
-	defer func() {
-		_ = r.Body.Close()
-	}()
-
 	ctx := r.Context()
-	handler := handler.NewHandler(w, r)
+	ex := exchange.NewExchanger(w, r)
 
 	var data AddWordRq
-	err := handler.CheckBody(&data)
+	err := ex.CheckBody(&data)
 	if err != nil {
-		handler.SendError(http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.addWord - check body: %v", err))
+		ex.SendError(http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.addWord - check body: %v", err))
 		return
 	}
 
 	err = h.vocabularySvc.AddWordInVocabulary(ctx, data.DictionaryID, data.NativeWord, data.TanslateWords, data.Examples, data.Tags)
 	if err != nil {
-		handler.SendError(http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.addWord: %v", err))
+		ex.SendError(http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.addWord: %v", err))
 		return
 	}
-	handler.SendEmptyData(http.StatusOK)
+	ex.SendEmptyData(http.StatusOK)
 }
 
 func (h *Handler) deleteWord(w http.ResponseWriter, r *http.Request) {
@@ -88,21 +83,21 @@ func (h *Handler) deleteWord(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	ctx := r.Context()
-	handler := handler.NewHandler(w, r)
+	ex := exchange.NewExchanger(w, r)
 
 	var data RemoveWordRq
-	err := handler.CheckBody(&data)
+	err := ex.CheckBody(&data)
 	if err != nil {
-		handler.SendError(http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.deleteWord - check body: %v", err))
+		ex.SendError(http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.deleteWord - check body: %v", err))
 		return
 	}
 
 	err = h.vocabularySvc.DeleteWordFromVocabulary(ctx, data.DictionaryID, data.NativeWordID)
 	if err != nil {
-		handler.SendError(http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.deleteWord: %v", err))
+		ex.SendError(http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.deleteWord: %v", err))
 		return
 	}
-	handler.SendEmptyData(http.StatusOK)
+	ex.SendEmptyData(http.StatusOK)
 }
 
 func (h *Handler) getWord(w http.ResponseWriter, r *http.Request) {
@@ -111,32 +106,32 @@ func (h *Handler) getWord(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) getWords(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	handler := handler.NewHandler(w, r)
+	ex := exchange.NewExchanger(w, r)
 
-	dictID, err := handler.QueryParamString("dictionary_id")
+	dictID, err := ex.QueryParamString("dictionary_id")
 	if err != nil {
-		handler.SendError(http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.getWords - get query: %w", err))
+		ex.SendError(http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.getWords - get query: %w", err))
 		return
 	}
 
 	did, err := uuid.Parse(dictID)
 	if err != nil {
-		handler.SendError(http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.getWords - parse query: %w", err))
+		ex.SendError(http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.getWords - parse query: %w", err))
 		return
 	}
 
 	words, err := h.vocabularySvc.GetWords(ctx, did)
 	if err != nil {
-		handler.SendError(http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.getWords: %w", err))
+		ex.SendError(http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.getWords: %w", err))
 		return
 	}
 
 	b, err := json.Marshal(words)
 	if err != nil {
-		handler.SendError(http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.getWords - marshal: %w", err))
+		ex.SendError(http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.getWords - marshal: %w", err))
 		return
 	}
 
-	handler.SetContentType(common.ContentTypeJSON)
-	handler.SendData(http.StatusOK, b)
+	ex.SetContentType(exchange.ContentTypeJSON)
+	ex.SendData(http.StatusOK, b)
 }
