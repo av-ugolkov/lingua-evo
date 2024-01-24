@@ -8,8 +8,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"lingua-evo/internal/services/language/service"
-	"lingua-evo/pkg/http/handler"
-	"lingua-evo/pkg/http/handler/common"
+	"lingua-evo/pkg/http/exchange"
 )
 
 const (
@@ -24,8 +23,8 @@ type (
 )
 
 func Create(r *mux.Router, langSvc *service.LanguageSvc) {
-	handler := newHandler(langSvc)
-	handler.register(r)
+	h := newHandler(langSvc)
+	h.register(r)
 }
 
 func newHandler(langSvc *service.LanguageSvc) *Handler {
@@ -40,40 +39,40 @@ func (h *Handler) register(r *mux.Router) {
 }
 
 func (h *Handler) getCurrentLanguage(w http.ResponseWriter, r *http.Request) {
-	handler := handler.NewHandler(w, r)
+	ex := exchange.NewExchanger(w, r)
 
 	type Language struct {
 		Language string `json:"language"`
 		Code     string `json:"code"`
 	}
 	lang := Language{}
-	lang.Code = handler.GetCookieLanguageOrDefault()
+	lang.Code = ex.GetCookieLanguageOrDefault()
 
 	b, err := json.Marshal(lang)
 	if err != nil {
-		handler.SendError(http.StatusInternalServerError, fmt.Errorf("lingua.language.delivery.Handler.getCurrentLanguage - marshal: %v", err))
+		ex.SendError(http.StatusInternalServerError, fmt.Errorf("lingua.language.delivery.Handler.getCurrentLanguage - marshal: %v", err))
 		return
 	}
 
-	handler.SetContentType(common.ContentTypeJSON)
-	handler.SetCookieLanguage(lang.Code)
-	handler.SendData(http.StatusOK, b)
+	ex.SetContentType(exchange.ContentTypeJSON)
+	ex.SetCookieLanguage(lang.Code)
+	ex.SendData(http.StatusOK, b)
 }
 
 func (h *Handler) getAvailableLanguages(w http.ResponseWriter, r *http.Request) {
-	handler := handler.NewHandler(w, r)
+	ex := exchange.NewExchanger(w, r)
 
 	languages, err := h.langSvc.GetAvailableLanguages(r.Context())
 	if err != nil {
-		handler.SendError(http.StatusInternalServerError, fmt.Errorf("lingua.language.delivery.Handler.getAvailableLanguages: %v", err))
+		ex.SendError(http.StatusInternalServerError, fmt.Errorf("lingua.language.delivery.Handler.getAvailableLanguages: %v", err))
 		return
 	}
 
 	jsonLanguages, err := json.Marshal(languages)
 	if err != nil {
-		handler.SendError(http.StatusInternalServerError, fmt.Errorf("lingua.language.delivery.Handler.getAvailableLanguages - marshal: %v", err))
+		ex.SendError(http.StatusInternalServerError, fmt.Errorf("lingua.language.delivery.Handler.getAvailableLanguages - marshal: %v", err))
 		return
 	}
-	handler.SetContentType(common.ContentTypeJSON)
-	handler.SendData(http.StatusOK, jsonLanguages)
+	ex.SetContentType(exchange.ContentTypeJSON)
+	ex.SendData(http.StatusOK, jsonLanguages)
 }
