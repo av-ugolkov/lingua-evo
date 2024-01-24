@@ -7,8 +7,7 @@ import (
 
 	serviceLang "lingua-evo/internal/services/language/service"
 	serviceWord "lingua-evo/internal/services/word/service"
-	"lingua-evo/pkg/http/handler"
-	"lingua-evo/pkg/http/handler/common"
+	"lingua-evo/pkg/http/exchange"
 	"lingua-evo/pkg/middleware"
 
 	"github.com/google/uuid"
@@ -53,8 +52,8 @@ type (
 )
 
 func Create(r *mux.Router, wordSvc *serviceWord.WordSvc, langSvc *serviceLang.LanguageSvc) {
-	handler := newHandler(wordSvc, langSvc)
-	handler.register(r)
+	h := newHandler(wordSvc, langSvc)
+	h.register(r)
 }
 
 func newHandler(wordSvc *serviceWord.WordSvc, langSvc *serviceLang.LanguageSvc) *Handler {
@@ -75,10 +74,10 @@ func (h *Handler) addWord(w http.ResponseWriter, r *http.Request) {
 		_ = r.Body.Close()
 	}()
 
-	handler := handler.NewHandler(w, r)
+	ex := exchange.NewExchanger(w, r)
 	var data AddWordRq
-	if err := handler.CheckBody(&data); err != nil {
-		handler.SendError(http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.addWord - check body: %v", err))
+	if err := ex.CheckBody(&data); err != nil {
+		ex.SendError(http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.addWord - check body: %v", err))
 		return
 	}
 
@@ -86,17 +85,17 @@ func (h *Handler) addWord(w http.ResponseWriter, r *http.Request) {
 
 	err := h.langSvc.CheckLanguage(ctx, data.LanguageCode)
 	if err != nil {
-		handler.SendError(http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.addWord - check language: %v", err))
+		ex.SendError(http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.addWord - check language: %v", err))
 		return
 	}
 
 	wordUUID, err := h.wordSvc.AddWord(ctx, data.Text, data.LanguageCode, data.Pronunciation)
 	if err != nil {
-		handler.SendError(http.StatusInternalServerError, err)
+		ex.SendError(http.StatusInternalServerError, err)
 		return
 	}
-	handler.SetContentType(common.ContentTypeJSON)
-	handler.SendData(http.StatusOK, []byte(wordUUID.String()))
+	ex.SetContentType(exchange.ContentTypeJSON)
+	ex.SendData(http.StatusOK, []byte(wordUUID.String()))
 }
 
 func (h *Handler) getWord(w http.ResponseWriter, r *http.Request) {
@@ -104,27 +103,27 @@ func (h *Handler) getWord(w http.ResponseWriter, r *http.Request) {
 		_ = r.Body.Close()
 	}()
 
-	handler := handler.NewHandler(w, r)
+	ex := exchange.NewExchanger(w, r)
 	var data GetWordRq
-	if err := handler.CheckBody(&data); err != nil {
-		handler.SendError(http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getWord - check body: %v", err))
+	if err := ex.CheckBody(&data); err != nil {
+		ex.SendError(http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getWord - check body: %v", err))
 		return
 	}
 
 	ctx := r.Context()
 
 	if err := h.langSvc.CheckLanguage(ctx, data.LanguageCode); err != nil {
-		handler.SendError(http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getWord - check language: %v", err))
+		ex.SendError(http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getWord - check language: %v", err))
 		return
 	}
 
 	wordID, err := h.wordSvc.GetWord(ctx, data.Text, data.LanguageCode)
 	if err != nil {
-		handler.SendError(http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getWord: %v", err))
+		ex.SendError(http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getWord: %v", err))
 		return
 	}
-	handler.SetContentType(common.ContentTypeJSON)
-	handler.SendData(http.StatusOK, []byte(wordID.String()))
+	ex.SetContentType(exchange.ContentTypeJSON)
+	ex.SendData(http.StatusOK, []byte(wordID.String()))
 }
 
 func (h *Handler) getRandomWord(w http.ResponseWriter, r *http.Request) {
@@ -132,23 +131,23 @@ func (h *Handler) getRandomWord(w http.ResponseWriter, r *http.Request) {
 		_ = r.Body.Close()
 	}()
 
-	handler := handler.NewHandler(w, r)
+	ex := exchange.NewExchanger(w, r)
 	var data RandomWordRq
-	if err := handler.CheckBody(&data); err != nil {
-		handler.SendError(http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getRandomWord - check body: %v", err))
+	if err := ex.CheckBody(&data); err != nil {
+		ex.SendError(http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getRandomWord - check body: %v", err))
 		return
 	}
 
 	ctx := r.Context()
 
 	if err := h.langSvc.CheckLanguage(ctx, data.LanguageCode); err != nil {
-		handler.SendError(http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getRandomWord - check language: %v", err))
+		ex.SendError(http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getRandomWord - check language: %v", err))
 		return
 	}
 
 	word, err := h.wordSvc.GetRandomWord(ctx, data.LanguageCode)
 	if err != nil {
-		handler.SendError(http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getRandomWord: %v", err))
+		ex.SendError(http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getRandomWord: %v", err))
 		return
 	}
 
@@ -160,9 +159,9 @@ func (h *Handler) getRandomWord(w http.ResponseWriter, r *http.Request) {
 
 	b, err := json.Marshal(&randomWordRs)
 	if err != nil {
-		handler.SendError(http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getRandomWord - marshal: %v", err))
+		ex.SendError(http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getRandomWord - marshal: %v", err))
 		return
 	}
-	handler.SetContentType(common.ContentTypeJSON)
-	handler.SendData(http.StatusOK, b)
+	ex.SetContentType(exchange.ContentTypeJSON)
+	ex.SendData(http.StatusOK, b)
 }
