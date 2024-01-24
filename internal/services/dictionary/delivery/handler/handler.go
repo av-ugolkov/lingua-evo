@@ -11,8 +11,7 @@ import (
 
 	entity "lingua-evo/internal/services/dictionary"
 	"lingua-evo/internal/services/dictionary/service"
-	"lingua-evo/pkg/http/handler"
-	"lingua-evo/pkg/http/handler/common"
+	"lingua-evo/pkg/http/exchange"
 	"lingua-evo/pkg/middleware"
 	"lingua-evo/runtime"
 )
@@ -43,8 +42,8 @@ type (
 )
 
 func Create(r *mux.Router, dictionarySvc *service.DictionarySvc) {
-	handler := newHandler(dictionarySvc)
-	handler.register(r)
+	h := newHandler(dictionarySvc)
+	h.register(r)
 }
 
 func newHandler(dictionarySvc *service.DictionarySvc) *Handler {
@@ -61,85 +60,85 @@ func (h *Handler) register(r *mux.Router) {
 }
 
 func (h *Handler) addDictionary(w http.ResponseWriter, r *http.Request) {
-	handler := handler.NewHandler(w, r)
+	ex := exchange.NewExchanger(w, r)
 	ctx := r.Context()
 	userID, err := runtime.UserIDFromContext(ctx)
 	if err != nil {
-		handler.SendError(http.StatusUnauthorized, fmt.Errorf("dictionary.delivery.Handler.addDictionary - unauthorized: %v", err))
+		ex.SendError(http.StatusUnauthorized, fmt.Errorf("dictionary.delivery.Handler.addDictionary - unauthorized: %v", err))
 		return
 	}
 
-	name, err := handler.QueryParamString(ParamsName)
+	name, err := ex.QueryParamString(ParamsName)
 	if err != nil {
-		handler.SendError(http.StatusUnauthorized, fmt.Errorf("dictionary.delivery.Handler.addDictionary - get query [name]: %v", err))
+		ex.SendError(http.StatusUnauthorized, fmt.Errorf("dictionary.delivery.Handler.addDictionary - get query [name]: %v", err))
 		return
 	}
 
 	dictID, err := h.dictionarySvc.AddDictionary(ctx, userID, name)
 	if err != nil {
-		handler.SendError(http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.addDictionary: %v", err))
+		ex.SendError(http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.addDictionary: %v", err))
 	}
 
 	b, err := json.Marshal(DictionaryRs{dictID})
 	if err != nil {
-		handler.SendError(http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.addDictionary - marshal: %v", err))
+		ex.SendError(http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.addDictionary - marshal: %v", err))
 		return
 	}
 
-	handler.SetContentType(common.ContentTypeJSON)
-	handler.SendData(http.StatusOK, b)
+	ex.SetContentType(exchange.ContentTypeJSON)
+	ex.SendData(http.StatusOK, b)
 }
 
 func (h *Handler) deleteDictionary(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	handler := handler.NewHandler(w, r)
+	ex := exchange.NewExchanger(w, r)
 	userID, err := runtime.UserIDFromContext(ctx)
 	if err != nil {
-		handler.SendError(http.StatusUnauthorized, fmt.Errorf("dictionary.delivery.Handler.deleteDictionary - unauthorized: %v", err))
+		ex.SendError(http.StatusUnauthorized, fmt.Errorf("dictionary.delivery.Handler.deleteDictionary - unauthorized: %v", err))
 		return
 	}
 
-	name, err := handler.QueryParamString(ParamsName)
+	name, err := ex.QueryParamString(ParamsName)
 	if err != nil {
-		handler.SendError(http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.deleteDictionary - get query [name]: %v", err))
+		ex.SendError(http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.deleteDictionary - get query [name]: %v", err))
 		return
 	}
 
 	err = h.dictionarySvc.DeleteDictionary(ctx, userID, name)
 	switch {
 	case errors.Is(err, entity.ErrDictionaryNotFound):
-		handler.SendError(http.StatusNotFound, fmt.Errorf("dictionary.delivery.Handler.deleteDictionary: %v", err))
+		ex.SendError(http.StatusNotFound, fmt.Errorf("dictionary.delivery.Handler.deleteDictionary: %v", err))
 		return
 	case err != nil:
-		handler.SendError(http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.deleteDictionary: %v", err))
+		ex.SendError(http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.deleteDictionary: %v", err))
 		return
 	}
 
-	handler.SendEmptyData(http.StatusOK)
+	ex.SendEmptyData(http.StatusOK)
 }
 
 func (h *Handler) getDictionary(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	handler := handler.NewHandler(w, r)
+	ex := exchange.NewExchanger(w, r)
 	userID, err := runtime.UserIDFromContext(ctx)
 	if err != nil {
-		handler.SendError(http.StatusUnauthorized, fmt.Errorf("dictionary.delivery.Handler.getDictionary - unauthorized: %v", err))
+		ex.SendError(http.StatusUnauthorized, fmt.Errorf("dictionary.delivery.Handler.getDictionary - unauthorized: %v", err))
 		return
 	}
 
-	name, err := handler.QueryParamString(ParamsName)
+	name, err := ex.QueryParamString(ParamsName)
 	if err != nil {
-		handler.SendError(http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.getDictionary - get query [name]: %v", err))
+		ex.SendError(http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.getDictionary - get query [name]: %v", err))
 		return
 	}
 
 	id, tags, err := h.dictionarySvc.GetDictionary(ctx, userID, name)
 	if err != nil {
-		handler.SendError(http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.getDictionary: %v", err))
+		ex.SendError(http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.getDictionary: %v", err))
 		return
 	}
 	if id == uuid.Nil {
-		handler.SendError(http.StatusNotFound, fmt.Errorf("dictionary.delivery.Handler.getDictionary - dictionary not found: %v", err))
+		ex.SendError(http.StatusNotFound, fmt.Errorf("dictionary.delivery.Handler.getDictionary - dictionary not found: %v", err))
 		return
 	}
 
@@ -149,34 +148,34 @@ func (h *Handler) getDictionary(w http.ResponseWriter, r *http.Request) {
 	}
 	b, err := json.Marshal(&dictID)
 	if err != nil {
-		handler.SendError(http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.getDictionary - marshal: %v", err))
+		ex.SendError(http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.getDictionary - marshal: %v", err))
 		return
 	}
 
-	handler.SetContentType(common.ContentTypeJSON)
-	handler.SendData(http.StatusOK, b)
+	ex.SetContentType(exchange.ContentTypeJSON)
+	ex.SendData(http.StatusOK, b)
 }
 
 func (h *Handler) getDictionaries(w http.ResponseWriter, r *http.Request) {
-	handler := handler.NewHandler(w, r)
+	ex := exchange.NewExchanger(w, r)
 	userID, err := runtime.UserIDFromContext(r.Context())
 	if err != nil {
-		handler.SendError(http.StatusUnauthorized, fmt.Errorf("dictionary.delivery.Handler.getAllDictionary - unauthorized: %v", err))
+		ex.SendError(http.StatusUnauthorized, fmt.Errorf("dictionary.delivery.Handler.getAllDictionary - unauthorized: %v", err))
 		return
 	}
 
 	ctx := r.Context()
 	dictionaries, err := h.dictionarySvc.GetDictionaries(ctx, userID)
 	if err != nil {
-		handler.SendError(http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.getAllDictionary: %v", err))
+		ex.SendError(http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.getAllDictionary: %v", err))
 	}
 
 	b, err := json.Marshal(dictionaries)
 	if err != nil {
-		handler.SendError(http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.getAllDictionary - marshal: %v", err))
+		ex.SendError(http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.getAllDictionary - marshal: %v", err))
 		return
 	}
 
-	handler.SetContentType(common.ContentTypeJSON)
-	handler.SendData(http.StatusOK, b)
+	ex.SetContentType(exchange.ContentTypeJSON)
+	ex.SendData(http.StatusOK, b)
 }
