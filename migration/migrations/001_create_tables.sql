@@ -70,7 +70,7 @@ CREATE TABLE IF NOT EXISTS
         native_word UUID NOT NULL,
         translate_word UUID[] NOT NULL,
         examples UUID[],
-        tags INT[]
+        tags UUID[]
     );
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_vocabulary__dictionary_id_native_word ON vocabulary (dictionary_id, native_word);

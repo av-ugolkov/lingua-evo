@@ -11,8 +11,8 @@ var (
 )
 
 type Dictionary struct {
-	ID     uuid.UUID `json:"id"`
-	UserID uuid.UUID `json:"user_id"`
-	Name   string    `json:"name"`
-	Tags   []string  `json:"tags"`
+	ID     uuid.UUID
+	UserID uuid.UUID
+	Name   string
+	Tags   []string
 }

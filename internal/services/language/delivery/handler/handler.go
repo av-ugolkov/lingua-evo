@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -17,6 +16,11 @@ const (
 )
 
 type (
+	LanguageRs struct {
+		Language string `json:"language"`
+		Code     string `json:"code"`
+	}
+
 	Handler struct {
 		langSvc *service.LanguageSvc
 	}
@@ -41,22 +45,13 @@ func (h *Handler) register(r *mux.Router) {
 func (h *Handler) getCurrentLanguage(w http.ResponseWriter, r *http.Request) {
 	ex := exchange.NewExchanger(w, r)
 
-	type Language struct {
-		Language string `json:"language"`
-		Code     string `json:"code"`
-	}
-	lang := Language{}
-	lang.Code = ex.GetCookieLanguageOrDefault()
-
-	b, err := json.Marshal(lang)
-	if err != nil {
-		ex.SendError(http.StatusInternalServerError, fmt.Errorf("lingua.language.delivery.Handler.getCurrentLanguage - marshal: %v", err))
-		return
+	languageRs := &LanguageRs{
+		Code: ex.GetCookieLanguageOrDefault(),
 	}
 
 	ex.SetContentType(exchange.ContentTypeJSON)
-	ex.SetCookieLanguage(lang.Code)
-	ex.SendData(http.StatusOK, b)
+	ex.SetCookieLanguage(languageRs.Code)
+	ex.SendData(http.StatusOK, languageRs)
 }
 
 func (h *Handler) getAvailableLanguages(w http.ResponseWriter, r *http.Request) {
@@ -68,11 +63,14 @@ func (h *Handler) getAvailableLanguages(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	jsonLanguages, err := json.Marshal(languages)
-	if err != nil {
-		ex.SendError(http.StatusInternalServerError, fmt.Errorf("lingua.language.delivery.Handler.getAvailableLanguages - marshal: %v", err))
-		return
+	languagesRs := make([]LanguageRs, 0, len(languages))
+	for _, lang := range languages {
+		languagesRs = append(languagesRs, LanguageRs{
+			Language: lang.Lang,
+			Code:     lang.Code,
+		})
 	}
+
 	ex.SetContentType(exchange.ContentTypeJSON)
-	ex.SendData(http.StatusOK, jsonLanguages)
+	ex.SendData(http.StatusOK, languagesRs)
 }
