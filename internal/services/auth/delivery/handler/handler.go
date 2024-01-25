@@ -2,7 +2,6 @@ package handler
 
 import (
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -85,12 +84,8 @@ func (h *Handler) signin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	b, err := json.Marshal(&CreateSessionRs{
+	sessionRs := &CreateSessionRs{
 		AccessToken: tokens.AccessToken,
-	})
-	if err != nil {
-		ex.SendError(http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.signin - marshal: %v", err))
-		return
 	}
 
 	additionalTime := config.GetConfig().JWT.ExpireRefresh
@@ -98,7 +93,7 @@ func (h *Handler) signin(w http.ResponseWriter, r *http.Request) {
 
 	ex.SetContentType(exchange.ContentTypeJSON)
 	ex.SetCookieRefreshToken(tokens.RefreshToken, duration)
-	ex.SendData(http.StatusOK, b)
+	ex.SendData(http.StatusOK, sessionRs)
 }
 
 func (h *Handler) refresh(w http.ResponseWriter, r *http.Request) {
@@ -131,19 +126,16 @@ func (h *Handler) refresh(w http.ResponseWriter, r *http.Request) {
 		ex.SendError(http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.refresh - refresh token: %v", err))
 		return
 	}
-	b, err := json.Marshal(&CreateSessionRs{
+
+	sessionRs := &CreateSessionRs{
 		AccessToken: tokens.AccessToken,
-	})
-	if err != nil {
-		ex.SendError(http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.refresh - marshal: %v", err))
-		return
 	}
 
 	additionalTime := config.GetConfig().JWT.ExpireRefresh
 	duration := time.Duration(additionalTime) * time.Second
 	ex.SetContentType(exchange.ContentTypeJSON)
 	ex.SetCookieRefreshToken(tokens.RefreshToken, duration)
-	ex.SendData(http.StatusOK, b)
+	ex.SendData(http.StatusOK, sessionRs)
 }
 
 func (h *Handler) logout(w http.ResponseWriter, r *http.Request) {

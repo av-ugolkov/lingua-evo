@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -27,13 +26,16 @@ const (
 )
 
 type (
-	DictionaryRs struct {
-		DictionaryID uuid.UUID `json:"dictionary_id"`
-	}
-
 	DictionaryIDRs struct {
 		ID   uuid.UUID   `json:"dictionary_id"`
 		Tags []uuid.UUID `json:"tags"`
+	}
+
+	DictionaryRs struct {
+		ID     uuid.UUID `json:"id"`
+		UserID uuid.UUID `json:"user_id"`
+		Name   string    `json:"name"`
+		Tags   []string  `json:"tags"`
 	}
 
 	Handler struct {
@@ -79,14 +81,12 @@ func (h *Handler) addDictionary(w http.ResponseWriter, r *http.Request) {
 		ex.SendError(http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.addDictionary: %v", err))
 	}
 
-	b, err := json.Marshal(DictionaryRs{dictID})
-	if err != nil {
-		ex.SendError(http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.addDictionary - marshal: %v", err))
-		return
+	dictRs := &DictionaryRs{
+		ID: dictID,
 	}
 
 	ex.SetContentType(exchange.ContentTypeJSON)
-	ex.SendData(http.StatusOK, b)
+	ex.SendData(http.StatusOK, dictRs)
 }
 
 func (h *Handler) deleteDictionary(w http.ResponseWriter, r *http.Request) {
@@ -142,18 +142,13 @@ func (h *Handler) getDictionary(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dictID := DictionaryIDRs{
+	dictRs := &DictionaryIDRs{
 		ID:   id,
 		Tags: tags,
 	}
-	b, err := json.Marshal(&dictID)
-	if err != nil {
-		ex.SendError(http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.getDictionary - marshal: %v", err))
-		return
-	}
 
 	ex.SetContentType(exchange.ContentTypeJSON)
-	ex.SendData(http.StatusOK, b)
+	ex.SendData(http.StatusOK, dictRs)
 }
 
 func (h *Handler) getDictionaries(w http.ResponseWriter, r *http.Request) {
@@ -170,12 +165,16 @@ func (h *Handler) getDictionaries(w http.ResponseWriter, r *http.Request) {
 		ex.SendError(http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.getAllDictionary: %v", err))
 	}
 
-	b, err := json.Marshal(dictionaries)
-	if err != nil {
-		ex.SendError(http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.getAllDictionary - marshal: %v", err))
-		return
+	dictionariesRs := make([]DictionaryRs, 0, len(dictionaries))
+	for _, dict := range dictionaries {
+		dictionariesRs = append(dictionariesRs, DictionaryRs{
+			ID:     dict.ID,
+			UserID: dict.UserID,
+			Name:   dict.Name,
+			Tags:   dict.Tags,
+		})
 	}
 
 	ex.SetContentType(exchange.ContentTypeJSON)
-	ex.SendData(http.StatusOK, b)
+	ex.SendData(http.StatusOK, dictionariesRs)
 }
