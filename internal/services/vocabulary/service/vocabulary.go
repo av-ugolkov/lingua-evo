@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"fmt"
-	"log/slog"
 
 	entity "lingua-evo/internal/services/vocabulary"
 
@@ -57,17 +56,17 @@ func (s *VocabularySvc) AddWordInVocabulary(
 	nativeWord entity.Word,
 	tanslateWords []entity.Word,
 	examples []string,
-	tags []string) error {
+	tags []string) (*entity.Vocabulary, error) {
 	nativeWordID, err := s.wordSvc.AddWord(ctx, nativeWord.Text, nativeWord.LangCode, nativeWord.Pronunciation)
 	if err != nil {
-		return fmt.Errorf("vocabulary.service.VocabularuSvc.AddWordInVocabulary - add native word in dictionary: %w", err)
+		return nil, fmt.Errorf("vocabulary.service.VocabularuSvc.AddWordInVocabulary - add native word in dictionary: %w", err)
 	}
 
 	translateWordIDs := make([]uuid.UUID, 0, len(tanslateWords))
 	for _, translateWord := range tanslateWords {
 		translateWordID, err := s.wordSvc.AddWord(ctx, translateWord.Text, translateWord.LangCode, translateWord.Pronunciation)
 		if err != nil {
-			return fmt.Errorf("vocabulary.service.VocabularuSvc.AddWordInVocabulary - add translate word in dictionary: %w", err)
+			return nil, fmt.Errorf("vocabulary.service.VocabularuSvc.AddWordInVocabulary - add translate word in dictionary: %w", err)
 		}
 		translateWordIDs = append(translateWordIDs, translateWordID)
 	}
@@ -76,7 +75,7 @@ func (s *VocabularySvc) AddWordInVocabulary(
 	for _, example := range examples {
 		exampleID, err := s.exampleSvc.AddExample(ctx, example, nativeWord.LangCode)
 		if err != nil {
-			return fmt.Errorf("vocabulary.service.VocabularuSvc.AddWordInVocabulary - add example: %w", err)
+			return nil, fmt.Errorf("vocabulary.service.VocabularuSvc.AddWordInVocabulary - add example: %w", err)
 		}
 		exampleIDs = append(exampleIDs, exampleID)
 	}
@@ -85,9 +84,8 @@ func (s *VocabularySvc) AddWordInVocabulary(
 	for _, tag := range tags {
 		tagID, err := s.tagSvc.AddTag(ctx, tag)
 		if err != nil {
-			return fmt.Errorf("vocabulary.service.VocabularuSvc.AddWordInVocabulary - add tag: %w", err)
+			return nil, fmt.Errorf("vocabulary.service.VocabularuSvc.AddWordInVocabulary - add tag: %w", err)
 		}
-		slog.Info(fmt.Sprintf("tagID: %s", tagID))
 		tagIDs = append(tagIDs, tagID)
 	}
 
@@ -101,10 +99,10 @@ func (s *VocabularySvc) AddWordInVocabulary(
 
 	err = s.repo.AddWord(ctx, vocabulary)
 	if err != nil {
-		return fmt.Errorf("vocabulary.service.VocabularuSvc.AddWordInVocabulary - add vocabulary: %w", err)
+		return nil, fmt.Errorf("vocabulary.service.VocabularuSvc.AddWordInVocabulary - add vocabulary: %w", err)
 	}
 
-	return nil
+	return &vocabulary, nil
 }
 
 func (s *VocabularySvc) DeleteWordFromVocabulary(ctx context.Context, dictID, nativeWordID uuid.UUID) error {

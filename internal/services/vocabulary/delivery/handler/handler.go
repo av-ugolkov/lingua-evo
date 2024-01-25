@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -33,6 +32,14 @@ type (
 	RemoveWordRq struct {
 		DictionaryID uuid.UUID `json:"dictionary_id"`
 		NativeWordID uuid.UUID `json:"native_word_id"`
+	}
+
+	VocabularyWordsRs struct {
+		DictionaryId   uuid.UUID   `json:"dictionary_id"`
+		NativeWord     uuid.UUID   `json:"native_word_id"`
+		TranslateWords []uuid.UUID `json:"translate_words_id"`
+		Examples       []uuid.UUID `json:"examples_id"`
+		Tags           []uuid.UUID `json:"tags_id"`
 	}
 
 	Handler struct {
@@ -69,12 +76,22 @@ func (h *Handler) addWord(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.vocabularySvc.AddWordInVocabulary(ctx, data.DictionaryID, data.NativeWord, data.TanslateWords, data.Examples, data.Tags)
+	word, err := h.vocabularySvc.AddWordInVocabulary(ctx, data.DictionaryID, data.NativeWord, data.TanslateWords, data.Examples, data.Tags)
 	if err != nil {
 		ex.SendError(http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.addWord: %v", err))
 		return
 	}
-	ex.SendEmptyData(http.StatusOK)
+
+	wordRs := &VocabularyWordsRs{
+		DictionaryId:   word.DictionaryId,
+		NativeWord:     word.NativeWord,
+		TranslateWords: word.TranslateWords,
+		Examples:       word.Examples,
+		Tags:           word.Tags,
+	}
+
+	ex.SetContentType(exchange.ContentTypeJSON)
+	ex.SendData(http.StatusCreated, wordRs)
 }
 
 func (h *Handler) deleteWord(w http.ResponseWriter, r *http.Request) {
@@ -126,12 +143,19 @@ func (h *Handler) getWords(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	b, err := json.Marshal(words)
-	if err != nil {
-		ex.SendError(http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.getWords - marshal: %w", err))
-		return
+	wordsRs := make([]VocabularyWordsRs, 0, len(words))
+	for _, word := range words {
+		wordRs := VocabularyWordsRs{
+			DictionaryId:   word.DictionaryId,
+			NativeWord:     word.NativeWord,
+			TranslateWords: word.TranslateWords,
+			Examples:       word.Examples,
+			Tags:           word.Tags,
+		}
+
+		wordsRs = append(wordsRs, wordRs)
 	}
 
 	ex.SetContentType(exchange.ContentTypeJSON)
-	ex.SendData(http.StatusOK, b)
+	ex.SendData(http.StatusOK, wordsRs)
 }

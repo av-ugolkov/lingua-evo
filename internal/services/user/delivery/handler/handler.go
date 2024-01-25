@@ -3,7 +3,6 @@ package handler
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -113,16 +112,12 @@ func (h *Handler) createAccount(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	b, err := json.Marshal(&CreateUserRs{
+	createUserRs := &CreateUserRs{
 		UserID: uid,
-	})
-	if err != nil {
-		ex.SendError(http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.createAccount - marshal: %v", err))
-		return
 	}
 
 	ex.SetContentType(exchange.ContentTypeJSON)
-	ex.SendData(http.StatusCreated, b)
+	ex.SendData(http.StatusCreated, createUserRs)
 }
 
 func (h *Handler) getUserByID(w http.ResponseWriter, r *http.Request) {
@@ -140,19 +135,15 @@ func (h *Handler) getUserByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userRs := UserRs{
+	userRs := &UserRs{
 		ID:    user.ID,
 		Name:  user.Name,
 		Email: user.Email,
 		Role:  user.Role,
 	}
-	b, err := json.Marshal(userRs)
-	if err != nil {
-		ex.SendError(http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.getUserByID - marshal: %v", err))
-		return
-	}
+
 	ex.SetContentType(exchange.ContentTypeJSON)
-	ex.SendData(http.StatusOK, b)
+	ex.SendData(http.StatusOK, userRs)
 }
 
 func (h *Handler) getUserByName(w http.ResponseWriter, r *http.Request) {
@@ -176,19 +167,15 @@ func (h *Handler) getUserByName(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userID := UserRs{
+	userRs := &UserRs{
 		ID:    user.ID,
 		Name:  user.Name,
 		Email: user.Email,
 		Role:  user.Role,
 	}
-	b, err := json.Marshal(userID)
-	if err != nil {
-		ex.SendError(http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.getIDByName - marshal: %v", err))
-		return
-	}
+
 	ex.SetContentType(exchange.ContentTypeJSON)
-	ex.SendData(http.StatusOK, b)
+	ex.SendData(http.StatusOK, userRs)
 }
 
 func (h *Handler) getUserByEmail(w http.ResponseWriter, r *http.Request) {
@@ -211,19 +198,15 @@ func (h *Handler) getUserByEmail(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userID := UserRs{
+	userRs := &UserRs{
 		ID:    user.ID,
 		Name:  user.Name,
 		Email: user.Email,
 		Role:  user.Role,
 	}
-	b, err := json.Marshal(userID)
-	if err != nil {
-		ex.SendError(http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.getIDByEmail - marshal: %v", err))
-		return
-	}
+
 	ex.SetContentType(exchange.ContentTypeJSON)
-	ex.SendData(http.StatusOK, b)
+	ex.SendData(http.StatusOK, userRs)
 }
 
 func (h *Handler) validateEmail(ctx context.Context, email string) error {

@@ -60,11 +60,21 @@ func (e *Exchanger) CheckBody(body any) error {
 	return nil
 }
 
-func (e *Exchanger) SendData(httpStatus int, data []byte) {
-	e.responseWriter.WriteHeader(httpStatus)
-	_, err := e.responseWriter.Write(data)
+func (e *Exchanger) SendData(httpStatus int, data any) {
+	b, err := json.Marshal(data)
 	if err != nil {
-		slog.Error(fmt.Errorf("http.exchange.Exchanger.SendError: %v", err).Error())
+		err = fmt.Errorf("http.exchange.Exchanger.SendData - marshal: %v", err)
+		slog.Error(err.Error())
+		e.SendError(http.StatusInternalServerError, err)
+		return
+	}
+
+	e.responseWriter.WriteHeader(httpStatus)
+	_, err = e.responseWriter.Write(b)
+	if err != nil {
+		err = fmt.Errorf("http.exchange.Exchanger.SendData: %v", err)
+		slog.Error(err.Error())
+		e.SendError(http.StatusInternalServerError, err)
 	}
 }
 

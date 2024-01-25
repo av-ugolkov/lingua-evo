@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -37,6 +36,10 @@ type (
 
 	RandomWordRq struct {
 		LanguageCode string `json:"language_code"`
+	}
+
+	WordRs struct {
+		ID uuid.UUID `json:"id"`
 	}
 
 	RandomWordRs struct {
@@ -89,13 +92,18 @@ func (h *Handler) addWord(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	wordUUID, err := h.wordSvc.AddWord(ctx, data.Text, data.LanguageCode, data.Pronunciation)
+	wordID, err := h.wordSvc.AddWord(ctx, data.Text, data.LanguageCode, data.Pronunciation)
 	if err != nil {
 		ex.SendError(http.StatusInternalServerError, err)
 		return
 	}
+
+	wordRs := &WordRs{
+		ID: wordID,
+	}
+
 	ex.SetContentType(exchange.ContentTypeJSON)
-	ex.SendData(http.StatusOK, []byte(wordUUID.String()))
+	ex.SendData(http.StatusOK, wordRs)
 }
 
 func (h *Handler) getWord(w http.ResponseWriter, r *http.Request) {
@@ -122,8 +130,13 @@ func (h *Handler) getWord(w http.ResponseWriter, r *http.Request) {
 		ex.SendError(http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getWord: %v", err))
 		return
 	}
+
+	wordRs := &WordRs{
+		ID: wordID,
+	}
+
 	ex.SetContentType(exchange.ContentTypeJSON)
-	ex.SendData(http.StatusOK, []byte(wordID.String()))
+	ex.SendData(http.StatusOK, wordRs)
 }
 
 func (h *Handler) getRandomWord(w http.ResponseWriter, r *http.Request) {
@@ -151,17 +164,12 @@ func (h *Handler) getRandomWord(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	randomWordRs := RandomWordRs{
+	randomWordRs := &RandomWordRs{
 		Text:          word.Text,
 		LanguageCode:  word.LanguageCode,
 		Pronunciation: word.Pronunciation,
 	}
 
-	b, err := json.Marshal(&randomWordRs)
-	if err != nil {
-		ex.SendError(http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getRandomWord - marshal: %v", err))
-		return
-	}
 	ex.SetContentType(exchange.ContentTypeJSON)
-	ex.SendData(http.StatusOK, b)
+	ex.SendData(http.StatusOK, randomWordRs)
 }
