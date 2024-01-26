@@ -73,10 +73,6 @@ func (h *Handler) register(r *mux.Router) {
 }
 
 func (h *Handler) addWord(w http.ResponseWriter, r *http.Request) {
-	defer func() {
-		_ = r.Body.Close()
-	}()
-
 	ex := exchange.NewExchanger(w, r)
 	var data AddWordRq
 	if err := ex.CheckBody(&data); err != nil {
@@ -107,10 +103,6 @@ func (h *Handler) addWord(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) getWord(w http.ResponseWriter, r *http.Request) {
-	defer func() {
-		_ = r.Body.Close()
-	}()
-
 	ex := exchange.NewExchanger(w, r)
 	var data GetWordRq
 	if err := ex.CheckBody(&data); err != nil {
@@ -140,10 +132,6 @@ func (h *Handler) getWord(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) getRandomWord(w http.ResponseWriter, r *http.Request) {
-	defer func() {
-		_ = r.Body.Close()
-	}()
-
 	ex := exchange.NewExchanger(w, r)
 	var data RandomWordRq
 	if err := ex.CheckBody(&data); err != nil {
