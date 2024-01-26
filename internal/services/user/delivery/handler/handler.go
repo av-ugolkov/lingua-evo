@@ -71,10 +71,6 @@ func (h *Handler) register(r *mux.Router) {
 }
 
 func (h *Handler) createAccount(w http.ResponseWriter, r *http.Request) {
-	defer func() {
-		_ = r.Body.Close()
-	}()
-
 	ex := exchange.NewExchanger(w, r)
 	var data CreateUserRq
 	err := ex.CheckBody(&data)
@@ -147,10 +143,6 @@ func (h *Handler) getUserByID(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) getUserByName(w http.ResponseWriter, r *http.Request) {
-	defer func() {
-		_ = r.Body.Close()
-	}()
-
 	ex := exchange.NewExchanger(w, r)
 	var data GetValueRq
 
@@ -179,9 +171,6 @@ func (h *Handler) getUserByName(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) getUserByEmail(w http.ResponseWriter, r *http.Request) {
-	defer func() {
-		_ = r.Body.Close()
-	}()
 	ex := exchange.NewExchanger(w, r)
 
 	var data GetValueRq

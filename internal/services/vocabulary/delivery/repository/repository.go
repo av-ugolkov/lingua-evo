@@ -75,7 +75,7 @@ func (r *VocabularyRepo) GetRandomWord(ctx context.Context, vocadulary *entity.V
 }
 
 func (r *VocabularyRepo) DeleteWord(ctx context.Context, vocabulary entity.Vocabulary) (int64, error) {
-	query := `DELETE FROM vocabulary WHERE dictopnary_id=$1 AND native_word=$2;`
+	query := `DELETE FROM vocabulary WHERE dictionary_id=$1 AND native_word=$2;`
 
 	result, err := r.db.Exec(query, vocabulary.DictionaryId, vocabulary.NativeWord)
 	if err != nil {
