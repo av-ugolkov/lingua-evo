@@ -56,10 +56,6 @@ func (h *Handler) register(r *mux.Router) {
 }
 
 func (h *Handler) signin(w http.ResponseWriter, r *http.Request) {
-	defer func() {
-		_ = r.Body.Close()
-	}()
-
 	ex := exchange.NewExchanger(w, r)
 	authorization, err := ex.GetHeaderAuthorization(exchange.AuthTypeBasic)
 	if err != nil {
