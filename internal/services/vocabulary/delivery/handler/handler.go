@@ -14,9 +14,7 @@ import (
 )
 
 const (
-	addVocabulary    = "/vocabulary/add"
-	deleteVocabulary = "/vocabulary/delete"
-	getVocabulary    = "/vocabulary/get"
+	vocabulary       = "/vocabulary"
 	getAllVocabulary = "/vocabulary/get_all"
 )
 
@@ -59,9 +57,9 @@ func newHandler(vocabularySvc *service.VocabularySvc) *Handler {
 }
 
 func (h *Handler) register(r *mux.Router) {
-	r.HandleFunc(addVocabulary, middleware.Auth(h.addWord)).Methods(http.MethodPost)
-	r.HandleFunc(deleteVocabulary, middleware.Auth(h.deleteWord)).Methods(http.MethodDelete)
-	r.HandleFunc(getVocabulary, middleware.Auth(h.getWord)).Methods(http.MethodGet)
+	r.HandleFunc(vocabulary, middleware.Auth(h.addWord)).Methods(http.MethodPost)
+	r.HandleFunc(vocabulary, middleware.Auth(h.deleteWord)).Methods(http.MethodDelete)
+	r.HandleFunc(vocabulary, middleware.Auth(h.getWord)).Methods(http.MethodGet)
 	r.HandleFunc(getAllVocabulary, middleware.Auth(h.getWords)).Methods(http.MethodGet)
 }
 
@@ -95,10 +93,6 @@ func (h *Handler) addWord(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) deleteWord(w http.ResponseWriter, r *http.Request) {
-	defer func() {
-		_ = r.Body.Close()
-	}()
-
 	ctx := r.Context()
 	ex := exchange.NewExchanger(w, r)
 
