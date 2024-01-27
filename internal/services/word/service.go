@@ -13,7 +13,7 @@ import (
 type repoWord interface {
 	AddWord(ctx context.Context, w *Word) (uuid.UUID, error)
 	GetWord(ctx context.Context, w *Word) (uuid.UUID, error)
-	EditWord(ctx context.Context, w *Word) (int64, error)
+	UpdateWord(ctx context.Context, w *Word) error
 	FindWords(ctx context.Context, w *Word) ([]uuid.UUID, error)
 	DeleteWord(ctx context.Context, w *Word) (int64, error)
 	GetRandomWord(ctx context.Context, w *Word) (*Word, error)
@@ -115,8 +115,34 @@ func (s *Service) GetRandomWord(ctx context.Context, langCode string) (*Word, er
 }
 
 func (s *Service) UpdateWord(ctx context.Context, text, langCode, pronunciation string) (uuid.UUID, error) {
-	slog.Error("not implemented")
-	return uuid.Nil, nil
+	word := &Word{
+		Text:          text,
+		LanguageCode:  langCode,
+		Pronunciation: pronunciation,
+	}
+
+	wordID, err := s.repo.GetWord(ctx, word)
+
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return uuid.Nil, fmt.Errorf("word.Service.UpdateWord - get word: %w", err)
+	} else if wordID == uuid.Nil {
+		word.ID = uuid.New()
+		wordID, err = s.repo.AddWord(ctx, word)
+		if err != nil {
+			return uuid.Nil, fmt.Errorf("word.Service.UpdateWord - add word: %w", err)
+		}
+
+		return wordID, nil
+	}
+
+	word.ID = wordID
+
+	err = s.repo.UpdateWord(ctx, word)
+	if err != nil {
+		return uuid.Nil, err
+	}
+
+	return wordID, nil
 }
 
 func (s *Service) SharedWord(ctx context.Context, w *Word) (*Word, error) {
