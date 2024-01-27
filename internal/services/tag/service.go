@@ -3,7 +3,6 @@ package tag
 import (
 	"context"
 	"fmt"
-	"log/slog"
 
 	"github.com/google/uuid"
 )
@@ -12,6 +11,7 @@ type (
 	repoTag interface {
 		AddTag(ctx context.Context, id uuid.UUID, text string) (uuid.UUID, error)
 		FindTag(ctx context.Context, text string) ([]*Tag, error)
+		GetTag(ctx context.Context, text string) (uuid.UUID, error)
 		GetAllTags(ctx context.Context) ([]*Tag, error)
 	}
 )
@@ -51,6 +51,17 @@ func (s *Service) GetAllTag(ctx context.Context) ([]*Tag, error) {
 }
 
 func (s *Service) UpdateTag(ctx context.Context, text string) (uuid.UUID, error) {
-	slog.Error("not implemented")
-	return uuid.Nil, nil
+	id, err := s.repo.GetTag(ctx, text)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("tag.Service.UpdateTag: %w", err)
+	}
+	if id != uuid.Nil {
+		return id, nil
+	}
+
+	id, err = s.AddTag(ctx, text)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("tag.Service.UpdateTag: %w", err)
+	}
+	return id, nil
 }
