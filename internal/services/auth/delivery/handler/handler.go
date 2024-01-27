@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"lingua-evo/internal/config"
-	"lingua-evo/internal/services/auth/service"
+	"lingua-evo/internal/services/auth"
 	"lingua-evo/pkg/http/exchange"
 	"lingua-evo/pkg/middleware"
 
@@ -34,16 +34,16 @@ type (
 	}
 
 	Handler struct {
-		authSvc *service.AuthSvc
+		authSvc *auth.Service
 	}
 )
 
-func Create(r *mux.Router, authSvc *service.AuthSvc) {
+func Create(r *mux.Router, authSvc *auth.Service) {
 	h := newHandler(authSvc)
 	h.register(r)
 }
 
-func newHandler(authSvc *service.AuthSvc) *Handler {
+func newHandler(authSvc *auth.Service) *Handler {
 	return &Handler{
 		authSvc: authSvc,
 	}

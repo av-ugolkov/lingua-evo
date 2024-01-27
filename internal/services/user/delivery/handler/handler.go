@@ -7,8 +7,7 @@ import (
 	"fmt"
 	"net/http"
 
-	entity "lingua-evo/internal/services/user"
-	"lingua-evo/internal/services/user/service"
+	"lingua-evo/internal/services/user"
 	"lingua-evo/pkg/http/exchange"
 	"lingua-evo/pkg/middleware"
 	"lingua-evo/pkg/utils"
@@ -48,16 +47,16 @@ type (
 	}
 
 	Handler struct {
-		userSvc *service.UserSvc
+		userSvc *user.Service
 	}
 )
 
-func Create(r *mux.Router, userSvc *service.UserSvc) {
+func Create(r *mux.Router, userSvc *user.Service) {
 	h := newHandler(userSvc)
 	h.register(r)
 }
 
-func newHandler(userSvc *service.UserSvc) *Handler {
+func newHandler(userSvc *user.Service) *Handler {
 	return &Handler{
 		userSvc: userSvc,
 	}
@@ -200,45 +199,45 @@ func (h *Handler) getUserByEmail(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) validateEmail(ctx context.Context, email string) error {
 	if !utils.IsEmailValid(email) {
-		return entity.ErrEmailNotCorrect
+		return user.ErrEmailNotCorrect
 	}
 
-	user, err := h.userSvc.GetUserByEmail(ctx, email)
+	userData, err := h.userSvc.GetUserByEmail(ctx, email)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return err
-	} else if user.ID == uuid.Nil && err == nil {
-		return entity.ErrItIsAdmin
-	} else if user.ID != uuid.Nil {
-		return entity.ErrEmailBusy
+	} else if userData.ID == uuid.Nil && err == nil {
+		return user.ErrItIsAdmin
+	} else if userData.ID != uuid.Nil {
+		return user.ErrEmailBusy
 	}
 
 	return nil
 }
 
 func (h *Handler) validateUsername(ctx context.Context, username string) error {
-	if len(username) <= entity.UsernameLen {
-		return entity.ErrUsernameLen
+	if len(username) <= user.UsernameLen {
+		return user.ErrUsernameLen
 	}
 
-	user, err := h.userSvc.GetUserByName(ctx, username)
+	userData, err := h.userSvc.GetUserByName(ctx, username)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return err
-	} else if user.ID == uuid.Nil && err == nil {
-		return entity.ErrItIsAdmin
-	} else if user.ID != uuid.Nil {
-		return entity.ErrUsernameBusy
+	} else if userData.ID == uuid.Nil && err == nil {
+		return user.ErrItIsAdmin
+	} else if userData.ID != uuid.Nil {
+		return user.ErrUsernameBusy
 	}
 
 	return nil
 }
 
 func validatePassword(password string) error {
-	if len(password) < entity.MinPasswordLen {
-		return entity.ErrPasswordLen
+	if len(password) < user.MinPasswordLen {
+		return user.ErrPasswordLen
 	}
 
 	if !utils.IsPasswordValid(password) {
-		return entity.ErrPasswordDifficult
+		return user.ErrPasswordDifficult
 	}
 
 	return nil

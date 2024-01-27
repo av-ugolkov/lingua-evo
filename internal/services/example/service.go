@@ -1,7 +1,8 @@
-package service
+package example
 
 import (
 	"context"
+	"log/slog"
 
 	"github.com/google/uuid"
 )
@@ -11,17 +12,17 @@ type repoExample interface {
 	GetExample(ctx context.Context, id uuid.UUID, langCode string) (string, error)
 }
 
-type ExampleSvc struct {
+type Service struct {
 	repo repoExample
 }
 
-func NewService(repo repoExample) *ExampleSvc {
-	return &ExampleSvc{
+func NewService(repo repoExample) *Service {
+	return &Service{
 		repo: repo,
 	}
 }
 
-func (s *ExampleSvc) AddExample(ctx context.Context, text, langCode string) (uuid.UUID, error) {
+func (s *Service) AddExample(ctx context.Context, text, langCode string) (uuid.UUID, error) {
 	id := uuid.New()
 	err := s.repo.AddExample(ctx, id, text, langCode)
 	if err != nil {
@@ -31,11 +32,16 @@ func (s *ExampleSvc) AddExample(ctx context.Context, text, langCode string) (uui
 	return id, nil
 }
 
-func (s *ExampleSvc) GetExample(ctx context.Context, id uuid.UUID, langCode string) (string, error) {
+func (s *Service) GetExample(ctx context.Context, id uuid.UUID, langCode string) (string, error) {
 	text, err := s.repo.GetExample(ctx, id, langCode)
 	if err != nil {
 		return "", err
 	}
 
 	return text, nil
+}
+
+func (s *Service) UpdateExample(ctx context.Context, text, langCode string) (uuid.UUID, error) {
+	slog.Error("not implemented")
+	return uuid.Nil, nil
 }

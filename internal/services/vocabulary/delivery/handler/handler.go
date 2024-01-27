@@ -4,8 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	entity "lingua-evo/internal/services/vocabulary"
-	"lingua-evo/internal/services/vocabulary/service"
+	"lingua-evo/internal/services/vocabulary"
 	"lingua-evo/pkg/http/exchange"
 	"lingua-evo/pkg/middleware"
 
@@ -14,17 +13,21 @@ import (
 )
 
 const (
-	vocabulary       = "/vocabulary"
-	getAllVocabulary = "/vocabulary/get_all"
+	vocabularyUrl       = "/vocabulary"
+	getAllVocabularyUrl = "/vocabulary/get_all"
 )
 
 type (
 	AddWordRq struct {
-		DictionaryID  uuid.UUID     `json:"dictionary_id"`
-		NativeWord    entity.Word   `json:"native_word"`
-		TanslateWords []entity.Word `json:"translate_words"`
-		Examples      []string      `json:"examples"`
-		Tags          []string      `json:"tags"`
+		DictionaryID  uuid.UUID         `json:"dictionary_id"`
+		NativeWord    vocabulary.Word   `json:"native_word"`
+		TanslateWords []vocabulary.Word `json:"translate_words"`
+		Examples      []string          `json:"examples"`
+		Tags          []string          `json:"tags"`
+	}
+
+	UpdateWordRq struct {
+		AddWordRq
 	}
 
 	RemoveWordRq struct {
@@ -41,26 +44,27 @@ type (
 	}
 
 	Handler struct {
-		vocabularySvc *service.VocabularySvc
+		vocabularySvc *vocabulary.Service
 	}
 )
 
-func Create(r *mux.Router, vocabularySvc *service.VocabularySvc) {
+func Create(r *mux.Router, vocabularySvc *vocabulary.Service) {
 	h := newHandler(vocabularySvc)
 	h.register(r)
 }
 
-func newHandler(vocabularySvc *service.VocabularySvc) *Handler {
+func newHandler(vocabularySvc *vocabulary.Service) *Handler {
 	return &Handler{
 		vocabularySvc: vocabularySvc,
 	}
 }
 
 func (h *Handler) register(r *mux.Router) {
-	r.HandleFunc(vocabulary, middleware.Auth(h.addWord)).Methods(http.MethodPost)
-	r.HandleFunc(vocabulary, middleware.Auth(h.deleteWord)).Methods(http.MethodDelete)
-	r.HandleFunc(vocabulary, middleware.Auth(h.getWord)).Methods(http.MethodGet)
-	r.HandleFunc(getAllVocabulary, middleware.Auth(h.getWords)).Methods(http.MethodGet)
+	r.HandleFunc(vocabularyUrl, middleware.Auth(h.addWord)).Methods(http.MethodPost)
+	r.HandleFunc(vocabularyUrl, middleware.Auth(h.deleteWord)).Methods(http.MethodDelete)
+	r.HandleFunc(vocabularyUrl, middleware.Auth(h.getWord)).Methods(http.MethodGet)
+	r.HandleFunc(vocabularyUrl, middleware.Auth(h.updateWord)).Methods(http.MethodPatch)
+	r.HandleFunc(getAllVocabularyUrl, middleware.Auth(h.getWords)).Methods(http.MethodGet)
 }
 
 func (h *Handler) addWord(w http.ResponseWriter, r *http.Request) {
@@ -113,6 +117,35 @@ func (h *Handler) deleteWord(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) getWord(w http.ResponseWriter, r *http.Request) {
 
+}
+
+func (h *Handler) updateWord(w http.ResponseWriter, r *http.Request) {
+	ex := exchange.NewExchanger(w, r)
+	ctx := r.Context()
+
+	var data UpdateWordRq
+	err := ex.CheckBody(&data)
+	if err != nil {
+		ex.SendError(http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.updateWord - check body: %v", err))
+		return
+	}
+
+	word, err := h.vocabularySvc.AddWordInVocabulary(ctx, data.DictionaryID, data.NativeWord, data.TanslateWords, data.Examples, data.Tags)
+	if err != nil {
+		ex.SendError(http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.updateWord: %v", err))
+		return
+	}
+
+	wordRs := &VocabularyWordsRs{
+		DictionaryId:   word.DictionaryId,
+		NativeWord:     word.NativeWord,
+		TranslateWords: word.TranslateWords,
+		Examples:       word.Examples,
+		Tags:           word.Tags,
+	}
+
+	ex.SetContentType(exchange.ContentTypeJSON)
+	ex.SendData(http.StatusCreated, wordRs)
 }
 
 func (h *Handler) getWords(w http.ResponseWriter, r *http.Request) {
