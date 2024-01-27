@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"net/http"
 
-	serviceLang "lingua-evo/internal/services/language/service"
-	serviceWord "lingua-evo/internal/services/word/service"
+	langSvc "lingua-evo/internal/services/language"
+	wordSvc "lingua-evo/internal/services/word"
 	"lingua-evo/pkg/http/exchange"
 	"lingua-evo/pkg/middleware"
 
@@ -49,17 +49,17 @@ type (
 	}
 
 	Handler struct {
-		wordSvc *serviceWord.WordSvc
-		langSvc *serviceLang.LanguageSvc
+		wordSvc *wordSvc.Service
+		langSvc *langSvc.Service
 	}
 )
 
-func Create(r *mux.Router, wordSvc *serviceWord.WordSvc, langSvc *serviceLang.LanguageSvc) {
+func Create(r *mux.Router, wordSvc *wordSvc.Service, langSvc *langSvc.Service) {
 	h := newHandler(wordSvc, langSvc)
 	h.register(r)
 }
 
-func newHandler(wordSvc *serviceWord.WordSvc, langSvc *serviceLang.LanguageSvc) *Handler {
+func newHandler(wordSvc *wordSvc.Service, langSvc *langSvc.Service) *Handler {
 	return &Handler{
 		wordSvc: wordSvc,
 		langSvc: langSvc,

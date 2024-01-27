@@ -3,10 +3,9 @@ package token
 import (
 	"errors"
 	"fmt"
+	"time"
 
 	"lingua-evo/internal/config"
-	entityAuth "lingua-evo/internal/services/auth"
-	entityUser "lingua-evo/internal/services/user"
 	"lingua-evo/runtime"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -20,13 +19,13 @@ type (
 	}
 )
 
-func NewJWTToken(u *entityUser.User, s *entityAuth.Claims) (string, error) {
+func NewJWTToken(uid, sid uuid.UUID, expiresAt time.Time) (string, error) {
 	userClaims := UserClaims{
-		UserID: u.ID,
+		UserID: uid,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ID:        s.ID.String(),
+			ID:        sid.String(),
 			Audience:  []string{"users"},
-			ExpiresAt: jwt.NewNumericDate(s.ExpiresAt),
+			ExpiresAt: jwt.NewNumericDate(expiresAt),
 		},
 	}
 

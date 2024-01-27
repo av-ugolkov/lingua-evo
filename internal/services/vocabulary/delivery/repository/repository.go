@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log/slog"
 
 	entity "lingua-evo/internal/services/vocabulary"
 
@@ -107,4 +108,9 @@ func (r *VocabularyRepo) GetWords(ctx context.Context, dictID uuid.UUID) ([]enti
 	}
 
 	return words, nil
+}
+
+func (r *VocabularyRepo) UpdateWord(ctx context.Context, vocabulary entity.Vocabulary) error {
+	slog.Error("not implemented")
+	return nil
 }

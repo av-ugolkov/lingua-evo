@@ -6,7 +6,7 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"lingua-evo/internal/services/language/service"
+	"lingua-evo/internal/services/language"
 	"lingua-evo/pkg/http/exchange"
 )
 
@@ -22,16 +22,16 @@ type (
 	}
 
 	Handler struct {
-		langSvc *service.LanguageSvc
+		langSvc *language.Service
 	}
 )
 
-func Create(r *mux.Router, langSvc *service.LanguageSvc) {
+func Create(r *mux.Router, langSvc *language.Service) {
 	h := newHandler(langSvc)
 	h.register(r)
 }
 
-func newHandler(langSvc *service.LanguageSvc) *Handler {
+func newHandler(langSvc *language.Service) *Handler {
 	return &Handler{
 		langSvc: langSvc,
 	}

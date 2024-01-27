@@ -8,8 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 
-	entity "lingua-evo/internal/services/dictionary"
-	"lingua-evo/internal/services/dictionary/service"
+	"lingua-evo/internal/services/dictionary"
 	"lingua-evo/pkg/http/exchange"
 	"lingua-evo/pkg/middleware"
 	"lingua-evo/runtime"
@@ -39,16 +38,16 @@ type (
 	}
 
 	Handler struct {
-		dictionarySvc *service.DictionarySvc
+		dictionarySvc *dictionary.Service
 	}
 )
 
-func Create(r *mux.Router, dictionarySvc *service.DictionarySvc) {
+func Create(r *mux.Router, dictionarySvc *dictionary.Service) {
 	h := newHandler(dictionarySvc)
 	h.register(r)
 }
 
-func newHandler(dictionarySvc *service.DictionarySvc) *Handler {
+func newHandler(dictionarySvc *dictionary.Service) *Handler {
 	return &Handler{
 		dictionarySvc: dictionarySvc,
 	}
@@ -106,7 +105,7 @@ func (h *Handler) deleteDictionary(w http.ResponseWriter, r *http.Request) {
 
 	err = h.dictionarySvc.DeleteDictionary(ctx, userID, name)
 	switch {
-	case errors.Is(err, entity.ErrDictionaryNotFound):
+	case errors.Is(err, dictionary.ErrDictionaryNotFound):
 		ex.SendError(http.StatusNotFound, fmt.Errorf("dictionary.delivery.Handler.deleteDictionary: %v", err))
 		return
 	case err != nil:
