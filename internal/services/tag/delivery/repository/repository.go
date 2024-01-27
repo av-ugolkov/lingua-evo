@@ -62,6 +62,18 @@ func (r *TagRepo) FindTag(ctx context.Context, text string) ([]*entity.Tag, erro
 	return tags, nil
 }
 
+func (r *TagRepo) GetTag(ctx context.Context, text string) (uuid.UUID, error) {
+	query := `SELECT id FROM tag WHERE text = $1`
+	var id uuid.UUID
+	err := r.db.QueryRowContext(ctx, query, text).Scan(&id)
+	if err != nil && err != sql.ErrNoRows {
+		return uuid.Nil, fmt.Errorf("example.repository.TagRepo.GetTag: %w", err)
+	} else if err == sql.ErrNoRows {
+		return uuid.Nil, nil
+	}
+	return id, nil
+}
+
 func (r *TagRepo) GetAllTags(ctx context.Context) ([]*entity.Tag, error) {
 	query := `SELECT id, text FROM tag`
 	rows, err := r.db.QueryContext(ctx, query)

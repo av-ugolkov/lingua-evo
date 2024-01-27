@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"time"
 
@@ -38,24 +39,28 @@ func (r *WordRepo) GetWord(ctx context.Context, w *entity.Word) (uuid.UUID, erro
 	table := getTable(w.LanguageCode)
 	query := fmt.Sprintf(`SELECT id FROM "%s" WHERE text=$1 AND lang_code=$2;`, table)
 	err := r.db.QueryRowContext(ctx, query, w.Text, w.LanguageCode).Scan(&word.ID)
-	if err != nil {
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return uuid.Nil, fmt.Errorf("word.repository.WordRepo.GetWord - query: %w", err)
+	} else if errors.Is(err, sql.ErrNoRows) {
+		return uuid.Nil, nil
 	}
 	return word.ID, nil
 }
 
-func (r *WordRepo) EditWord(ctx context.Context, w *entity.Word) (int64, error) {
+func (r *WordRepo) UpdateWord(ctx context.Context, w *entity.Word) error {
 	query := `UPDATE word SET text=$1, pronunciation=$2 WHERE id=$3`
 	result, err := r.db.ExecContext(ctx, query, w.Text, w.Pronunciation, w.ID)
 	if err != nil {
-		return 0, fmt.Errorf("word.repository.WordRepo.EditWord - exec: %w", err)
-	}
-	rows, err := result.RowsAffected()
-	if err != nil {
-		return 0, fmt.Errorf("word.repository.WordRepo.EditWord - rows affected: %w", err)
+		return fmt.Errorf("word.repository.WordRepo.EditWord - exec: %w", err)
 	}
 
-	return rows, nil
+	if rows, err := result.RowsAffected(); rows == 0 {
+		return fmt.Errorf("word.repository.WordRepo.EditWord: not fount effected rows")
+	} else if err != nil {
+		return fmt.Errorf("word.repository.WordRepo.EditWord - rows affected: %w", err)
+	}
+
+	return nil
 }
 
 func (r *WordRepo) FindWords(ctx context.Context, w *entity.Word) ([]uuid.UUID, error) {

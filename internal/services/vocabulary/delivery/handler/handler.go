@@ -27,6 +27,7 @@ type (
 	}
 
 	UpdateWordRq struct {
+		OldWordID uuid.UUID `json:"old_word_id"`
 		AddWordRq
 	}
 
@@ -78,7 +79,7 @@ func (h *Handler) addWord(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	word, err := h.vocabularySvc.AddWordInVocabulary(ctx, data.DictionaryID, data.NativeWord, data.TanslateWords, data.Examples, data.Tags)
+	word, err := h.vocabularySvc.AddWord(ctx, data.DictionaryID, data.NativeWord, data.TanslateWords, data.Examples, data.Tags)
 	if err != nil {
 		ex.SendError(http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.addWord: %v", err))
 		return
@@ -107,7 +108,7 @@ func (h *Handler) deleteWord(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.vocabularySvc.DeleteWordFromVocabulary(ctx, data.DictionaryID, data.NativeWordID)
+	err = h.vocabularySvc.DeleteWord(ctx, data.DictionaryID, data.NativeWordID)
 	if err != nil {
 		ex.SendError(http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.deleteWord: %v", err))
 		return
@@ -130,7 +131,7 @@ func (h *Handler) updateWord(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	word, err := h.vocabularySvc.AddWordInVocabulary(ctx, data.DictionaryID, data.NativeWord, data.TanslateWords, data.Examples, data.Tags)
+	word, err := h.vocabularySvc.UpdateWord(ctx, data.DictionaryID, data.OldWordID, data.NativeWord, data.TanslateWords, data.Examples, data.Tags)
 	if err != nil {
 		ex.SendError(http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.updateWord: %v", err))
 		return

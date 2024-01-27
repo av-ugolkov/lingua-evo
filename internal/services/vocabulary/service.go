@@ -10,7 +10,7 @@ import (
 type (
 	repoVocabulary interface {
 		AddWord(ctx context.Context, vocabulary Vocabulary) error
-		DeleteWord(ctx context.Context, vocabulary Vocabulary) (int64, error)
+		DeleteWord(ctx context.Context, vocabulary Vocabulary) error
 		GetWords(ctx context.Context, dictID uuid.UUID) ([]Vocabulary, error)
 		UpdateWord(ctx context.Context, vocabulary Vocabulary) error
 	}
@@ -52,7 +52,7 @@ func NewService(
 	}
 }
 
-func (s *Service) AddWordInVocabulary(
+func (s *Service) AddWord(
 	ctx context.Context,
 	dictID uuid.UUID,
 	nativeWord Word,
@@ -61,14 +61,14 @@ func (s *Service) AddWordInVocabulary(
 	tags []string) (*Vocabulary, error) {
 	nativeWordID, err := s.wordSvc.AddWord(ctx, nativeWord.Text, nativeWord.LangCode, nativeWord.Pronunciation)
 	if err != nil {
-		return nil, fmt.Errorf("vocabulary.Service.AddWordInVocabulary - add native word in dictionary: %w", err)
+		return nil, fmt.Errorf("vocabulary.Service.AddWord - add native word in dictionary: %w", err)
 	}
 
 	translateWordIDs := make([]uuid.UUID, 0, len(tanslateWords))
 	for _, translateWord := range tanslateWords {
 		translateWordID, err := s.wordSvc.AddWord(ctx, translateWord.Text, translateWord.LangCode, translateWord.Pronunciation)
 		if err != nil {
-			return nil, fmt.Errorf("vocabulary.Service.AddWordInVocabulary - add translate word in dictionary: %w", err)
+			return nil, fmt.Errorf("vocabulary.Service.AddWord - add translate word in dictionary: %w", err)
 		}
 		translateWordIDs = append(translateWordIDs, translateWordID)
 	}
@@ -77,7 +77,7 @@ func (s *Service) AddWordInVocabulary(
 	for _, example := range examples {
 		exampleID, err := s.exampleSvc.AddExample(ctx, example, nativeWord.LangCode)
 		if err != nil {
-			return nil, fmt.Errorf("vocabulary.Service.AddWordInVocabulary - add example: %w", err)
+			return nil, fmt.Errorf("vocabulary.Service.AddWord - add example: %w", err)
 		}
 		exampleIDs = append(exampleIDs, exampleID)
 	}
@@ -86,7 +86,7 @@ func (s *Service) AddWordInVocabulary(
 	for _, tag := range tags {
 		tagID, err := s.tagSvc.AddTag(ctx, tag)
 		if err != nil {
-			return nil, fmt.Errorf("vocabulary.Service.AddWordInVocabulary - add tag: %w", err)
+			return nil, fmt.Errorf("vocabulary.Service.AddWord - add tag: %w", err)
 		}
 		tagIDs = append(tagIDs, tagID)
 	}
@@ -101,25 +101,87 @@ func (s *Service) AddWordInVocabulary(
 
 	err = s.repo.AddWord(ctx, vocabulary)
 	if err != nil {
-		return nil, fmt.Errorf("vocabulary.Service.AddWordInVocabulary - add vocabulary: %w", err)
+		return nil, fmt.Errorf("vocabulary.Service.AddWord - add vocabulary: %w", err)
 	}
 
 	return &vocabulary, nil
 }
 
-func (s *Service) UpdateWord() {
+func (s *Service) UpdateWord(ctx context.Context,
+	dictID uuid.UUID,
+	oldWordID uuid.UUID,
+	nativeWord Word,
+	tanslateWords []Word,
+	examples []string,
+	tags []string) (*Vocabulary, error) {
+	nativeWordID, err := s.wordSvc.UpdateWord(ctx, nativeWord.Text, nativeWord.LangCode, nativeWord.Pronunciation)
+	if err != nil {
+		return nil, fmt.Errorf("vocabulary.Service.UpdateWord - add native word in dictionary: %w", err)
+	}
 
+	translateWordIDs := make([]uuid.UUID, 0, len(tanslateWords))
+	for _, translateWord := range tanslateWords {
+		translateWordID, err := s.wordSvc.UpdateWord(ctx, translateWord.Text, translateWord.LangCode, translateWord.Pronunciation)
+		if err != nil {
+			return nil, fmt.Errorf("vocabulary.Service.UpdateWord - add translate word in dictionary: %w", err)
+		}
+		translateWordIDs = append(translateWordIDs, translateWordID)
+	}
+
+	exampleIDs := make([]uuid.UUID, 0, len(examples))
+	for _, example := range examples {
+		exampleID, err := s.exampleSvc.UpdateExample(ctx, example, nativeWord.LangCode)
+		if err != nil {
+			return nil, fmt.Errorf("vocabulary.Service.UpdateWord - add example: %w", err)
+		}
+		exampleIDs = append(exampleIDs, exampleID)
+	}
+
+	tagIDs := make([]uuid.UUID, 0, len(tags))
+	for _, tag := range tags {
+		tagID, err := s.tagSvc.UpdateTag(ctx, tag)
+		if err != nil {
+			return nil, fmt.Errorf("vocabulary.Service.UpdateWord - add tag: %w", err)
+		}
+		tagIDs = append(tagIDs, tagID)
+	}
+
+	vocabulary := Vocabulary{
+		DictionaryId:   dictID,
+		NativeWord:     nativeWordID,
+		TranslateWords: translateWordIDs,
+		Examples:       exampleIDs,
+		Tags:           tagIDs,
+	}
+
+	if oldWordID != nativeWordID {
+		err = s.repo.DeleteWord(ctx, Vocabulary{DictionaryId: dictID, NativeWord: oldWordID})
+		if err != nil {
+			return nil, fmt.Errorf("vocabulary.Service.UpdateWord - delete old word: %w", err)
+		}
+		err = s.repo.AddWord(ctx, vocabulary)
+		if err != nil {
+			return nil, fmt.Errorf("vocabulary.Service.UpdateWord - add new word: %w", err)
+		}
+		return &vocabulary, nil
+	}
+	err = s.repo.UpdateWord(ctx, vocabulary)
+	if err != nil {
+		return nil, fmt.Errorf("vocabulary.Service.UpdateWord - update vocabulary: %w", err)
+	}
+
+	return &vocabulary, nil
 }
 
-func (s *Service) DeleteWordFromVocabulary(ctx context.Context, dictID, nativeWordID uuid.UUID) error {
+func (s *Service) DeleteWord(ctx context.Context, dictID, nativeWordID uuid.UUID) error {
 	vocabulary := Vocabulary{
 		DictionaryId: dictID,
 		NativeWord:   nativeWordID,
 	}
 
-	_, err := s.repo.DeleteWord(ctx, vocabulary)
+	err := s.repo.DeleteWord(ctx, vocabulary)
 	if err != nil {
-		return fmt.Errorf("vocabulary.Service.DeleteWordFromVocabulary - delete word: %w", err)
+		return fmt.Errorf("vocabulary.Service.DeleteWord - delete word: %w", err)
 	}
 	return nil
 }

@@ -75,19 +75,20 @@ func (r *VocabularyRepo) GetRandomWord(ctx context.Context, vocadulary *entity.V
 	return vocadulary, nil
 }
 
-func (r *VocabularyRepo) DeleteWord(ctx context.Context, vocabulary entity.Vocabulary) (int64, error) {
+func (r *VocabularyRepo) DeleteWord(ctx context.Context, vocabulary entity.Vocabulary) error {
 	query := `DELETE FROM vocabulary WHERE dictionary_id=$1 AND native_word=$2;`
 
 	result, err := r.db.Exec(query, vocabulary.DictionaryId, vocabulary.NativeWord)
 	if err != nil {
-		return 0, fmt.Errorf("vocabulary.repository.VocabularyRepo.DeleteWord - exec: %w", err)
+		return fmt.Errorf("vocabulary.repository.VocabularyRepo.DeleteWord - exec: %w", err)
 	}
 
-	rows, err := result.RowsAffected()
-	if err != nil {
-		return 0, fmt.Errorf("vocabulary.repository.VocabularyRepo.DeleteWord - rows affected: %w", err)
+	if rowsAffected, err := result.RowsAffected(); rowsAffected == 0 {
+		return fmt.Errorf("vocabulary.repository.VocabularyRepo.DeleteWord - rows affected: %w", sql.ErrNoRows)
+	} else if err != nil {
+		return fmt.Errorf("vocabulary.repository.VocabularyRepo.DeleteWord: %w", err)
 	}
-	return rows, nil
+	return nil
 }
 
 func (r *VocabularyRepo) GetWords(ctx context.Context, dictID uuid.UUID) ([]entity.Vocabulary, error) {
