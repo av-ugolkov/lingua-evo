@@ -3,8 +3,8 @@ package main
 import (
 	"flag"
 
-	"lingua-evo/internal/app"
-	"lingua-evo/internal/config"
+	"github.com/av-ugolkov/lingua-evo/internal/app"
+	"github.com/av-ugolkov/lingua-evo/internal/config"
 )
 
 func main() {

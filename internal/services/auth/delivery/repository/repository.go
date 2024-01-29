@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	authEntity "lingua-evo/internal/services/auth"
+	authEntity "github.com/av-ugolkov/lingua-evo/internal/services/auth"
 
 	"github.com/google/uuid"
 )

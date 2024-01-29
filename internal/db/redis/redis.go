@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"lingua-evo/internal/config"
+	"github.com/av-ugolkov/lingua-evo/internal/config"
 
 	rClient "github.com/redis/go-redis/v9"
 )

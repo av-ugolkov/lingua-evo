@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"net/http"
 
-	"lingua-evo/internal/config"
-	"lingua-evo/pkg/http/exchange"
-	"lingua-evo/pkg/token"
-	"lingua-evo/runtime"
+	"github.com/av-ugolkov/lingua-evo/internal/config"
+	"github.com/av-ugolkov/lingua-evo/pkg/http/exchange"
+	"github.com/av-ugolkov/lingua-evo/pkg/token"
+	"github.com/av-ugolkov/lingua-evo/runtime"
 )
 
 func Auth(next http.HandlerFunc) http.HandlerFunc {

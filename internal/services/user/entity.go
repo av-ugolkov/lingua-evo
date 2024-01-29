@@ -3,8 +3,9 @@ package user
 import (
 	"errors"
 	"fmt"
-	"lingua-evo/runtime"
 	"time"
+
+	"github.com/av-ugolkov/lingua-evo/runtime"
 
 	"github.com/google/uuid"
 )
