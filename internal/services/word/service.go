@@ -146,6 +146,6 @@ func (s *Service) UpdateWord(ctx context.Context, text, langCode, pronunciation 
 }
 
 func (s *Service) SharedWord(ctx context.Context, w *Word) (*Word, error) {
-	slog.Error("not implemented")
+	slog.Error("word.Service.SharedWord - not implemented")
 	return nil, nil
 }
