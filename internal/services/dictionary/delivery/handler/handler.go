@@ -8,10 +8,10 @@ import (
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 
-	"lingua-evo/internal/services/dictionary"
-	"lingua-evo/pkg/http/exchange"
-	"lingua-evo/pkg/middleware"
-	"lingua-evo/runtime"
+	"github.com/av-ugolkov/lingua-evo/internal/services/dictionary"
+	"github.com/av-ugolkov/lingua-evo/pkg/http/exchange"
+	"github.com/av-ugolkov/lingua-evo/pkg/middleware"
+	"github.com/av-ugolkov/lingua-evo/runtime"
 )
 
 const (

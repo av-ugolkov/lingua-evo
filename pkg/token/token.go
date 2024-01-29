@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"lingua-evo/internal/config"
-	"lingua-evo/runtime"
+	"github.com/av-ugolkov/lingua-evo/internal/config"
+	"github.com/av-ugolkov/lingua-evo/runtime"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"

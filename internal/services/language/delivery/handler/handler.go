@@ -6,8 +6,8 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"lingua-evo/internal/services/language"
-	"lingua-evo/pkg/http/exchange"
+	"github.com/av-ugolkov/lingua-evo/internal/services/language"
+	"github.com/av-ugolkov/lingua-evo/pkg/http/exchange"
 )
 
 const (
