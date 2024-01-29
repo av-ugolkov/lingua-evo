@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"time"
 
-	"lingua-evo/internal/config"
-	entityUser "lingua-evo/internal/services/user"
-	"lingua-evo/pkg/token"
-	"lingua-evo/pkg/utils"
+	"github.com/av-ugolkov/lingua-evo/internal/config"
+	entityUser "github.com/av-ugolkov/lingua-evo/internal/services/user"
+	"github.com/av-ugolkov/lingua-evo/pkg/token"
+	"github.com/av-ugolkov/lingua-evo/pkg/utils"
 
 	"github.com/google/uuid"
 )

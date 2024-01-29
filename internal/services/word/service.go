@@ -20,6 +20,8 @@ type repoWord interface {
 	SharedWord(ctx context.Context, w *Word) (*Word, error)
 }
 
+//go:generate mockery --outpkg word --testonly --name "repoWord"
+
 type Service struct {
 	repo repoWord
 }

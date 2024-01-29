@@ -9,7 +9,7 @@ import (
 	"log/slog"
 	"time"
 
-	pg "lingua-evo/internal/db/postgres"
+	pg "github.com/av-ugolkov/lingua-evo/internal/db/postgres"
 
 	"github.com/google/uuid"
 	"golang.org/x/text/language"

@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 
-	entity "lingua-evo/internal/services/language"
+	entity "github.com/av-ugolkov/lingua-evo/internal/services/language"
 )
 
 type LangRepo struct {
