@@ -10,7 +10,7 @@ import (
 
 	"github.com/google/uuid"
 
-	"lingua-evo/runtime"
+	"github.com/av-ugolkov/lingua-evo/runtime"
 )
 
 type (

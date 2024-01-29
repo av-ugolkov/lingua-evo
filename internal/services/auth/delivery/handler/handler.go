@@ -7,10 +7,10 @@ import (
 	"strings"
 	"time"
 
-	"lingua-evo/internal/config"
-	"lingua-evo/internal/services/auth"
-	"lingua-evo/pkg/http/exchange"
-	"lingua-evo/pkg/middleware"
+	"github.com/av-ugolkov/lingua-evo/internal/config"
+	"github.com/av-ugolkov/lingua-evo/internal/services/auth"
+	"github.com/av-ugolkov/lingua-evo/pkg/http/exchange"
+	"github.com/av-ugolkov/lingua-evo/pkg/middleware"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
