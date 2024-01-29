@@ -68,7 +68,7 @@ func ServerStart(cfg *config.Config) {
 
 	c := cors.New(cors.Options{
 		AllowedOrigins:   []string{"http://localhost:5173"},
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"},
 		AllowCredentials: true,
 		AllowedHeaders:   []string{"Authorization", "Content-Type", "Fingerprint"},
 	})

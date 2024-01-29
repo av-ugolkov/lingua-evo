@@ -64,7 +64,7 @@ func (h *Handler) register(r *mux.Router) {
 	r.HandleFunc(vocabularyUrl, middleware.Auth(h.addWord)).Methods(http.MethodPost)
 	r.HandleFunc(vocabularyUrl, middleware.Auth(h.deleteWord)).Methods(http.MethodDelete)
 	r.HandleFunc(vocabularyUrl, middleware.Auth(h.getWord)).Methods(http.MethodGet)
-	r.HandleFunc(vocabularyUrl, middleware.Auth(h.updateWord)).Methods(http.MethodPatch)
+	r.HandleFunc(vocabularyUrl, middleware.Auth(h.updateWord)).Methods(http.MethodPut)
 	r.HandleFunc(getAllVocabularyUrl, middleware.Auth(h.getWords)).Methods(http.MethodGet)
 }
 

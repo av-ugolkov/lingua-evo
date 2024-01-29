@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"log/slog"
 
 	entity "lingua-evo/internal/services/vocabulary"
 
@@ -112,6 +111,17 @@ func (r *VocabularyRepo) GetWords(ctx context.Context, dictID uuid.UUID) ([]enti
 }
 
 func (r *VocabularyRepo) UpdateWord(ctx context.Context, vocabulary entity.Vocabulary) error {
-	slog.Error("not implemented")
+	query := `UPDATE vocabulary SET translate_word=$1, examples=$2, tags=$3 WHERE dictionary_id=$4 AND native_word=$5;`
+
+	result, err := r.db.ExecContext(ctx, query, vocabulary.TranslateWords, vocabulary.Examples, vocabulary.Tags, vocabulary.DictionaryId, vocabulary.NativeWord)
+	if err != nil {
+		return fmt.Errorf("vocabulary.repository.VocabularyRepo.UpdateWord - exec: %w", err)
+	}
+
+	if rowsAffected, err := result.RowsAffected(); rowsAffected == 0 {
+		return fmt.Errorf("vocabulary.repository.VocabularyRepo.UpdateWord - rows affected: %w", sql.ErrNoRows)
+	} else if err != nil {
+		return fmt.Errorf("vocabulary.repository.VocabularyRepo.UpdateWord: %w", err)
+	}
 	return nil
 }
