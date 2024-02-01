@@ -10,6 +10,8 @@ services:
         networks:
             - lingua-evo-local
         entrypoint:
+            - "/bin/sh"
+            - "-ecx"
             - "redis-server --requirepass itBg40drEvZsw2gbHyp0"
 
     postgres:
@@ -31,7 +33,8 @@ services:
     lingua-evo:
         container_name: lingua-evo
         build:
-            context: .
+            context: ../.
+            dockerfile: Dockerfile
             args:
                 config_dir: ${CONFIG:-docker}
         depends_on:
