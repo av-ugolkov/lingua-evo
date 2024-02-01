@@ -20,7 +20,7 @@ type repoWord interface {
 	SharedWord(ctx context.Context, w *Word) (*Word, error)
 }
 
-//go:generate mockery --outpkg word --testonly --name "repoWord"
+//go:generate mockery --inpackage --outpkg word --testonly --name "repoWord"
 
 type Service struct {
 	repo repoWord
@@ -41,7 +41,6 @@ func (s *Service) AddWord(ctx context.Context, text, langCode, pronunciation str
 	}
 
 	wordID, err := s.repo.GetWord(ctx, word)
-
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return uuid.Nil, fmt.Errorf("word.Service.AddWord - get word: %w", err)
 	} else if wordID != uuid.Nil {
