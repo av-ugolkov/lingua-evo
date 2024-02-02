@@ -12,11 +12,11 @@ postgres:
     name: pg-lingua-evo
     user: lingua
     password: ib6vACdec2Fmht4lnX153
-    host: postgres-lingua-evo
+    host: postgres
     port: 5432
 redis:
-    name: redis-lingua-evo
-    host: localhost
+    name: redis
+    host: redis
     port: 6379
     user: lingua
     password: 
