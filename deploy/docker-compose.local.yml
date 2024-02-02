@@ -1,8 +1,8 @@
 version: '3.5'
 services:
     redis:
-        container_name: redis-lingua-evo
-        image: redis:latest
+        container_name: redis
+        image: redis:7.2.4-alpine
         expose:
             - "6379"
         ports:
@@ -15,8 +15,8 @@ services:
             - "redis-server --requirepass itBg40drEvZsw2gbHyp0"
 
     postgres:
-        container_name: postgres-lingua-evo
-        image: postgres:14.5-alpine3.16
+        container_name: postgres
+        image: postgres:16.1-alpine3.19
         environment:
             - POSTGRES_DB=pg-lingua-evo
             - POSTGRES_PASSWORD=ib6vACdec2Fmht4lnX153
@@ -30,8 +30,8 @@ services:
         networks:
             - lingua-evo-local
 
-    lingua-evo:
-        container_name: lingua-evo
+    service:
+        container_name: service
         build:
             context: ../.
             dockerfile: Dockerfile
@@ -50,18 +50,18 @@ services:
             - lingua-evo-local
 
     migration:
-        container_name: migration-lingua-evo
+        container_name: migration
         build:
-            context: migration
+            context: ../migration
         depends_on:
             - postgres
-            - lingua-evo
+            - service
         networks:
             - lingua-evo-local
         entrypoint:
             - "/bin/sh"
             - "-ecx"
-            - "./migration -cmd up -url lingua:ib6vACdec2Fmht4lnX153@postgres-lingua-evo:5432/pg-lingua-evo?sslmode=disable"
+            - "./migration -cmd up -url lingua:ib6vACdec2Fmht4lnX153@postgres:5432/pg-lingua-evo?sslmode=disable"
 
 networks:
     lingua-evo-local:
