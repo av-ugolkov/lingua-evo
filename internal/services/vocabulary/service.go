@@ -3,6 +3,7 @@ package vocabulary
 import (
 	"context"
 	"fmt"
+	"log/slog"
 
 	"github.com/google/uuid"
 )
@@ -11,7 +12,7 @@ type (
 	repoVocabulary interface {
 		AddWord(ctx context.Context, vocabulary Vocabulary) error
 		DeleteWord(ctx context.Context, vocabulary Vocabulary) error
-		GetWords(ctx context.Context, dictID uuid.UUID) ([]Vocabulary, error)
+		GetWords(ctx context.Context, dictID uuid.UUID, limit int) ([]Vocabulary, error)
 		UpdateWord(ctx context.Context, vocabulary Vocabulary) error
 	}
 
@@ -56,7 +57,7 @@ func (s *Service) AddWord(
 	ctx context.Context,
 	dictID uuid.UUID,
 	nativeWord Word,
-	tanslateWords []Word,
+	tanslateWords Words,
 	examples []string,
 	tags []string) (*Vocabulary, error) {
 	nativeWordID, err := s.wordSvc.AddWord(ctx, nativeWord.Text, nativeWord.LangCode, nativeWord.Pronunciation)
@@ -111,9 +112,9 @@ func (s *Service) UpdateWord(ctx context.Context,
 	dictID uuid.UUID,
 	oldWordID uuid.UUID,
 	nativeWord Word,
-	tanslateWords []Word,
+	tanslateWords Words,
 	examples []string,
-	tags []string) (*Vocabulary, error) {
+	tags []string) (*VocabularyWord, error) {
 	nativeWordID, err := s.wordSvc.UpdateWord(ctx, nativeWord.Text, nativeWord.LangCode, nativeWord.Pronunciation)
 	if err != nil {
 		return nil, fmt.Errorf("vocabulary.Service.UpdateWord - add native word in dictionary: %w", err)
@@ -163,14 +164,24 @@ func (s *Service) UpdateWord(ctx context.Context,
 		if err != nil {
 			return nil, fmt.Errorf("vocabulary.Service.UpdateWord - add new word: %w", err)
 		}
-		return &vocabulary, nil
+		return &VocabularyWord{
+			NativeWord:     nativeWord.Text,
+			TranslateWords: tanslateWords.GetValues(),
+			Examples:       examples,
+			Tags:           tags,
+		}, nil
 	}
 	err = s.repo.UpdateWord(ctx, vocabulary)
 	if err != nil {
 		return nil, fmt.Errorf("vocabulary.Service.UpdateWord - update vocabulary: %w", err)
 	}
 
-	return &vocabulary, nil
+	return &VocabularyWord{
+		NativeWord:     nativeWord.Text,
+		TranslateWords: tanslateWords.GetValues(),
+		Examples:       examples,
+		Tags:           tags,
+	}, nil
 }
 
 func (s *Service) DeleteWord(ctx context.Context, dictID, nativeWordID uuid.UUID) error {
@@ -186,10 +197,16 @@ func (s *Service) DeleteWord(ctx context.Context, dictID, nativeWordID uuid.UUID
 	return nil
 }
 
-func (s *Service) GetWords(ctx context.Context, dictID uuid.UUID) ([]Vocabulary, error) {
-	words, err := s.repo.GetWords(ctx, dictID)
+func (s *Service) GetWords(ctx context.Context, dictID uuid.UUID, limit int) ([]VocabularyWord, error) {
+	vocabularies, err := s.repo.GetWords(ctx, dictID, limit)
 	if err != nil {
 		return nil, fmt.Errorf("vocabulary.Service.GetWords - get words: %w", err)
 	}
+
+	for vocabulary := range vocabularies {
+		slog.Info(fmt.Sprintf("%+v", vocabulary))
+	}
+
+	words := []VocabularyWord{}
 	return words, nil
 }

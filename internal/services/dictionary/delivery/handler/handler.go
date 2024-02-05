@@ -20,8 +20,7 @@ const (
 )
 
 const (
-	ParamsName     = "name"
-	ParamsCapacity = "cap"
+	ParamsName = "name"
 )
 
 type (
@@ -75,7 +74,7 @@ func (h *Handler) addDictionary(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dictID, err := h.dictionarySvc.AddDictionary(ctx, userID, name)
+	dictID, err := h.dictionarySvc.AddDictionary(ctx, userID, uuid.New(), name)
 	if err != nil {
 		ex.SendError(http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.addDictionary: %v", err))
 	}

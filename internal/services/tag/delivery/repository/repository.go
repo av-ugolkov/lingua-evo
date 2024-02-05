@@ -48,6 +48,8 @@ func (r *TagRepo) FindTag(ctx context.Context, text string) ([]*entity.Tag, erro
 	if err != nil {
 		return nil, fmt.Errorf("example.repository.TagRepo.GetAllTags: %w", err)
 	}
+	defer rows.Close()
+
 	var tags []*entity.Tag
 	for rows.Next() {
 		var tag *entity.Tag
@@ -80,6 +82,8 @@ func (r *TagRepo) GetAllTags(ctx context.Context) ([]*entity.Tag, error) {
 	if err != nil {
 		return nil, fmt.Errorf("example.repository.TagRepo.GetAllTags: %w", err)
 	}
+	defer rows.Close()
+
 	var tags []*entity.Tag
 	for rows.Next() {
 		var tag *entity.Tag

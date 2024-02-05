@@ -538,7 +538,9 @@
                 "выписать"
             ],
             "pronunciation": "[dɪs'mɪs]",
-            "example": "My father was dismissed from hospital"
+            "example": [
+                "My father was dismissed from hospital"
+            ]
         },
         {
             "word": "required",

@@ -24,10 +24,12 @@ func NewRepo(db *sql.DB) *DictRepo {
 func (r *DictRepo) AddDictionary(ctx context.Context, dict entity.Dictionary) error {
 	query := `INSERT INTO dictionary (id, user_id, name, tags) VALUES($1, $2, $3, $4)`
 
-	_, err := r.db.QueryContext(ctx, query, dict.ID, dict.UserID, dict.Name, []uuid.UUID{uuid.New(), uuid.New()})
+	rows, err := r.db.QueryContext(ctx, query, dict.ID, dict.UserID, dict.Name, []uuid.UUID{uuid.New(), uuid.New()})
 	if err != nil {
 		return fmt.Errorf("dictionary.repository.DictRepo.AddDictionary: %w", err)
 	}
+	defer rows.Close()
+
 	return nil
 }
 
@@ -61,6 +63,8 @@ func (r *DictRepo) GetDictionaries(ctx context.Context, userID uuid.UUID) ([]*en
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
+
 	var dictionaries []*entity.Dictionary
 	for rows.Next() {
 		var dict entity.Dictionary

@@ -22,10 +22,11 @@ func NewRepo(db *sql.DB) *VocabularyRepo {
 
 func (r *VocabularyRepo) AddWord(ctx context.Context, vocabulary entity.Vocabulary) error {
 	const query = `INSERT INTO vocabulary (dictionary_id, native_word, translate_word, examples, tags) VALUES($1, $2, $3, $4, $5) ON CONFLICT DO NOTHING;`
-	_, err := r.db.QueryContext(ctx, query, vocabulary.DictionaryId, vocabulary.NativeWord, vocabulary.TranslateWords, vocabulary.Examples, vocabulary.Tags)
+	rows, err := r.db.QueryContext(ctx, query, vocabulary.DictionaryId, vocabulary.NativeWord, vocabulary.TranslateWords, vocabulary.Examples, vocabulary.Tags)
 	if err != nil {
 		return fmt.Errorf("vocabulary.repository.VocabularyRepo.AddWord: %w", err)
 	}
+	defer rows.Close()
 
 	return nil
 }
@@ -47,6 +48,7 @@ func (r *VocabularyRepo) GetWordsFromDictionary(ctx context.Context, dictID uuid
 	if err != nil {
 		return nil, fmt.Errorf("vocabulary.repository.VocabularyRepo.GetWordsFromDictionary: %w", err)
 	}
+	defer rows.Close()
 
 	words := make([]string, 0, capacity)
 	for rows.Next() {
@@ -90,14 +92,15 @@ func (r *VocabularyRepo) DeleteWord(ctx context.Context, vocabulary entity.Vocab
 	return nil
 }
 
-func (r *VocabularyRepo) GetWords(ctx context.Context, dictID uuid.UUID) ([]entity.Vocabulary, error) {
-	query := `SELECT native_word, translate_word, examples, tags FROM vocabulary WHERE dictionary_id=$1`
-	rows, err := r.db.QueryContext(ctx, query, dictID)
+func (r *VocabularyRepo) GetWords(ctx context.Context, dictID uuid.UUID, limit int) ([]entity.Vocabulary, error) {
+	query := `SELECT native_word, translate_word, examples, tags FROM vocabulary WHERE dictionary_id=$1 ORDER BY RANDOM() LIMIT $2;`
+	rows, err := r.db.QueryContext(ctx, query, dictID, limit)
 	if err != nil {
 		return nil, fmt.Errorf("vocabulary.repository.VocabularyRepo.GetWords: %w", err)
 	}
+	defer rows.Close()
 
-	words := make([]entity.Vocabulary, 0, 50)
+	words := make([]entity.Vocabulary, 0, limit)
 	for rows.Next() {
 		var word entity.Vocabulary
 		err = rows.Scan(&word.NativeWord, &word.TranslateWords, &word.Examples, &word.Tags)

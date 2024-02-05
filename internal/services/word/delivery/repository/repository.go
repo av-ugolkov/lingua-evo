@@ -70,6 +70,7 @@ func (r *WordRepo) FindWords(ctx context.Context, w *entity.Word) ([]uuid.UUID, 
 	if err != nil {
 		return nil, fmt.Errorf("word.repository.WordRepo.FindWords - query: %w", err)
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 		var id uuid.UUID
