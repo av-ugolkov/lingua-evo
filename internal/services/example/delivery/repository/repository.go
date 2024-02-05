@@ -20,10 +20,11 @@ func NewRepo(db *sql.DB) *ExampleRepo {
 
 func (r *ExampleRepo) AddExample(ctx context.Context, id uuid.UUID, text, langCode string) error {
 	query := fmt.Sprintf(`INSERT INTO example_%s (id, text) VALUES($1, $2) ON CONFLICT DO NOTHING`, langCode)
-	_, err := r.db.QueryContext(ctx, query, id, text)
+	rows, err := r.db.QueryContext(ctx, query, id, text)
 	if err != nil {
 		return fmt.Errorf("example.repository.ExampleRepo.AddExample: %w", err)
 	}
+	defer rows.Close()
 
 	return nil
 }
