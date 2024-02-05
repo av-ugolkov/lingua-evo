@@ -37,9 +37,9 @@ func NewService(repoDict repoDict, repoVocab repoVocab) *Service {
 	}
 }
 
-func (s *Service) AddDictionary(ctx context.Context, userID uuid.UUID, name string) (uuid.UUID, error) {
+func (s *Service) AddDictionary(ctx context.Context, userID, dictID uuid.UUID, name string) (uuid.UUID, error) {
 	dictionary := Dictionary{
-		ID:     uuid.New(),
+		ID:     dictID,
 		UserID: userID,
 		Name:   name,
 	}
@@ -47,6 +47,12 @@ func (s *Service) AddDictionary(ctx context.Context, userID uuid.UUID, name stri
 	dictionaries, err := s.repoDict.GetDictionaries(ctx, dictionary.UserID)
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("dictionary.Service.AddDictionary - get count dictionaries: %w", err)
+	}
+
+	for _, dict := range dictionaries {
+		if dict.Name == dictionary.Name {
+			return dict.ID, nil
+		}
 	}
 
 	if len(dictionaries) > 3 {

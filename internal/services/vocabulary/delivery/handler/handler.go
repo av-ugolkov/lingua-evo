@@ -2,6 +2,7 @@ package handler
 
 import (
 	"fmt"
+	"log/slog"
 	"net/http"
 
 	"github.com/av-ugolkov/lingua-evo/internal/services/vocabulary"
@@ -13,8 +14,8 @@ import (
 )
 
 const (
-	vocabularyUrl       = "/vocabulary"
-	getAllVocabularyUrl = "/vocabulary/get_all"
+	vocabularyWordUrl = "/vocabulary"
+	getSeveralWords   = "/vocabulary/get_several_words"
 )
 
 type (
@@ -37,11 +38,10 @@ type (
 	}
 
 	VocabularyWordsRs struct {
-		DictionaryId   uuid.UUID   `json:"dictionary_id"`
-		NativeWord     uuid.UUID   `json:"native_word_id"`
-		TranslateWords []uuid.UUID `json:"translate_words_id"`
-		Examples       []uuid.UUID `json:"examples_id"`
-		Tags           []uuid.UUID `json:"tags_id"`
+		NativeWord     string   `json:"native"`
+		TranslateWords []string `json:"translate_words"`
+		Examples       []string `json:"examples"`
+		Tags           []string `json:"tags"`
 	}
 
 	Handler struct {
@@ -61,11 +61,11 @@ func newHandler(vocabularySvc *vocabulary.Service) *Handler {
 }
 
 func (h *Handler) register(r *mux.Router) {
-	r.HandleFunc(vocabularyUrl, middleware.Auth(h.addWord)).Methods(http.MethodPost)
-	r.HandleFunc(vocabularyUrl, middleware.Auth(h.deleteWord)).Methods(http.MethodDelete)
-	r.HandleFunc(vocabularyUrl, middleware.Auth(h.getWord)).Methods(http.MethodGet)
-	r.HandleFunc(vocabularyUrl, middleware.Auth(h.updateWord)).Methods(http.MethodPut)
-	r.HandleFunc(getAllVocabularyUrl, middleware.Auth(h.getWords)).Methods(http.MethodGet)
+	r.HandleFunc(vocabularyWordUrl, middleware.Auth(h.addWord)).Methods(http.MethodPost)
+	r.HandleFunc(vocabularyWordUrl, middleware.Auth(h.deleteWord)).Methods(http.MethodDelete)
+	r.HandleFunc(vocabularyWordUrl, middleware.Auth(h.getWord)).Methods(http.MethodGet)
+	r.HandleFunc(vocabularyWordUrl, middleware.Auth(h.updateWord)).Methods(http.MethodPut)
+	r.HandleFunc(getSeveralWords, middleware.Auth(h.getSeveralWords)).Methods(http.MethodGet)
 }
 
 func (h *Handler) addWord(w http.ResponseWriter, r *http.Request) {
@@ -85,16 +85,10 @@ func (h *Handler) addWord(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	wordRs := &VocabularyWordsRs{
-		DictionaryId:   word.DictionaryId,
-		NativeWord:     word.NativeWord,
-		TranslateWords: word.TranslateWords,
-		Examples:       word.Examples,
-		Tags:           word.Tags,
-	}
+	slog.Info(fmt.Sprintf("added word: %v", word))
 
 	ex.SetContentType(exchange.ContentTypeJSON)
-	ex.SendData(http.StatusCreated, wordRs)
+	ex.SendEmptyData(http.StatusCreated)
 }
 
 func (h *Handler) deleteWord(w http.ResponseWriter, r *http.Request) {
@@ -138,7 +132,6 @@ func (h *Handler) updateWord(w http.ResponseWriter, r *http.Request) {
 	}
 
 	wordRs := &VocabularyWordsRs{
-		DictionaryId:   word.DictionaryId,
 		NativeWord:     word.NativeWord,
 		TranslateWords: word.TranslateWords,
 		Examples:       word.Examples,
@@ -149,23 +142,28 @@ func (h *Handler) updateWord(w http.ResponseWriter, r *http.Request) {
 	ex.SendData(http.StatusCreated, wordRs)
 }
 
-func (h *Handler) getWords(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) getSeveralWords(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	ex := exchange.NewExchanger(w, r)
 
-	dictID, err := ex.QueryParamString("dictionary_id")
+	dictID, err := ex.QueryParamString("id")
 	if err != nil {
-		ex.SendError(http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.getWords - get query: %w", err))
+		ex.SendError(http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.getWords - get dict id: %w", err))
 		return
 	}
 
 	did, err := uuid.Parse(dictID)
 	if err != nil {
-		ex.SendError(http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.getWords - parse query: %w", err))
+		ex.SendError(http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.getWords - parse dict id: %w", err))
 		return
 	}
 
-	words, err := h.vocabularySvc.GetWords(ctx, did)
+	limit, err := ex.QueryParamInt("limit")
+	if err != nil {
+		ex.SendError(http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.getWords - get limit: %w", err))
+		return
+	}
+	words, err := h.vocabularySvc.GetWords(ctx, did, limit)
 	if err != nil {
 		ex.SendError(http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.getWords: %w", err))
 		return
@@ -174,7 +172,6 @@ func (h *Handler) getWords(w http.ResponseWriter, r *http.Request) {
 	wordsRs := make([]VocabularyWordsRs, 0, len(words))
 	for _, word := range words {
 		wordRs := VocabularyWordsRs{
-			DictionaryId:   word.DictionaryId,
 			NativeWord:     word.NativeWord,
 			TranslateWords: word.TranslateWords,
 			Examples:       word.Examples,

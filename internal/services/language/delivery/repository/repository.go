@@ -31,13 +31,13 @@ func (r *LangRepo) GetLanguage(ctx context.Context, langCode string) (*entity.La
 
 func (r *LangRepo) GetAvailableLanguages(ctx context.Context) ([]*entity.Language, error) {
 	query := `SELECT code, lang FROM language ORDER BY lang ASC`
-	data, err := r.db.QueryContext(ctx, query)
+	rows, err := r.db.QueryContext(ctx, query)
 	if err != nil {
 		return nil, fmt.Errorf("language.repository.LangRepo.GetAvailableLanguages: %v", err)
 	}
-	defer data.Close()
+	defer rows.Close()
 
-	languages, err := scanRowsLanguage(data)
+	languages, err := scanRowsLanguage(rows)
 	if err != nil {
 		return nil, fmt.Errorf("language.repository.LangRepo.GetAvailableLanguages - scan: %v", err)
 	}
