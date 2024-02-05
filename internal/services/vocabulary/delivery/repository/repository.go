@@ -22,11 +22,10 @@ func NewRepo(db *sql.DB) *VocabularyRepo {
 
 func (r *VocabularyRepo) AddWord(ctx context.Context, vocabulary entity.Vocabulary) error {
 	const query = `INSERT INTO vocabulary (dictionary_id, native_word, translate_word, examples, tags) VALUES($1, $2, $3, $4, $5) ON CONFLICT DO NOTHING;`
-	rows, err := r.db.QueryContext(ctx, query, vocabulary.DictionaryId, vocabulary.NativeWord, vocabulary.TranslateWords, vocabulary.Examples, vocabulary.Tags)
+	_, err := r.db.ExecContext(ctx, query, vocabulary.DictionaryId, vocabulary.NativeWord, vocabulary.TranslateWords, vocabulary.Examples, vocabulary.Tags)
 	if err != nil {
 		return fmt.Errorf("vocabulary.repository.VocabularyRepo.AddWord: %w", err)
 	}
-	defer rows.Close()
 
 	return nil
 }
