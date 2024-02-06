@@ -51,11 +51,11 @@ func (s *Service) AddDictionary(ctx context.Context, userID, dictID uuid.UUID, n
 
 	for _, dict := range dictionaries {
 		if dict.Name == dictionary.Name {
-			return dict.ID, nil
+			return dict.ID, fmt.Errorf("dictionary.Service.AddDictionary - already have dictionary with same")
 		}
 	}
 
-	if len(dictionaries) > 3 {
+	if len(dictionaries) >= 5 {
 		return uuid.Nil, fmt.Errorf("dictionary.Service.AddDictionary - %w %v", errCountDictionary, dictionary.UserID)
 	}
 
