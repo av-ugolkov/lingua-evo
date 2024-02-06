@@ -3,17 +3,13 @@ package token
 import (
 	"errors"
 	"fmt"
+	"time"
 
-	"lingua-evo/internal/config"
-	entityAuth "lingua-evo/internal/services/auth"
-	entityUser "lingua-evo/internal/services/user/entity"
+	"github.com/av-ugolkov/lingua-evo/internal/config"
+	"github.com/av-ugolkov/lingua-evo/runtime"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
-)
-
-const (
-	emptyString = ""
 )
 
 type (
@@ -23,20 +19,20 @@ type (
 	}
 )
 
-func NewJWTToken(u *entityUser.User, s *entityAuth.Claims) (string, error) {
+func NewJWTToken(uid, sid uuid.UUID, expiresAt time.Time) (string, error) {
 	userClaims := UserClaims{
-		UserID: u.ID,
+		UserID: uid,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ID:        s.ID.String(),
+			ID:        sid.String(),
 			Audience:  []string{"users"},
-			ExpiresAt: jwt.NewNumericDate(s.ExpiresAt),
+			ExpiresAt: jwt.NewNumericDate(expiresAt),
 		},
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, userClaims)
 	t, err := token.SignedString([]byte(config.GetConfig().JWT.Secret))
 	if err != nil {
-		return emptyString, fmt.Errorf("pkg.jwt.token.NewJWTToken - can't signed token: %w", err)
+		return runtime.EmptyString, fmt.Errorf("pkg.jwt.token.NewJWTToken - can't signed token: %w", err)
 	}
 	return t, nil
 }

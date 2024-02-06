@@ -1,12 +1,12 @@
-FROM golang:1.21.0-alpine
+FROM alpine AS basement
 
-RUN apk --no-cache --update --upgrade add ca-certificates gcc libc-dev
+RUN apk --no-cache --update --upgrade add go
 
 ENV GO111MODULE on
 ENV CGO_ENABLED 1
 ENV GOOS linux
 ENV GOARCH amd64
 
-WORKDIR /migrations
-ADD . /migrations
+WORKDIR /migration
+ADD . /migration
 RUN go build -o migration .
