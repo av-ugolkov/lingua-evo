@@ -24,7 +24,7 @@ func TestService_AddWord(t *testing.T) {
 		repoWordMock.On("AddWord", ctx, word).Return(word.ID, nil)
 		s := &Service{repo: repoWordMock}
 
-		got, err := s.AddWord(ctx, word.Text, word.LanguageCode, word.Pronunciation)
+		got, err := s.AddWord(ctx, word.ID, word.Text, word.LanguageCode, word.Pronunciation)
 		assert.NoError(t, err)
 		assert.NotNil(t, got)
 		assert.Equal(t, word.ID, got)
