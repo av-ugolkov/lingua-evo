@@ -55,12 +55,12 @@ CREATE TABLE IF NOT EXISTS
 CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_example_ru__text ON example_ru (text);
 
 CREATE TABLE IF NOT EXISTS
-    dictionary (id UUID PRIMARY KEY, user_id UUID REFERENCES users (id) NOT NULL, name TEXT NOT NULL, tags INT[]);
+    dictionary (id UUID PRIMARY KEY, user_id UUID REFERENCES users (id) NOT NULL, name TEXT NOT NULL, tags UUID[] NOT NULL);
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_dictionary__user_id_name ON dictionary (user_id, name);
 
 CREATE TABLE IF NOT EXISTS
-    tag (id bigserial PRIMARY KEY, text TEXT NOT NULL);
+    tag (id UUID PRIMARY KEY, text TEXT NOT NULL);
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_tag__text ON tag (text);
 
@@ -70,7 +70,7 @@ CREATE TABLE IF NOT EXISTS
         native_word UUID NOT NULL,
         translate_word UUID[] NOT NULL,
         examples UUID[],
-        tags INT[]
+        tags UUID[]
     );
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_vocabulary__dictionary_id_native_word ON vocabulary (dictionary_id, native_word);

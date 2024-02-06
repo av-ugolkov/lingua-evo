@@ -6,20 +6,17 @@ WORKDIR /build
 COPY . .
 RUN --mount=type=cache,target=/go make build
 
-FROM alpine:3.18
+FROM scratch
 LABEL key="Lingua-evo"
 
 ARG config_dir
 
-RUN apk --no-cache --update --upgrade add curl
-
 WORKDIR /lingua-evo
 COPY /configs/${config_dir}/server_config.yaml ./configs/server_config.yaml
-COPY /website/ ./website/
-COPY --from=builder ./build/main ./cmd/
+COPY --from=builder ./build/cmd/main ./
 
 EXPOSE 5000
 
-WORKDIR /lingua-evo/cmd/
+WORKDIR /lingua-evo/
 
 ENTRYPOINT ["./main"]
