@@ -9,8 +9,9 @@ import (
 
 type repoExample interface {
 	AddExample(ctx context.Context, id uuid.UUID, text, langCode string) error
-	GetExample(ctx context.Context, text string, langCode string) (uuid.UUID, error)
+	GetExampleByValue(ctx context.Context, text string, langCode string) (uuid.UUID, error)
 	GetExampleById(ctx context.Context, id uuid.UUID, langCode string) (string, error)
+	GetExamples(ctx context.Context, exampleIDs []uuid.UUID) ([]Example, error)
 }
 
 type Service struct {
@@ -33,7 +34,7 @@ func (s *Service) AddExample(ctx context.Context, text, langCode string) (uuid.U
 	return id, nil
 }
 
-func (s *Service) GetExample(ctx context.Context, id uuid.UUID, langCode string) (string, error) {
+func (s *Service) GetExampleById(ctx context.Context, id uuid.UUID, langCode string) (string, error) {
 	text, err := s.repo.GetExampleById(ctx, id, langCode)
 	if err != nil {
 		return "", err
@@ -42,8 +43,19 @@ func (s *Service) GetExample(ctx context.Context, id uuid.UUID, langCode string)
 	return text, nil
 }
 
+func (s *Service) GetExamples(ctx context.Context, exampleIDs []uuid.UUID) ([]Example, error) {
+	if len(exampleIDs) == 0 {
+		return []Example{}, nil
+	}
+	examples, err := s.repo.GetExamples(ctx, exampleIDs)
+	if err != nil {
+		return nil, fmt.Errorf("example.Service.GetExamples: %w", err)
+	}
+	return examples, nil
+}
+
 func (s *Service) UpdateExample(ctx context.Context, text, langCode string) (uuid.UUID, error) {
-	id, err := s.repo.GetExample(ctx, text, langCode)
+	id, err := s.repo.GetExampleByValue(ctx, text, langCode)
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("example.Service.UpdateExample: %w", err)
 	}

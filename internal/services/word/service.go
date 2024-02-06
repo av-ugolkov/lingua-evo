@@ -12,7 +12,8 @@ import (
 
 type repoWord interface {
 	AddWord(ctx context.Context, w *Word) (uuid.UUID, error)
-	GetWord(ctx context.Context, w *Word) (uuid.UUID, error)
+	GetWordByText(ctx context.Context, w *Word) (uuid.UUID, error)
+	GetWords(ctx context.Context, ids []uuid.UUID) ([]Word, error)
 	UpdateWord(ctx context.Context, w *Word) error
 	FindWords(ctx context.Context, w *Word) ([]uuid.UUID, error)
 	DeleteWord(ctx context.Context, w *Word) (int64, error)
@@ -40,7 +41,7 @@ func (s *Service) AddWord(ctx context.Context, text, langCode, pronunciation str
 		Pronunciation: pronunciation,
 	}
 
-	wordID, err := s.repo.GetWord(ctx, word)
+	wordID, err := s.repo.GetWordByText(ctx, word)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return uuid.Nil, fmt.Errorf("word.Service.AddWord - get word: %w", err)
 	} else if wordID != uuid.Nil {
@@ -54,17 +55,28 @@ func (s *Service) AddWord(ctx context.Context, text, langCode, pronunciation str
 	return wordID, nil
 }
 
-func (s *Service) GetWord(ctx context.Context, text, langCode string) (uuid.UUID, error) {
+func (s *Service) GetWordByValue(ctx context.Context, text, langCode string) (uuid.UUID, error) {
 	word := Word{
 		Text:         text,
 		LanguageCode: langCode,
 	}
 
-	wordID, err := s.repo.GetWord(ctx, &word)
+	wordID, err := s.repo.GetWordByText(ctx, &word)
 	if err != nil {
-		return uuid.Nil, fmt.Errorf("word.Service.GetWord: %w", err)
+		return uuid.Nil, fmt.Errorf("word.Service.GetWordByValue: %w", err)
 	}
 	return wordID, nil
+}
+
+func (s *Service) GetWords(ctx context.Context, wordIDs []uuid.UUID) ([]Word, error) {
+	if len(wordIDs) == 0 {
+		return []Word{}, nil
+	}
+	words, err := s.repo.GetWords(ctx, wordIDs)
+	if err != nil {
+		return nil, fmt.Errorf("word.Service.GetWords: %w", err)
+	}
+	return words, nil
 }
 
 func (s *Service) EditWord(ctx context.Context, text, langCode string) error {
@@ -122,7 +134,7 @@ func (s *Service) UpdateWord(ctx context.Context, text, langCode, pronunciation 
 		Pronunciation: pronunciation,
 	}
 
-	wordID, err := s.repo.GetWord(ctx, word)
+	wordID, err := s.repo.GetWordByText(ctx, word)
 
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return uuid.Nil, fmt.Errorf("word.Service.UpdateWord - get word: %w", err)

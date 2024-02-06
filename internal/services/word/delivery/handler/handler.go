@@ -117,7 +117,7 @@ func (h *Handler) getWord(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	wordID, err := h.wordSvc.GetWord(ctx, data.Text, data.LanguageCode)
+	wordID, err := h.wordSvc.GetWordByValue(ctx, data.Text, data.LanguageCode)
 	if err != nil {
 		ex.SendError(http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getWord: %v", err))
 		return
