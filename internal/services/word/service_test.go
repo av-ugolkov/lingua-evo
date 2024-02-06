@@ -20,7 +20,7 @@ func TestService_AddWord(t *testing.T) {
 			}
 		)
 		repoWordMock := new(mockRepoWord)
-		repoWordMock.On("GetWord", ctx, word).Return(word.ID, nil)
+		repoWordMock.On("GetWordByText", ctx, word).Return(word.ID, nil)
 		repoWordMock.On("AddWord", ctx, word).Return(word.ID, nil)
 		s := &Service{repo: repoWordMock}
 

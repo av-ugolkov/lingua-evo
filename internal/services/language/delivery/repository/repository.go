@@ -53,7 +53,7 @@ func scanRowsLanguage(rows *sql.Rows) ([]*entity.Language, error) {
 			&language.Lang,
 		)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("language.repository.scanRowsLanguage: %v", err)
 		}
 
 		languages = append(languages, &language)

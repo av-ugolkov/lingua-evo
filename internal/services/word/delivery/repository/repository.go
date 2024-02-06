@@ -34,17 +34,37 @@ func (r *WordRepo) AddWord(ctx context.Context, w *entity.Word) (uuid.UUID, erro
 	return id, nil
 }
 
-func (r *WordRepo) GetWord(ctx context.Context, w *entity.Word) (uuid.UUID, error) {
+func (r *WordRepo) GetWordByText(ctx context.Context, w *entity.Word) (uuid.UUID, error) {
 	word := &entity.Word{}
 	table := getTable(w.LanguageCode)
 	query := fmt.Sprintf(`SELECT id FROM "%s" WHERE text=$1 AND lang_code=$2;`, table)
 	err := r.db.QueryRowContext(ctx, query, w.Text, w.LanguageCode).Scan(&word.ID)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		return uuid.Nil, fmt.Errorf("word.repository.WordRepo.GetWord - query: %w", err)
+		return uuid.Nil, fmt.Errorf("word.repository.WordRepo.GetWordByText - query: %w", err)
 	} else if errors.Is(err, sql.ErrNoRows) {
 		return uuid.Nil, nil
 	}
 	return word.ID, nil
+}
+
+func (r *WordRepo) GetWords(ctx context.Context, ids []uuid.UUID) ([]entity.Word, error) {
+	query := `SELECT id, text, pronunciation FROM word WHERE id=ANY($1);`
+	rows, err := r.db.QueryContext(ctx, query, ids)
+	if err != nil {
+		return nil, fmt.Errorf("word.repository.WordRepo.GetWords - query: %w", err)
+	}
+	defer rows.Close()
+
+	words := make([]entity.Word, 0, len(ids))
+	for rows.Next() {
+		var word entity.Word
+		err = rows.Scan(&word.ID, &word.Text, &word.Pronunciation)
+		if err != nil {
+			return nil, fmt.Errorf("word.repository.WordRepo.GetWords - scan: %w", err)
+		}
+		words = append(words, word)
+	}
+	return words, nil
 }
 
 func (r *WordRepo) UpdateWord(ctx context.Context, w *entity.Word) error {

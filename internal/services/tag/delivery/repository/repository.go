@@ -76,7 +76,29 @@ func (r *TagRepo) GetTag(ctx context.Context, text string) (uuid.UUID, error) {
 	return id, nil
 }
 
-func (r *TagRepo) GetAllTags(ctx context.Context) ([]*entity.Tag, error) {
+func (r *TagRepo) GetTags(ctx context.Context, ids []uuid.UUID) ([]entity.Tag, error) {
+	query := `SELECT id, text FROM tag WHERE id = ANY($1)`
+	rows, err := r.db.QueryContext(ctx, query, ids)
+	if err != nil {
+		return nil, fmt.Errorf("example.repository.TagRepo.GetTags: %w", err)
+	}
+	defer rows.Close()
+
+	tags := make([]entity.Tag, 0, len(ids))
+	for rows.Next() {
+		var tag entity.Tag
+		err = rows.Scan(&tag.ID, &tag.Text)
+		if err != nil {
+			return nil, fmt.Errorf("example.repository.TagRepo.GetTags - scan: %w", err)
+		}
+
+		tags = append(tags, tag)
+	}
+
+	return tags, nil
+}
+
+func (r *TagRepo) GetAllTags(ctx context.Context) ([]entity.Tag, error) {
 	query := `SELECT id, text FROM tag`
 	rows, err := r.db.QueryContext(ctx, query)
 	if err != nil {
@@ -84,9 +106,9 @@ func (r *TagRepo) GetAllTags(ctx context.Context) ([]*entity.Tag, error) {
 	}
 	defer rows.Close()
 
-	var tags []*entity.Tag
+	var tags []entity.Tag
 	for rows.Next() {
-		var tag *entity.Tag
+		var tag entity.Tag
 		err = rows.Scan(&tag.ID, &tag.Text)
 		if err != nil {
 			return nil, fmt.Errorf("example.repository.TagRepo.GetAllTags - scan: %w", err)

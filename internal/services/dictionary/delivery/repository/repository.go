@@ -73,7 +73,7 @@ func (r *DictRepo) GetDictionaries(ctx context.Context, userID uuid.UUID) ([]*en
 			&dict.Name,
 		)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("dictionary.repository.DictRepo.GetDictionaries - scan: %w", err)
 		}
 
 		dictionaries = append(dictionaries, &dict)
