@@ -38,10 +38,10 @@ type (
 	}
 
 	VocabularyWordsRs struct {
-		NativeWord     string   `json:"native"`
-		TranslateWords []string `json:"translate_words"`
-		Examples       []string `json:"examples"`
-		Tags           []string `json:"tags"`
+		NativeWord     vocabulary.Word `json:"native"`
+		TranslateWords []string        `json:"translate_words"`
+		Examples       []string        `json:"examples"`
+		Tags           []string        `json:"tags"`
 	}
 
 	Handler struct {

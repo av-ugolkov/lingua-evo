@@ -3,32 +3,39 @@ package vocabulary
 import (
 	"context"
 	"fmt"
-	"log/slog"
 
 	"github.com/google/uuid"
+	"golang.org/x/sync/errgroup"
+
+	entityExample "github.com/av-ugolkov/lingua-evo/internal/services/example"
+	entityTag "github.com/av-ugolkov/lingua-evo/internal/services/tag"
+	entityWord "github.com/av-ugolkov/lingua-evo/internal/services/word"
 )
 
 type (
 	repoVocabulary interface {
 		AddWord(ctx context.Context, vocabulary Vocabulary) error
 		DeleteWord(ctx context.Context, vocabulary Vocabulary) error
-		GetWords(ctx context.Context, dictID uuid.UUID, limit int) ([]Vocabulary, error)
+		GetRandomVocabularies(ctx context.Context, dictID uuid.UUID, limit int) ([]Vocabulary, error)
 		UpdateWord(ctx context.Context, vocabulary Vocabulary) error
 	}
 
 	exampleSvc interface {
 		AddExample(ctx context.Context, text, langCode string) (uuid.UUID, error)
 		UpdateExample(ctx context.Context, text, langCode string) (uuid.UUID, error)
+		GetExamples(ctx context.Context, exampleIDs []uuid.UUID) ([]entityExample.Example, error)
 	}
 
 	tagSvc interface {
 		AddTag(ctx context.Context, text string) (uuid.UUID, error)
 		UpdateTag(ctx context.Context, text string) (uuid.UUID, error)
+		GetTags(ctx context.Context, tagIDs []uuid.UUID) ([]entityTag.Tag, error)
 	}
 
 	wordSvc interface {
 		AddWord(ctx context.Context, text, langCode, pronunciation string) (uuid.UUID, error)
 		UpdateWord(ctx context.Context, text, langCode, pronunciation string) (uuid.UUID, error)
+		GetWords(ctx context.Context, wordIDs []uuid.UUID) ([]entityWord.Word, error)
 	}
 )
 
@@ -165,7 +172,7 @@ func (s *Service) UpdateWord(ctx context.Context,
 			return nil, fmt.Errorf("vocabulary.Service.UpdateWord - add new word: %w", err)
 		}
 		return &VocabularyWord{
-			NativeWord:     nativeWord.Text,
+			NativeWord:     nativeWord,
 			TranslateWords: tanslateWords.GetValues(),
 			Examples:       examples,
 			Tags:           tags,
@@ -177,7 +184,7 @@ func (s *Service) UpdateWord(ctx context.Context,
 	}
 
 	return &VocabularyWord{
-		NativeWord:     nativeWord.Text,
+		NativeWord:     nativeWord,
 		TranslateWords: tanslateWords.GetValues(),
 		Examples:       examples,
 		Tags:           tags,
@@ -198,15 +205,69 @@ func (s *Service) DeleteWord(ctx context.Context, dictID, nativeWordID uuid.UUID
 }
 
 func (s *Service) GetWords(ctx context.Context, dictID uuid.UUID, limit int) ([]VocabularyWord, error) {
-	vocabularies, err := s.repo.GetWords(ctx, dictID, limit)
+	vocabularies, err := s.repo.GetRandomVocabularies(ctx, dictID, limit)
 	if err != nil {
 		return nil, fmt.Errorf("vocabulary.Service.GetWords - get words: %w", err)
 	}
 
-	for vocabulary := range vocabularies {
-		slog.Info(fmt.Sprintf("%+v", vocabulary))
+	vocabularyWords := make([]VocabularyWord, 0, len(vocabularies))
+
+	var eg errgroup.Group
+	eg.SetLimit(10)
+	for _, vocab := range vocabularies {
+		vocab := vocab
+		eg.Go(func() error {
+			words, err := s.wordSvc.GetWords(ctx, []uuid.UUID{vocab.NativeWord})
+			if err != nil {
+				return fmt.Errorf("get words: %w", err)
+			}
+			if len(words) == 0 {
+				return fmt.Errorf("not found word by id [%v]", vocab.NativeWord)
+			}
+
+			translateWords, err := s.wordSvc.GetWords(ctx, vocab.TranslateWords)
+			if err != nil {
+				return fmt.Errorf("get translate words: %w", err)
+			}
+			translates := make([]string, 0, len(translateWords))
+			for _, word := range translateWords {
+				translates = append(translates, word.Text)
+			}
+
+			examples, err := s.exampleSvc.GetExamples(ctx, vocab.Examples)
+			if err != nil {
+				return fmt.Errorf("get examples: %w", err)
+			}
+			examplesStr := make([]string, 0, len(examples))
+			for _, example := range examples {
+				examplesStr = append(examplesStr, example.Text)
+			}
+
+			tags, err := s.tagSvc.GetTags(ctx, vocab.Tags)
+			if err != nil {
+				return fmt.Errorf("get tags: %w", err)
+			}
+			tagsStr := make([]string, 0, len(tags))
+			for _, tag := range tags {
+				tagsStr = append(tagsStr, tag.Text)
+			}
+
+			vocabularyWords = append(vocabularyWords, VocabularyWord{
+				NativeWord: Word{
+					Text:          words[0].Text,
+					Pronunciation: words[0].Pronunciation,
+				},
+				TranslateWords: translates,
+				Examples:       examplesStr,
+				Tags:           tagsStr,
+			})
+			return nil
+		})
 	}
 
-	words := []VocabularyWord{}
-	return words, nil
+	if err := eg.Wait(); err != nil {
+		return nil, fmt.Errorf("vocabulary.Service.GetWords - get words: %w", err)
+	}
+
+	return vocabularyWords, nil
 }

@@ -6,6 +6,8 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+
+	"github.com/av-ugolkov/lingua-evo/internal/services/example"
 )
 
 type ExampleRepo struct {
@@ -28,7 +30,7 @@ func (r *ExampleRepo) AddExample(ctx context.Context, id uuid.UUID, text, langCo
 	return nil
 }
 
-func (r *ExampleRepo) GetExample(ctx context.Context, text, langCode string) (uuid.UUID, error) {
+func (r *ExampleRepo) GetExampleByValue(ctx context.Context, text, langCode string) (uuid.UUID, error) {
 	var id uuid.UUID
 	query := fmt.Sprintf(`SELECT id FROM example_%s WHERE text=$1`, langCode)
 	err := r.db.QueryRowContext(ctx, query, text).Scan(&id)
@@ -50,4 +52,25 @@ func (r *ExampleRepo) GetExampleById(ctx context.Context, id uuid.UUID, langCode
 	}
 
 	return text, nil
+}
+
+func (r *ExampleRepo) GetExamples(ctx context.Context, ids []uuid.UUID) ([]example.Example, error) {
+	query := `SELECT id, text FROM example WHERE id = ANY($1)`
+	rows, err := r.db.QueryContext(ctx, query, ids)
+	if err != nil {
+		return nil, fmt.Errorf("example.repository.ExampleRepo.GetExamples: %w", err)
+	}
+	defer rows.Close()
+
+	examples := make([]example.Example, 0, len(ids))
+	for rows.Next() {
+		var example example.Example
+		err = rows.Scan(&example.Id, &example.Text)
+		if err != nil {
+			return nil, fmt.Errorf("example.repository.ExampleRepo.GetExamples - scan: %w", err)
+		}
+		examples = append(examples, example)
+	}
+
+	return examples, nil
 }
