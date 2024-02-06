@@ -6,12 +6,12 @@ build:
 run:
 	./cmd/main
 
-.PHONY: docker-create
-docker-create:
+.PHONY: run.docker
+run.docker:
 	docker compose -p lingua-evo -f deploy/docker-compose.local.yml up --build --force-recreate
 
-.PHONY: docker-create-database
-docker-create-database:
+.PHONY: run.docker.database
+run.docker.database:
 	docker compose -p lingua-evo -f deploy/docker-compose.database.local.yml up --build --force-recreate
 
 .PHONY: lint
