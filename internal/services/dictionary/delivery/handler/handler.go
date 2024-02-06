@@ -80,7 +80,10 @@ func (h *Handler) addDictionary(w http.ResponseWriter, r *http.Request) {
 	}
 
 	dictRs := &DictionaryRs{
-		ID: dictID,
+		ID:     dictID,
+		UserID: userID,
+		Name:   name,
+		Tags:   []string{},
 	}
 
 	ex.SetContentType(exchange.ContentTypeJSON)
