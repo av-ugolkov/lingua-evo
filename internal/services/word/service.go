@@ -33,9 +33,9 @@ func NewService(repo repoWord) *Service {
 	}
 }
 
-func (s *Service) AddWord(ctx context.Context, text, langCode, pronunciation string) (uuid.UUID, error) {
+func (s *Service) AddWord(ctx context.Context, id uuid.UUID, text, langCode, pronunciation string) (uuid.UUID, error) {
 	word := &Word{
-		ID:            uuid.New(),
+		ID:            id,
 		Text:          text,
 		LanguageCode:  langCode,
 		Pronunciation: pronunciation,

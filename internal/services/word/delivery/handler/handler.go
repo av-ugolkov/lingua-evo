@@ -88,7 +88,7 @@ func (h *Handler) addWord(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	wordID, err := h.wordSvc.AddWord(ctx, data.Text, data.LanguageCode, data.Pronunciation)
+	wordID, err := h.wordSvc.AddWord(ctx, uuid.New(), data.Text, data.LanguageCode, data.Pronunciation)
 	if err != nil {
 		ex.SendError(http.StatusInternalServerError, err)
 		return

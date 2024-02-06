@@ -33,7 +33,7 @@ type (
 	}
 
 	wordSvc interface {
-		AddWord(ctx context.Context, text, langCode, pronunciation string) (uuid.UUID, error)
+		AddWord(ctx context.Context, id uuid.UUID, text, langCode, pronunciation string) (uuid.UUID, error)
 		UpdateWord(ctx context.Context, text, langCode, pronunciation string) (uuid.UUID, error)
 		GetWords(ctx context.Context, wordIDs []uuid.UUID) ([]entityWord.Word, error)
 	}
@@ -67,14 +67,14 @@ func (s *Service) AddWord(
 	tanslateWords Words,
 	examples []string,
 	tags []string) (*Vocabulary, error) {
-	nativeWordID, err := s.wordSvc.AddWord(ctx, nativeWord.Text, nativeWord.LangCode, nativeWord.Pronunciation)
+	nativeWordID, err := s.wordSvc.AddWord(ctx, uuid.New(), nativeWord.Text, nativeWord.LangCode, nativeWord.Pronunciation)
 	if err != nil {
 		return nil, fmt.Errorf("vocabulary.Service.AddWord - add native word in dictionary: %w", err)
 	}
 
 	translateWordIDs := make([]uuid.UUID, 0, len(tanslateWords))
 	for _, translateWord := range tanslateWords {
-		translateWordID, err := s.wordSvc.AddWord(ctx, translateWord.Text, translateWord.LangCode, translateWord.Pronunciation)
+		translateWordID, err := s.wordSvc.AddWord(ctx, uuid.New(), translateWord.Text, translateWord.LangCode, translateWord.Pronunciation)
 		if err != nil {
 			return nil, fmt.Errorf("vocabulary.Service.AddWord - add translate word in dictionary: %w", err)
 		}
