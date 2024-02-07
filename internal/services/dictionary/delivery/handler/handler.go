@@ -24,8 +24,14 @@ const (
 )
 
 type (
+	DictionaryRq struct {
+		ID   uuid.UUID   `json:"id"`
+		Name string      `json:"name"`
+		Tags []uuid.UUID `json:"tags"`
+	}
+
 	DictionaryIDRs struct {
-		ID   uuid.UUID   `json:"dictionary_id"`
+		ID   uuid.UUID   `json:"id"`
 		Tags []uuid.UUID `json:"tags"`
 	}
 
@@ -56,6 +62,7 @@ func (h *Handler) register(r *mux.Router) {
 	r.HandleFunc(dictionaryOp, middleware.Auth(h.addDictionary)).Methods(http.MethodPost)
 	r.HandleFunc(dictionaryOp, middleware.Auth(h.deleteDictionary)).Methods(http.MethodDelete)
 	r.HandleFunc(dictionaryOp, middleware.Auth(h.getDictionary)).Methods(http.MethodGet)
+	r.HandleFunc(dictionaryOp, middleware.Auth(h.renameDictionary)).Methods(http.MethodPut)
 	r.HandleFunc(getAllDictionary, middleware.Auth(h.getDictionaries)).Methods(http.MethodGet)
 }
 
@@ -178,4 +185,30 @@ func (h *Handler) getDictionaries(w http.ResponseWriter, r *http.Request) {
 
 	ex.SetContentType(exchange.ContentTypeJSON)
 	ex.SendData(http.StatusOK, dictionariesRs)
+}
+
+func (h *Handler) renameDictionary(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	ex := exchange.NewExchanger(w, r)
+
+	name, err := ex.QueryParamString(ParamsName)
+	if err != nil {
+		ex.SendError(http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.renameDictionary - get query [name]: %v", err))
+		return
+	}
+
+	var dictID DictionaryRq
+	err = ex.CheckBody(&dictID)
+	if err != nil {
+		ex.SendError(http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.renameDictionary - get body: %v", err))
+		return
+	}
+
+	err = h.dictionarySvc.RenameDictionary(ctx, dictID.ID, name)
+	if err != nil {
+		ex.SendError(http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.renameDictionary: %v", err))
+		return
+	}
+
+	ex.SendEmptyData(http.StatusOK)
 }
