@@ -1,16 +1,19 @@
 package middleware
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
 	"github.com/av-ugolkov/lingua-evo/internal/config"
-	"github.com/av-ugolkov/lingua-evo/pkg/http/exchange"
-	"github.com/av-ugolkov/lingua-evo/pkg/token"
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/http/exchange"
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/token"
 	"github.com/av-ugolkov/lingua-evo/runtime"
 )
 
-func Auth(next http.HandlerFunc) http.HandlerFunc {
+type ExangerFunc func(ctx context.Context, ex *exchange.Exchanger)
+
+func Auth(next ExangerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ex := exchange.NewExchanger(w, r)
 		var bearerToken string
@@ -24,7 +27,7 @@ func Auth(next http.HandlerFunc) http.HandlerFunc {
 			ex.SendError(http.StatusUnauthorized, err)
 			return
 		}
-		r = r.WithContext(runtime.SetUserIDInContext(r.Context(), claims.UserID))
-		next(w, r)
+		ctx := runtime.SetUserIDInContext(r.Context(), claims.UserID)
+		next(ctx, exchange.NewExchanger(w, r))
 	})
 }

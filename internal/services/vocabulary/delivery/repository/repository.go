@@ -92,11 +92,11 @@ func (r *VocabularyRepo) DeleteWord(ctx context.Context, vocabulary entity.Vocab
 	return nil
 }
 
-func (r *VocabularyRepo) GetRandomVocabularies(ctx context.Context, dictID uuid.UUID, limit int) ([]entity.Vocabulary, error) {
+func (r *VocabularyRepo) GetRandomVocabulary(ctx context.Context, dictID uuid.UUID, limit int) ([]entity.Vocabulary, error) {
 	query := `SELECT native_word, translate_word, examples, tags FROM vocabulary WHERE dictionary_id=$1 ORDER BY RANDOM() LIMIT $2;`
 	rows, err := r.db.QueryContext(ctx, query, dictID, limit)
 	if err != nil {
-		return nil, fmt.Errorf("vocabulary.repository.VocabularyRepo.GetRandomVocabularies: %w", err)
+		return nil, fmt.Errorf("vocabulary.repository.VocabularyRepo.GetRandomVocabulary: %w", err)
 	}
 	defer rows.Close()
 
@@ -105,7 +105,28 @@ func (r *VocabularyRepo) GetRandomVocabularies(ctx context.Context, dictID uuid.
 		var vocabulary entity.Vocabulary
 		err = rows.Scan(&vocabulary.NativeWord, pq.Array(&vocabulary.TranslateWords), pq.Array(&vocabulary.Examples), pq.Array(&vocabulary.Tags))
 		if err != nil {
-			return nil, fmt.Errorf("vocabulary.repository.VocabularyRepo.GetRandomVocabularies - scan: %w", err)
+			return nil, fmt.Errorf("vocabulary.repository.VocabularyRepo.GetRandomVocabulary - scan: %w", err)
+		}
+		vocabularies = append(vocabularies, vocabulary)
+	}
+
+	return vocabularies, nil
+}
+
+func (r *VocabularyRepo) GetVocabulary(ctx context.Context, dictID uuid.UUID) ([]entity.Vocabulary, error) {
+	query := `SELECT native_word, translate_word, examples, tags FROM vocabulary WHERE dictionary_id=$1;`
+	rows, err := r.db.QueryContext(ctx, query, dictID)
+	if err != nil {
+		return nil, fmt.Errorf("vocabulary.repository.VocabularyRepo.GetVocabulary: %w", err)
+	}
+	defer rows.Close()
+
+	vocabularies := make([]entity.Vocabulary, 0, 25)
+	for rows.Next() {
+		var vocabulary entity.Vocabulary
+		err = rows.Scan(&vocabulary.NativeWord, pq.Array(&vocabulary.TranslateWords), pq.Array(&vocabulary.Examples), pq.Array(&vocabulary.Tags))
+		if err != nil {
+			return nil, fmt.Errorf("vocabulary.repository.VocabularyRepo.GetVocabulary - scan: %w", err)
 		}
 		vocabularies = append(vocabularies, vocabulary)
 	}
