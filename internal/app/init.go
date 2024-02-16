@@ -1,12 +1,15 @@
 package app
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
 	"log/slog"
 	"net"
 	"net/http"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -79,16 +82,29 @@ func ServerStart(cfg *config.Config) {
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 	}
+
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
+
 	slog.Info("start sertver")
-	if err := server.Serve(listener); err != nil {
-		switch {
-		case errors.Is(err, http.ErrServerClosed):
-			slog.Warn("server shutdown")
-		default:
-			slog.Error(err.Error())
-			return
+	go func() {
+		if err := server.Serve(listener); err != nil {
+			switch {
+			case errors.Is(err, http.ErrServerClosed):
+				slog.Warn("server shutdown")
+			default:
+				slog.Error(err.Error())
+				return
+			}
 		}
+	}()
+
+	<-ctx.Done()
+	if err := server.Shutdown(context.TODO()); err != nil {
+		slog.Info(fmt.Sprintf("server shutdown returned an err: %v\n", err))
 	}
+
+	slog.Info("final")
 }
 
 func initServer(r *mux.Router, db *sql.DB, redis *redis.Redis) {

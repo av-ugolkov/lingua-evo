@@ -7,9 +7,9 @@ import (
 	"time"
 
 	"github.com/av-ugolkov/lingua-evo/internal/config"
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/token"
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/utils"
 	entityUser "github.com/av-ugolkov/lingua-evo/internal/services/user"
-	"github.com/av-ugolkov/lingua-evo/pkg/token"
-	"github.com/av-ugolkov/lingua-evo/pkg/utils"
 
 	"github.com/google/uuid"
 )

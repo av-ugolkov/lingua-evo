@@ -16,7 +16,8 @@ type (
 	repoVocabulary interface {
 		AddWord(ctx context.Context, vocabulary Vocabulary) error
 		DeleteWord(ctx context.Context, vocabulary Vocabulary) error
-		GetRandomVocabularies(ctx context.Context, dictID uuid.UUID, limit int) ([]Vocabulary, error)
+		GetRandomVocabulary(ctx context.Context, dictID uuid.UUID, limit int) ([]Vocabulary, error)
+		GetVocabulary(ctx context.Context, dictID uuid.UUID) ([]Vocabulary, error)
 		UpdateWord(ctx context.Context, vocabulary Vocabulary) error
 	}
 
@@ -204,8 +205,76 @@ func (s *Service) DeleteWord(ctx context.Context, dictID, nativeWordID uuid.UUID
 	return nil
 }
 
-func (s *Service) GetWords(ctx context.Context, dictID uuid.UUID, limit int) ([]VocabularyWord, error) {
-	vocabularies, err := s.repo.GetRandomVocabularies(ctx, dictID, limit)
+func (s *Service) GetRandomWords(ctx context.Context, dictID uuid.UUID, limit int) ([]VocabularyWord, error) {
+	vocabularies, err := s.repo.GetRandomVocabulary(ctx, dictID, limit)
+	if err != nil {
+		return nil, fmt.Errorf("vocabulary.Service.GetWords - get words: %w", err)
+	}
+
+	vocabularyWords := make([]VocabularyWord, 0, len(vocabularies))
+
+	var eg errgroup.Group
+	eg.SetLimit(10)
+	for _, vocab := range vocabularies {
+		vocab := vocab
+		eg.Go(func() error {
+			words, err := s.wordSvc.GetWords(ctx, []uuid.UUID{vocab.NativeWord})
+			if err != nil {
+				return fmt.Errorf("get words: %w", err)
+			}
+			if len(words) == 0 {
+				return fmt.Errorf("not found word by id [%v]", vocab.NativeWord)
+			}
+
+			translateWords, err := s.wordSvc.GetWords(ctx, vocab.TranslateWords)
+			if err != nil {
+				return fmt.Errorf("get translate words: %w", err)
+			}
+			translates := make([]string, 0, len(translateWords))
+			for _, word := range translateWords {
+				translates = append(translates, word.Text)
+			}
+
+			examples, err := s.exampleSvc.GetExamples(ctx, vocab.Examples)
+			if err != nil {
+				return fmt.Errorf("get examples: %w", err)
+			}
+			examplesStr := make([]string, 0, len(examples))
+			for _, example := range examples {
+				examplesStr = append(examplesStr, example.Text)
+			}
+
+			tags, err := s.tagSvc.GetTags(ctx, vocab.Tags)
+			if err != nil {
+				return fmt.Errorf("get tags: %w", err)
+			}
+			tagsStr := make([]string, 0, len(tags))
+			for _, tag := range tags {
+				tagsStr = append(tagsStr, tag.Text)
+			}
+
+			vocabularyWords = append(vocabularyWords, VocabularyWord{
+				NativeWord: Word{
+					Text:          words[0].Text,
+					Pronunciation: words[0].Pronunciation,
+				},
+				TranslateWords: translates,
+				Examples:       examplesStr,
+				Tags:           tagsStr,
+			})
+			return nil
+		})
+	}
+
+	if err := eg.Wait(); err != nil {
+		return nil, fmt.Errorf("vocabulary.Service.GetWords - get words: %w", err)
+	}
+
+	return vocabularyWords, nil
+}
+
+func (s *Service) GetWords(ctx context.Context, dictID uuid.UUID) ([]VocabularyWord, error) {
+	vocabularies, err := s.repo.GetVocabulary(ctx, dictID)
 	if err != nil {
 		return nil, fmt.Errorf("vocabulary.Service.GetWords - get words: %w", err)
 	}
