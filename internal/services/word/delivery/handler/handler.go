@@ -1,13 +1,14 @@
 package handler
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/http/exchange"
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/middleware"
 	langSvc "github.com/av-ugolkov/lingua-evo/internal/services/language"
 	wordSvc "github.com/av-ugolkov/lingua-evo/internal/services/word"
-	"github.com/av-ugolkov/lingua-evo/pkg/http/exchange"
-	"github.com/av-ugolkov/lingua-evo/pkg/middleware"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
@@ -72,15 +73,12 @@ func (h *Handler) register(r *mux.Router) {
 	r.HandleFunc(getRandomWord, h.getRandomWord).Methods(http.MethodPost)
 }
 
-func (h *Handler) addWord(w http.ResponseWriter, r *http.Request) {
-	ex := exchange.NewExchanger(w, r)
+func (h *Handler) addWord(ctx context.Context, ex *exchange.Exchanger) {
 	var data AddWordRq
 	if err := ex.CheckBody(&data); err != nil {
 		ex.SendError(http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.addWord - check body: %v", err))
 		return
 	}
-
-	ctx := r.Context()
 
 	err := h.langSvc.CheckLanguage(ctx, data.LanguageCode)
 	if err != nil {
