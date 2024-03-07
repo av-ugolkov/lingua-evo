@@ -21,6 +21,22 @@ func NewRepo(db *sql.DB) *VocabularyRepo {
 	}
 }
 
+func (r *VocabularyRepo) GetWord(ctx context.Context, dictID, wordID uuid.UUID) (entity.Vocabulary, error) {
+	const query = `SELECT native_word, translate_word, examples, tags FROM vocabulary WHERE dictionary_id=$1 and native_word=$2;`
+
+	var word entity.Vocabulary
+	err := r.db.QueryRowContext(ctx, query, dictID, wordID).Scan(
+		&word.NativeWord,
+		pq.Array(&word.TranslateWords),
+		pq.Array(&word.Examples),
+		pq.Array(&word.Tags))
+	if err != nil {
+		return word, fmt.Errorf("vocabulary.repository.VocabularyRepo.GetWord: %w", err)
+	}
+
+	return word, nil
+}
+
 func (r *VocabularyRepo) AddWord(ctx context.Context, vocabulary entity.Vocabulary) error {
 	const query = `INSERT INTO vocabulary (dictionary_id, native_word, translate_word, examples, tags) VALUES($1, $2, $3, $4, $5) ON CONFLICT DO NOTHING;`
 	_, err := r.db.ExecContext(ctx, query, vocabulary.DictionaryId, vocabulary.NativeWord, vocabulary.TranslateWords, vocabulary.Examples, vocabulary.Tags)

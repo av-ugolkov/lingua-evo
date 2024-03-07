@@ -22,6 +22,7 @@ type (
 	}
 
 	VocabularyWord struct {
+		Id             uuid.UUID
 		NativeWord     Word
 		TranslateWords []string
 		Examples       []string
