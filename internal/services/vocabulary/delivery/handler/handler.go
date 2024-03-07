@@ -15,9 +15,10 @@ import (
 )
 
 const (
-	ParamID    = "id"
-	ParamName  = "name"
-	ParamLimit = "limit"
+	ParamDictID = "dict_id"
+	ParamWordID = "word_id"
+	ParamName   = "name"
+	ParamLimit  = "limit"
 )
 
 const (
@@ -46,6 +47,7 @@ type (
 	}
 
 	VocabularyWordsRs struct {
+		ID             uuid.UUID       `json:"id"`
 		NativeWord     vocabulary.Word `json:"native"`
 		TranslateWords []string        `json:"translate_words"`
 		Examples       []string        `json:"examples"`
@@ -69,6 +71,7 @@ func newHandler(vocabularySvc *vocabulary.Service) *Handler {
 }
 
 func (h *Handler) register(r *mux.Router) {
+	r.HandleFunc(vocabularyWordUrl, middleware.Auth(h.getWord)).Methods(http.MethodGet)
 	r.HandleFunc(vocabularyWordUrl, middleware.Auth(h.addWord)).Methods(http.MethodPost)
 	r.HandleFunc(vocabularyWordUrl, middleware.Auth(h.deleteWord)).Methods(http.MethodDelete)
 	r.HandleFunc(vocabularyWordUrl, middleware.Auth(h.updateWord)).Methods(http.MethodPut)
@@ -138,7 +141,7 @@ func (h *Handler) updateWord(ctx context.Context, ex *exchange.Exchanger) {
 }
 
 func (h *Handler) getSeveralWords(ctx context.Context, ex *exchange.Exchanger) {
-	dictID, err := ex.QueryParamUUID(ParamID)
+	dictID, err := ex.QueryParamUUID(ParamDictID)
 	if err != nil {
 		ex.SendError(http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.getSeveralWords - get dict id: %w", err))
 		return
@@ -171,8 +174,38 @@ func (h *Handler) getSeveralWords(ctx context.Context, ex *exchange.Exchanger) {
 	ex.SendData(http.StatusOK, wordsRs)
 }
 
+func (h *Handler) getWord(ctx context.Context, ex *exchange.Exchanger) {
+	dictID, err := ex.QueryParamUUID(ParamDictID)
+	if err != nil {
+		ex.SendError(http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.getWords - get dict id: %w", err))
+		return
+	}
+
+	wordID, err := ex.QueryParamUUID(ParamWordID)
+	if err != nil {
+		ex.SendError(http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.getWords - get word id: %w", err))
+		return
+	}
+	word, err := h.vocabularySvc.GetWord(ctx, dictID, wordID)
+	if err != nil {
+		ex.SendError(http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.getWords: %w", err))
+		return
+	}
+
+	wordRs := VocabularyWordsRs{
+		ID:             word.Id,
+		NativeWord:     word.NativeWord,
+		TranslateWords: word.TranslateWords,
+		Examples:       word.Examples,
+		Tags:           word.Tags,
+	}
+
+	ex.SetContentType(exchange.ContentTypeJSON)
+	ex.SendData(http.StatusOK, wordRs)
+}
+
 func (h *Handler) getWords(ctx context.Context, ex *exchange.Exchanger) {
-	dictID, err := ex.QueryParamUUID(ParamID)
+	dictID, err := ex.QueryParamUUID(ParamDictID)
 	if err != nil {
 		ex.SendError(http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.getWords - get dict id: %w", err))
 		return
@@ -187,6 +220,7 @@ func (h *Handler) getWords(ctx context.Context, ex *exchange.Exchanger) {
 	wordsRs := make([]VocabularyWordsRs, 0, len(words))
 	for _, word := range words {
 		wordRs := VocabularyWordsRs{
+			ID:             word.Id,
 			NativeWord:     word.NativeWord,
 			TranslateWords: word.TranslateWords,
 			Examples:       word.Examples,
