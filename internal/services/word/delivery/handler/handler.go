@@ -70,7 +70,7 @@ func newHandler(wordSvc *wordSvc.Service, langSvc *langSvc.Service) *Handler {
 func (h *Handler) register(r *mux.Router) {
 	r.HandleFunc(addWord, middleware.Auth(h.addWord)).Methods(http.MethodPost)
 	r.HandleFunc(getWord, h.getWord).Methods(http.MethodPost)
-	r.HandleFunc(getRandomWord, h.getRandomWord).Methods(http.MethodPost)
+	r.HandleFunc(getRandomWord, h.getRandomWord).Methods(http.MethodGet)
 }
 
 func (h *Handler) addWord(ctx context.Context, ex *exchange.Exchanger) {
@@ -131,20 +131,20 @@ func (h *Handler) getWord(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) getRandomWord(w http.ResponseWriter, r *http.Request) {
 	ex := exchange.NewExchanger(w, r)
-	var data RandomWordRq
-	if err := ex.CheckBody(&data); err != nil {
-		ex.SendError(http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getRandomWord - check body: %v", err))
+	ctx := ex.Context()
+
+	languageCode, err := ex.QueryParamString("language_code")
+	if err != nil {
+		ex.SendError(http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getRandomWord - query language: %v", err))
 		return
 	}
 
-	ctx := r.Context()
-
-	if err := h.langSvc.CheckLanguage(ctx, data.LanguageCode); err != nil {
+	if err := h.langSvc.CheckLanguage(ctx, languageCode); err != nil {
 		ex.SendError(http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getRandomWord - check language: %v", err))
 		return
 	}
 
-	word, err := h.wordSvc.GetRandomWord(ctx, data.LanguageCode)
+	word, err := h.wordSvc.GetRandomWord(ctx, languageCode)
 	if err != nil {
 		ex.SendError(http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getRandomWord: %v", err))
 		return
