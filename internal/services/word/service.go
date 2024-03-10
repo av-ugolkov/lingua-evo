@@ -41,18 +41,12 @@ func (s *Service) AddWord(ctx context.Context, id uuid.UUID, text, langCode, pro
 		Pronunciation: pronunciation,
 	}
 
-	wordID, err := s.repo.GetWordByText(ctx, word)
-	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		return uuid.Nil, fmt.Errorf("word.Service.AddWord - get word: %w", err)
-	} else if wordID != uuid.Nil {
-		return wordID, nil
-	}
-	wordID, err = s.repo.AddWord(ctx, word)
+	id, err := s.repo.AddWord(ctx, word)
 	if err != nil {
-		return uuid.Nil, err
+		return uuid.Nil, fmt.Errorf("word.Service.AddWord: %w", err)
 	}
 
-	return wordID, nil
+	return id, nil
 }
 
 func (s *Service) GetWordByValue(ctx context.Context, text, langCode string) (uuid.UUID, error) {

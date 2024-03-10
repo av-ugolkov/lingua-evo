@@ -47,11 +47,11 @@ type (
 	}
 
 	VocabularyWordsRs struct {
-		ID             uuid.UUID       `json:"id"`
+		WordID         *uuid.UUID      `json:"word_id,omitempty"`
 		NativeWord     vocabulary.Word `json:"native"`
-		TranslateWords []string        `json:"translate_words"`
-		Examples       []string        `json:"examples"`
-		Tags           []string        `json:"tags"`
+		TranslateWords []string        `json:"translate_words,omitempty"`
+		Examples       []string        `json:"examples,omitempty"`
+		Tags           []string        `json:"tags,omitempty"`
 	}
 
 	Handler struct {
@@ -72,9 +72,9 @@ func newHandler(vocabularySvc *vocabulary.Service) *Handler {
 
 func (h *Handler) register(r *mux.Router) {
 	r.HandleFunc(vocabularyWordUrl, middleware.Auth(h.getWord)).Methods(http.MethodGet)
-	r.HandleFunc(vocabularyWordUrl, middleware.Auth(h.addWord)).Methods(http.MethodPost)
+	r.HandleFunc(vocabularyWordUrl, middleware.Auth(h.addWord)).Methods(http.MethodPut)
 	r.HandleFunc(vocabularyWordUrl, middleware.Auth(h.deleteWord)).Methods(http.MethodDelete)
-	r.HandleFunc(vocabularyWordUrl, middleware.Auth(h.updateWord)).Methods(http.MethodPut)
+	r.HandleFunc(vocabularyWordUrl, middleware.Auth(h.updateWord)).Methods(http.MethodPatch)
 	r.HandleFunc(getSeveralWords, middleware.Auth(h.getSeveralWords)).Methods(http.MethodGet)
 	r.HandleFunc(getWords, middleware.Auth(h.getWords)).Methods(http.MethodGet)
 }
@@ -193,7 +193,7 @@ func (h *Handler) getWord(ctx context.Context, ex *exchange.Exchanger) {
 	}
 
 	wordRs := VocabularyWordsRs{
-		ID:             word.Id,
+		WordID:         &word.Id,
 		NativeWord:     word.NativeWord,
 		TranslateWords: word.TranslateWords,
 		Examples:       word.Examples,
@@ -220,7 +220,7 @@ func (h *Handler) getWords(ctx context.Context, ex *exchange.Exchanger) {
 	wordsRs := make([]VocabularyWordsRs, 0, len(words))
 	for _, word := range words {
 		wordRs := VocabularyWordsRs{
-			ID:             word.Id,
+			WordID:         &word.Id,
 			NativeWord:     word.NativeWord,
 			TranslateWords: word.TranslateWords,
 			Examples:       word.Examples,

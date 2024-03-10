@@ -3,9 +3,11 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/lib/pq"
 
 	"github.com/google/uuid"
@@ -38,10 +40,16 @@ func (r *VocabularyRepo) GetWord(ctx context.Context, dictID, wordID uuid.UUID) 
 }
 
 func (r *VocabularyRepo) AddWord(ctx context.Context, vocabulary entity.Vocabulary) error {
-	const query = `INSERT INTO vocabulary (dictionary_id, native_word, translate_word, examples, tags) VALUES($1, $2, $3, $4, $5) ON CONFLICT DO NOTHING;`
+	const query = `INSERT INTO vocabulary (dictionary_id, native_word, translate_word, examples, tags) VALUES($1, $2, $3, $4, $5);`
 	_, err := r.db.ExecContext(ctx, query, vocabulary.DictionaryId, vocabulary.NativeWord, vocabulary.TranslateWords, vocabulary.Examples, vocabulary.Tags)
 	if err != nil {
-		return fmt.Errorf("vocabulary.repository.VocabularyRepo.AddWord: %w", err)
+		var pgErr *pgconn.PgError
+		switch {
+		case errors.As(err, &pgErr) && pgErr.Code == "23505":
+			return fmt.Errorf("vocabulary.repository.VocabularyRepo.AddWord: %w", errors.New("duplicate key value violates unique constraint"))
+		default:
+			return fmt.Errorf("vocabulary.repository.VocabularyRepo.AddWord: %w", err)
+		}
 	}
 
 	return nil

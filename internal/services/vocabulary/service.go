@@ -76,11 +76,11 @@ func (s *Service) AddWord(
 
 	translateWordIDs := make([]uuid.UUID, 0, len(tanslateWords))
 	for _, translateWord := range tanslateWords {
-		translateWordID, err := s.wordSvc.AddWord(ctx, uuid.New(), translateWord.Text, translateWord.LangCode, translateWord.Pronunciation)
+		translateID, err := s.wordSvc.AddWord(ctx, uuid.New(), translateWord.Text, translateWord.LangCode, translateWord.Pronunciation)
 		if err != nil {
 			return nil, fmt.Errorf("vocabulary.Service.AddWord - add translate word in dictionary: %w", err)
 		}
-		translateWordIDs = append(translateWordIDs, translateWordID)
+		translateWordIDs = append(translateWordIDs, translateID)
 	}
 
 	exampleIDs := make([]uuid.UUID, 0, len(examples))
