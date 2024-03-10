@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
+	_ "net/http/pprof"
 	"os/signal"
 	"syscall"
 	"time"
@@ -45,7 +46,7 @@ import (
 func ServerStart(cfg *config.Config) {
 	if cfg.PprofDebug.Enable {
 		go func() {
-			slog.Error("%v", http.ListenAndServe("localhost:6060", nil))
+			slog.Error("%v", http.ListenAndServe(cfg.PprofDebug.Addr(), nil))
 		}()
 	}
 

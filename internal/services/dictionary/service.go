@@ -43,6 +43,7 @@ func (s *Service) AddDictionary(ctx context.Context, userID, dictID uuid.UUID, n
 		ID:     dictID,
 		UserID: userID,
 		Name:   name,
+		Tags:   []string{},
 	}
 
 	dictionaries, err := s.repoDict.GetDictionaries(ctx, dictionary.UserID)

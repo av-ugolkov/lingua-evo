@@ -24,7 +24,7 @@ func NewRepo(db *sql.DB) *DictRepo {
 func (r *DictRepo) Add(ctx context.Context, dict entity.Dictionary) error {
 	query := `INSERT INTO dictionary (id, user_id, name, tags) VALUES($1, $2, $3, $4)`
 
-	_, err := r.db.ExecContext(ctx, query, dict.ID, dict.UserID, dict.Name, []uuid.UUID{uuid.New(), uuid.New()})
+	_, err := r.db.ExecContext(ctx, query, dict.ID, dict.UserID, dict.Name, dict.Tags)
 	if err != nil {
 		return fmt.Errorf("dictionary.repository.DictRepo.AddDictionary: %w", err)
 	}
