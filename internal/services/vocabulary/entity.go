@@ -1,14 +1,20 @@
 package vocabulary
 
 import (
+	"errors"
+
 	"github.com/google/uuid"
+)
+
+var (
+	ErrDuplicate = errors.New("duplicate key value violates unique constraint")
 )
 
 type (
 	Word struct {
 		Text          string `json:"text"`
 		Pronunciation string `json:"pronunciation,omitempty"`
-		LangCode      string `json:"language"`
+		LangCode      string `json:"language,omitempty"`
 	}
 
 	Words []Word
