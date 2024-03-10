@@ -20,6 +20,10 @@ type PprofDebug struct {
 	Port   int  `yaml:"port"`
 }
 
+func (p PprofDebug) Addr() string {
+	return fmt.Sprintf("localhost:%d", p.Port)
+}
+
 type JWT struct {
 	Secret        string `yaml:"secret" env-required:"true"`
 	ExpireAccess  int    `yaml:"expire_access" env-default:"1800"`
