@@ -14,7 +14,7 @@ require (
 	github.com/rs/cors v1.10.1
 	github.com/stretchr/testify v1.8.1
 	golang.org/x/crypto v0.17.0
-	golang.org/x/sync v0.1.0
+	golang.org/x/sync v0.6.0
 	golang.org/x/text v0.14.0
 )
 
