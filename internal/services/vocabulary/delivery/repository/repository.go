@@ -7,10 +7,10 @@ import (
 	"fmt"
 
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary"
-	"github.com/jackc/pgx/v5/pgconn"
-	"github.com/lib/pq"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/lib/pq"
 )
 
 type VocabularyRepo struct {
@@ -46,7 +46,7 @@ func (r *VocabularyRepo) AddWord(ctx context.Context, vocabulary entity.Vocabula
 		var pgErr *pgconn.PgError
 		switch {
 		case errors.As(err, &pgErr) && pgErr.Code == "23505":
-			return fmt.Errorf("vocabulary.repository.VocabularyRepo.AddWord: %w", errors.New("duplicate key value violates unique constraint"))
+			return fmt.Errorf("vocabulary.repository.VocabularyRepo.AddWord: %w", entity.ErrDuplicate)
 		default:
 			return fmt.Errorf("vocabulary.repository.VocabularyRepo.AddWord: %w", err)
 		}

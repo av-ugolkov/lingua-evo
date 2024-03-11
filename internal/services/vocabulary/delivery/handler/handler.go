@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -89,10 +90,15 @@ func (h *Handler) addWord(ctx context.Context, ex *exchange.Exchanger) {
 
 	word, err := h.vocabularySvc.AddWord(ctx, data.DictionaryID, data.NativeWord, data.TanslateWords, data.Examples, data.Tags)
 	if err != nil {
-		ex.SendError(http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.addWord: %v", err))
-		return
+		switch {
+		case errors.Is(err, vocabulary.ErrDuplicate):
+			ex.SendError(http.StatusConflict, fmt.Errorf("vocabulary.delivery.Handler.addWord: %v", err))
+			return
+		default:
+			ex.SendError(http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.addWord: %v", err))
+			return
+		}
 	}
-
 	slog.Info(fmt.Sprintf("added word: %v", word))
 
 	ex.SetContentType(exchange.ContentTypeJSON)

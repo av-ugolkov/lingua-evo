@@ -2,6 +2,7 @@ package vocabulary
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -111,7 +112,12 @@ func (s *Service) AddWord(
 
 	err = s.repo.AddWord(ctx, vocabulary)
 	if err != nil {
-		return nil, fmt.Errorf("vocabulary.Service.AddWord - add vocabulary: %w", err)
+		switch {
+		case errors.Is(err, ErrDuplicate):
+			return nil, fmt.Errorf("vocabulary.Service.AddWord - add vocabulary: %w", ErrDuplicate)
+		default:
+			return nil, fmt.Errorf("vocabulary.Service.AddWord - add vocabulary: %w", err)
+		}
 	}
 
 	return &vocabulary, nil
