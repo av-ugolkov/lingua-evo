@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log/slog"
 	"net/http"
 
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/http/exchange"
@@ -99,10 +98,9 @@ func (h *Handler) addWord(ctx context.Context, ex *exchange.Exchanger) {
 			return
 		}
 	}
-	slog.Info(fmt.Sprintf("added word: %v", word))
 
 	ex.SetContentType(exchange.ContentTypeJSON)
-	ex.SendEmptyData(http.StatusCreated)
+	ex.SendData(http.StatusCreated, word)
 }
 
 func (h *Handler) deleteWord(ctx context.Context, ex *exchange.Exchanger) {
