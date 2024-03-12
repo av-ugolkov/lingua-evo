@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS
         text TEXT NOT NULL,
         pronunciation TEXT,
         lang_code TEXT,
+        moderator UUID,
         created_at TIMESTAMP NOT NULL,
         CONSTRAINT word_lang_code_fkey FOREIGN KEY (lang_code) REFERENCES language (code) ON DELETE CASCADE
     );

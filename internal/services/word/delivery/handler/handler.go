@@ -17,7 +17,7 @@ import (
 const (
 	addWord       = "/word/add"
 	getWord       = "/word/get"
-	getRandomWord = "/word/get_random"
+	getRandomWord = "/word/random"
 )
 
 type (
