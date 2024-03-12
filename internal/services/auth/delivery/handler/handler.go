@@ -101,7 +101,7 @@ func (h *Handler) refresh(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if refreshToken == nil {
-		ex.SendError(http.StatusUnauthorized, fmt.Errorf("auth.delivery.Handler.refresh: %v", err))
+		ex.SendError(http.StatusUnauthorized, fmt.Errorf("auth.delivery.Handler.refresh - refresh token is nil"))
 		return
 	}
 
