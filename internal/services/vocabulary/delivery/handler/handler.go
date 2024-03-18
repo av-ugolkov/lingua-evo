@@ -29,15 +29,15 @@ const (
 
 type (
 	AddWordRq struct {
-		DictionaryID  uuid.UUID         `json:"dictionary_id"`
-		NativeWord    vocabulary.Word   `json:"native_word"`
-		TanslateWords []vocabulary.Word `json:"translate_words"`
-		Examples      []string          `json:"examples"`
-		Tags          []string          `json:"tags"`
+		DictionaryID  uuid.UUID       `json:"dictionary_id"`
+		NativeWord    vocabulary.Word `json:"native_word"`
+		TanslateWords []string        `json:"translate_words,omitempty"`
+		Examples      []string        `json:"examples,omitempty"`
+		Tags          []string        `json:"tags,omitempty"`
 	}
 
 	UpdateWordRq struct {
-		OldWordID uuid.UUID `json:"old_word_id"`
+		OldWordID uuid.UUID `json:"word_id"`
 		AddWordRq
 	}
 
@@ -87,7 +87,12 @@ func (h *Handler) addWord(ctx context.Context, ex *exchange.Exchanger) {
 		return
 	}
 
-	word, err := h.vocabularySvc.AddWord(ctx, data.DictionaryID, data.NativeWord, data.TanslateWords, data.Examples, data.Tags)
+	translateWords := make([]vocabulary.Word, 0, len(data.TanslateWords))
+	for _, word := range data.TanslateWords {
+		translateWords = append(translateWords, vocabulary.Word{Text: word})
+	}
+
+	word, err := h.vocabularySvc.AddWord(ctx, data.DictionaryID, data.NativeWord, translateWords, data.Examples, data.Tags)
 	if err != nil {
 		switch {
 		case errors.Is(err, vocabulary.ErrDuplicate):
@@ -127,7 +132,12 @@ func (h *Handler) updateWord(ctx context.Context, ex *exchange.Exchanger) {
 		return
 	}
 
-	word, err := h.vocabularySvc.UpdateWord(ctx, data.DictionaryID, data.OldWordID, data.NativeWord, data.TanslateWords, data.Examples, data.Tags)
+	translateWords := make([]vocabulary.Word, 0, len(data.TanslateWords))
+	for _, word := range data.TanslateWords {
+		translateWords = append(translateWords, vocabulary.Word{Text: word})
+	}
+
+	word, err := h.vocabularySvc.UpdateWord(ctx, data.DictionaryID, data.OldWordID, data.NativeWord, translateWords, data.Examples, data.Tags)
 	if err != nil {
 		ex.SendError(http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.updateWord: %v", err))
 		return
