@@ -19,6 +19,8 @@ import (
 	"github.com/av-ugolkov/lingua-evo/internal/config"
 	pg "github.com/av-ugolkov/lingua-evo/internal/db/postgres"
 	"github.com/av-ugolkov/lingua-evo/internal/db/redis"
+	"github.com/av-ugolkov/lingua-evo/internal/delivery/kafka"
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/middleware"
 	authService "github.com/av-ugolkov/lingua-evo/internal/services/auth"
 	authHandler "github.com/av-ugolkov/lingua-evo/internal/services/auth/delivery/handler"
 	authRepository "github.com/av-ugolkov/lingua-evo/internal/services/auth/delivery/repository"
@@ -56,9 +58,13 @@ func ServerStart(cfg *config.Config) {
 		return
 	}
 
+	kafkaWriter := kafka.NewWriter(cfg)
+	analytics := middleware.NewMiddleware(kafkaWriter)
+
 	redisDB := redis.New(cfg)
 
 	router := mux.NewRouter()
+	router.Use(analytics.SendData)
 	initServer(router, db, redisDB)
 
 	address := fmt.Sprintf(":%s", cfg.Service.Port)

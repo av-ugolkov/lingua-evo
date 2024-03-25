@@ -1,21 +1,21 @@
 version: '3.5'
 services:
     redis:
-        container_name: redis
+        container_name: redis-base
         image: redis:7.2.4-alpine
         expose:
             - "6379"
         ports:
             - "6379:6379"
         networks:
-            - lingua-evo-local
+            - lingua
         entrypoint:
             - "/bin/sh"
             - "-ecx"
             - "redis-server --requirepass "
 
     postgres:
-        container_name: postgres
+        container_name: postgres-base
         image: postgres:16.1-alpine3.19
         environment:
             - POSTGRES_DB=pg-lingua-evo
@@ -28,10 +28,10 @@ services:
         ports:
             - "6432:5432"
         networks:
-            - lingua-evo-local
+            - lingua
 
     service:
-        container_name: service
+        container_name: lingua-evo
         build:
             context: ../.
             dockerfile: Dockerfile
@@ -47,7 +47,7 @@ services:
         ports:
             - "5000:5000"
         networks:
-            - lingua-evo-local
+            - lingua
 
     migration:
         container_name: migration
@@ -57,12 +57,12 @@ services:
             - postgres
             - service
         networks:
-            - lingua-evo-local
+            - lingua
         entrypoint:
             - "/bin/sh"
             - "-ecx"
             - "./migration -cmd up -url lingua:ib6vACdec2Fmht4lnX153@postgres:5432/pg-lingua-evo?sslmode=disable"
 
 networks:
-    lingua-evo-local:
-        name: lingua-evo-local
+    lingua:
+        name: lingua

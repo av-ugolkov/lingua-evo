@@ -21,3 +21,7 @@ redis:
     user: lingua
     password: 
     db: 0
+kafka:
+    host: lingua-kafka
+    port: 9092
+    topic: analytics
