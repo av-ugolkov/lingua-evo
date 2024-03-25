@@ -13,6 +13,7 @@ type Config struct {
 	Service    Service    `yaml:"service"`
 	DbSQL      DbSQL      `yaml:"postgres"`
 	DbRedis    DbRedis    `yaml:"redis"`
+	Kafka      Kafka      `yaml:"kafka"`
 }
 
 type PprofDebug struct {
@@ -53,6 +54,16 @@ type DbRedis struct {
 	Host     string `yaml:"host"`
 	Port     string `yaml:"port"`
 	DB       int    `yaml:"db"`
+}
+
+type Kafka struct {
+	Host  string `yaml:"host"`
+	Port  int    `yaml:"port"`
+	Topic string `yaml:"topic"`
+}
+
+func (k Kafka) Addr() string {
+	return fmt.Sprintf("%s:%d", k.Host, k.Port)
 }
 
 var instance *Config

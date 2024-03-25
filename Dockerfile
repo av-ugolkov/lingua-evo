@@ -18,5 +18,4 @@ COPY --from=builder ./build/cmd/main ./
 EXPOSE 5000
 
 WORKDIR /lingua-evo/
-
-ENTRYPOINT ["./main"]
+CMD ["./main"]

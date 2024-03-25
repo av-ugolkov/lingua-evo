@@ -92,12 +92,8 @@ func (e *Exchanger) SendEmptyData(httpStatus int) {
 }
 
 func (e *Exchanger) SendError(httpStatus int, err error) {
-	e.responseWriter.WriteHeader(httpStatus)
 	slog.Error(fmt.Errorf("http.exchange.Exchanger.SendError: %v", err).Error())
-	_, err = e.responseWriter.Write([]byte(err.Error()))
-	if err != nil {
-		slog.Error(fmt.Errorf("http.exchange.Exchanger.SendError: %v", err).Error())
-	}
+	http.Error(e.responseWriter, err.Error(), httpStatus)
 }
 
 func (e *Exchanger) setCookie(name, value string) {
