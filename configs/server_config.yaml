@@ -22,5 +22,5 @@ redis:
     db: 0
 kafka:
     host: lingua-kafka
-    port: 9092
+    port: 9091
     topic: analytics
