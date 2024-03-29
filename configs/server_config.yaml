@@ -23,4 +23,5 @@ redis:
 kafka:
     host: lingua-kafka
     port: 9091
-    topic: analytics
+    topics:
+        - user_action
