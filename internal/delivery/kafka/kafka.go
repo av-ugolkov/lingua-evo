@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/av-ugolkov/lingua-evo/internal/config"
 	"github.com/segmentio/kafka-go"
 )
 
@@ -12,10 +11,10 @@ type Writer struct {
 	writer *kafka.Writer
 }
 
-func NewWriter(cfg *config.Config) *Writer {
+func NewWriter(addr, topic string) *Writer {
 	config := kafka.WriterConfig{
-		Brokers: []string{cfg.Kafka.Addr()},
-		Topic:   cfg.Kafka.Topic,
+		Brokers: []string{addr},
+		Topic:   topic,
 	}
 	w := kafka.NewWriter(config)
 

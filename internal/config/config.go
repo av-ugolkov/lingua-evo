@@ -57,9 +57,9 @@ type DbRedis struct {
 }
 
 type Kafka struct {
-	Host  string `yaml:"host"`
-	Port  int    `yaml:"port"`
-	Topic string `yaml:"topic"`
+	Host   string   `yaml:"host"`
+	Port   int      `yaml:"port"`
+	Topics []string `yaml:"topics"`
 }
 
 func (k Kafka) Addr() string {
