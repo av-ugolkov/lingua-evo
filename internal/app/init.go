@@ -58,13 +58,12 @@ func ServerStart(cfg *config.Config) {
 		return
 	}
 
-	kafkaWriter := kafka.NewWriter(cfg)
-	analytics := middleware.NewMiddleware(kafkaWriter)
+	kafkaUserAction := kafka.NewWriter(cfg.Kafka.Addr(), cfg.Kafka.Topics[0])
+	middleware.NewMiddlewareAuth(kafkaUserAction)
 
 	redisDB := redis.New(cfg)
 
 	router := mux.NewRouter()
-	router.Use(analytics.SendData)
 	initServer(router, db, redisDB)
 
 	address := fmt.Sprintf(":%s", cfg.Service.Port)
