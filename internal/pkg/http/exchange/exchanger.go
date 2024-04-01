@@ -1,6 +1,7 @@
 package exchange
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -41,6 +42,10 @@ func NewExchanger(rw http.ResponseWriter, r *http.Request) *Exchanger {
 		responseWriter: rw,
 		request:        r,
 	}
+}
+
+func (e *Exchanger) Context() context.Context {
+	return e.request.Context()
 }
 
 func (e *Exchanger) CheckBody(body any) error {
@@ -87,12 +92,8 @@ func (e *Exchanger) SendEmptyData(httpStatus int) {
 }
 
 func (e *Exchanger) SendError(httpStatus int, err error) {
-	e.responseWriter.WriteHeader(httpStatus)
 	slog.Error(fmt.Errorf("http.exchange.Exchanger.SendError: %v", err).Error())
-	_, err = e.responseWriter.Write([]byte(err.Error()))
-	if err != nil {
-		slog.Error(fmt.Errorf("http.exchange.Exchanger.SendError: %v", err).Error())
-	}
+	http.Error(e.responseWriter, err.Error(), httpStatus)
 }
 
 func (e *Exchanger) setCookie(name, value string) {
@@ -222,6 +223,21 @@ func (e *Exchanger) QueryParamBool(key string) (bool, error) {
 		return false, fmt.Errorf("http.exchange.Exchanger.QueryParamBool - cann't parse query param [%s]: %w", key, err)
 	}
 	return v, nil
+}
+
+func (e *Exchanger) QueryParamUUID(key string) (uuid.UUID, error) {
+	if !e.request.URL.Query().Has(key) {
+		return uuid.Nil, fmt.Errorf("http.exchange.Exchanger.QueryParamString: not found query for key [%s]", key)
+	}
+
+	s := e.request.URL.Query().Get(key)
+
+	u, err := uuid.Parse(s)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("http.exchange.Exchanger.QueryParamUUID - cann't parse query param [%s]: %w", key, err)
+	}
+
+	return u, nil
 }
 
 func (e *Exchanger) hasQueryParam(key string) bool {
