@@ -17,10 +17,6 @@ CREATE UNIQUE INDEX IF not EXISTS idx_unique_users__email ON users (email);
 CREATE TABLE IF NOT EXISTS
     language (code TEXT NOT NULL PRIMARY KEY, lang TEXT NOT NULL);
 
-CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_language__code ON language (code);
-
-CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_language__code_lang ON language (code, lang);
-
 CREATE TABLE IF NOT EXISTS
     word (
         id UUID PRIMARY KEY,
@@ -56,7 +52,16 @@ CREATE TABLE IF NOT EXISTS
 CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_example_ru__text ON example_ru (text);
 
 CREATE TABLE IF NOT EXISTS
-    dictionary (id UUID PRIMARY KEY, user_id UUID REFERENCES users (id) ON DELETE CASCADE, name TEXT NOT NULL, tags UUID[]);
+    dictionary (
+        id UUID PRIMARY KEY,
+        user_id UUID REFERENCES users (id) ON DELETE CASCADE,
+        name TEXT NOT NULL,
+        native_lang_code TEXT NOT NULL,
+        second_lang_code TEXT NOT NULL,
+        tags UUID[],
+        CONSTRAINT dictionary_native_lang_code_fkey FOREIGN KEY (native_lang_code) REFERENCES language (code) ON DELETE CASCADE,
+        CONSTRAINT dictionary_second_lang_code_fkey FOREIGN KEY (second_lang_code) REFERENCES language (code) ON DELETE CASCADE
+    );
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_dictionary__user_id_name ON dictionary (user_id, name);
 
