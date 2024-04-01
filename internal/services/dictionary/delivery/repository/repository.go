@@ -22,9 +22,9 @@ func NewRepo(db *sql.DB) *DictRepo {
 }
 
 func (r *DictRepo) Add(ctx context.Context, dict entity.Dictionary) error {
-	query := `INSERT INTO dictionary (id, user_id, name, tags) VALUES($1, $2, $3, $4)`
+	query := `INSERT INTO dictionary (id, user_id, name, native_lang_code, second_lang_code, tags) VALUES($1, $2, $3, $4, $5, $6)`
 
-	_, err := r.db.ExecContext(ctx, query, dict.ID, dict.UserID, dict.Name, dict.Tags)
+	_, err := r.db.ExecContext(ctx, query, dict.ID, dict.UserID, dict.Name, dict.NativeLang, dict.SecondLang, dict.Tags)
 	if err != nil {
 		return fmt.Errorf("dictionary.repository.DictRepo.AddDictionary: %w", err)
 	}
@@ -57,7 +57,10 @@ func (r *DictRepo) GetByName(ctx context.Context, dict entity.Dictionary) (uuid.
 }
 
 func (r *DictRepo) GetDictionaries(ctx context.Context, userID uuid.UUID) ([]*entity.Dictionary, error) {
-	query := `SELECT id, user_id, name FROM dictionary WHERE user_id=$1;`
+	query := `SELECT d.id, d.user_id, name, n.lang native_lang_code, s.lang second_lang_code FROM dictionary d
+left join "language" n on n.code = d.native_lang_code
+left join "language" s on s.code = d.second_lang_code 
+WHERE user_id=$1;`
 	rows, err := r.db.QueryContext(ctx, query, userID)
 	if err != nil {
 		return nil, err
@@ -71,6 +74,8 @@ func (r *DictRepo) GetDictionaries(ctx context.Context, userID uuid.UUID) ([]*en
 			&dict.ID,
 			&dict.UserID,
 			&dict.Name,
+			&dict.NativeLang,
+			&dict.SecondLang,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("dictionary.repository.DictRepo.GetDictionaries - scan: %w", err)

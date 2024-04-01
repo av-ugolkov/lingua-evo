@@ -14,6 +14,8 @@ import (
 	dictRepo "github.com/av-ugolkov/lingua-evo/internal/services/dictionary/delivery/repository"
 	"github.com/av-ugolkov/lingua-evo/internal/services/example"
 	repoExample "github.com/av-ugolkov/lingua-evo/internal/services/example/delivery/repository"
+	"github.com/av-ugolkov/lingua-evo/internal/services/language"
+	repoLang "github.com/av-ugolkov/lingua-evo/internal/services/language/delivery/repository"
 	"github.com/av-ugolkov/lingua-evo/internal/services/tag"
 	repoTag "github.com/av-ugolkov/lingua-evo/internal/services/tag/delivery/repository"
 	"github.com/av-ugolkov/lingua-evo/internal/services/user"
@@ -22,6 +24,7 @@ import (
 	repoVocabulary "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary/delivery/repository"
 	"github.com/av-ugolkov/lingua-evo/internal/services/word"
 	repoWord "github.com/av-ugolkov/lingua-evo/internal/services/word/delivery/repository"
+
 	"github.com/google/uuid"
 )
 
@@ -75,14 +78,15 @@ func fillWord(db *sql.DB) error {
 		return fmt.Errorf("fildDB.fillWord - GetUser: %w", err)
 	}
 
+	langSvc := language.NewService(repoLang.NewRepo(db))
 	wordSvc := word.NewService(repoWord.NewRepo(db))
 	exampleSvc := example.NewService(repoExample.NewRepo(db))
 	tagSvc := tag.NewService(repoTag.NewRepo(db))
 	repoVocab := repoVocabulary.NewRepo(db)
-	dictSvc := dictionary.NewService(dictRepo.NewRepo(db), repoVocab)
+	dictSvc := dictionary.NewService(dictRepo.NewRepo(db), repoVocab, langSvc)
 	vocabSvc := vocabulary.NewService(repoVocab, wordSvc, exampleSvc, tagSvc)
 
-	dictID, err := dictSvc.AddDictionary(context.Background(), user.ID, uuid.New(), "default")
+	dict, err := dictSvc.AddDictionary(context.Background(), user.ID, uuid.New(), "default", "en", "ru")
 	if err != nil {
 		return fmt.Errorf("fildDB.fillWord - AddDictionary: %w", err)
 	}
@@ -97,7 +101,7 @@ func fillWord(db *sql.DB) error {
 		for _, word := range d.Translates {
 			translateWords = append(translateWords, vocabulary.Word{Text: word, Pronunciation: "", LangCode: translateTable})
 		}
-		vocabulary, err := vocabSvc.AddWord(context.Background(), dictID, vocabulary.Word{Text: d.Word, Pronunciation: d.Pronunciation, LangCode: nativeTable},
+		vocabulary, err := vocabSvc.AddWord(context.Background(), dict.ID, vocabulary.Word{Text: d.Word, Pronunciation: d.Pronunciation, LangCode: nativeTable},
 			translateWords, d.Examples, nil)
 		if err != nil {
 			slog.Error(fmt.Errorf("fail insert word [%s]: %v", d.Word, err).Error())

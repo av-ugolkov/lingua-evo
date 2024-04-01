@@ -24,49 +24,65 @@ type (
 	repoVocab interface {
 		GetWordsFromDictionary(ctx context.Context, id uuid.UUID, capacity int) ([]string, error)
 	}
+
+	langSvc interface {
+		GetLangByCode(ctx context.Context, code string) (string, error)
+	}
 )
 
 type Service struct {
 	repoDict  repoDict
 	repoVocab repoVocab
+	langSvc   langSvc
 }
 
-func NewService(repoDict repoDict, repoVocab repoVocab) *Service {
+func NewService(repoDict repoDict, repoVocab repoVocab, langSvc langSvc) *Service {
 	return &Service{
 		repoDict:  repoDict,
 		repoVocab: repoVocab,
+		langSvc:   langSvc,
 	}
 }
 
-func (s *Service) AddDictionary(ctx context.Context, userID, dictID uuid.UUID, name string) (uuid.UUID, error) {
+func (s *Service) AddDictionary(ctx context.Context, userID, dictID uuid.UUID, name, nativeLangCode, secondLangCode string) (Dictionary, error) {
 	dictionary := Dictionary{
-		ID:     dictID,
-		UserID: userID,
-		Name:   name,
-		Tags:   []string{},
+		ID:         dictID,
+		UserID:     userID,
+		Name:       name,
+		NativeLang: nativeLangCode,
+		SecondLang: secondLangCode,
+		Tags:       []string{},
 	}
 
 	dictionaries, err := s.repoDict.GetDictionaries(ctx, dictionary.UserID)
 	if err != nil {
-		return uuid.Nil, fmt.Errorf("dictionary.Service.AddDictionary - get count dictionaries: %w", err)
+		return Dictionary{}, fmt.Errorf("dictionary.Service.AddDictionary - get count dictionaries: %w", err)
 	}
 
 	for _, dict := range dictionaries {
 		if dict.Name == dictionary.Name {
-			return dict.ID, fmt.Errorf("dictionary.Service.AddDictionary - already have dictionary with same")
+			return Dictionary{}, fmt.Errorf("dictionary.Service.AddDictionary - already have dictionary with same")
 		}
 	}
 
 	if len(dictionaries) >= 5 {
-		return uuid.Nil, fmt.Errorf("dictionary.Service.AddDictionary - %w %v", errCountDictionary, dictionary.UserID)
+		return Dictionary{}, fmt.Errorf("dictionary.Service.AddDictionary - %w %v", errCountDictionary, dictionary.UserID)
 	}
 
 	err = s.repoDict.Add(ctx, dictionary)
 	if err != nil {
-		return uuid.Nil, fmt.Errorf("dictionary.Service.AddDictionary: %w", err)
+		return Dictionary{}, fmt.Errorf("dictionary.Service.AddDictionary: %w", err)
 	}
 
-	return dictionary.ID, nil
+	dictionary.NativeLang, err = s.langSvc.GetLangByCode(ctx, dictionary.NativeLang)
+	if err != nil {
+		return Dictionary{}, fmt.Errorf("dictionary.Service.AddDictionary - get native lang: %w", err)
+	}
+	dictionary.SecondLang, err = s.langSvc.GetLangByCode(ctx, dictionary.SecondLang)
+	if err != nil {
+		return Dictionary{}, fmt.Errorf("dictionary.Service.AddDictionary - get second lang: %w", err)
+	}
+	return dictionary, nil
 }
 
 func (s *Service) DeleteDictionary(ctx context.Context, userID uuid.UUID, name string) error {

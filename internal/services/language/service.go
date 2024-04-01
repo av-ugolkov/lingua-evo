@@ -8,7 +8,7 @@ import (
 
 type langRepo interface {
 	GetAvailableLanguages(ctx context.Context) ([]*Language, error)
-	GetLanguage(ctx context.Context, lang string) (*Language, error)
+	GetLanguage(ctx context.Context, lang string) (string, error)
 }
 
 type Service struct {
@@ -21,10 +21,10 @@ func NewService(repo langRepo) *Service {
 	}
 }
 
-func (s *Service) GetLanguage(ctx context.Context, lang string) (*Language, error) {
+func (s *Service) GetLangByCode(ctx context.Context, lang string) (string, error) {
 	language, err := s.repo.GetLanguage(ctx, lang)
 	if err != nil {
-		return nil, fmt.Errorf("language.Service.GetLanguage: %v", err)
+		return "", fmt.Errorf("language.Service.GetLanguage: %v", err)
 	}
 
 	return language, nil

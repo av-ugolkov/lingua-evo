@@ -26,9 +26,11 @@ const (
 
 type (
 	DictionaryRq struct {
-		ID   uuid.UUID   `json:"id"`
-		Name string      `json:"name"`
-		Tags []uuid.UUID `json:"tags"`
+		ID             uuid.UUID   `json:"id"`
+		Name           string      `json:"name"`
+		NativeLangCode string      `json:"native_lang_code"`
+		SecondLangCode string      `json:"second_lang_code"`
+		Tags           []uuid.UUID `json:"tags"`
 	}
 
 	DictionaryIDRs struct {
@@ -37,10 +39,12 @@ type (
 	}
 
 	DictionaryRs struct {
-		ID     uuid.UUID `json:"id"`
-		UserID uuid.UUID `json:"user_id"`
-		Name   string    `json:"name"`
-		Tags   []string  `json:"tags"`
+		ID         uuid.UUID `json:"id"`
+		UserID     uuid.UUID `json:"user_id"`
+		Name       string    `json:"name"`
+		NativeLang string    `json:"native_lang"`
+		SecondLang string    `json:"second_lang"`
+		Tags       []string  `json:"tags"`
 	}
 
 	Handler struct {
@@ -74,22 +78,25 @@ func (h *Handler) addDictionary(ctx context.Context, ex *exchange.Exchanger) {
 		return
 	}
 
-	name, err := ex.QueryParamString(ParamsName)
+	var data DictionaryRq
+	err = ex.CheckBody(&data)
 	if err != nil {
-		ex.SendError(http.StatusUnauthorized, fmt.Errorf("dictionary.delivery.Handler.addDictionary - get query [name]: %v", err))
+		ex.SendError(http.StatusUnauthorized, fmt.Errorf("dictionary.delivery.Handler.addDictionary - check body: %v", err))
 		return
 	}
 
-	dictID, err := h.dictionarySvc.AddDictionary(ctx, userID, uuid.New(), name)
+	dict, err := h.dictionarySvc.AddDictionary(ctx, userID, uuid.New(), data.Name, data.NativeLangCode, data.SecondLangCode)
 	if err != nil {
 		ex.SendError(http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.addDictionary: %v", err))
 	}
 
 	dictRs := &DictionaryRs{
-		ID:     dictID,
-		UserID: userID,
-		Name:   name,
-		Tags:   []string{},
+		ID:         dict.ID,
+		UserID:     dict.UserID,
+		Name:       dict.Name,
+		NativeLang: dict.NativeLang,
+		SecondLang: dict.SecondLang,
+		Tags:       dict.Tags,
 	}
 
 	ex.SetContentType(exchange.ContentTypeJSON)
@@ -169,10 +176,12 @@ func (h *Handler) getDictionaries(ctx context.Context, ex *exchange.Exchanger) {
 	dictionariesRs := make([]DictionaryRs, 0, len(dictionaries))
 	for _, dict := range dictionaries {
 		dictionariesRs = append(dictionariesRs, DictionaryRs{
-			ID:     dict.ID,
-			UserID: dict.UserID,
-			Name:   dict.Name,
-			Tags:   dict.Tags,
+			ID:         dict.ID,
+			UserID:     dict.UserID,
+			Name:       dict.Name,
+			NativeLang: dict.NativeLang,
+			SecondLang: dict.SecondLang,
+			Tags:       dict.Tags,
 		})
 	}
 
