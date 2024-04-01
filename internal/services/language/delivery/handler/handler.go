@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	getCurrentLanguage    = "/get_current_languages"
-	getAvailableLanguages = "/get_languages"
+	getCurrentLanguage    = "/current_languages"
+	getAvailableLanguages = "/languages"
 )
 
 type (

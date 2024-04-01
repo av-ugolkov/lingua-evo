@@ -130,7 +130,7 @@ func initServer(r *mux.Router, db *sql.DB, redis *redis.Redis) {
 	vocabularyRepo := vocabularyRepository.NewRepo(db)
 	vocabularySvc := vocabularyService.NewService(vocabularyRepo, wordSvc, exampleSvc, tagSvc)
 	dictRepo := dictRepository.NewRepo(db)
-	dictSvc := dictService.NewService(dictRepo, vocabularyRepo)
+	dictSvc := dictService.NewService(dictRepo, vocabularyRepo, langSvc)
 	authRepo := authRepository.NewRepo(redis)
 	authSvc := authService.NewService(authRepo, userSvc)
 

@@ -11,8 +11,10 @@ var (
 )
 
 type Dictionary struct {
-	ID     uuid.UUID
-	UserID uuid.UUID
-	Name   string
-	Tags   []string
+	ID         uuid.UUID
+	UserID     uuid.UUID
+	Name       string
+	NativeLang string
+	SecondLang string
+	Tags       []string
 }
