@@ -57,6 +57,7 @@ type DbRedis struct {
 }
 
 type Kafka struct {
+	Enable bool     `yaml:"enable"`
 	Host   string   `yaml:"host"`
 	Port   int      `yaml:"port"`
 	Topics []string `yaml:"topics"`
