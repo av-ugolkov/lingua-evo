@@ -21,6 +21,7 @@ redis:
     password: itBg40drEvZsw2gbHyp0
     db: 0
 kafka:
+    enable: false
     host: lingua-kafka
     port: 9091
     topics:

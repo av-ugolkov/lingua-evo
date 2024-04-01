@@ -20,7 +20,7 @@ import (
 	pg "github.com/av-ugolkov/lingua-evo/internal/db/postgres"
 	"github.com/av-ugolkov/lingua-evo/internal/db/redis"
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/kafka"
-	"github.com/av-ugolkov/lingua-evo/internal/pkg/middleware"
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/analytic"
 	authService "github.com/av-ugolkov/lingua-evo/internal/services/auth"
 	authHandler "github.com/av-ugolkov/lingua-evo/internal/services/auth/delivery/handler"
 	authRepository "github.com/av-ugolkov/lingua-evo/internal/services/auth/delivery/repository"
@@ -58,8 +58,10 @@ func ServerStart(cfg *config.Config) {
 		return
 	}
 
-	kafkaUserAction := kafka.NewWriter(cfg.Kafka.Addr(), cfg.Kafka.Topics[0])
-	middleware.NewMiddlewareAuth(kafkaUserAction)
+	if cfg.Kafka.Enable {
+		kafkaUserAction := kafka.NewWriter(cfg.Kafka.Addr(), cfg.Kafka.Topics[0])
+		analytics.SetKafka(kafkaUserAction)
+	}
 
 	redisDB := redis.New(cfg)
 
