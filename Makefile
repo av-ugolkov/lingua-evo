@@ -27,3 +27,15 @@ test:
 .PHONY: count line
 count line:
 	find . -name '*.go' | xargs wc -l
+
+.PHONY: pprof cpu
+pprof cpu:
+	go tool pprof -http=:8080 profile
+
+.PHONY: pprof heap
+pprof heap:
+	go tool pprof -http=:8080 heap
+
+.PHONY: pprof trace
+pprof trace:
+	go tool pprof -http=:8080 trace
