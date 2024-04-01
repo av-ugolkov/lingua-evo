@@ -1,4 +1,4 @@
-FROM golang:1.21.0-alpine as builder
+FROM golang:1.22.0-alpine as builder
 
 RUN apk --no-cache --update --upgrade add git make
 
@@ -18,5 +18,4 @@ COPY --from=builder ./build/cmd/main ./
 EXPOSE 5000
 
 WORKDIR /lingua-evo/
-
-ENTRYPOINT ["./main"]
+CMD ["./main"]

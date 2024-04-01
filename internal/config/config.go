@@ -13,11 +13,16 @@ type Config struct {
 	Service    Service    `yaml:"service"`
 	DbSQL      DbSQL      `yaml:"postgres"`
 	DbRedis    DbRedis    `yaml:"redis"`
+	Kafka      Kafka      `yaml:"kafka"`
 }
 
 type PprofDebug struct {
 	Enable bool `yaml:"enable"`
 	Port   int  `yaml:"port"`
+}
+
+func (p PprofDebug) Addr() string {
+	return fmt.Sprintf("localhost:%d", p.Port)
 }
 
 type JWT struct {
@@ -49,6 +54,17 @@ type DbRedis struct {
 	Host     string `yaml:"host"`
 	Port     string `yaml:"port"`
 	DB       int    `yaml:"db"`
+}
+
+type Kafka struct {
+	Enable bool     `yaml:"enable"`
+	Host   string   `yaml:"host"`
+	Port   int      `yaml:"port"`
+	Topics []string `yaml:"topics"`
+}
+
+func (k Kafka) Addr() string {
+	return fmt.Sprintf("%s:%d", k.Host, k.Port)
 }
 
 var instance *Config

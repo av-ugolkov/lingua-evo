@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS
         text TEXT NOT NULL,
         pronunciation TEXT,
         lang_code TEXT,
+        moderator UUID,
         created_at TIMESTAMP NOT NULL,
         CONSTRAINT word_lang_code_fkey FOREIGN KEY (lang_code) REFERENCES language (code) ON DELETE CASCADE
     );
@@ -55,7 +56,7 @@ CREATE TABLE IF NOT EXISTS
 CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_example_ru__text ON example_ru (text);
 
 CREATE TABLE IF NOT EXISTS
-    dictionary (id UUID PRIMARY KEY, user_id UUID REFERENCES users (id) NOT NULL, name TEXT NOT NULL, tags UUID[] NOT NULL);
+    dictionary (id UUID PRIMARY KEY, user_id UUID REFERENCES users (id) ON DELETE CASCADE, name TEXT NOT NULL, tags UUID[]);
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_dictionary__user_id_name ON dictionary (user_id, name);
 
@@ -66,7 +67,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_tag__text ON tag (text);
 
 CREATE TABLE IF NOT EXISTS
     vocabulary (
-        dictionary_id UUID REFERENCES dictionary (id) NOT NULL,
+        dictionary_id UUID REFERENCES dictionary (id) ON DELETE CASCADE,
         native_word UUID NOT NULL,
         translate_word UUID[] NOT NULL,
         examples UUID[],

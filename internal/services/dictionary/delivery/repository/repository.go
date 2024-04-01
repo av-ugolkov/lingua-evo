@@ -21,10 +21,10 @@ func NewRepo(db *sql.DB) *DictRepo {
 	}
 }
 
-func (r *DictRepo) AddDictionary(ctx context.Context, dict entity.Dictionary) error {
+func (r *DictRepo) Add(ctx context.Context, dict entity.Dictionary) error {
 	query := `INSERT INTO dictionary (id, user_id, name, tags) VALUES($1, $2, $3, $4)`
 
-	_, err := r.db.ExecContext(ctx, query, dict.ID, dict.UserID, dict.Name, []uuid.UUID{uuid.New(), uuid.New()})
+	_, err := r.db.ExecContext(ctx, query, dict.ID, dict.UserID, dict.Name, dict.Tags)
 	if err != nil {
 		return fmt.Errorf("dictionary.repository.DictRepo.AddDictionary: %w", err)
 	}
@@ -32,7 +32,7 @@ func (r *DictRepo) AddDictionary(ctx context.Context, dict entity.Dictionary) er
 	return nil
 }
 
-func (r *DictRepo) DeleteDictionary(ctx context.Context, dict entity.Dictionary) error {
+func (r *DictRepo) Delete(ctx context.Context, dict entity.Dictionary) error {
 	query := `DELETE FROM dictionary WHERE user_id=$1 AND name=$2;`
 	result, err := r.db.ExecContext(ctx, query, dict.UserID, dict.Name)
 	if err != nil {
@@ -45,7 +45,7 @@ func (r *DictRepo) DeleteDictionary(ctx context.Context, dict entity.Dictionary)
 	return nil
 }
 
-func (r *DictRepo) GetDictionaryByName(ctx context.Context, dict entity.Dictionary) (uuid.UUID, []uuid.UUID, error) {
+func (r *DictRepo) GetByName(ctx context.Context, dict entity.Dictionary) (uuid.UUID, []uuid.UUID, error) {
 	query := `SELECT id, tags FROM dictionary WHERE user_id=$1 AND name=$2;`
 	var dictID uuid.UUID
 	var tags []uuid.UUID
@@ -92,4 +92,16 @@ func (r *DictRepo) GetCountDictionaries(ctx context.Context, userID uuid.UUID) (
 		return -1, err
 	}
 	return countDictionaries, nil
+}
+
+func (r *DictRepo) Rename(ctx context.Context, id uuid.UUID, newName string) error {
+	query := `UPDATE dictionary SET name=$1 WHERE id=$2;`
+	result, err := r.db.ExecContext(ctx, query, newName, id)
+	if err != nil {
+		return fmt.Errorf("dictionary.repository.DictRepo.RenameDictionary: %w", err)
+	}
+	if rowsAffected, _ := result.RowsAffected(); rowsAffected == 0 {
+		return fmt.Errorf("dictionary.repository.DictRepo.RenameDictionary: %w", entity.ErrDictionaryNotFound)
+	}
+	return nil
 }

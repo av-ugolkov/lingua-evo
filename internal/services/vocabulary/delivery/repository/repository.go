@@ -3,12 +3,14 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary"
-	"github.com/lib/pq"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/lib/pq"
 )
 
 type VocabularyRepo struct {
@@ -21,11 +23,33 @@ func NewRepo(db *sql.DB) *VocabularyRepo {
 	}
 }
 
+func (r *VocabularyRepo) GetWord(ctx context.Context, dictID, wordID uuid.UUID) (entity.Vocabulary, error) {
+	const query = `SELECT native_word, translate_word, examples, tags FROM vocabulary WHERE dictionary_id=$1 and native_word=$2;`
+
+	var word entity.Vocabulary
+	err := r.db.QueryRowContext(ctx, query, dictID, wordID).Scan(
+		&word.NativeWord,
+		pq.Array(&word.TranslateWords),
+		pq.Array(&word.Examples),
+		pq.Array(&word.Tags))
+	if err != nil {
+		return word, fmt.Errorf("vocabulary.repository.VocabularyRepo.GetWord: %w", err)
+	}
+
+	return word, nil
+}
+
 func (r *VocabularyRepo) AddWord(ctx context.Context, vocabulary entity.Vocabulary) error {
-	const query = `INSERT INTO vocabulary (dictionary_id, native_word, translate_word, examples, tags) VALUES($1, $2, $3, $4, $5) ON CONFLICT DO NOTHING;`
+	const query = `INSERT INTO vocabulary (dictionary_id, native_word, translate_word, examples, tags) VALUES($1, $2, $3, $4, $5);`
 	_, err := r.db.ExecContext(ctx, query, vocabulary.DictionaryId, vocabulary.NativeWord, vocabulary.TranslateWords, vocabulary.Examples, vocabulary.Tags)
 	if err != nil {
-		return fmt.Errorf("vocabulary.repository.VocabularyRepo.AddWord: %w", err)
+		var pgErr *pgconn.PgError
+		switch {
+		case errors.As(err, &pgErr) && pgErr.Code == "23505":
+			return fmt.Errorf("vocabulary.repository.VocabularyRepo.AddWord: %w", entity.ErrDuplicate)
+		default:
+			return fmt.Errorf("vocabulary.repository.VocabularyRepo.AddWord: %w", err)
+		}
 	}
 
 	return nil
@@ -92,11 +116,11 @@ func (r *VocabularyRepo) DeleteWord(ctx context.Context, vocabulary entity.Vocab
 	return nil
 }
 
-func (r *VocabularyRepo) GetRandomVocabularies(ctx context.Context, dictID uuid.UUID, limit int) ([]entity.Vocabulary, error) {
+func (r *VocabularyRepo) GetRandomVocabulary(ctx context.Context, dictID uuid.UUID, limit int) ([]entity.Vocabulary, error) {
 	query := `SELECT native_word, translate_word, examples, tags FROM vocabulary WHERE dictionary_id=$1 ORDER BY RANDOM() LIMIT $2;`
 	rows, err := r.db.QueryContext(ctx, query, dictID, limit)
 	if err != nil {
-		return nil, fmt.Errorf("vocabulary.repository.VocabularyRepo.GetRandomVocabularies: %w", err)
+		return nil, fmt.Errorf("vocabulary.repository.VocabularyRepo.GetRandomVocabulary: %w", err)
 	}
 	defer rows.Close()
 
@@ -105,7 +129,28 @@ func (r *VocabularyRepo) GetRandomVocabularies(ctx context.Context, dictID uuid.
 		var vocabulary entity.Vocabulary
 		err = rows.Scan(&vocabulary.NativeWord, pq.Array(&vocabulary.TranslateWords), pq.Array(&vocabulary.Examples), pq.Array(&vocabulary.Tags))
 		if err != nil {
-			return nil, fmt.Errorf("vocabulary.repository.VocabularyRepo.GetRandomVocabularies - scan: %w", err)
+			return nil, fmt.Errorf("vocabulary.repository.VocabularyRepo.GetRandomVocabulary - scan: %w", err)
+		}
+		vocabularies = append(vocabularies, vocabulary)
+	}
+
+	return vocabularies, nil
+}
+
+func (r *VocabularyRepo) GetVocabulary(ctx context.Context, dictID uuid.UUID) ([]entity.Vocabulary, error) {
+	query := `SELECT native_word, translate_word, examples, tags FROM vocabulary WHERE dictionary_id=$1;`
+	rows, err := r.db.QueryContext(ctx, query, dictID)
+	if err != nil {
+		return nil, fmt.Errorf("vocabulary.repository.VocabularyRepo.GetVocabulary: %w", err)
+	}
+	defer rows.Close()
+
+	vocabularies := make([]entity.Vocabulary, 0, 25)
+	for rows.Next() {
+		var vocabulary entity.Vocabulary
+		err = rows.Scan(&vocabulary.NativeWord, pq.Array(&vocabulary.TranslateWords), pq.Array(&vocabulary.Examples), pq.Array(&vocabulary.Tags))
+		if err != nil {
+			return nil, fmt.Errorf("vocabulary.repository.VocabularyRepo.GetVocabulary - scan: %w", err)
 		}
 		vocabularies = append(vocabularies, vocabulary)
 	}
