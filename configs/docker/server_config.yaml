@@ -12,7 +12,7 @@ postgres:
     name: pg-lingua-evo
     user: lingua
     password: ib6vACdec2Fmht4lnX153
-    host: postgres
+    host: postgres-base
     port: 5432
 redis:
     name: redis
@@ -21,3 +21,9 @@ redis:
     user: lingua
     password: itBg40drEvZsw2gbHyp0
     db: 0
+kafka:
+    enable: true
+    host: lingua-kafka
+    port: 9091
+    topics:
+        - user_action

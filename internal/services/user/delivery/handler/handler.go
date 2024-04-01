@@ -7,10 +7,10 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/http/exchange"
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/middleware"
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/utils"
 	"github.com/av-ugolkov/lingua-evo/internal/services/user"
-	"github.com/av-ugolkov/lingua-evo/pkg/http/exchange"
-	"github.com/av-ugolkov/lingua-evo/pkg/middleware"
-	"github.com/av-ugolkov/lingua-evo/pkg/utils"
 	"github.com/av-ugolkov/lingua-evo/runtime"
 
 	"github.com/google/uuid"
@@ -115,10 +115,7 @@ func (h *Handler) createAccount(w http.ResponseWriter, r *http.Request) {
 	ex.SendData(http.StatusCreated, createUserRs)
 }
 
-func (h *Handler) getUserByID(w http.ResponseWriter, r *http.Request) {
-	ex := exchange.NewExchanger(w, r)
-
-	ctx := r.Context()
+func (h *Handler) getUserByID(ctx context.Context, ex *exchange.Exchanger) {
 	userID, err := runtime.UserIDFromContext(ctx)
 	if err != nil {
 		ex.SendError(http.StatusUnauthorized, fmt.Errorf("user.delivery.Handler.getUserByID - unauthorized: %v", err))
@@ -141,17 +138,14 @@ func (h *Handler) getUserByID(w http.ResponseWriter, r *http.Request) {
 	ex.SendData(http.StatusOK, userRs)
 }
 
-func (h *Handler) getUserByName(w http.ResponseWriter, r *http.Request) {
-	ex := exchange.NewExchanger(w, r)
+func (h *Handler) getUserByName(ctx context.Context, ex *exchange.Exchanger) {
 	var data GetValueRq
-
 	err := ex.CheckBody(&data)
 	if err != nil {
 		ex.SendError(http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.getIDByName - check body: %v", err))
 		return
 	}
 
-	ctx := r.Context()
 	user, err := h.userSvc.GetUserByName(ctx, data.Value)
 	if err != nil {
 		ex.SendError(http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.getIDByName: %v", err))
@@ -169,17 +163,13 @@ func (h *Handler) getUserByName(w http.ResponseWriter, r *http.Request) {
 	ex.SendData(http.StatusOK, userRs)
 }
 
-func (h *Handler) getUserByEmail(w http.ResponseWriter, r *http.Request) {
-	ex := exchange.NewExchanger(w, r)
-
+func (h *Handler) getUserByEmail(ctx context.Context, ex *exchange.Exchanger) {
 	var data GetValueRq
-
 	if err := ex.CheckBody(&data); err != nil {
 		ex.SendError(http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.getIDByEmail - check body: %v", err))
 		return
 	}
 
-	ctx := r.Context()
 	user, err := h.userSvc.GetUserByEmail(ctx, data.Value)
 	if err != nil {
 		ex.SendError(http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.getIDByEmail: %v", err))

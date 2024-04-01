@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -8,9 +9,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/http/exchange"
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/middleware"
 	"github.com/av-ugolkov/lingua-evo/internal/services/dictionary"
-	"github.com/av-ugolkov/lingua-evo/pkg/http/exchange"
-	"github.com/av-ugolkov/lingua-evo/pkg/middleware"
 	"github.com/av-ugolkov/lingua-evo/runtime"
 )
 
@@ -24,8 +25,14 @@ const (
 )
 
 type (
+	DictionaryRq struct {
+		ID   uuid.UUID   `json:"id"`
+		Name string      `json:"name"`
+		Tags []uuid.UUID `json:"tags"`
+	}
+
 	DictionaryIDRs struct {
-		ID   uuid.UUID   `json:"dictionary_id"`
+		ID   uuid.UUID   `json:"id"`
 		Tags []uuid.UUID `json:"tags"`
 	}
 
@@ -56,12 +63,11 @@ func (h *Handler) register(r *mux.Router) {
 	r.HandleFunc(dictionaryOp, middleware.Auth(h.addDictionary)).Methods(http.MethodPost)
 	r.HandleFunc(dictionaryOp, middleware.Auth(h.deleteDictionary)).Methods(http.MethodDelete)
 	r.HandleFunc(dictionaryOp, middleware.Auth(h.getDictionary)).Methods(http.MethodGet)
+	r.HandleFunc(dictionaryOp, middleware.Auth(h.renameDictionary)).Methods(http.MethodPut)
 	r.HandleFunc(getAllDictionary, middleware.Auth(h.getDictionaries)).Methods(http.MethodGet)
 }
 
-func (h *Handler) addDictionary(w http.ResponseWriter, r *http.Request) {
-	ex := exchange.NewExchanger(w, r)
-	ctx := r.Context()
+func (h *Handler) addDictionary(ctx context.Context, ex *exchange.Exchanger) {
 	userID, err := runtime.UserIDFromContext(ctx)
 	if err != nil {
 		ex.SendError(http.StatusUnauthorized, fmt.Errorf("dictionary.delivery.Handler.addDictionary - unauthorized: %v", err))
@@ -80,16 +86,17 @@ func (h *Handler) addDictionary(w http.ResponseWriter, r *http.Request) {
 	}
 
 	dictRs := &DictionaryRs{
-		ID: dictID,
+		ID:     dictID,
+		UserID: userID,
+		Name:   name,
+		Tags:   []string{},
 	}
 
 	ex.SetContentType(exchange.ContentTypeJSON)
 	ex.SendData(http.StatusOK, dictRs)
 }
 
-func (h *Handler) deleteDictionary(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	ex := exchange.NewExchanger(w, r)
+func (h *Handler) deleteDictionary(ctx context.Context, ex *exchange.Exchanger) {
 	userID, err := runtime.UserIDFromContext(ctx)
 	if err != nil {
 		ex.SendError(http.StatusUnauthorized, fmt.Errorf("dictionary.delivery.Handler.deleteDictionary - unauthorized: %v", err))
@@ -115,9 +122,7 @@ func (h *Handler) deleteDictionary(w http.ResponseWriter, r *http.Request) {
 	ex.SendEmptyData(http.StatusOK)
 }
 
-func (h *Handler) getDictionary(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	ex := exchange.NewExchanger(w, r)
+func (h *Handler) getDictionary(ctx context.Context, ex *exchange.Exchanger) {
 	userID, err := runtime.UserIDFromContext(ctx)
 	if err != nil {
 		ex.SendError(http.StatusUnauthorized, fmt.Errorf("dictionary.delivery.Handler.getDictionary - unauthorized: %v", err))
@@ -149,15 +154,13 @@ func (h *Handler) getDictionary(w http.ResponseWriter, r *http.Request) {
 	ex.SendData(http.StatusOK, dictRs)
 }
 
-func (h *Handler) getDictionaries(w http.ResponseWriter, r *http.Request) {
-	ex := exchange.NewExchanger(w, r)
-	userID, err := runtime.UserIDFromContext(r.Context())
+func (h *Handler) getDictionaries(ctx context.Context, ex *exchange.Exchanger) {
+	userID, err := runtime.UserIDFromContext(ctx)
 	if err != nil {
 		ex.SendError(http.StatusUnauthorized, fmt.Errorf("dictionary.delivery.Handler.getAllDictionary - unauthorized: %v", err))
 		return
 	}
 
-	ctx := r.Context()
 	dictionaries, err := h.dictionarySvc.GetDictionaries(ctx, userID)
 	if err != nil {
 		ex.SendError(http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.getAllDictionary: %v", err))
@@ -175,4 +178,27 @@ func (h *Handler) getDictionaries(w http.ResponseWriter, r *http.Request) {
 
 	ex.SetContentType(exchange.ContentTypeJSON)
 	ex.SendData(http.StatusOK, dictionariesRs)
+}
+
+func (h *Handler) renameDictionary(ctx context.Context, ex *exchange.Exchanger) {
+	name, err := ex.QueryParamString(ParamsName)
+	if err != nil {
+		ex.SendError(http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.renameDictionary - get query [name]: %v", err))
+		return
+	}
+
+	var dictID DictionaryRq
+	err = ex.CheckBody(&dictID)
+	if err != nil {
+		ex.SendError(http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.renameDictionary - get body: %v", err))
+		return
+	}
+
+	err = h.dictionarySvc.RenameDictionary(ctx, dictID.ID, name)
+	if err != nil {
+		ex.SendError(http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.renameDictionary: %v", err))
+		return
+	}
+
+	ex.SendEmptyData(http.StatusOK)
 }

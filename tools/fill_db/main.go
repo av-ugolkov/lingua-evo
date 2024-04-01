@@ -57,10 +57,10 @@ func fillWord(db *sql.DB) error {
 	var data struct {
 		Dictionary []struct {
 			Word          string   `json:"word"`
-			Pronunciation string   `json:"pronunciation"`
+			Pronunciation string   `json:"pronunciation,omitempty"`
 			Examples      []string `json:"example,omitempty"`
-			Translates    []string `json:"translate"`
-			Description   string   `json:"description"`
+			Translates    []string `json:"translate,omitempty"`
+			Description   string   `json:"description,omitempty"`
 		} `json:"dictionary"`
 	}
 

@@ -8,7 +8,7 @@ services:
         ports:
             - "6379:6379"
         networks:
-            - lingua-evo-local
+            - lingua
         entrypoint:
             - "/bin/sh"
             - "-ecx"
@@ -28,7 +28,7 @@ services:
         ports:
             - "6432:5432"
         networks:
-            - lingua-evo-local
+            - lingua
 
     migration:
         container_name: migration
@@ -37,12 +37,12 @@ services:
         depends_on:
             - postgres
         networks:
-            - lingua-evo-local
+            - lingua
         entrypoint:
             - "/bin/sh"
             - "-ecx"
             - "./migration -cmd up -url lingua:ib6vACdec2Fmht4lnX153@postgres:5432/pg-lingua-evo?sslmode=disable"
 
 networks:
-    lingua-evo-local:
-        name: lingua-evo-local
+    lingua:
+        name: lingua

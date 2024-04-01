@@ -25,7 +25,18 @@ func NewRepo(db *sql.DB) *WordRepo {
 func (r *WordRepo) AddWord(ctx context.Context, w *entity.Word) (uuid.UUID, error) {
 	var id uuid.UUID
 	table := getTable(w.LanguageCode)
-	query := fmt.Sprintf(`INSERT INTO "%s" (id, text, pronunciation, lang_code, created_at) VALUES($1, $2, $3, $4, $5) ON CONFLICT DO NOTHING RETURNING id;`, table)
+	query := fmt.Sprintf(
+		`WITH w AS (
+    		SELECT id FROM "%[1]s" WHERE text = $2),
+		ins AS (
+    		INSERT INTO "%[1]s" (id, text, pronunciation, lang_code, created_at)
+			VALUES($1, $2, $3, $4, $5)
+    		ON CONFLICT DO NOTHING RETURNING id)
+		SELECT id
+		FROM ins
+		UNION ALL
+		SELECT id
+		FROM w;`, table)
 	err := r.db.QueryRowContext(ctx, query, w.ID, w.Text, w.Pronunciation, w.LanguageCode, time.Now().UTC()).Scan(&id)
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("word.repository.WordRepo.AddWord - query: %w", err)
@@ -119,7 +130,7 @@ func (r *WordRepo) DeleteWord(ctx context.Context, w *entity.Word) (int64, error
 
 func (r *WordRepo) GetRandomWord(ctx context.Context, w *entity.Word) (*entity.Word, error) {
 	table := getTable(w.LanguageCode)
-	query := fmt.Sprintf(`SELECT text, pronunciation FROM "%s" ORDER BY RANDOM() LIMIT 1;`, table)
+	query := fmt.Sprintf(`SELECT text, pronunciation FROM "%s" WHERE moderator IS NOT NULL ORDER BY RANDOM() LIMIT 1;`, table)
 	word := &entity.Word{}
 	err := r.db.QueryRowContext(ctx, query).Scan(&word.Text, &word.Pronunciation)
 	if err != nil {

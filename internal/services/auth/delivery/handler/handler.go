@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"encoding/base64"
 	"fmt"
 	"net/http"
@@ -8,9 +9,9 @@ import (
 	"time"
 
 	"github.com/av-ugolkov/lingua-evo/internal/config"
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/http/exchange"
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/middleware"
 	"github.com/av-ugolkov/lingua-evo/internal/services/auth"
-	"github.com/av-ugolkov/lingua-evo/pkg/http/exchange"
-	"github.com/av-ugolkov/lingua-evo/pkg/middleware"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
@@ -100,7 +101,7 @@ func (h *Handler) refresh(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if refreshToken == nil {
-		ex.SendError(http.StatusUnauthorized, fmt.Errorf("auth.delivery.Handler.refresh: %v", err))
+		ex.SendError(http.StatusUnauthorized, fmt.Errorf("auth.delivery.Handler.refresh - refresh token is nil"))
 		return
 	}
 
@@ -134,9 +135,7 @@ func (h *Handler) refresh(w http.ResponseWriter, r *http.Request) {
 	ex.SendData(http.StatusOK, sessionRs)
 }
 
-func (h *Handler) logout(w http.ResponseWriter, r *http.Request) {
-	ex := exchange.NewExchanger(w, r)
-
+func (h *Handler) logout(ctx context.Context, ex *exchange.Exchanger) {
 	refreshToken, err := ex.Cookie(exchange.RefreshToken)
 	if err != nil {
 		ex.SendError(http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.logout - get cookie: %v", err))
@@ -159,7 +158,6 @@ func (h *Handler) logout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := r.Context()
 	err = h.authSvc.Logout(ctx, refreshID, fingerprint)
 	if err != nil {
 		ex.SendError(http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.logout - logout: %v", err))

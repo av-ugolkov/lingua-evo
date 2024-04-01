@@ -1,12 +1,16 @@
 package app
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
 	"log/slog"
 	"net"
 	"net/http"
+	_ "net/http/pprof"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -15,6 +19,8 @@ import (
 	"github.com/av-ugolkov/lingua-evo/internal/config"
 	pg "github.com/av-ugolkov/lingua-evo/internal/db/postgres"
 	"github.com/av-ugolkov/lingua-evo/internal/db/redis"
+	"github.com/av-ugolkov/lingua-evo/internal/delivery/kafka"
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/analytic"
 	authService "github.com/av-ugolkov/lingua-evo/internal/services/auth"
 	authHandler "github.com/av-ugolkov/lingua-evo/internal/services/auth/delivery/handler"
 	authRepository "github.com/av-ugolkov/lingua-evo/internal/services/auth/delivery/repository"
@@ -42,7 +48,7 @@ import (
 func ServerStart(cfg *config.Config) {
 	if cfg.PprofDebug.Enable {
 		go func() {
-			slog.Error("%v", http.ListenAndServe("localhost:6060", nil))
+			slog.Error("%v", http.ListenAndServe(cfg.PprofDebug.Addr(), nil))
 		}()
 	}
 
@@ -50,6 +56,11 @@ func ServerStart(cfg *config.Config) {
 	if err != nil {
 		slog.Error(fmt.Errorf("can't create pg pool: %v", err).Error())
 		return
+	}
+
+	if cfg.Kafka.Enable {
+		kafkaUserAction := kafka.NewWriter(cfg.Kafka.Addr(), cfg.Kafka.Topics[0])
+		analytics.SetKafka(kafkaUserAction)
 	}
 
 	redisDB := redis.New(cfg)
@@ -79,16 +90,29 @@ func ServerStart(cfg *config.Config) {
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 	}
+
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
+
 	slog.Info("start sertver")
-	if err := server.Serve(listener); err != nil {
-		switch {
-		case errors.Is(err, http.ErrServerClosed):
-			slog.Warn("server shutdown")
-		default:
-			slog.Error(err.Error())
-			return
+	go func() {
+		if err := server.Serve(listener); err != nil {
+			switch {
+			case errors.Is(err, http.ErrServerClosed):
+				slog.Warn("server shutdown")
+			default:
+				slog.Error(err.Error())
+				return
+			}
 		}
+	}()
+
+	<-ctx.Done()
+	if err := server.Shutdown(context.TODO()); err != nil {
+		slog.Info(fmt.Sprintf("server shutdown returned an err: %v\n", err))
 	}
+
+	slog.Info("final")
 }
 
 func initServer(r *mux.Router, db *sql.DB, redis *redis.Redis) {
