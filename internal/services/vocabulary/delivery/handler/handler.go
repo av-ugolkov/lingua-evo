@@ -43,11 +43,11 @@ type (
 
 	RemoveWordRq struct {
 		DictionaryID uuid.UUID `json:"dictionary_id"`
-		NativeWordID uuid.UUID `json:"native_word_id"`
+		WordID       uuid.UUID `json:"word_id"`
 	}
 
 	VocabularyWordsRs struct {
-		WordID         *uuid.UUID      `json:"word_id,omitempty"`
+		WordID         uuid.UUID       `json:"word_id,omitempty"`
 		NativeWord     vocabulary.Word `json:"native"`
 		TranslateWords []string        `json:"translate_words,omitempty"`
 		Examples       []string        `json:"examples,omitempty"`
@@ -104,8 +104,16 @@ func (h *Handler) addWord(ctx context.Context, ex *exchange.Exchanger) {
 		}
 	}
 
+	wordRs := VocabularyWordsRs{
+		WordID:         word.Id,
+		NativeWord:     word.NativeWord,
+		TranslateWords: word.TranslateWords,
+		Examples:       word.Examples,
+		Tags:           word.Tags,
+	}
+
 	ex.SetContentType(exchange.ContentTypeJSON)
-	ex.SendData(http.StatusCreated, word)
+	ex.SendData(http.StatusCreated, wordRs)
 }
 
 func (h *Handler) deleteWord(ctx context.Context, ex *exchange.Exchanger) {
@@ -116,7 +124,7 @@ func (h *Handler) deleteWord(ctx context.Context, ex *exchange.Exchanger) {
 		return
 	}
 
-	err = h.vocabularySvc.DeleteWord(ctx, data.DictionaryID, data.NativeWordID)
+	err = h.vocabularySvc.DeleteWord(ctx, data.DictionaryID, data.WordID)
 	if err != nil {
 		ex.SendError(http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.deleteWord: %v", err))
 		return
@@ -207,7 +215,7 @@ func (h *Handler) getWord(ctx context.Context, ex *exchange.Exchanger) {
 	}
 
 	wordRs := VocabularyWordsRs{
-		WordID:         &word.Id,
+		WordID:         word.Id,
 		NativeWord:     word.NativeWord,
 		TranslateWords: word.TranslateWords,
 		Examples:       word.Examples,
@@ -234,7 +242,7 @@ func (h *Handler) getWords(ctx context.Context, ex *exchange.Exchanger) {
 	wordsRs := make([]VocabularyWordsRs, 0, len(words))
 	for _, word := range words {
 		wordRs := VocabularyWordsRs{
-			WordID:         &word.Id,
+			WordID:         word.Id,
 			NativeWord:     word.NativeWord,
 			TranslateWords: word.TranslateWords,
 			Examples:       word.Examples,
