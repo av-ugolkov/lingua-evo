@@ -128,9 +128,9 @@ func initServer(r *mux.Router, db *sql.DB, redis *redis.Redis) {
 	tagRepo := tagRepository.NewRepo(db)
 	tagSvc := tagService.NewService(tagRepo)
 	vocabularyRepo := vocabularyRepository.NewRepo(db)
-	vocabularySvc := vocabularyService.NewService(vocabularyRepo, wordSvc, exampleSvc, tagSvc)
 	dictRepo := dictRepository.NewRepo(db)
 	dictSvc := dictService.NewService(dictRepo, vocabularyRepo, langSvc)
+	vocabularySvc := vocabularyService.NewService(vocabularyRepo, dictSvc, wordSvc, exampleSvc, tagSvc)
 	authRepo := authRepository.NewRepo(redis)
 	authSvc := authService.NewService(authRepo, userSvc)
 

@@ -45,15 +45,24 @@ func (r *DictRepo) Delete(ctx context.Context, dict entity.Dictionary) error {
 	return nil
 }
 
-func (r *DictRepo) GetByName(ctx context.Context, dict entity.Dictionary) (uuid.UUID, []uuid.UUID, error) {
-	query := `SELECT id, tags FROM dictionary WHERE user_id=$1 AND name=$2;`
-	var dictID uuid.UUID
-	var tags []uuid.UUID
-	err := r.db.QueryRowContext(ctx, query, dict.UserID, dict.Name).Scan(&dictID, pq.Array(&tags))
+func (r *DictRepo) GetByName(ctx context.Context, userID uuid.UUID, name string) (entity.Dictionary, error) {
+	query := `SELECT id, native_lang_code, second_lang_code, tags FROM dictionary WHERE user_id=$1 AND name=$2;`
+	var dict entity.Dictionary
+	err := r.db.QueryRowContext(ctx, query, userID, name).Scan(&dict.ID, &dict.NativeLang, &dict.SecondLang, pq.Array(&dict.Tags))
 	if err != nil {
-		return uuid.Nil, nil, err
+		return dict, err
 	}
-	return dictID, tags, nil
+	return dict, nil
+}
+
+func (r *DictRepo) GetByID(ctx context.Context, dictID uuid.UUID) (entity.Dictionary, error) {
+	query := `SELECT user_id, name, native_lang_code, second_lang_code, tags FROM dictionary WHERE id=$1;`
+	var dict entity.Dictionary
+	err := r.db.QueryRowContext(ctx, query, dictID).Scan(&dict.UserID, &dict.Name, &dict.NativeLang, &dict.SecondLang, pq.Array(&dict.Tags))
+	if err != nil {
+		return dict, err
+	}
+	return dict, nil
 }
 
 func (r *DictRepo) GetDictionaries(ctx context.Context, userID uuid.UUID) ([]*entity.Dictionary, error) {
