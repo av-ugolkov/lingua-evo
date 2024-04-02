@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"golang.org/x/sync/errgroup"
 
+	entityDict "github.com/av-ugolkov/lingua-evo/internal/services/dictionary"
 	entityExample "github.com/av-ugolkov/lingua-evo/internal/services/example"
 	entityTag "github.com/av-ugolkov/lingua-evo/internal/services/tag"
 	entityWord "github.com/av-ugolkov/lingua-evo/internal/services/word"
@@ -24,6 +25,10 @@ type (
 		GetRandomVocabulary(ctx context.Context, dictID uuid.UUID, limit int) ([]Vocabulary, error)
 		GetVocabulary(ctx context.Context, dictID uuid.UUID) ([]Vocabulary, error)
 		UpdateWord(ctx context.Context, vocabulary Vocabulary) error
+	}
+
+	dictSvc interface {
+		GetDictByID(ctx context.Context, dictID uuid.UUID) (entityDict.Dictionary, error)
 	}
 
 	exampleSvc interface {
@@ -47,6 +52,7 @@ type (
 
 type Service struct {
 	repo       repoVocabulary
+	dictSvc    dictSvc
 	wordSvc    wordSvc
 	exampleSvc exampleSvc
 	tagSvc     tagSvc
@@ -54,12 +60,14 @@ type Service struct {
 
 func NewService(
 	repo repoVocabulary,
+	dictSvc dictSvc,
 	wordSvc wordSvc,
 	exexampleSvc exampleSvc,
 	tagSvc tagSvc,
 ) *Service {
 	return &Service{
 		repo:       repo,
+		dictSvc:    dictSvc,
 		wordSvc:    wordSvc,
 		exampleSvc: exexampleSvc,
 		tagSvc:     tagSvc,
@@ -70,28 +78,33 @@ func (s *Service) AddWord(
 	ctx context.Context,
 	dictID uuid.UUID,
 	nativeWord Word,
-	tanslateWords Words,
+	translateWords Words,
 	examples []string,
-	tags []string) (*Vocabulary, error) {
-	nativeWordID, err := s.wordSvc.AddWord(ctx, uuid.New(), nativeWord.Text, nativeWord.LangCode, nativeWord.Pronunciation)
+	tags []string) (VocabularyWord, error) {
+	dict, err := s.dictSvc.GetDictByID(ctx, dictID)
 	if err != nil {
-		return nil, fmt.Errorf("vocabulary.Service.AddWord - add native word in dictionary: %w", err)
+		return VocabularyWord{}, fmt.Errorf("vocabulary.Service.AddWord - get dictionary: %w", err)
 	}
 
-	translateWordIDs := make([]uuid.UUID, 0, len(tanslateWords))
-	for _, translateWord := range tanslateWords {
-		translateID, err := s.wordSvc.AddWord(ctx, uuid.New(), translateWord.Text, translateWord.LangCode, translateWord.Pronunciation)
+	nativeWordID, err := s.wordSvc.AddWord(ctx, uuid.New(), nativeWord.Text, dict.NativeLang, nativeWord.Pronunciation)
+	if err != nil {
+		return VocabularyWord{}, fmt.Errorf("vocabulary.Service.AddWord - add native word in dictionary: %w", err)
+	}
+
+	translateWordIDs := make([]uuid.UUID, 0, len(translateWords))
+	for _, translateWord := range translateWords {
+		translateID, err := s.wordSvc.AddWord(ctx, uuid.New(), translateWord.Text, dict.SecondLang, translateWord.Pronunciation)
 		if err != nil {
-			return nil, fmt.Errorf("vocabulary.Service.AddWord - add translate word in dictionary: %w", err)
+			return VocabularyWord{}, fmt.Errorf("vocabulary.Service.AddWord - add translate word in dictionary: %w", err)
 		}
 		translateWordIDs = append(translateWordIDs, translateID)
 	}
 
 	exampleIDs := make([]uuid.UUID, 0, len(examples))
 	for _, example := range examples {
-		exampleID, err := s.exampleSvc.AddExample(ctx, example, nativeWord.LangCode)
+		exampleID, err := s.exampleSvc.AddExample(ctx, example, dict.NativeLang)
 		if err != nil {
-			return nil, fmt.Errorf("vocabulary.Service.AddWord - add example: %w", err)
+			return VocabularyWord{}, fmt.Errorf("vocabulary.Service.AddWord - add example: %w", err)
 		}
 		exampleIDs = append(exampleIDs, exampleID)
 	}
@@ -100,7 +113,7 @@ func (s *Service) AddWord(
 	for _, tag := range tags {
 		tagID, err := s.tagSvc.AddTag(ctx, tag)
 		if err != nil {
-			return nil, fmt.Errorf("vocabulary.Service.AddWord - add tag: %w", err)
+			return VocabularyWord{}, fmt.Errorf("vocabulary.Service.AddWord - add tag: %w", err)
 		}
 		tagIDs = append(tagIDs, tagID)
 	}
@@ -117,13 +130,26 @@ func (s *Service) AddWord(
 	if err != nil {
 		switch {
 		case errors.Is(err, ErrDuplicate):
-			return nil, fmt.Errorf("vocabulary.Service.AddWord - add vocabulary: %w", ErrDuplicate)
+			return VocabularyWord{}, fmt.Errorf("vocabulary.Service.AddWord - add vocabulary: %w", ErrDuplicate)
 		default:
-			return nil, fmt.Errorf("vocabulary.Service.AddWord - add vocabulary: %w", err)
+			return VocabularyWord{}, fmt.Errorf("vocabulary.Service.AddWord - add vocabulary: %w", err)
 		}
 	}
 
-	return &vocabulary, nil
+	translates := make([]string, 0, len(translateWords))
+	for _, translateWord := range translateWords {
+		translates = append(translates, translateWord.Text)
+	}
+
+	vocabularyWord := VocabularyWord{
+		Id:             nativeWordID,
+		NativeWord:     nativeWord,
+		TranslateWords: translates,
+		Examples:       examples,
+		Tags:           tags,
+	}
+
+	return vocabularyWord, nil
 }
 
 func (s *Service) UpdateWord(ctx context.Context,
@@ -407,7 +433,6 @@ func (s *Service) workerForGetWord(
 	inData <-chan Vocabulary,
 	result chan<- ResultJob,
 	stopCh chan<- struct{}) {
-
 	for vocab := range inData {
 		words, err := s.wordSvc.GetWords(ctx, []uuid.UUID{vocab.NativeWord})
 		if err != nil {

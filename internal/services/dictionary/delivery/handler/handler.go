@@ -34,8 +34,8 @@ type (
 	}
 
 	DictionaryIDRs struct {
-		ID   uuid.UUID   `json:"id"`
-		Tags []uuid.UUID `json:"tags"`
+		ID   uuid.UUID `json:"id"`
+		Tags []string  `json:"tags"`
 	}
 
 	DictionaryRs struct {
@@ -142,19 +142,19 @@ func (h *Handler) getDictionary(ctx context.Context, ex *exchange.Exchanger) {
 		return
 	}
 
-	id, tags, err := h.dictionarySvc.GetDictionary(ctx, userID, name)
+	dict, err := h.dictionarySvc.GetDictionary(ctx, userID, name)
 	if err != nil {
 		ex.SendError(http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.getDictionary: %v", err))
 		return
 	}
-	if id == uuid.Nil {
+	if dict.ID == uuid.Nil {
 		ex.SendError(http.StatusNotFound, fmt.Errorf("dictionary.delivery.Handler.getDictionary - dictionary not found: %v", err))
 		return
 	}
 
 	dictRs := &DictionaryIDRs{
-		ID:   id,
-		Tags: tags,
+		ID:   dict.ID,
+		Tags: dict.Tags,
 	}
 
 	ex.SetContentType(exchange.ContentTypeJSON)

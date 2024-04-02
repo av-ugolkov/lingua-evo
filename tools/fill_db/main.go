@@ -84,7 +84,7 @@ func fillWord(db *sql.DB) error {
 	tagSvc := tag.NewService(repoTag.NewRepo(db))
 	repoVocab := repoVocabulary.NewRepo(db)
 	dictSvc := dictionary.NewService(dictRepo.NewRepo(db), repoVocab, langSvc)
-	vocabSvc := vocabulary.NewService(repoVocab, wordSvc, exampleSvc, tagSvc)
+	vocabSvc := vocabulary.NewService(repoVocab, dictSvc, wordSvc, exampleSvc, tagSvc)
 
 	dict, err := dictSvc.AddDictionary(context.Background(), user.ID, uuid.New(), "default", "en", "ru")
 	if err != nil {

@@ -16,7 +16,8 @@ type (
 	repoDict interface {
 		Add(ctx context.Context, dict Dictionary) error
 		Delete(ctx context.Context, dict Dictionary) error
-		GetByName(ctx context.Context, dict Dictionary) (uuid.UUID, []uuid.UUID, error)
+		GetByName(ctx context.Context, uid uuid.UUID, name string) (Dictionary, error)
+		GetByID(ctx context.Context, dictID uuid.UUID) (Dictionary, error)
 		GetDictionaries(ctx context.Context, userID uuid.UUID) ([]*Dictionary, error)
 		Rename(ctx context.Context, id uuid.UUID, newName string) error
 	}
@@ -98,18 +99,22 @@ func (s *Service) DeleteDictionary(ctx context.Context, userID uuid.UUID, name s
 	return nil
 }
 
-func (s *Service) GetDictionary(ctx context.Context, userID uuid.UUID, name string) (uuid.UUID, []uuid.UUID, error) {
-	dict := Dictionary{
-		UserID: userID,
-		Name:   name,
-	}
-
-	dictID, tags, err := s.repoDict.GetByName(ctx, dict)
+func (s *Service) GetDictionary(ctx context.Context, userID uuid.UUID, name string) (Dictionary, error) {
+	dict, err := s.repoDict.GetByName(ctx, userID, name)
 	if err != nil {
-		return uuid.Nil, nil, fmt.Errorf("dictionary.Service.GetDictionary: %w", err)
+		return dict, fmt.Errorf("dictionary.Service.GetDictionary: %w", err)
 	}
 
-	return dictID, tags, nil
+	return dict, nil
+}
+
+func (s *Service) GetDictByID(ctx context.Context, dictID uuid.UUID) (Dictionary, error) {
+	dict, err := s.repoDict.GetByID(ctx, dictID)
+	if err != nil {
+		return Dictionary{}, fmt.Errorf("dictionary.Service.GetDictionary: %w", err)
+	}
+
+	return dict, nil
 }
 
 func (s *Service) GetDictionaries(ctx context.Context, userID uuid.UUID) ([]*Dictionary, error) {
