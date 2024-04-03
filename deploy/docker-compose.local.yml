@@ -39,6 +39,7 @@ services:
                 config_dir: ${CONFIG:-docker}
         depends_on:
             - postgres
+            - redis
         restart: always
         extra_hosts:
             - "host.docker.internal:host-gateway"
@@ -55,7 +56,6 @@ services:
             context: ../migration
         depends_on:
             - postgres
-            - service
         networks:
             - lingua
         entrypoint:
@@ -66,3 +66,4 @@ services:
 networks:
     lingua:
         name: lingua
+        external: true
