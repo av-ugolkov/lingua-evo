@@ -78,7 +78,7 @@ func ServerStart(cfg *config.Config) {
 	slog.Info(fmt.Sprintf("web address: %s", listener.Addr()))
 
 	c := cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:5173"},
+		AllowedOrigins:   cfg.Service.AllowedOrigins,
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"},
 		AllowCredentials: true,
 		AllowedHeaders:   []string{"Authorization", "Content-Type", "Fingerprint"},
