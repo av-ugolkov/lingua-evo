@@ -3,173 +3,159 @@ package repository
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
+	"time"
 
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgconn"
-	"github.com/lib/pq"
 )
 
-type VocabularyRepo struct {
+type VocabRepo struct {
 	db *sql.DB
 }
 
-func NewRepo(db *sql.DB) *VocabularyRepo {
-	return &VocabularyRepo{
+func NewRepo(db *sql.DB) *VocabRepo {
+	return &VocabRepo{
 		db: db,
 	}
 }
 
-func (r *VocabularyRepo) GetWord(ctx context.Context, dictID, wordID uuid.UUID) (entity.Vocabulary, error) {
-	const query = `SELECT native_word, translate_word, examples, tags FROM vocabulary WHERE dictionary_id=$1 and native_word=$2;`
+func (r *VocabRepo) Add(ctx context.Context, vocab entity.Vocabulary) error {
+	query := `INSERT INTO vocabulary (id, user_id, name, native_lang, translate_lang, updated_at, created_at) VALUES($1, $2, $3, $4, $5, $6, $6)`
 
-	var word entity.Vocabulary
-	err := r.db.QueryRowContext(ctx, query, dictID, wordID).Scan(
-		&word.NativeWord,
-		pq.Array(&word.TranslateWords),
-		pq.Array(&word.Examples),
-		pq.Array(&word.Tags))
+	_, err := r.db.ExecContext(ctx, query, vocab.ID, vocab.UserID, vocab.Name, vocab.NativeLang, vocab.TranslateLang, time.Now().UTC())
 	if err != nil {
-		return word, fmt.Errorf("vocabulary.repository.VocabularyRepo.GetWord: %w", err)
-	}
-
-	return word, nil
-}
-
-func (r *VocabularyRepo) AddWord(ctx context.Context, vocabulary entity.Vocabulary) error {
-	const query = `INSERT INTO vocabulary (dictionary_id, native_word, translate_word, examples, tags) VALUES($1, $2, $3, $4, $5);`
-	_, err := r.db.ExecContext(ctx, query, vocabulary.DictionaryId, vocabulary.NativeWord, vocabulary.TranslateWords, vocabulary.Examples, vocabulary.Tags)
-	if err != nil {
-		var pgErr *pgconn.PgError
-		switch {
-		case errors.As(err, &pgErr) && pgErr.Code == "23505":
-			return fmt.Errorf("vocabulary.repository.VocabularyRepo.AddWord: %w", entity.ErrDuplicate)
-		default:
-			return fmt.Errorf("vocabulary.repository.VocabularyRepo.AddWord: %w", err)
-		}
+		return fmt.Errorf("vocabulary.delivery.repository.VocabRepo.Add: %w", err)
 	}
 
 	return nil
 }
 
-func (r *VocabularyRepo) EditVocabulary(ctx context.Context, vocabulary entity.Vocabulary) (int64, error) {
-	return 0, nil
-}
-
-func (r *VocabularyRepo) GetWordsFromDictionary(ctx context.Context, dictID uuid.UUID, capacity int) ([]string, error) {
-	const query = `
-	SELECT text 
-	FROM word 
-	WHERE id=any(
-		SELECT native_word 
-		FROM vocabulary 
-		WHERE dictionary_id=$1
-			ORDER BY random() LIMIT $2)`
-	rows, err := r.db.QueryContext(ctx, query, dictID, capacity)
+func (r *VocabRepo) AddTagsToVocabulary(ctx context.Context, vocabularyID uuid.UUID, tagIDs []uuid.UUID) error {
+	query := `INSERT INTO vocabulary_tag (vocabulary_id, tag_id) VALUES`
+	vals := make([]interface{}, 0, len(tagIDs))
+	vals = append(vals, vocabularyID)
+	for ind, tagID := range tagIDs {
+		query += fmt.Sprintf("($1, $%d),", ind+2)
+		vals = append(vals, tagID)
+	}
+	query = query[0 : len(query)-1]
+	_, err := r.db.ExecContext(ctx, query, vals...)
 	if err != nil {
-		return nil, fmt.Errorf("vocabulary.repository.VocabularyRepo.GetWordsFromDictionary: %w", err)
-	}
-	defer rows.Close()
-
-	words := make([]string, 0, capacity)
-	for rows.Next() {
-		var word string
-		err = rows.Scan(&word)
-		if err != nil {
-			return nil, fmt.Errorf("vocabulary.repository.VocabularyRepo.GetWordsFromDictionary - scan: %w", err)
-		}
-		words = append(words, word)
+		return fmt.Errorf("vocabulary.delivery.repository.VocabRepo.AddTagsToVocabulary: %w", err)
 	}
 
-	return words, nil
-}
-
-func (r *VocabularyRepo) GetRandomWord(ctx context.Context, vocadulary *entity.Vocabulary) (*entity.Vocabulary, error) {
-	query := `SELECT native_word, translate_word, examples, tags FROM vocabulary WHERE dictionary_id=$1 ORDER BY random() LIMIT 1;`
-	err := r.db.QueryRowContext(ctx, query, vocadulary.DictionaryId).Scan(
-		&vocadulary.NativeWord,
-		&vocadulary.TranslateWords,
-		&vocadulary.Examples,
-		&vocadulary.Tags)
-	if err != nil {
-		return nil, fmt.Errorf("vocabulary.repository.VocabularyRepo.GetRandomWord - scan: %w", err)
-	}
-	return vocadulary, nil
-}
-
-func (r *VocabularyRepo) DeleteWord(ctx context.Context, vocabulary entity.Vocabulary) error {
-	query := `DELETE FROM vocabulary WHERE dictionary_id=$1 AND native_word=$2;`
-
-	result, err := r.db.Exec(query, vocabulary.DictionaryId, vocabulary.NativeWord)
-	if err != nil {
-		return fmt.Errorf("vocabulary.repository.VocabularyRepo.DeleteWord - exec: %w", err)
-	}
-
-	if rowsAffected, err := result.RowsAffected(); rowsAffected == 0 {
-		return fmt.Errorf("vocabulary.repository.VocabularyRepo.DeleteWord - rows affected: %w", sql.ErrNoRows)
-	} else if err != nil {
-		return fmt.Errorf("vocabulary.repository.VocabularyRepo.DeleteWord: %w", err)
-	}
 	return nil
 }
 
-func (r *VocabularyRepo) GetRandomVocabulary(ctx context.Context, dictID uuid.UUID, limit int) ([]entity.Vocabulary, error) {
-	query := `SELECT native_word, translate_word, examples, tags FROM vocabulary WHERE dictionary_id=$1 ORDER BY RANDOM() LIMIT $2;`
-	rows, err := r.db.QueryContext(ctx, query, dictID, limit)
+func (r *VocabRepo) Delete(ctx context.Context, vocab entity.Vocabulary) error {
+	query := `DELETE FROM vocabulary WHERE user_id=$1 AND name=$2;`
+	result, err := r.db.ExecContext(ctx, query, vocab.UserID, vocab.Name)
 	if err != nil {
-		return nil, fmt.Errorf("vocabulary.repository.VocabularyRepo.GetRandomVocabulary: %w", err)
+		return fmt.Errorf("vocabulary.delivery.repository.VocabRepo.Delete: %w", err)
+	}
+	if rowsAffected, _ := result.RowsAffected(); rowsAffected == 0 {
+		return fmt.Errorf("vocabulary.delivery.repository.VocabRepo.Delete: %w", entity.ErrVocabularyNotFound)
+	}
+
+	return nil
+}
+
+func (r *VocabRepo) GetByName(ctx context.Context, userID uuid.UUID, name string) (entity.Vocabulary, error) {
+	query := `SELECT id, user_id, name, n.lang native_lang, t.lang translate_lang FROM vocabulary v
+left join "language" n on n.code =v.native_lang 
+left join "language" t on t.code =v.translate_lang 
+WHERE user_id=$1 AND name=$2;`
+	var vocab entity.Vocabulary
+	err := r.db.QueryRowContext(ctx, query, userID, name).Scan(&vocab.ID, &vocab.UserID, &vocab.Name, &vocab.NativeLang, &vocab.TranslateLang)
+	if err != nil {
+		return vocab, fmt.Errorf("vocabulary.delivery.repository.VocabRepo.GetByName: %w", err)
+	}
+	return vocab, nil
+}
+
+func (r *VocabRepo) GetTagsVocabulary(ctx context.Context, vocabID uuid.UUID) ([]string, error) {
+	query := `SELECT "text" from tag 
+where id=any(select tag_id from vocabulary_tag where vocabulary_id=$1);`
+	rows, err := r.db.QueryContext(ctx, query, vocabID)
+	if err != nil {
+		return nil, fmt.Errorf("vocabulary.delivery.repository.VocabRepo.GetByName: %w", err)
+	}
+	tags := []string{}
+	for rows.Next() {
+		var tag string
+		if err := rows.Scan(&tag); err != nil {
+			return nil, fmt.Errorf("vocabulary.delivery.repository.VocabRepo.GetByName: %w", err)
+		}
+
+		tags = append(tags, tag)
+	}
+
+	return tags, nil
+}
+
+func (r *VocabRepo) GetByID(ctx context.Context, dictID uuid.UUID) (entity.Vocabulary, error) {
+	query := `SELECT user_id, name, native_lang, translate_lang FROM vocabulary WHERE id=$1;`
+	var vocab entity.Vocabulary
+	err := r.db.QueryRowContext(ctx, query, dictID).Scan(&vocab.UserID, &vocab.Name, &vocab.NativeLang, &vocab.TranslateLang)
+	if err != nil {
+		return vocab, fmt.Errorf("vocabulary.delivery.repository.VocabRepo.GetByID: %w", err)
+	}
+	return vocab, nil
+}
+
+func (r *VocabRepo) GetVocabularies(ctx context.Context, userID uuid.UUID) ([]entity.Vocabulary, error) {
+	query := `SELECT d.id, d.user_id, name, n.lang native_lang, s.lang translate_lang FROM vocabulary d
+left join "language" n on n.code = d.native_lang
+left join "language" s on s.code = d.translate_lang 
+WHERE user_id=$1;`
+	rows, err := r.db.QueryContext(ctx, query, userID)
+	if err != nil {
+		return nil, err
 	}
 	defer rows.Close()
 
-	vocabularies := make([]entity.Vocabulary, 0, limit)
+	var vocabularies []entity.Vocabulary
 	for rows.Next() {
-		var vocabulary entity.Vocabulary
-		err = rows.Scan(&vocabulary.NativeWord, pq.Array(&vocabulary.TranslateWords), pq.Array(&vocabulary.Examples), pq.Array(&vocabulary.Tags))
+		var vocab entity.Vocabulary
+		err := rows.Scan(
+			&vocab.ID,
+			&vocab.UserID,
+			&vocab.Name,
+			&vocab.NativeLang,
+			&vocab.TranslateLang,
+		)
 		if err != nil {
-			return nil, fmt.Errorf("vocabulary.repository.VocabularyRepo.GetRandomVocabulary - scan: %w", err)
+			return nil, fmt.Errorf("vocabulary.delivery.repository.VocabRepo.GetVocabularies - scan: %w", err)
 		}
-		vocabularies = append(vocabularies, vocabulary)
+
+		vocabularies = append(vocabularies, vocab)
 	}
 
 	return vocabularies, nil
 }
 
-func (r *VocabularyRepo) GetVocabulary(ctx context.Context, dictID uuid.UUID) ([]entity.Vocabulary, error) {
-	query := `SELECT native_word, translate_word, examples, tags FROM vocabulary WHERE dictionary_id=$1;`
-	rows, err := r.db.QueryContext(ctx, query, dictID)
+func (r *VocabRepo) GetCountVocabularies(ctx context.Context, userID uuid.UUID) (int, error) {
+	var countVocabularies int
+
+	query := `SELECT COUNT(id) FROM vocabulary WHERE user_id=$1;`
+
+	err := r.db.QueryRowContext(ctx, query, userID).Scan(&countVocabularies)
 	if err != nil {
-		return nil, fmt.Errorf("vocabulary.repository.VocabularyRepo.GetVocabulary: %w", err)
+		return -1, err
 	}
-	defer rows.Close()
-
-	vocabularies := make([]entity.Vocabulary, 0, 25)
-	for rows.Next() {
-		var vocabulary entity.Vocabulary
-		err = rows.Scan(&vocabulary.NativeWord, pq.Array(&vocabulary.TranslateWords), pq.Array(&vocabulary.Examples), pq.Array(&vocabulary.Tags))
-		if err != nil {
-			return nil, fmt.Errorf("vocabulary.repository.VocabularyRepo.GetVocabulary - scan: %w", err)
-		}
-		vocabularies = append(vocabularies, vocabulary)
-	}
-
-	return vocabularies, nil
+	return countVocabularies, nil
 }
 
-func (r *VocabularyRepo) UpdateWord(ctx context.Context, vocabulary entity.Vocabulary) error {
-	query := `UPDATE vocabulary SET translate_word=$1, examples=$2, tags=$3 WHERE dictionary_id=$4 AND native_word=$5;`
-
-	result, err := r.db.ExecContext(ctx, query, vocabulary.TranslateWords, vocabulary.Examples, vocabulary.Tags, vocabulary.DictionaryId, vocabulary.NativeWord)
+func (r *VocabRepo) Rename(ctx context.Context, id uuid.UUID, newName string) error {
+	query := `UPDATE vocabulary SET name=$1 WHERE id=$2;`
+	result, err := r.db.ExecContext(ctx, query, newName, id)
 	if err != nil {
-		return fmt.Errorf("vocabulary.repository.VocabularyRepo.UpdateWord - exec: %w", err)
+		return fmt.Errorf("vocabulary.delivery.repository.VocabRepo.Rename: %w", err)
 	}
-
-	if rowsAffected, err := result.RowsAffected(); rowsAffected == 0 {
-		return fmt.Errorf("vocabulary.repository.VocabularyRepo.UpdateWord - rows affected: %w", sql.ErrNoRows)
-	} else if err != nil {
-		return fmt.Errorf("vocabulary.repository.VocabularyRepo.UpdateWord: %w", err)
+	if rowsAffected, _ := result.RowsAffected(); rowsAffected == 0 {
+		return fmt.Errorf("vocabulary.delivery.repository.VocabRepo.Rename: %w", entity.ErrVocabularyNotFound)
 	}
 	return nil
 }
