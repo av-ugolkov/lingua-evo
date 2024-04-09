@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS
         "pronunciation" TEXT,
         "lang_code" TEXT REFERENCES "language" ("code") ON DELETE CASCADE,
         "moderator" UUID,
+        "updated_at" TIMESTAMP NOT NULL,
         "created_at" TIMESTAMP NOT NULL
     );
 
@@ -57,6 +58,7 @@ CREATE TABLE IF NOT EXISTS
         "name" TEXT NOT NULL,
         "native_lang" TEXT REFERENCES "language" ("code") ON DELETE CASCADE,
         "translate_lang" TEXT REFERENCES "language" ("code") ON DELETE CASCADE,
+        "updated_at" TIMESTAMP NOT NULL,
         "created_at" TIMESTAMP NOT NULL
     );
 
@@ -74,24 +76,20 @@ CREATE TABLE IF NOT EXISTS
     "word" (
         "id" UUID PRIMARY KEY,
         "vocabulary_id" UUID REFERENCES "vocabulary" ("id") ON DELETE CASCADE,
-        "native_id" UUID REFERENCES "dictionary" ("id"),
+        "native_id" UUID NOT NULL,
+        "updated_at" TIMESTAMP NOT NULL,
         "created_at" TIMESTAMP NOT NULL
     );
 
 CREATE UNIQUE INDEX IF NOT EXISTS "idx_unique_word__vocabulary_id_native_id" ON "word" ("vocabulary_id", "native_id");
 
 CREATE TABLE IF NOT EXISTS
-    "word_tag" ("word_id" UUID REFERENCES "word" ("id") ON DELETE CASCADE, "tag_id" UUID REFERENCES "tag" ("id"));
-
-CREATE UNIQUE INDEX IF NOT EXISTS "idx_unique_word_tag__word_id_tag_id" ON "word_tag" ("word_id", "tag_id");
-
-CREATE TABLE IF NOT EXISTS
-    "word_translate" ("word_id" UUID REFERENCES "word" ("id") ON DELETE CASCADE, "dictionary_id" UUID REFERENCES "dictionary" ("id"));
+    "word_translate" ("word_id" UUID REFERENCES "word" ("id") ON DELETE CASCADE, "dictionary_id" UUID NOT NULL);
 
 CREATE UNIQUE INDEX IF NOT EXISTS "idx_unique_word_translate__word_id_dictionary_id" ON "word_translate" ("word_id", "dictionary_id");
 
 CREATE TABLE IF NOT EXISTS
-    "word_example" ("word_id" UUID REFERENCES "word" ("id") ON DELETE CASCADE, "example_id" UUID REFERENCES "example" ("id"));
+    "word_example" ("word_id" UUID REFERENCES "word" ("id") ON DELETE CASCADE, "example_id" UUID NOT NULL);
 
 CREATE UNIQUE INDEX IF NOT EXISTS "idx_unique_word_example__word_id_example_id" ON "word_example" ("word_id", "example_id");
 

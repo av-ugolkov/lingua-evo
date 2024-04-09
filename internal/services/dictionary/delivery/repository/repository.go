@@ -4,118 +4,143 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-
-	entity "github.com/av-ugolkov/lingua-evo/internal/services/dictionary"
+	"time"
 
 	"github.com/google/uuid"
-	"github.com/lib/pq"
+
+	entity "github.com/av-ugolkov/lingua-evo/internal/services/dictionary"
 )
 
-type DictRepo struct {
+type DictionaryRepo struct {
 	db *sql.DB
 }
 
-func NewRepo(db *sql.DB) *DictRepo {
-	return &DictRepo{
+func NewRepo(db *sql.DB) *DictionaryRepo {
+	return &DictionaryRepo{
 		db: db,
 	}
 }
 
-func (r *DictRepo) Add(ctx context.Context, dict entity.Dictionary) error {
-	query := `INSERT INTO dictionary (id, user_id, name, native_lang_code, second_lang_code, tags) VALUES($1, $2, $3, $4, $5, $6)`
-
-	_, err := r.db.ExecContext(ctx, query, dict.ID, dict.UserID, dict.Name, dict.NativeLang, dict.SecondLang, dict.Tags)
+func (r *DictionaryRepo) AddWord(ctx context.Context, w *entity.Word) (uuid.UUID, error) {
+	var id uuid.UUID
+	table := getTable(w.LangCode)
+	query := fmt.Sprintf(
+		`WITH d AS (
+    		SELECT id FROM "%[1]s" WHERE text = $2),
+		ins AS (
+    		INSERT INTO "%[1]s" (id, text, pronunciation, lang_code, updated_at, created_at)
+			VALUES($1, $2, $3, $4, $5, $5)
+    		ON CONFLICT DO NOTHING RETURNING id)
+		SELECT id
+		FROM ins
+		UNION ALL
+		SELECT id
+		FROM d;`, table)
+	err := r.db.QueryRowContext(ctx, query, w.ID, w.Text, w.Pronunciation, w.LangCode, time.Now().UTC()).Scan(&id)
 	if err != nil {
-		return fmt.Errorf("dictionary.repository.DictRepo.AddDictionary: %w", err)
+		return uuid.Nil, fmt.Errorf("dictionary.repository.DictionaryRepo.AddWord - query: %w", err)
 	}
 
-	return nil
+	return id, nil
 }
 
-func (r *DictRepo) Delete(ctx context.Context, dict entity.Dictionary) error {
-	query := `DELETE FROM dictionary WHERE user_id=$1 AND name=$2;`
-	result, err := r.db.ExecContext(ctx, query, dict.UserID, dict.Name)
+func (r *DictionaryRepo) GetWordByText(ctx context.Context, w *entity.Word) (uuid.UUID, error) {
+	word := &entity.Word{}
+	table := getTable(w.LangCode)
+	query := fmt.Sprintf(`SELECT id FROM "%s" WHERE text=$1 AND lang_code=$2;`, table)
+	err := r.db.QueryRowContext(ctx, query, w.Text, w.LangCode).Scan(&word.ID)
 	if err != nil {
-		return fmt.Errorf("dictionary.repository.DictRepo.DeleteDictionary: %w", err)
+		return uuid.Nil, fmt.Errorf("dictionary.repository.DictionaryRepo.GetWordByText: %w", err)
 	}
-	if rowsAffected, _ := result.RowsAffected(); rowsAffected == 0 {
-		return fmt.Errorf("dictionary.repository.DictRepo.DeleteDictionary: %w", entity.ErrDictionaryNotFound)
-	}
-
-	return nil
+	return word.ID, nil
 }
 
-func (r *DictRepo) GetByName(ctx context.Context, userID uuid.UUID, name string) (entity.Dictionary, error) {
-	query := `SELECT id, native_lang_code, second_lang_code, tags FROM dictionary WHERE user_id=$1 AND name=$2;`
-	var dict entity.Dictionary
-	err := r.db.QueryRowContext(ctx, query, userID, name).Scan(&dict.ID, &dict.NativeLang, &dict.SecondLang, pq.Array(&dict.Tags))
+func (r *DictionaryRepo) GetWords(ctx context.Context, ids []uuid.UUID) ([]entity.Word, error) {
+	query := `SELECT id, text, pronunciation FROM dictionary WHERE id=ANY($1);`
+	rows, err := r.db.QueryContext(ctx, query, ids)
 	if err != nil {
-		return dict, err
-	}
-	return dict, nil
-}
-
-func (r *DictRepo) GetByID(ctx context.Context, dictID uuid.UUID) (entity.Dictionary, error) {
-	query := `SELECT user_id, name, native_lang_code, second_lang_code, tags FROM dictionary WHERE id=$1;`
-	var dict entity.Dictionary
-	err := r.db.QueryRowContext(ctx, query, dictID).Scan(&dict.UserID, &dict.Name, &dict.NativeLang, &dict.SecondLang, pq.Array(&dict.Tags))
-	if err != nil {
-		return dict, err
-	}
-	return dict, nil
-}
-
-func (r *DictRepo) GetDictionaries(ctx context.Context, userID uuid.UUID) ([]*entity.Dictionary, error) {
-	query := `SELECT d.id, d.user_id, name, n.lang native_lang_code, s.lang second_lang_code FROM dictionary d
-left join "language" n on n.code = d.native_lang_code
-left join "language" s on s.code = d.second_lang_code 
-WHERE user_id=$1;`
-	rows, err := r.db.QueryContext(ctx, query, userID)
-	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("dictionary.repository.DictionaryRepo.GetWords - query: %w", err)
 	}
 	defer rows.Close()
 
-	var dictionaries []*entity.Dictionary
+	words := make([]entity.Word, 0, len(ids))
 	for rows.Next() {
-		var dict entity.Dictionary
-		err := rows.Scan(
-			&dict.ID,
-			&dict.UserID,
-			&dict.Name,
-			&dict.NativeLang,
-			&dict.SecondLang,
-		)
+		var word entity.Word
+		err = rows.Scan(&word.ID, &word.Text, &word.Pronunciation)
 		if err != nil {
-			return nil, fmt.Errorf("dictionary.repository.DictRepo.GetDictionaries - scan: %w", err)
+			return nil, fmt.Errorf("dictionary.repository.DictionaryRepo.GetWords - scan: %w", err)
 		}
-
-		dictionaries = append(dictionaries, &dict)
+		words = append(words, word)
 	}
-
-	return dictionaries, nil
+	return words, nil
 }
 
-func (r *DictRepo) GetCountDictionaries(ctx context.Context, userID uuid.UUID) (int, error) {
-	var countDictionaries int
-
-	query := `SELECT COUNT(id) FROM dictionary WHERE user_id=$1;`
-
-	err := r.db.QueryRowContext(ctx, query, userID).Scan(&countDictionaries)
+func (r *DictionaryRepo) UpdateWord(ctx context.Context, w *entity.Word) error {
+	query := `UPDATE dictionary SET text=$1, pronunciation=$2 WHERE id=$3`
+	result, err := r.db.ExecContext(ctx, query, w.Text, w.Pronunciation, w.ID)
 	if err != nil {
-		return -1, err
+		return fmt.Errorf("dictionary.repository.DictionaryRepo.EditWord - exec: %w", err)
 	}
-	return countDictionaries, nil
-}
 
-func (r *DictRepo) Rename(ctx context.Context, id uuid.UUID, newName string) error {
-	query := `UPDATE dictionary SET name=$1 WHERE id=$2;`
-	result, err := r.db.ExecContext(ctx, query, newName, id)
-	if err != nil {
-		return fmt.Errorf("dictionary.repository.DictRepo.RenameDictionary: %w", err)
+	if rows, err := result.RowsAffected(); rows == 0 {
+		return fmt.Errorf("dictionary.repository.DictionaryRepo.EditWord: not fount effected rows")
+	} else if err != nil {
+		return fmt.Errorf("dictionary.repository.DictionaryRepo.EditWord - rows affected: %w", err)
 	}
-	if rowsAffected, _ := result.RowsAffected(); rowsAffected == 0 {
-		return fmt.Errorf("dictionary.repository.DictRepo.RenameDictionary: %w", entity.ErrDictionaryNotFound)
-	}
+
 	return nil
+}
+
+func (r *DictionaryRepo) FindWords(ctx context.Context, w *entity.Word) ([]uuid.UUID, error) {
+	var ids []uuid.UUID
+	query := `SELECT id FROM dictionary WHERE text=$1% AND lang_code=$2;`
+	rows, err := r.db.QueryContext(ctx, query, w.Text, w.LangCode)
+	if err != nil {
+		return nil, fmt.Errorf("dictionary.repository.DictionaryRepo.FindWords - query: %w", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var id uuid.UUID
+		err := rows.Scan(&id)
+		if err != nil {
+			return nil, fmt.Errorf("dictionary.repository.DictionaryRepo.FindWords - scan: %w", err)
+		}
+		ids = append(ids, id)
+	}
+
+	return ids, nil
+}
+
+func (r *DictionaryRepo) DeleteWord(ctx context.Context, w *entity.Word) (int64, error) {
+	query := `DELETE FROM dictionary WHERE id=$1`
+	result, err := r.db.ExecContext(ctx, query, w.ID)
+	if err != nil {
+		return 0, fmt.Errorf("dictionary.repository.DictionaryRepo.DeleteWord - exec: %w", err)
+	}
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return 0, fmt.Errorf("dictionary.repository.DictionaryRepo.DeleteWord - rows affected: %w", err)
+	}
+	return rows, nil
+}
+
+func (r *DictionaryRepo) GetRandomWord(ctx context.Context, w *entity.Word) (*entity.Word, error) {
+	table := getTable(w.LangCode)
+	query := fmt.Sprintf(`SELECT text, pronunciation, lang_code FROM "%s" WHERE moderator IS NOT NULL ORDER BY RANDOM() LIMIT 1;`, table)
+	word := &entity.Word{}
+	err := r.db.QueryRowContext(ctx, query).Scan(&word.Text, &word.Pronunciation, &word.LangCode)
+	if err != nil {
+		return nil, fmt.Errorf("dictionary.repository.DictionaryRepo.GetRandomWord - scan: %w", err)
+	}
+
+	return word, nil
+}
+
+func getTable(langCode string) string {
+	table := "dictionary"
+	if len(langCode) != 0 {
+		table = fmt.Sprintf(`%s_%s`, table, langCode)
+	}
+	return table
 }
