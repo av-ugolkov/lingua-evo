@@ -2,7 +2,6 @@ package language
 
 import (
 	"context"
-	"errors"
 	"fmt"
 )
 
@@ -41,7 +40,7 @@ func (s *Service) GetAvailableLanguages(ctx context.Context) ([]*Language, error
 
 func (s *Service) CheckLanguage(ctx context.Context, langCode string) error {
 	if len(langCode) == 0 {
-		return errors.New("language.Service.CheckLanguage - code language is empty")
+		return nil
 	}
 
 	if _, err := s.repo.GetLanguage(ctx, langCode); err != nil {

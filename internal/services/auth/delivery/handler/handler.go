@@ -9,18 +9,13 @@ import (
 	"time"
 
 	"github.com/av-ugolkov/lingua-evo/internal/config"
+	"github.com/av-ugolkov/lingua-evo/internal/delivery"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/http/exchange"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/middleware"
 	"github.com/av-ugolkov/lingua-evo/internal/services/auth"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
-)
-
-const (
-	signin  = "/auth/signin"
-	refresh = "/auth/refresh"
-	logout  = "/auth/logout"
 )
 
 type (
@@ -51,9 +46,9 @@ func newHandler(authSvc *auth.Service) *Handler {
 }
 
 func (h *Handler) register(r *mux.Router) {
-	r.HandleFunc(signin, h.signin).Methods(http.MethodPost)
-	r.HandleFunc(refresh, h.refresh).Methods(http.MethodGet)
-	r.HandleFunc(logout, middleware.Auth(h.logout)).Methods(http.MethodGet)
+	r.HandleFunc(delivery.SignIn, h.signin).Methods(http.MethodPost)
+	r.HandleFunc(delivery.Refresh, h.refresh).Methods(http.MethodGet)
+	r.HandleFunc(delivery.Logout, middleware.Auth(h.logout)).Methods(http.MethodGet)
 }
 
 func (h *Handler) signin(w http.ResponseWriter, r *http.Request) {

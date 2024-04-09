@@ -2,133 +2,196 @@ package dictionary
 
 import (
 	"context"
-	"errors"
+	"database/sql"
 	"fmt"
+	"log/slog"
+	"strings"
+
+	"github.com/av-ugolkov/lingua-evo/internal/services/dictionary/model"
+	"github.com/av-ugolkov/lingua-evo/runtime"
 
 	"github.com/google/uuid"
-)
-
-var (
-	errCountDictionary = errors.New("too much dictionaries for user")
+	"github.com/pkg/errors"
 )
 
 type (
-	repoDict interface {
-		Add(ctx context.Context, dict Dictionary) error
-		Delete(ctx context.Context, dict Dictionary) error
-		GetByName(ctx context.Context, uid uuid.UUID, name string) (Dictionary, error)
-		GetByID(ctx context.Context, dictID uuid.UUID) (Dictionary, error)
-		GetDictionaries(ctx context.Context, userID uuid.UUID) ([]*Dictionary, error)
-		Rename(ctx context.Context, id uuid.UUID, newName string) error
-	}
-
-	repoVocab interface {
-		GetWordsFromDictionary(ctx context.Context, id uuid.UUID, capacity int) ([]string, error)
+	repoDictionary interface {
+		AddWord(ctx context.Context, w *Word) (uuid.UUID, error)
+		GetWordByText(ctx context.Context, w *Word) (uuid.UUID, error)
+		GetWords(ctx context.Context, ids []uuid.UUID) ([]Word, error)
+		UpdateWord(ctx context.Context, w *Word) error
+		FindWords(ctx context.Context, w *Word) ([]uuid.UUID, error)
+		DeleteWord(ctx context.Context, w *Word) (int64, error)
+		GetRandomWord(ctx context.Context, w *Word) (*Word, error)
 	}
 
 	langSvc interface {
-		GetLangByCode(ctx context.Context, code string) (string, error)
+		CheckLanguage(ctx context.Context, langCode string) error
 	}
 )
 
+//go:generate mockery --inpackage --outpkg dictionary --testonly --name "repoDictionary"
+
 type Service struct {
-	repoDict  repoDict
-	repoVocab repoVocab
-	langSvc   langSvc
+	repo    repoDictionary
+	langSvc langSvc
 }
 
-func NewService(repoDict repoDict, repoVocab repoVocab, langSvc langSvc) *Service {
+func NewService(repo repoDictionary, langSvc langSvc) *Service {
 	return &Service{
-		repoDict:  repoDict,
-		repoVocab: repoVocab,
-		langSvc:   langSvc,
+		repo:    repo,
+		langSvc: langSvc,
 	}
 }
 
-func (s *Service) AddDictionary(ctx context.Context, userID, dictID uuid.UUID, name, nativeLangCode, secondLangCode string) (Dictionary, error) {
-	dictionary := Dictionary{
-		ID:         dictID,
-		UserID:     userID,
-		Name:       name,
-		NativeLang: nativeLangCode,
-		SecondLang: secondLangCode,
-		Tags:       []string{},
+func (s *Service) AddWord(ctx context.Context, data model.WordRq) (uuid.UUID, error) {
+	data.Text = strings.TrimSpace(data.Text)
+	if data.Text == runtime.EmptyString {
+		return uuid.Nil, fmt.Errorf("dictionary.Service.AddWord - empty text")
 	}
 
-	dictionaries, err := s.repoDict.GetDictionaries(ctx, dictionary.UserID)
+	err := s.langSvc.CheckLanguage(ctx, data.LangCode)
 	if err != nil {
-		return Dictionary{}, fmt.Errorf("dictionary.Service.AddDictionary - get count dictionaries: %w", err)
+		return uuid.Nil, fmt.Errorf("dictionary.Service.AddWord - check language: %v", err)
 	}
 
-	for _, dict := range dictionaries {
-		if dict.Name == dictionary.Name {
-			return Dictionary{}, fmt.Errorf("dictionary.Service.AddDictionary - already have dictionary with same")
+	word := &Word{
+		ID:            uuid.New(),
+		Text:          data.Text,
+		LangCode:      data.LangCode,
+		Pronunciation: data.Pronunciation,
+	}
+
+	wordID, err := s.repo.AddWord(ctx, word)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("dictionary.Service.AddWord: %v", err)
+	}
+
+	return wordID, nil
+}
+
+func (s *Service) GetWordByText(ctx context.Context, text, langCode string) (uuid.UUID, error) {
+	text = strings.TrimSpace(text)
+	if text == runtime.EmptyString {
+		return uuid.Nil, fmt.Errorf("dictionary.Service.GetWordByText - empty text")
+	}
+
+	if err := s.langSvc.CheckLanguage(ctx, langCode); err != nil {
+		return uuid.Nil, fmt.Errorf("dictionary.Service.GetWordByText - check language: %v", err)
+	}
+
+	word := Word{
+		Text:     text,
+		LangCode: langCode,
+	}
+
+	wordID, err := s.repo.GetWordByText(ctx, &word)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("dictionary.Service.GetWordByText: %v", err)
+	}
+	return wordID, nil
+}
+
+func (s *Service) GetWords(ctx context.Context, wordIDs []uuid.UUID) ([]Word, error) {
+	if len(wordIDs) == 0 {
+		return []Word{}, nil
+	}
+	words, err := s.repo.GetWords(ctx, wordIDs)
+	if err != nil {
+		return nil, fmt.Errorf("dictionary.Service.GetWords: %w", err)
+	}
+	return words, nil
+}
+
+func (s *Service) EditWord(ctx context.Context, text, langCode string) error {
+	word := Word{
+		Text:     text,
+		LangCode: langCode,
+	}
+	fmt.Println(word)
+
+	return nil
+}
+
+func (s *Service) FindWords(ctx context.Context, text, langCode string) ([]uuid.UUID, error) {
+	word := Word{
+		Text:     text,
+		LangCode: langCode,
+	}
+
+	wordIDs, err := s.repo.FindWords(ctx, &word)
+	if err != nil {
+		return nil, fmt.Errorf("word.Service.FindWord: %w", err)
+	}
+
+	return wordIDs, nil
+}
+
+func (s *Service) DeleteWord(ctx context.Context, text, langCode string) error {
+	word := Word{
+		Text:     text,
+		LangCode: langCode,
+	}
+
+	i, err := s.repo.DeleteWord(ctx, &word)
+	if err != nil {
+		return fmt.Errorf("word.Service.DeleteWord: %w", err)
+	}
+
+	slog.Debug(fmt.Sprintf("deleted %d rows", i))
+
+	return nil
+}
+
+func (s *Service) GetRandomWord(ctx context.Context, langCode string) (*Word, error) {
+	if err := s.langSvc.CheckLanguage(ctx, langCode); err != nil {
+		return nil, fmt.Errorf("dictionary.Service.GetRandomWord - check language: %v", err)
+	}
+
+	word := &Word{
+		LangCode: langCode,
+	}
+
+	word, err := s.repo.GetRandomWord(ctx, word)
+	if err != nil {
+		return nil, fmt.Errorf("word.Service.GetRandomWord: %w", err)
+	}
+
+	return word, nil
+}
+
+func (s *Service) UpdateWord(ctx context.Context, text, langCode, pronunciation string) (uuid.UUID, error) {
+	word := &Word{
+		Text:          text,
+		LangCode:      langCode,
+		Pronunciation: pronunciation,
+	}
+
+	wordID, err := s.repo.GetWordByText(ctx, word)
+
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return uuid.Nil, fmt.Errorf("word.Service.UpdateWord - get word: %w", err)
+	} else if wordID == uuid.Nil {
+		word.ID = uuid.New()
+		wordID, err = s.repo.AddWord(ctx, word)
+		if err != nil {
+			return uuid.Nil, fmt.Errorf("word.Service.UpdateWord - add word: %w", err)
 		}
+
+		return wordID, nil
 	}
 
-	if len(dictionaries) >= 5 {
-		return Dictionary{}, fmt.Errorf("dictionary.Service.AddDictionary - %w %v", errCountDictionary, dictionary.UserID)
+	word.ID = wordID
+
+	err = s.repo.UpdateWord(ctx, word)
+	if err != nil {
+		return uuid.Nil, err
 	}
 
-	err = s.repoDict.Add(ctx, dictionary)
-	if err != nil {
-		return Dictionary{}, fmt.Errorf("dictionary.Service.AddDictionary: %w", err)
-	}
-
-	dictionary.NativeLang, err = s.langSvc.GetLangByCode(ctx, dictionary.NativeLang)
-	if err != nil {
-		return Dictionary{}, fmt.Errorf("dictionary.Service.AddDictionary - get native lang: %w", err)
-	}
-	dictionary.SecondLang, err = s.langSvc.GetLangByCode(ctx, dictionary.SecondLang)
-	if err != nil {
-		return Dictionary{}, fmt.Errorf("dictionary.Service.AddDictionary - get second lang: %w", err)
-	}
-	return dictionary, nil
+	return wordID, nil
 }
 
-func (s *Service) DeleteDictionary(ctx context.Context, userID uuid.UUID, name string) error {
-	dict := Dictionary{
-		UserID: userID,
-		Name:   name,
-	}
-
-	err := s.repoDict.Delete(ctx, dict)
-	if err != nil {
-		return fmt.Errorf("dictionary.Service.DeleteDictionary: %w", err)
-	}
-	return nil
-}
-
-func (s *Service) GetDictionary(ctx context.Context, userID uuid.UUID, name string) (Dictionary, error) {
-	dict, err := s.repoDict.GetByName(ctx, userID, name)
-	if err != nil {
-		return dict, fmt.Errorf("dictionary.Service.GetDictionary: %w", err)
-	}
-
-	return dict, nil
-}
-
-func (s *Service) GetDictByID(ctx context.Context, dictID uuid.UUID) (Dictionary, error) {
-	dict, err := s.repoDict.GetByID(ctx, dictID)
-	if err != nil {
-		return Dictionary{}, fmt.Errorf("dictionary.Service.GetDictionary: %w", err)
-	}
-
-	return dict, nil
-}
-
-func (s *Service) GetDictionaries(ctx context.Context, userID uuid.UUID) ([]*Dictionary, error) {
-	dictionaries, err := s.repoDict.GetDictionaries(ctx, userID)
-	if err != nil {
-		return nil, fmt.Errorf("dictionary.Service.GetDictionaries: %w", err)
-	}
-	return dictionaries, nil
-}
-
-func (s *Service) RenameDictionary(ctx context.Context, id uuid.UUID, newName string) error {
-	err := s.repoDict.Rename(ctx, id, newName)
-	if err != nil {
-		return fmt.Errorf("dictionary.Service.RenameDictionary: %w", err)
-	}
-	return nil
+func (s *Service) SharedWord(ctx context.Context, w *Word) (*Word, error) {
+	slog.Error("word.Service.SharedWord - not implemented")
+	return nil, nil
 }
