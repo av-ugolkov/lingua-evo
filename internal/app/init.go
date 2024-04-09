@@ -19,6 +19,7 @@ import (
 	"github.com/av-ugolkov/lingua-evo/internal/config"
 	pg "github.com/av-ugolkov/lingua-evo/internal/db/postgres"
 	"github.com/av-ugolkov/lingua-evo/internal/db/redis"
+	"github.com/av-ugolkov/lingua-evo/internal/db/transactor"
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/kafka"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/analytic"
 	authService "github.com/av-ugolkov/lingua-evo/internal/services/auth"
@@ -27,6 +28,7 @@ import (
 	dictService "github.com/av-ugolkov/lingua-evo/internal/services/dictionary"
 	dictHandler "github.com/av-ugolkov/lingua-evo/internal/services/dictionary/delivery/handler"
 	dictRepository "github.com/av-ugolkov/lingua-evo/internal/services/dictionary/delivery/repository"
+
 	exampleService "github.com/av-ugolkov/lingua-evo/internal/services/example"
 	exampleRepository "github.com/av-ugolkov/lingua-evo/internal/services/example/delivery/repository"
 	langService "github.com/av-ugolkov/lingua-evo/internal/services/language"
@@ -37,9 +39,9 @@ import (
 	userService "github.com/av-ugolkov/lingua-evo/internal/services/user"
 	userHandler "github.com/av-ugolkov/lingua-evo/internal/services/user/delivery/handler"
 	userRepository "github.com/av-ugolkov/lingua-evo/internal/services/user/delivery/repository"
-	vocabularyService "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary"
-	vocabularyHandler "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary/delivery/handler"
-	vocabularyRepository "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary/delivery/repository"
+	vocabService "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary"
+	vocabHandler "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary/delivery/handler"
+	vocabRepository "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary/delivery/repository"
 	wordService "github.com/av-ugolkov/lingua-evo/internal/services/word"
 	wordHandler "github.com/av-ugolkov/lingua-evo/internal/services/word/delivery/handler"
 	wordRepository "github.com/av-ugolkov/lingua-evo/internal/services/word/delivery/repository"
@@ -116,30 +118,31 @@ func ServerStart(cfg *config.Config) {
 }
 
 func initServer(r *mux.Router, db *sql.DB, redis *redis.Redis) {
+	transactor := transactor.NewTransactor(db)
 	slog.Info("create services")
 	userRepo := userRepository.NewRepo(db)
 	userSvc := userService.NewService(userRepo, redis)
-	wordRepo := wordRepository.NewRepo(db)
-	wordSvc := wordService.NewService(wordRepo)
 	langRepo := langRepository.NewRepo(db)
 	langSvc := langService.NewService(langRepo)
+	dictRepo := dictRepository.NewRepo(db)
+	dictSvc := dictService.NewService(dictRepo, langSvc)
 	exampleRepo := exampleRepository.NewRepo(db)
 	exampleSvc := exampleService.NewService(exampleRepo)
 	tagRepo := tagRepository.NewRepo(db)
 	tagSvc := tagService.NewService(tagRepo)
-	vocabularyRepo := vocabularyRepository.NewRepo(db)
-	dictRepo := dictRepository.NewRepo(db)
-	dictSvc := dictService.NewService(dictRepo, vocabularyRepo, langSvc)
-	vocabularySvc := vocabularyService.NewService(vocabularyRepo, dictSvc, wordSvc, exampleSvc, tagSvc)
+	vocabRepo := vocabRepository.NewRepo(db)
+	vocabSvc := vocabService.NewService(transactor, vocabRepo, langSvc, tagSvc)
+	wordRepo := wordRepository.NewRepo(db)
+	wordSvc := wordService.NewService(transactor, wordRepo, vocabSvc, dictSvc, exampleSvc)
 	authRepo := authRepository.NewRepo(redis)
 	authSvc := authService.NewService(authRepo, userSvc)
 
 	slog.Info("create handlers")
 	userHandler.Create(r, userSvc)
 	languageHandler.Create(r, langSvc)
-	wordHandler.Create(r, wordSvc, langSvc)
 	dictHandler.Create(r, dictSvc)
-	vocabularyHandler.Create(r, vocabularySvc)
+	wordHandler.Create(r, wordSvc)
+	vocabHandler.Create(r, vocabSvc)
 	authHandler.Create(r, authSvc)
 
 	slog.Info("end init services")

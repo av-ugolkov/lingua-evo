@@ -6,58 +6,24 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/google/uuid"
+	"github.com/gorilla/mux"
+
+	"github.com/av-ugolkov/lingua-evo/internal/delivery"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/http/exchange"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/middleware"
 	"github.com/av-ugolkov/lingua-evo/internal/services/vocabulary"
-
-	"github.com/google/uuid"
-	"github.com/gorilla/mux"
+	"github.com/av-ugolkov/lingua-evo/internal/services/vocabulary/model"
+	"github.com/av-ugolkov/lingua-evo/runtime"
 )
 
 const (
-	ParamDictID = "dict_id"
-	ParamWordID = "word_id"
-	ParamName   = "name"
-	ParamLimit  = "limit"
+	ParamsName = "name"
 )
 
-const (
-	vocabularyWordUrl = "/vocabulary"
-	getSeveralWords   = "/vocabulary/get_several_words"
-	getWords          = "/vocabulary/all"
-)
-
-type (
-	AddWordRq struct {
-		DictionaryID  uuid.UUID       `json:"dictionary_id"`
-		NativeWord    vocabulary.Word `json:"native_word"`
-		TanslateWords []string        `json:"translate_words,omitempty"`
-		Examples      []string        `json:"examples,omitempty"`
-		Tags          []string        `json:"tags,omitempty"`
-	}
-
-	UpdateWordRq struct {
-		OldWordID uuid.UUID `json:"word_id"`
-		AddWordRq
-	}
-
-	RemoveWordRq struct {
-		DictionaryID uuid.UUID `json:"dictionary_id"`
-		WordID       uuid.UUID `json:"word_id"`
-	}
-
-	VocabularyWordsRs struct {
-		WordID         uuid.UUID       `json:"word_id,omitempty"`
-		NativeWord     vocabulary.Word `json:"native"`
-		TranslateWords []string        `json:"translate_words,omitempty"`
-		Examples       []string        `json:"examples,omitempty"`
-		Tags           []string        `json:"tags,omitempty"`
-	}
-
-	Handler struct {
-		vocabularySvc *vocabulary.Service
-	}
-)
+type Handler struct {
+	vocabularySvc *vocabulary.Service
+}
 
 func Create(r *mux.Router, vocabularySvc *vocabulary.Service) {
 	h := newHandler(vocabularySvc)
@@ -71,187 +37,154 @@ func newHandler(vocabularySvc *vocabulary.Service) *Handler {
 }
 
 func (h *Handler) register(r *mux.Router) {
-	r.HandleFunc(vocabularyWordUrl, middleware.Auth(h.getWord)).Methods(http.MethodGet)
-	r.HandleFunc(vocabularyWordUrl, middleware.Auth(h.addWord)).Methods(http.MethodPut)
-	r.HandleFunc(vocabularyWordUrl, middleware.Auth(h.deleteWord)).Methods(http.MethodDelete)
-	r.HandleFunc(vocabularyWordUrl, middleware.Auth(h.updateWord)).Methods(http.MethodPatch)
-	r.HandleFunc(getSeveralWords, middleware.Auth(h.getSeveralWords)).Methods(http.MethodGet)
-	r.HandleFunc(getWords, middleware.Auth(h.getWords)).Methods(http.MethodGet)
+	r.HandleFunc(delivery.Vocabulary, middleware.Auth(h.addVocabulary)).Methods(http.MethodPost)
+	r.HandleFunc(delivery.Vocabulary, middleware.Auth(h.deleteVocabulary)).Methods(http.MethodDelete)
+	r.HandleFunc(delivery.Vocabulary, middleware.Auth(h.getVocabulary)).Methods(http.MethodGet)
+	r.HandleFunc(delivery.Vocabulary, middleware.Auth(h.renameVocabulary)).Methods(http.MethodPut)
+	r.HandleFunc(delivery.Vocabularies, middleware.Auth(h.getVocabularies)).Methods(http.MethodGet)
 }
 
-func (h *Handler) addWord(ctx context.Context, ex *exchange.Exchanger) {
-	var data AddWordRq
-	err := ex.CheckBody(&data)
+func (h *Handler) addVocabulary(ctx context.Context, ex *exchange.Exchanger) {
+	userID, err := runtime.UserIDFromContext(ctx)
 	if err != nil {
-		ex.SendError(http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.addWord - check body: %v", err))
+		ex.SendError(http.StatusUnauthorized, fmt.Errorf("vocabulary.delivery.Handler.addVocabulary - unauthorized: %v", err))
 		return
 	}
 
-	translateWords := make([]vocabulary.Word, 0, len(data.TanslateWords))
-	for _, word := range data.TanslateWords {
-		translateWords = append(translateWords, vocabulary.Word{Text: word})
-	}
-
-	word, err := h.vocabularySvc.AddWord(ctx, data.DictionaryID, data.NativeWord, translateWords, data.Examples, data.Tags)
+	var data model.VocabularyRq
+	err = ex.CheckBody(&data)
 	if err != nil {
-		switch {
-		case errors.Is(err, vocabulary.ErrDuplicate):
-			ex.SendError(http.StatusConflict, fmt.Errorf("vocabulary.delivery.Handler.addWord: %v", err))
-			return
-		default:
-			ex.SendError(http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.addWord: %v", err))
-			return
-		}
+		ex.SendError(http.StatusUnauthorized, fmt.Errorf("vocabulary.delivery.Handler.addVocabulary - check body: %v", err))
+		return
 	}
 
-	wordRs := VocabularyWordsRs{
-		WordID:         word.Id,
-		NativeWord:     word.NativeWord,
-		TranslateWords: word.TranslateWords,
-		Examples:       word.Examples,
-		Tags:           word.Tags,
+	vocab, err := h.vocabularySvc.AddVocabulary(ctx, userID, data)
+	if err != nil {
+		ex.SendError(http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.addVocabulary: %v", err))
+	}
+
+	vocabRs := &model.VocabularyRs{
+		ID:            vocab.ID,
+		UserID:        vocab.UserID,
+		Name:          vocab.Name,
+		NativeLang:    vocab.NativeLang,
+		TranslateLang: vocab.TranslateLang,
+		Tags:          vocab.Tags,
 	}
 
 	ex.SetContentType(exchange.ContentTypeJSON)
-	ex.SendData(http.StatusCreated, wordRs)
+	ex.SendData(http.StatusOK, vocabRs)
 }
 
-func (h *Handler) deleteWord(ctx context.Context, ex *exchange.Exchanger) {
-	var data RemoveWordRq
-	err := ex.CheckBody(&data)
+func (h *Handler) deleteVocabulary(ctx context.Context, ex *exchange.Exchanger) {
+	userID, err := runtime.UserIDFromContext(ctx)
 	if err != nil {
-		ex.SendError(http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.deleteWord - check body: %v", err))
+		ex.SendError(http.StatusUnauthorized, fmt.Errorf("vocabulary.delivery.Handler.deleteVocabulary - unauthorized: %v", err))
 		return
 	}
 
-	err = h.vocabularySvc.DeleteWord(ctx, data.DictionaryID, data.WordID)
+	name, err := ex.QueryParamString(ParamsName)
 	if err != nil {
-		ex.SendError(http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.deleteWord: %v", err))
+		ex.SendError(http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.deleteVocabulary - get query [name]: %v", err))
 		return
 	}
+
+	err = h.vocabularySvc.DeleteVocabulary(ctx, userID, name)
+	switch {
+	case errors.Is(err, vocabulary.ErrVocabularyNotFound):
+		ex.SendError(http.StatusNotFound, fmt.Errorf("vocabulary.delivery.Handler.deleteVocabulary: %v", err))
+		return
+	case err != nil:
+		ex.SendError(http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.deleteVocabulary: %v", err))
+		return
+	}
+
 	ex.SendEmptyData(http.StatusOK)
 }
 
-func (h *Handler) updateWord(ctx context.Context, ex *exchange.Exchanger) {
-	var data UpdateWordRq
-	err := ex.CheckBody(&data)
+func (h *Handler) getVocabulary(ctx context.Context, ex *exchange.Exchanger) {
+	userID, err := runtime.UserIDFromContext(ctx)
 	if err != nil {
-		ex.SendError(http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.updateWord - check body: %v", err))
+		ex.SendError(http.StatusUnauthorized, fmt.Errorf("vocabulary.delivery.Handler.getVocabulary - unauthorized: %v", err))
 		return
 	}
 
-	translateWords := make([]vocabulary.Word, 0, len(data.TanslateWords))
-	for _, word := range data.TanslateWords {
-		translateWords = append(translateWords, vocabulary.Word{Text: word})
-	}
-
-	word, err := h.vocabularySvc.UpdateWord(ctx, data.DictionaryID, data.OldWordID, data.NativeWord, translateWords, data.Examples, data.Tags)
+	name, err := ex.QueryParamString(ParamsName)
 	if err != nil {
-		ex.SendError(http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.updateWord: %v", err))
+		ex.SendError(http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.getVocabulary - get query [name]: %v", err))
 		return
 	}
 
-	wordRs := &VocabularyWordsRs{
-		NativeWord:     word.NativeWord,
-		TranslateWords: word.TranslateWords,
-		Examples:       word.Examples,
-		Tags:           word.Tags,
+	vocab, err := h.vocabularySvc.GetVocabulary(ctx, userID, name)
+	if err != nil {
+		ex.SendError(http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.getVocabulary: %v", err))
+		return
+	}
+	if vocab.ID == uuid.Nil {
+		ex.SendError(http.StatusNotFound, fmt.Errorf("vocabulary.delivery.Handler.getVocabulary - vocabulary not found: %v", err))
+		return
+	}
+
+	vocabRs := &model.VocabularyRs{
+		ID:            vocab.ID,
+		UserID:        vocab.UserID,
+		Name:          vocab.Name,
+		NativeLang:    vocab.NativeLang,
+		TranslateLang: vocab.TranslateLang,
+		Tags:          vocab.Tags,
 	}
 
 	ex.SetContentType(exchange.ContentTypeJSON)
-	ex.SendData(http.StatusCreated, wordRs)
+	ex.SendData(http.StatusOK, vocabRs)
 }
 
-func (h *Handler) getSeveralWords(ctx context.Context, ex *exchange.Exchanger) {
-	dictID, err := ex.QueryParamUUID(ParamDictID)
+func (h *Handler) getVocabularies(ctx context.Context, ex *exchange.Exchanger) {
+	userID, err := runtime.UserIDFromContext(ctx)
 	if err != nil {
-		ex.SendError(http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.getSeveralWords - get dict id: %w", err))
+		ex.SendError(http.StatusUnauthorized, fmt.Errorf("vocabulary.delivery.Handler.getVocabularies - unauthorized: %v", err))
 		return
 	}
 
-	limit, err := ex.QueryParamInt(ParamLimit)
+	vocabularies, err := h.vocabularySvc.GetVocabularies(ctx, userID)
 	if err != nil {
-		ex.SendError(http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.getSeveralWords - get limit: %w", err))
-		return
-	}
-	words, err := h.vocabularySvc.GetRandomWords(ctx, dictID, limit)
-	if err != nil {
-		ex.SendError(http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.getSeveralWords: %w", err))
-		return
+		ex.SendError(http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.getVocabularies: %v", err))
 	}
 
-	wordsRs := make([]VocabularyWordsRs, 0, len(words))
-	for _, word := range words {
-		wordRs := VocabularyWordsRs{
-			NativeWord:     word.NativeWord,
-			TranslateWords: word.TranslateWords,
-			Examples:       word.Examples,
-			Tags:           word.Tags,
-		}
-
-		wordsRs = append(wordsRs, wordRs)
+	vocabulariesRs := make([]model.VocabularyRs, 0, len(vocabularies))
+	for _, vocab := range vocabularies {
+		vocabulariesRs = append(vocabulariesRs, model.VocabularyRs{
+			ID:            vocab.ID,
+			UserID:        vocab.UserID,
+			Name:          vocab.Name,
+			NativeLang:    vocab.NativeLang,
+			TranslateLang: vocab.TranslateLang,
+			Tags:          vocab.Tags,
+		})
 	}
 
 	ex.SetContentType(exchange.ContentTypeJSON)
-	ex.SendData(http.StatusOK, wordsRs)
+	ex.SendData(http.StatusOK, vocabulariesRs)
 }
 
-func (h *Handler) getWord(ctx context.Context, ex *exchange.Exchanger) {
-	dictID, err := ex.QueryParamUUID(ParamDictID)
+func (h *Handler) renameVocabulary(ctx context.Context, ex *exchange.Exchanger) {
+	name, err := ex.QueryParamString(ParamsName)
 	if err != nil {
-		ex.SendError(http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.getWords - get dict id: %w", err))
+		ex.SendError(http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.renameVocabulary - get query [name]: %v", err))
 		return
 	}
 
-	wordID, err := ex.QueryParamUUID(ParamWordID)
+	var vocab model.VocabularyIDRs
+	err = ex.CheckBody(&vocab)
 	if err != nil {
-		ex.SendError(http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.getWords - get word id: %w", err))
-		return
-	}
-	word, err := h.vocabularySvc.GetWord(ctx, dictID, wordID)
-	if err != nil {
-		ex.SendError(http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.getWords: %w", err))
+		ex.SendError(http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.renameVocabulary - get body: %v", err))
 		return
 	}
 
-	wordRs := VocabularyWordsRs{
-		WordID:         word.Id,
-		NativeWord:     word.NativeWord,
-		TranslateWords: word.TranslateWords,
-		Examples:       word.Examples,
-		Tags:           word.Tags,
-	}
-
-	ex.SetContentType(exchange.ContentTypeJSON)
-	ex.SendData(http.StatusOK, wordRs)
-}
-
-func (h *Handler) getWords(ctx context.Context, ex *exchange.Exchanger) {
-	dictID, err := ex.QueryParamUUID(ParamDictID)
+	err = h.vocabularySvc.RenameVocabulary(ctx, vocab.ID, name)
 	if err != nil {
-		ex.SendError(http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.getWords - get dict id: %w", err))
+		ex.SendError(http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.renameVocabulary: %v", err))
 		return
 	}
 
-	words, err := h.vocabularySvc.GetWords(ctx, dictID)
-	if err != nil {
-		ex.SendError(http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.getWords: %w", err))
-		return
-	}
-
-	wordsRs := make([]VocabularyWordsRs, 0, len(words))
-	for _, word := range words {
-		wordRs := VocabularyWordsRs{
-			WordID:         word.Id,
-			NativeWord:     word.NativeWord,
-			TranslateWords: word.TranslateWords,
-			Examples:       word.Examples,
-			Tags:           word.Tags,
-		}
-
-		wordsRs = append(wordsRs, wordRs)
-	}
-
-	ex.SetContentType(exchange.ContentTypeJSON)
-	ex.SendData(http.StatusOK, wordsRs)
+	ex.SendEmptyData(http.StatusOK)
 }
