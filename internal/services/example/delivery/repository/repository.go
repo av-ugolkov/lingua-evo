@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strings"
 
 	"github.com/google/uuid"
 
@@ -20,14 +21,50 @@ func NewRepo(db *sql.DB) *ExampleRepo {
 	}
 }
 
-func (r *ExampleRepo) AddExample(ctx context.Context, id uuid.UUID, text, langCode string) error {
-	query := fmt.Sprintf(`INSERT INTO example_%s (id, text) VALUES($1, $2) ON CONFLICT DO NOTHING`, langCode)
-	_, err := r.db.ExecContext(ctx, query, id, text)
-	if err != nil {
-		return fmt.Errorf("example.repository.ExampleRepo.AddExample: %w", err)
+func (r *ExampleRepo) AddExamples(ctx context.Context, ids []uuid.UUID, texts []string, langCode string) ([]uuid.UUID, error) {
+	var insValues strings.Builder
+	countBytesText := 0
+	for _, text := range texts {
+		countBytesText += len(text)
+	}
+	const lenByteOfTemp = 7
+	const lenByteUUID = 36
+	insValues.Grow((len(ids) * (lenByteUUID + lenByteOfTemp)) + countBytesText)
+	for i := 0; i < len(texts); i++ {
+		insValues.WriteString(fmt.Sprintf("('%s','%s')", ids[i], texts[i]))
+		if i < len(texts)-1 {
+			insValues.WriteString(",")
+		}
 	}
 
-	return nil
+	query := fmt.Sprintf(`
+	WITH s AS (
+    		SELECT id FROM example_%[1]s WHERE text = any($1::text[])),
+		ins AS (
+    		INSERT INTO example_%[1]s (id, text)
+			VALUES %[2]s
+    		ON CONFLICT DO NOTHING RETURNING id)
+		SELECT id
+		FROM ins
+		UNION ALL
+		SELECT id
+		FROM s;`, langCode, insValues.String())
+	rows, err := r.db.QueryContext(ctx, query, texts)
+	if err != nil {
+		return nil, fmt.Errorf("example.repository.ExampleRepo.AddExample: %w", err)
+	}
+
+	tagIDs := make([]uuid.UUID, 0, len(texts))
+	for rows.Next() {
+		var id uuid.UUID
+		err = rows.Scan(&id)
+		if err != nil {
+			return nil, fmt.Errorf("example.repository.ExampleRepo.AddExample: %w", err)
+		}
+		tagIDs = append(tagIDs, id)
+	}
+
+	return tagIDs, nil
 }
 
 func (r *ExampleRepo) GetExampleByValue(ctx context.Context, text, langCode string) (uuid.UUID, error) {
