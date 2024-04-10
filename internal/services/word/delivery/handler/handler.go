@@ -67,10 +67,7 @@ func (h *Handler) addWord(ctx context.Context, ex *exchange.Exchanger) {
 	}
 
 	wordRs := model.VocabWordsRs{
-		WordID:         vocabWord.Id,
-		NativeWord:     vocabWord.NativeWord,
-		TranslateWords: vocabWord.TranslateWords,
-		Examples:       vocabWord.Examples,
+		WordID: vocabWord.Id,
 	}
 
 	ex.SetContentType(exchange.ContentTypeJSON)
@@ -101,9 +98,9 @@ func (h *Handler) updateWord(ctx context.Context, ex *exchange.Exchanger) {
 		return
 	}
 
-	translateWords := make([]model.Word, 0, len(data.TanslateWords))
+	translateWords := make([]model.VocabWord, 0, len(data.TanslateWords))
 	for _, tr := range data.TanslateWords {
-		translateWords = append(translateWords, model.Word{Text: tr})
+		translateWords = append(translateWords, model.VocabWord{Text: tr})
 	}
 
 	word, err := h.wordSvc.UpdateWord(ctx, data.VocabID, data.WordID, data.NativeWord, translateWords, data.Examples)
@@ -113,7 +110,7 @@ func (h *Handler) updateWord(ctx context.Context, ex *exchange.Exchanger) {
 	}
 
 	wordRs := &model.VocabWordsRs{
-		NativeWord:     word.NativeWord,
+		NativeWord:     &word.NativeWord,
 		TranslateWords: word.TranslateWords,
 		Examples:       word.Examples,
 	}
@@ -143,7 +140,7 @@ func (h *Handler) getSeveralWords(ctx context.Context, ex *exchange.Exchanger) {
 	wordsRs := make([]model.VocabWordsRs, 0, len(words))
 	for _, word := range words {
 		wordRs := model.VocabWordsRs{
-			NativeWord:     word.NativeWord,
+			NativeWord:     &word.NativeWord,
 			TranslateWords: word.TranslateWords,
 			Examples:       word.Examples,
 		}
@@ -175,7 +172,7 @@ func (h *Handler) getWord(ctx context.Context, ex *exchange.Exchanger) {
 
 	wordRs := model.VocabWordsRs{
 		WordID:         word.Id,
-		NativeWord:     word.NativeWord,
+		NativeWord:     &word.NativeWord,
 		TranslateWords: word.TranslateWords,
 		Examples:       word.Examples,
 	}
@@ -201,7 +198,7 @@ func (h *Handler) getWords(ctx context.Context, ex *exchange.Exchanger) {
 	for _, word := range words {
 		wordRs := model.VocabWordsRs{
 			WordID:         word.Id,
-			NativeWord:     word.NativeWord,
+			NativeWord:     &word.NativeWord,
 			TranslateWords: word.TranslateWords,
 			Examples:       word.Examples,
 		}
