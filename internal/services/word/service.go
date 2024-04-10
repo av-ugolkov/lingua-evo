@@ -134,15 +134,10 @@ func (s *Service) AddWord(
 		return VocabularyWord{}, fmt.Errorf("word.Service.AddWord: %w", err)
 	}
 
-	translates := make([]string, 0, len(data.TanslateWords))
-	for _, translateWord := range data.TanslateWords {
-		translates = append(translates, translateWord)
-	}
-
 	vocabularyWord := VocabularyWord{
 		Id:             nativeWordID,
 		NativeWord:     data.NativeWord,
-		TranslateWords: translates,
+		TranslateWords: data.TanslateWords,
 		Examples:       data.Examples,
 	}
 

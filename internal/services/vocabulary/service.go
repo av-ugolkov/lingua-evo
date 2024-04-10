@@ -25,10 +25,6 @@ type (
 		AddTagsToVocabulary(ctx context.Context, vocabularyID uuid.UUID, tagIDs []uuid.UUID) error
 	}
 
-	repoDict interface {
-		GetWords(ctx context.Context, id uuid.UUID, capacity int) ([]string, error)
-	}
-
 	tagSvc interface {
 		AddTags(ctx context.Context, tags []string) ([]uuid.UUID, error)
 	}
