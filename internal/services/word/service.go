@@ -34,8 +34,7 @@ type (
 	}
 
 	exampleSvc interface {
-		AddExample(ctx context.Context, text, langCode string) (uuid.UUID, error)
-		UpdateExample(ctx context.Context, text, langCode string) (uuid.UUID, error)
+		AddExamples(ctx context.Context, text []string, langCode string) ([]uuid.UUID, error)
 		GetExamples(ctx context.Context, exampleIDs []uuid.UUID) ([]entityExample.Example, error)
 	}
 
@@ -101,13 +100,9 @@ func (s *Service) AddWord(
 			translateWordIDs = append(translateWordIDs, translateID)
 		}
 
-		exampleIDs := make([]uuid.UUID, 0, len(data.Examples))
-		for _, example := range data.Examples {
-			exampleID, err := s.exampleSvc.AddExample(ctx, example, vocab.NativeLang)
-			if err != nil {
-				return fmt.Errorf("add example: %w", err)
-			}
-			exampleIDs = append(exampleIDs, exampleID)
+		exampleIDs, err := s.exampleSvc.AddExamples(ctx, data.Examples, vocab.NativeLang)
+		if err != nil {
+			return fmt.Errorf("add example: %w", err)
 		}
 
 		vocabWord := Word{
@@ -135,10 +130,7 @@ func (s *Service) AddWord(
 	}
 
 	vocabularyWord := VocabularyWord{
-		Id:             nativeWordID,
-		NativeWord:     data.NativeWord,
-		TranslateWords: data.TanslateWords,
-		Examples:       data.Examples,
+		Id: nativeWordID,
 	}
 
 	return vocabularyWord, nil
@@ -147,30 +139,31 @@ func (s *Service) AddWord(
 func (s *Service) UpdateWord(ctx context.Context,
 	vocabID uuid.UUID,
 	wordID uuid.UUID,
-	nativeWord model.Word,
+	nativeWord model.VocabWord,
 	tanslateWords Words,
-	examples []string) (*VocabularyWord, error) {
-	nativeWordID, err := s.dictSvc.UpdateWord(ctx, nativeWord.Text, nativeWord.LangCode, nativeWord.Pronunciation)
+	examples []string) (VocabularyWord, error) {
+	vocab, err := s.vocabSvc.GetVocabularyByID(ctx, vocabID)
 	if err != nil {
-		return nil, fmt.Errorf("word.Service.UpdateWord - add native word in dictionary: %w", err)
+		return VocabularyWord{}, fmt.Errorf("word.Service.UpdateWord - get dictionary: %w", err)
+	}
+
+	nativeWordID, err := s.dictSvc.UpdateWord(ctx, nativeWord.Text, vocab.NativeLang, nativeWord.Pronunciation)
+	if err != nil {
+		return VocabularyWord{}, fmt.Errorf("word.Service.UpdateWord - add native word in dictionary: %w", err)
 	}
 
 	translateWordIDs := make([]uuid.UUID, 0, len(tanslateWords))
 	for _, translateWord := range tanslateWords {
-		translateWordID, err := s.dictSvc.UpdateWord(ctx, translateWord.Text, translateWord.LangCode, translateWord.Pronunciation)
+		translateWordID, err := s.dictSvc.UpdateWord(ctx, translateWord.Text, vocab.TranslateLang, translateWord.Pronunciation)
 		if err != nil {
-			return nil, fmt.Errorf("word.Service.UpdateWord - add translate word in dictionary: %w", err)
+			return VocabularyWord{}, fmt.Errorf("word.Service.UpdateWord - add translate word in dictionary: %w", err)
 		}
 		translateWordIDs = append(translateWordIDs, translateWordID)
 	}
 
-	exampleIDs := make([]uuid.UUID, 0, len(examples))
-	for _, example := range examples {
-		exampleID, err := s.exampleSvc.UpdateExample(ctx, example, nativeWord.LangCode)
-		if err != nil {
-			return nil, fmt.Errorf("word.Service.UpdateWord - add example: %w", err)
-		}
-		exampleIDs = append(exampleIDs, exampleID)
+	exampleIDs, err := s.exampleSvc.AddExamples(ctx, examples, vocab.NativeLang)
+	if err != nil {
+		return VocabularyWord{}, fmt.Errorf("word.Service.UpdateWord - add example: %w", err)
 	}
 
 	vocabulary := Word{
@@ -183,13 +176,13 @@ func (s *Service) UpdateWord(ctx context.Context,
 	if wordID != nativeWordID {
 		err = s.repo.DeleteWord(ctx, Word{ID: vocabID, NativeID: wordID})
 		if err != nil {
-			return nil, fmt.Errorf("word.Service.UpdateWord - delete old word: %w", err)
+			return VocabularyWord{}, fmt.Errorf("word.Service.UpdateWord - delete old word: %w", err)
 		}
 		err = s.repo.AddWord(ctx, vocabulary)
 		if err != nil {
-			return nil, fmt.Errorf("word.Service.UpdateWord - add new word: %w", err)
+			return VocabularyWord{}, fmt.Errorf("word.Service.UpdateWord - add new word: %w", err)
 		}
-		return &VocabularyWord{
+		return VocabularyWord{
 			NativeWord:     nativeWord,
 			TranslateWords: tanslateWords.GetValues(),
 			Examples:       examples,
@@ -197,10 +190,10 @@ func (s *Service) UpdateWord(ctx context.Context,
 	}
 	err = s.repo.UpdateWord(ctx, vocabulary)
 	if err != nil {
-		return nil, fmt.Errorf("word.Service.UpdateWord - update vocabulary: %w", err)
+		return VocabularyWord{}, fmt.Errorf("word.Service.UpdateWord - update vocabulary: %w", err)
 	}
 
-	return &VocabularyWord{
+	return VocabularyWord{
 		NativeWord:     nativeWord,
 		TranslateWords: tanslateWords.GetValues(),
 		Examples:       examples,
@@ -260,7 +253,7 @@ func (s *Service) GetRandomWords(ctx context.Context, vocabID uuid.UUID, limit i
 			}
 
 			vocabularyWords = append(vocabularyWords, VocabularyWord{
-				NativeWord: model.Word{
+				NativeWord: model.VocabWord{
 					Text:          words[0].Text,
 					Pronunciation: words[0].Pronunciation,
 				},
@@ -294,7 +287,7 @@ func (s *Service) GetWord(ctx context.Context, vocabID, wordID uuid.UUID) (*Voca
 			return fmt.Errorf("not found word by id [%v]", wordID)
 		}
 
-		vocab.NativeWord = model.Word{
+		vocab.NativeWord = model.VocabWord{
 			Text:          words[0].Text,
 			Pronunciation: words[0].Pronunciation,
 		}
@@ -425,7 +418,7 @@ func (s *Service) workerForGetWord(
 		result <- ResultJob{
 			value: VocabularyWord{
 				Id: words[0].ID,
-				NativeWord: model.Word{
+				NativeWord: model.VocabWord{
 					Text:          words[0].Text,
 					Pronunciation: words[0].Pronunciation,
 				},
