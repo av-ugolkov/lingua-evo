@@ -15,14 +15,13 @@ var ()
 
 type (
 	repoVocab interface {
-		Add(ctx context.Context, dict Vocabulary) error
+		Add(ctx context.Context, dict Vocabulary, tagIDs []uuid.UUID) error
 		Delete(ctx context.Context, dict Vocabulary) error
 		GetByName(ctx context.Context, uid uuid.UUID, name string) (Vocabulary, error)
 		GetTagsVocabulary(ctx context.Context, vocabularyID uuid.UUID) ([]string, error)
 		GetByID(ctx context.Context, dictID uuid.UUID) (Vocabulary, error)
 		GetVocabularies(ctx context.Context, userID uuid.UUID) ([]Vocabulary, error)
 		Rename(ctx context.Context, id uuid.UUID, newName string) error
-		AddTagsToVocabulary(ctx context.Context, vocabularyID uuid.UUID, tagIDs []uuid.UUID) error
 	}
 
 	tagSvc interface {
@@ -81,16 +80,9 @@ func (s *Service) AddVocabulary(ctx context.Context, userID uuid.UUID, data mode
 			return fmt.Errorf("add tags: %w", err)
 		}
 
-		err = s.repoVocab.Add(ctx, vocabulary)
+		err = s.repoVocab.Add(ctx, vocabulary, tagIDs)
 		if err != nil {
 			return fmt.Errorf("add vocabulary: %w", err)
-		}
-
-		if len(tagIDs) > 0 {
-			err = s.repoVocab.AddTagsToVocabulary(ctx, vocabulary.ID, tagIDs)
-			if err != nil {
-				return fmt.Errorf("add tags to vocabulary: %w", err)
-			}
 		}
 
 		return nil

@@ -13,7 +13,7 @@ var (
 )
 
 type (
-	Words []model.Word
+	Words []model.VocabWord
 
 	Word struct {
 		ID             uuid.UUID
@@ -25,7 +25,7 @@ type (
 
 	VocabularyWord struct {
 		Id             uuid.UUID
-		NativeWord     model.Word
+		NativeWord     model.VocabWord
 		TranslateWords []string
 		Examples       []string
 	}

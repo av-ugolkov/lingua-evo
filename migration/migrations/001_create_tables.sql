@@ -58,6 +58,7 @@ CREATE TABLE IF NOT EXISTS
         "name" TEXT NOT NULL,
         "native_lang" TEXT REFERENCES "language" ("code") ON DELETE CASCADE,
         "translate_lang" TEXT REFERENCES "language" ("code") ON DELETE CASCADE,
+        "tags" UUID[],
         "updated_at" TIMESTAMP NOT NULL,
         "created_at" TIMESTAMP NOT NULL
     );
@@ -70,28 +71,17 @@ CREATE TABLE IF NOT EXISTS
 CREATE UNIQUE INDEX IF NOT EXISTS "idx_unique_tag__text" ON "tag" ("text");
 
 CREATE TABLE IF NOT EXISTS
-    "vocabulary_tag" ("vocabulary_id" UUID REFERENCES "vocabulary" ("id") ON DELETE CASCADE, "tag_id" UUID REFERENCES "tag" ("id"));
-
-CREATE TABLE IF NOT EXISTS
     "word" (
         "id" UUID PRIMARY KEY,
         "vocabulary_id" UUID REFERENCES "vocabulary" ("id") ON DELETE CASCADE,
         "native_id" UUID NOT NULL,
+        "translate_words" UUID[],
+        "examples" UUID[],
         "updated_at" TIMESTAMP NOT NULL,
         "created_at" TIMESTAMP NOT NULL
     );
 
 CREATE UNIQUE INDEX IF NOT EXISTS "idx_unique_word__vocabulary_id_native_id" ON "word" ("vocabulary_id", "native_id");
-
-CREATE TABLE IF NOT EXISTS
-    "word_translate" ("word_id" UUID REFERENCES "word" ("id") ON DELETE CASCADE, "dictionary_id" UUID NOT NULL);
-
-CREATE UNIQUE INDEX IF NOT EXISTS "idx_unique_word_translate__word_id_dictionary_id" ON "word_translate" ("word_id", "dictionary_id");
-
-CREATE TABLE IF NOT EXISTS
-    "word_example" ("word_id" UUID REFERENCES "word" ("id") ON DELETE CASCADE, "example_id" UUID NOT NULL);
-
-CREATE UNIQUE INDEX IF NOT EXISTS "idx_unique_word_example__word_id_example_id" ON "word_example" ("word_id", "example_id");
 
 -- +goose Down
 DROP TABLE IF EXISTS "users";
@@ -107,9 +97,3 @@ DROP TABLE IF EXISTS "word";
 DROP TABLE IF EXISTS "vocabulary";
 
 DROP TABLE IF EXISTS "tag";
-
-DROP TABLE IF EXISTS "word_tag";
-
-DROP TABLE IF EXISTS "word_translate";
-
-DROP TABLE IF EXISTS "word_example";

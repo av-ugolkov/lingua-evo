@@ -26,9 +26,9 @@ func (r *DictionaryRepo) AddWord(ctx context.Context, w *entity.Word) (uuid.UUID
 	table := getTable(w.LangCode)
 	query := fmt.Sprintf(
 		`WITH d AS (
-    		SELECT id FROM "%[1]s" WHERE text = $2),
+    		SELECT id FROM %[1]s WHERE text = $2),
 		ins AS (
-    		INSERT INTO "%[1]s" (id, text, pronunciation, lang_code, updated_at, created_at)
+    		INSERT INTO %[1]s (id, text, pronunciation, lang_code, updated_at, created_at)
 			VALUES($1, $2, $3, $4, $5, $5)
     		ON CONFLICT DO NOTHING RETURNING id)
 		SELECT id

@@ -5,16 +5,15 @@ import (
 )
 
 type (
-	Word struct {
+	VocabWord struct {
 		Text          string `json:"text"`
 		Pronunciation string `json:"pronunciation,omitempty"`
-		LangCode      string `json:"language,omitempty"`
 	}
 
 	VocabWordRq struct {
 		VocabID       uuid.UUID `json:"vocab_id"`
 		WordID        uuid.UUID `json:"word_id,omitempty"`
-		NativeWord    Word      `json:"native_word"`
+		NativeWord    VocabWord `json:"native_word"`
 		TanslateWords []string  `json:"translate_words,omitempty"`
 		Examples      []string  `json:"examples,omitempty"`
 	}
@@ -25,9 +24,9 @@ type (
 	}
 
 	VocabWordsRs struct {
-		WordID         uuid.UUID `json:"word_id,omitempty"`
-		NativeWord     Word      `json:"native"`
-		TranslateWords []string  `json:"translate_words,omitempty"`
-		Examples       []string  `json:"examples,omitempty"`
+		WordID         uuid.UUID  `json:"word_id"`
+		NativeWord     *VocabWord `json:"native,omitempty"`
+		TranslateWords []string   `json:"translate_words,omitempty"`
+		Examples       []string   `json:"examples,omitempty"`
 	}
 )

@@ -40,8 +40,8 @@ func (r *WordRepo) GetWord(ctx context.Context, vocabID, nativeID uuid.UUID) (en
 }
 
 func (r *WordRepo) AddWord(ctx context.Context, word entity.Word) error {
-	const query = `INSERT INTO word (id, vocabulary_id, native_id, updated_at, created_at) VALUES($1, $2, $3, $4, $4);`
-	_, err := r.db.ExecContext(ctx, query, word.ID, word.VocabID, word.NativeID, time.Now().UTC())
+	const query = `INSERT INTO word (id, vocabulary_id, native_id, translate_words, examples, updated_at, created_at) VALUES($1, $2, $3, $4, $5, $6, $6);`
+	_, err := r.db.ExecContext(ctx, query, word.ID, word.VocabID, word.NativeID, word.TranslateWords, word.Examples, time.Now().UTC())
 	if err != nil {
 		var pgErr *pgconn.PgError
 		switch {
@@ -59,7 +59,7 @@ func (r *WordRepo) EditVocabulary(ctx context.Context, vocabulary entity.Word) (
 	return 0, nil
 }
 
-func (r *WordRepo) GetWordsFromDictionary(ctx context.Context, dictID uuid.UUID, capacity int) ([]string, error) {
+func (r *WordRepo) GetWordsFromVocabulary(ctx context.Context, dictID uuid.UUID, capacity int) ([]string, error) {
 	const query = `
 	SELECT text 
 	FROM word 

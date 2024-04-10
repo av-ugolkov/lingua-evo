@@ -9,6 +9,7 @@ import (
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary"
 
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 )
 
 type VocabRepo struct {
@@ -21,29 +22,12 @@ func NewRepo(db *sql.DB) *VocabRepo {
 	}
 }
 
-func (r *VocabRepo) Add(ctx context.Context, vocab entity.Vocabulary) error {
-	query := `INSERT INTO vocabulary (id, user_id, name, native_lang, translate_lang, updated_at, created_at) VALUES($1, $2, $3, $4, $5, $6, $6)`
+func (r *VocabRepo) Add(ctx context.Context, vocab entity.Vocabulary, tagIDs []uuid.UUID) error {
+	query := `INSERT INTO vocabulary (id, user_id, name, native_lang, translate_lang, tags, updated_at, created_at) VALUES($1, $2, $3, $4, $5, $6, $7, $7)`
 
-	_, err := r.db.ExecContext(ctx, query, vocab.ID, vocab.UserID, vocab.Name, vocab.NativeLang, vocab.TranslateLang, time.Now().UTC())
+	_, err := r.db.ExecContext(ctx, query, vocab.ID, vocab.UserID, vocab.Name, vocab.NativeLang, vocab.TranslateLang, pq.Array(tagIDs), time.Now().UTC())
 	if err != nil {
 		return fmt.Errorf("vocabulary.delivery.repository.VocabRepo.Add: %w", err)
-	}
-
-	return nil
-}
-
-func (r *VocabRepo) AddTagsToVocabulary(ctx context.Context, vocabularyID uuid.UUID, tagIDs []uuid.UUID) error {
-	query := `INSERT INTO vocabulary_tag (vocabulary_id, tag_id) VALUES`
-	vals := make([]interface{}, 0, len(tagIDs))
-	vals = append(vals, vocabularyID)
-	for ind, tagID := range tagIDs {
-		query += fmt.Sprintf("($1, $%d),", ind+2)
-		vals = append(vals, tagID)
-	}
-	query = query[0 : len(query)-1]
-	_, err := r.db.ExecContext(ctx, query, vals...)
-	if err != nil {
-		return fmt.Errorf("vocabulary.delivery.repository.VocabRepo.AddTagsToVocabulary: %w", err)
 	}
 
 	return nil
