@@ -39,7 +39,7 @@ create table
 CREATE UNIQUE INDEX IF NOT EXISTS "idx_unique_dictionary_ru__text" ON "dictionary_ru" ("text");
 
 CREATE TABLE IF NOT EXISTS
-    "example" ("id" UUID PRIMARY KEY, "text" TEXT);
+    "example" ("id" UUID PRIMARY KEY, "text" TEXT, "created_at" TIMESTAMP NOT NULL);
 
 CREATE TABLE IF NOT EXISTS
     "example_en" () INHERITS ("example");
