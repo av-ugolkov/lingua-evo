@@ -16,10 +16,10 @@ import (
 )
 
 const (
-	ParamDictID = "dict_id"
-	ParamWordID = "word_id"
-	ParamName   = "name"
-	ParamLimit  = "limit"
+	ParamVocabID = "vocab_id"
+	ParamWordID  = "word_id"
+	ParamName    = "name"
+	ParamLimit   = "limit"
 )
 
 type Handler struct {
@@ -67,7 +67,7 @@ func (h *Handler) addWord(ctx context.Context, ex *exchange.Exchanger) {
 	}
 
 	wordRs := model.VocabWordsRs{
-		WordID: vocabWord.Id,
+		WordID: vocabWord.ID,
 	}
 
 	ex.SetContentType(exchange.ContentTypeJSON)
@@ -120,7 +120,7 @@ func (h *Handler) updateWord(ctx context.Context, ex *exchange.Exchanger) {
 }
 
 func (h *Handler) getSeveralWords(ctx context.Context, ex *exchange.Exchanger) {
-	dictID, err := ex.QueryParamUUID(ParamDictID)
+	dictID, err := ex.QueryParamUUID(ParamVocabID)
 	if err != nil {
 		ex.SendError(http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getSeveralWords - get dict id: %w", err))
 		return
@@ -153,7 +153,7 @@ func (h *Handler) getSeveralWords(ctx context.Context, ex *exchange.Exchanger) {
 }
 
 func (h *Handler) getWord(ctx context.Context, ex *exchange.Exchanger) {
-	dictID, err := ex.QueryParamUUID(ParamDictID)
+	vocabID, err := ex.QueryParamUUID(ParamVocabID)
 	if err != nil {
 		ex.SendError(http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getWords - get dict id: %w", err))
 		return
@@ -164,14 +164,15 @@ func (h *Handler) getWord(ctx context.Context, ex *exchange.Exchanger) {
 		ex.SendError(http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getWords - get word id: %w", err))
 		return
 	}
-	word, err := h.wordSvc.GetWord(ctx, dictID, wordID)
+
+	word, err := h.wordSvc.GetWord(ctx, vocabID, wordID)
 	if err != nil {
 		ex.SendError(http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getWords: %w", err))
 		return
 	}
 
 	wordRs := model.VocabWordsRs{
-		WordID:         word.Id,
+		WordID:         word.ID,
 		NativeWord:     &word.NativeWord,
 		TranslateWords: word.TranslateWords,
 		Examples:       word.Examples,
@@ -182,13 +183,13 @@ func (h *Handler) getWord(ctx context.Context, ex *exchange.Exchanger) {
 }
 
 func (h *Handler) getWords(ctx context.Context, ex *exchange.Exchanger) {
-	dictID, err := ex.QueryParamUUID(ParamDictID)
+	vocabID, err := ex.QueryParamUUID(ParamVocabID)
 	if err != nil {
 		ex.SendError(http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getWords - get dict id: %w", err))
 		return
 	}
 
-	words, err := h.wordSvc.GetWords(ctx, dictID)
+	words, err := h.wordSvc.GetWords(ctx, vocabID)
 	if err != nil {
 		ex.SendError(http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getWords: %w", err))
 		return
@@ -197,7 +198,7 @@ func (h *Handler) getWords(ctx context.Context, ex *exchange.Exchanger) {
 	wordsRs := make([]model.VocabWordsRs, 0, len(words))
 	for _, word := range words {
 		wordRs := model.VocabWordsRs{
-			WordID:         word.Id,
+			WordID:         word.ID,
 			NativeWord:     &word.NativeWord,
 			TranslateWords: word.TranslateWords,
 			Examples:       word.Examples,
