@@ -120,7 +120,7 @@ func (h *Handler) updateWord(ctx context.Context, ex *exchange.Exchanger) {
 }
 
 func (h *Handler) getSeveralWords(ctx context.Context, ex *exchange.Exchanger) {
-	dictID, err := ex.QueryParamUUID(ParamVocabID)
+	vocabID, err := ex.QueryParamUUID(ParamVocabID)
 	if err != nil {
 		ex.SendError(http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getSeveralWords - get dict id: %w", err))
 		return
@@ -131,7 +131,7 @@ func (h *Handler) getSeveralWords(ctx context.Context, ex *exchange.Exchanger) {
 		ex.SendError(http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getSeveralWords - get limit: %w", err))
 		return
 	}
-	words, err := h.wordSvc.GetRandomWords(ctx, dictID, limit)
+	words, err := h.wordSvc.GetRandomWords(ctx, vocabID, limit)
 	if err != nil {
 		ex.SendError(http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getSeveralWords: %w", err))
 		return
