@@ -21,7 +21,7 @@ func TestService_AddWord(t *testing.T) {
 			}
 		)
 		repoWordMock := new(mockRepoDictionary)
-		repoWordMock.On("AddWord", ctx, data).Return(mock.Anything, nil)
+		repoWordMock.On("AddWords", ctx, mock.Anything).Return(mock.Anything, nil)
 		s := &Service{repo: repoWordMock}
 
 		got, err := s.AddWord(ctx, data)
