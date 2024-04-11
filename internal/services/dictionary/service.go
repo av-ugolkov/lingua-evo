@@ -16,7 +16,7 @@ import (
 
 type (
 	repoDictionary interface {
-		AddWord(ctx context.Context, w *Word) (uuid.UUID, error)
+		AddWords(ctx context.Context, words []Word) ([]uuid.UUID, error)
 		GetWordByText(ctx context.Context, w *Word) (uuid.UUID, error)
 		GetWords(ctx context.Context, ids []uuid.UUID) ([]Word, error)
 		UpdateWord(ctx context.Context, w *Word) error
@@ -55,19 +55,19 @@ func (s *Service) AddWord(ctx context.Context, data model.WordRq) (uuid.UUID, er
 		return uuid.Nil, fmt.Errorf("dictionary.Service.AddWord - check language: %v", err)
 	}
 
-	word := &Word{
-		ID:            uuid.New(),
-		Text:          data.Text,
-		LangCode:      data.LangCode,
-		Pronunciation: data.Pronunciation,
-	}
-
-	wordID, err := s.repo.AddWord(ctx, word)
+	wordIDs, err := s.repo.AddWords(ctx, []Word{
+		{
+			ID:            uuid.New(),
+			Text:          data.Text,
+			LangCode:      data.LangCode,
+			Pronunciation: data.Pronunciation,
+		},
+	})
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("dictionary.Service.AddWord: %v", err)
 	}
 
-	return wordID, nil
+	return wordIDs[0], nil
 }
 
 func (s *Service) GetWordByText(ctx context.Context, text, langCode string) (uuid.UUID, error) {
@@ -173,12 +173,12 @@ func (s *Service) UpdateWord(ctx context.Context, text, langCode, pronunciation 
 		return uuid.Nil, fmt.Errorf("word.Service.UpdateWord - get word: %w", err)
 	} else if wordID == uuid.Nil {
 		word.ID = uuid.New()
-		wordID, err = s.repo.AddWord(ctx, word)
+		wordIDs, err := s.repo.AddWords(ctx, []Word{*word})
 		if err != nil {
 			return uuid.Nil, fmt.Errorf("word.Service.UpdateWord - add word: %w", err)
 		}
 
-		return wordID, nil
+		return wordIDs[0], nil
 	}
 
 	word.ID = wordID
