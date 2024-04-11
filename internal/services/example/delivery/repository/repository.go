@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 
@@ -22,16 +23,13 @@ func NewRepo(db *sql.DB) *ExampleRepo {
 }
 
 func (r *ExampleRepo) AddExamples(ctx context.Context, ids []uuid.UUID, texts []string, langCode string) ([]uuid.UUID, error) {
-	var insValues strings.Builder
-	countBytesText := 0
-	for _, text := range texts {
-		countBytesText += len(text)
+	if len(texts) == 0 {
+		return nil, fmt.Errorf("example.repository.ExampleRepo.AddExample - empty texts")
 	}
-	const lenByteOfTemp = 7
-	const lenByteUUID = 36
-	insValues.Grow((len(ids) * (lenByteUUID + lenByteOfTemp)) + countBytesText)
+
+	var insValues strings.Builder
 	for i := 0; i < len(texts); i++ {
-		insValues.WriteString(fmt.Sprintf("('%s','%s')", ids[i], texts[i]))
+		insValues.WriteString(fmt.Sprintf("('%s','%s','%q')", ids[i], texts[i], time.Now().UTC().Format(time.RFC3339)))
 		if i < len(texts)-1 {
 			insValues.WriteString(",")
 		}
@@ -41,7 +39,7 @@ func (r *ExampleRepo) AddExamples(ctx context.Context, ids []uuid.UUID, texts []
 	WITH s AS (
     		SELECT id FROM example_%[1]s WHERE text = any($1::text[])),
 		ins AS (
-    		INSERT INTO example_%[1]s (id, text)
+    		INSERT INTO example_%[1]s (id, text, created_at)
 			VALUES %[2]s
     		ON CONFLICT DO NOTHING RETURNING id)
 		SELECT id
@@ -51,7 +49,7 @@ func (r *ExampleRepo) AddExamples(ctx context.Context, ids []uuid.UUID, texts []
 		FROM s;`, langCode, insValues.String())
 	rows, err := r.db.QueryContext(ctx, query, texts)
 	if err != nil {
-		return nil, fmt.Errorf("example.repository.ExampleRepo.AddExample: %w", err)
+		return nil, fmt.Errorf("example.repository.ExampleRepo.AddExamples - query: %w", err)
 	}
 
 	tagIDs := make([]uuid.UUID, 0, len(texts))
@@ -59,7 +57,7 @@ func (r *ExampleRepo) AddExamples(ctx context.Context, ids []uuid.UUID, texts []
 		var id uuid.UUID
 		err = rows.Scan(&id)
 		if err != nil {
-			return nil, fmt.Errorf("example.repository.ExampleRepo.AddExample: %w", err)
+			return nil, fmt.Errorf("example.repository.ExampleRepo.AddExamples - scan: %w", err)
 		}
 		tagIDs = append(tagIDs, id)
 	}

@@ -14,25 +14,25 @@ type mockRepoDictionary struct {
 	mock.Mock
 }
 
-// AddWord provides a mock function with given fields: ctx, w
-func (_m *mockRepoDictionary) AddWord(ctx context.Context, w *Word) (uuid.UUID, error) {
-	ret := _m.Called(ctx, w)
+// AddWords provides a mock function with given fields: ctx, words
+func (_m *mockRepoDictionary) AddWords(ctx context.Context, words []Word) ([]uuid.UUID, error) {
+	ret := _m.Called(ctx, words)
 
-	var r0 uuid.UUID
+	var r0 []uuid.UUID
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *Word) (uuid.UUID, error)); ok {
-		return rf(ctx, w)
+	if rf, ok := ret.Get(0).(func(context.Context, []Word) ([]uuid.UUID, error)); ok {
+		return rf(ctx, words)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *Word) uuid.UUID); ok {
-		r0 = rf(ctx, w)
+	if rf, ok := ret.Get(0).(func(context.Context, []Word) []uuid.UUID); ok {
+		r0 = rf(ctx, words)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(uuid.UUID)
+			r0 = ret.Get(0).([]uuid.UUID)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *Word) error); ok {
-		r1 = rf(ctx, w)
+	if rf, ok := ret.Get(1).(func(context.Context, []Word) error); ok {
+		r1 = rf(ctx, words)
 	} else {
 		r1 = ret.Error(1)
 	}
