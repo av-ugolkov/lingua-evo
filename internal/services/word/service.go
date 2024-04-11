@@ -130,7 +130,7 @@ func (s *Service) AddWord(
 	}
 
 	vocabularyWord := VocabularyWord{
-		Id: nativeWordID,
+		ID: nativeWordID,
 	}
 
 	return vocabularyWord, nil
@@ -321,6 +321,8 @@ func (s *Service) GetWord(ctx context.Context, vocabID, wordID uuid.UUID) (*Voca
 		return nil, fmt.Errorf("word.Service.GetWords - get data: %w", err)
 	}
 
+	vocab.ID = wordID
+
 	return &vocab, nil
 }
 
@@ -330,12 +332,12 @@ type ResultJob struct {
 }
 
 func (s *Service) GetWords(ctx context.Context, vocabID uuid.UUID) ([]VocabularyWord, error) {
-	vocabularies, err := s.repo.GetVocabulary(ctx, vocabID)
+	vocabWords, err := s.repo.GetVocabulary(ctx, vocabID)
 	if err != nil {
 		return nil, fmt.Errorf("word.Service.GetWords - get words: %w", err)
 	}
 
-	vocabularyWords := make([]VocabularyWord, 0, len(vocabularies))
+	vocabularyWords := make([]VocabularyWord, 0, len(vocabWords))
 
 	data := make(chan Word, countWorker)
 	result := make(chan ResultJob, countWorker)
@@ -355,7 +357,7 @@ func (s *Service) GetWords(ctx context.Context, vocabID uuid.UUID) ([]Vocabulary
 
 	go func() {
 		defer close(data)
-		for _, vocab := range vocabularies {
+		for _, vocab := range vocabWords {
 			data <- vocab
 		}
 	}()
@@ -417,7 +419,7 @@ func (s *Service) workerForGetWord(
 
 		result <- ResultJob{
 			value: VocabularyWord{
-				Id: words[0].ID,
+				ID: words[0].ID,
 				NativeWord: model.VocabWord{
 					Text:          words[0].Text,
 					Pronunciation: words[0].Pronunciation,

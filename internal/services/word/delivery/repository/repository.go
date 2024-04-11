@@ -25,11 +25,11 @@ func NewRepo(db *sql.DB) *WordRepo {
 }
 
 func (r *WordRepo) GetWord(ctx context.Context, vocabID, nativeID uuid.UUID) (entity.Word, error) {
-	const query = `SELECT native_word, translate_word, examples FROM word WHERE vocabulary_id=$1 and native_id=$2;`
+	const query = `SELECT id, translate_words, examples FROM word WHERE vocabulary_id=$1 and native_id=$2;`
 
 	var word entity.Word
 	err := r.db.QueryRowContext(ctx, query, vocabID, nativeID).Scan(
-		&word.NativeID,
+		&word.ID,
 		pq.Array(&word.TranslateWords),
 		pq.Array(&word.Examples))
 	if err != nil {
@@ -117,7 +117,7 @@ func (r *WordRepo) DeleteWord(ctx context.Context, vocabulary entity.Word) error
 }
 
 func (r *WordRepo) GetRandomVocabulary(ctx context.Context, vocabID uuid.UUID, limit int) ([]entity.Word, error) {
-	query := `SELECT native_id, translate_word, examples FROM vocabulary WHERE vocabulary_id=$1 ORDER BY RANDOM() LIMIT $2;`
+	query := `SELECT native_id, translate_words, examples FROM word WHERE vocabulary_id=$1 ORDER BY RANDOM() LIMIT $2;`
 	rows, err := r.db.QueryContext(ctx, query, vocabID, limit)
 	if err != nil {
 		return nil, fmt.Errorf("word.repository.WordRepo.GetRandomVocabulary: %w", err)
@@ -138,7 +138,7 @@ func (r *WordRepo) GetRandomVocabulary(ctx context.Context, vocabID uuid.UUID, l
 }
 
 func (r *WordRepo) GetVocabulary(ctx context.Context, vocabID uuid.UUID) ([]entity.Word, error) {
-	query := `SELECT native_id, translate_word, examples FROM vocabulary WHERE vocabulary_id=$1;`
+	query := `SELECT native_id, translate_words, examples FROM word WHERE vocabulary_id=$1;`
 	rows, err := r.db.QueryContext(ctx, query, vocabID)
 	if err != nil {
 		return nil, fmt.Errorf("word.repository.WordRepo.GetVocabulary: %w", err)
