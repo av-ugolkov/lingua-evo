@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -21,27 +22,56 @@ func NewRepo(db *sql.DB) *DictionaryRepo {
 	}
 }
 
-func (r *DictionaryRepo) AddWord(ctx context.Context, w *entity.Word) (uuid.UUID, error) {
-	var id uuid.UUID
-	table := getTable(w.LangCode)
-	query := fmt.Sprintf(
-		`WITH d AS (
-    		SELECT id FROM %[1]s WHERE text = $2),
-		ins AS (
-    		INSERT INTO %[1]s (id, text, pronunciation, lang_code, updated_at, created_at)
-			VALUES($1, $2, $3, $4, $5, $5)
-    		ON CONFLICT DO NOTHING RETURNING id)
-		SELECT id
-		FROM ins
-		UNION ALL
-		SELECT id
-		FROM d;`, table)
-	err := r.db.QueryRowContext(ctx, query, w.ID, w.Text, w.Pronunciation, w.LangCode, time.Now().UTC()).Scan(&id)
-	if err != nil {
-		return uuid.Nil, fmt.Errorf("dictionary.repository.DictionaryRepo.AddWord - query: %w", err)
+func (r *DictionaryRepo) AddWords(ctx context.Context, words []entity.Word) ([]uuid.UUID, error) {
+	if len(words) == 0 {
+		return nil, fmt.Errorf("dictionary.repository.DictionaryRepo.AddWord - empty words")
 	}
 
-	return id, nil
+	wordTexts := make([]string, 0, len(words))
+	var insValues strings.Builder
+	for i := 0; i < len(words); i++ {
+		wordTexts = append(wordTexts, words[i].Text)
+		insValues.WriteString(fmt.Sprintf("('%v','%s','%s','%s','%q','%q')",
+			words[i].ID,
+			words[i].Text,
+			words[i].Pronunciation,
+			words[i].LangCode,
+			time.Now().UTC().Format(time.RFC3339),
+			time.Now().UTC().Format(time.RFC3339),
+		))
+		if i < len(words)-1 {
+			insValues.WriteString(",")
+		}
+	}
+
+	table := getTable(words[0].LangCode)
+	query := fmt.Sprintf(
+		`WITH d AS (
+    		SELECT id FROM %[1]s WHERE text = ANY($1::text[])),
+		ins AS (
+    		INSERT INTO %[1]s (id, text, pronunciation, lang_code, updated_at, created_at)
+			VALUES %[2]s
+    		ON CONFLICT DO NOTHING RETURNING id)
+		SELECT id 
+		FROM ins 
+		UNION ALL 
+		SELECT id 
+		FROM d;`, table, insValues.String())
+	rows, err := r.db.QueryContext(ctx, query, wordTexts)
+	if err != nil {
+		return nil, fmt.Errorf("dictionary.repository.DictionaryRepo.AddWord - query: %w", err)
+	}
+
+	wordIDs := make([]uuid.UUID, 0, len(words))
+	for rows.Next() {
+		var id uuid.UUID
+		if err := rows.Scan(&id); err != nil {
+			return nil, fmt.Errorf("dictionary.repository.DictionaryRepo.AddWord - scan: %w", err)
+		}
+		wordIDs = append(wordIDs, id)
+	}
+
+	return wordIDs, nil
 }
 
 func (r *DictionaryRepo) GetWordByText(ctx context.Context, w *entity.Word) (uuid.UUID, error) {
