@@ -24,7 +24,7 @@ type (
 	}
 
 	VocabularyWord struct {
-		Id             uuid.UUID
+		ID             uuid.UUID
 		NativeWord     model.VocabWord
 		TranslateWords []string
 		Examples       []string
