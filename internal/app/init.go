@@ -28,13 +28,13 @@ import (
 	dictService "github.com/av-ugolkov/lingua-evo/internal/services/dictionary"
 	dictHandler "github.com/av-ugolkov/lingua-evo/internal/services/dictionary/delivery/handler"
 	dictRepository "github.com/av-ugolkov/lingua-evo/internal/services/dictionary/delivery/repository"
-
 	exampleService "github.com/av-ugolkov/lingua-evo/internal/services/example"
 	exampleRepository "github.com/av-ugolkov/lingua-evo/internal/services/example/delivery/repository"
 	langService "github.com/av-ugolkov/lingua-evo/internal/services/language"
 	languageHandler "github.com/av-ugolkov/lingua-evo/internal/services/language/delivery/handler"
 	langRepository "github.com/av-ugolkov/lingua-evo/internal/services/language/delivery/repository"
 	tagService "github.com/av-ugolkov/lingua-evo/internal/services/tag"
+	tagHandler "github.com/av-ugolkov/lingua-evo/internal/services/tag/delivery/handler"
 	tagRepository "github.com/av-ugolkov/lingua-evo/internal/services/tag/delivery/repository"
 	userService "github.com/av-ugolkov/lingua-evo/internal/services/user"
 	userHandler "github.com/av-ugolkov/lingua-evo/internal/services/user/delivery/handler"
@@ -96,7 +96,7 @@ func ServerStart(cfg *config.Config) {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	slog.Info("start sertver")
+	slog.Info("start server")
 	go func() {
 		if err := server.Serve(listener); err != nil {
 			switch {
@@ -118,7 +118,7 @@ func ServerStart(cfg *config.Config) {
 }
 
 func initServer(r *mux.Router, db *sql.DB, redis *redis.Redis) {
-	transactor := transactor.NewTransactor(db)
+	tr := transactor.NewTransactor(db)
 	slog.Info("create services")
 	userRepo := userRepository.NewRepo(db)
 	userSvc := userService.NewService(userRepo, redis)
@@ -131,9 +131,9 @@ func initServer(r *mux.Router, db *sql.DB, redis *redis.Redis) {
 	tagRepo := tagRepository.NewRepo(db)
 	tagSvc := tagService.NewService(tagRepo)
 	vocabRepo := vocabRepository.NewRepo(db)
-	vocabSvc := vocabService.NewService(transactor, vocabRepo, langSvc, tagSvc)
+	vocabSvc := vocabService.NewService(tr, vocabRepo, langSvc, tagSvc)
 	wordRepo := wordRepository.NewRepo(db)
-	wordSvc := wordService.NewService(transactor, wordRepo, vocabSvc, dictSvc, exampleSvc)
+	wordSvc := wordService.NewService(tr, wordRepo, vocabSvc, dictSvc, exampleSvc)
 	authRepo := authRepository.NewRepo(redis)
 	authSvc := authService.NewService(authRepo, userSvc)
 
@@ -143,6 +143,7 @@ func initServer(r *mux.Router, db *sql.DB, redis *redis.Redis) {
 	dictHandler.Create(r, dictSvc)
 	wordHandler.Create(r, wordSvc)
 	vocabHandler.Create(r, vocabSvc)
+	tagHandler.Create(r, tagSvc)
 	authHandler.Create(r, authSvc)
 
 	slog.Info("end init services")
