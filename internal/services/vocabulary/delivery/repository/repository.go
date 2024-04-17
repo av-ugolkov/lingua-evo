@@ -66,7 +66,7 @@ where id=any(select tag_id from vocabulary_tag where vocabulary_id=$1);`
 	if err != nil {
 		return nil, fmt.Errorf("vocabulary.delivery.repository.VocabRepo.GetByName: %w", err)
 	}
-	tags := []string{}
+	tags := make([]string, 0)
 	for rows.Next() {
 		var tag string
 		if err := rows.Scan(&tag); err != nil {
@@ -90,10 +90,12 @@ func (r *VocabRepo) GetByID(ctx context.Context, dictID uuid.UUID) (entity.Vocab
 }
 
 func (r *VocabRepo) GetVocabularies(ctx context.Context, userID uuid.UUID) ([]entity.Vocabulary, error) {
-	query := `SELECT d.id, d.user_id, name, n.lang native_lang, s.lang translate_lang FROM vocabulary d
-left join "language" n on n.code = d.native_lang
-left join "language" s on s.code = d.translate_lang 
-WHERE user_id=$1;`
+	query := `SELECT v.id, v.user_id, name, n.lang native_lang, t.lang translate_lang, array_agg(tg."text") tags FROM vocabulary v
+LEFT JOIN "language" n ON n.code = v.native_lang
+LEFT JOIN "language" t ON t.code = v.translate_lang 
+LEFT JOIN "tag" tg ON tg.id = any(v.tags)
+WHERE user_id=$1
+GROUP BY v.id, n.lang, t.lang;`
 	rows, err := r.db.QueryContext(ctx, query, userID)
 	if err != nil {
 		return nil, err
@@ -103,15 +105,23 @@ WHERE user_id=$1;`
 	var vocabularies []entity.Vocabulary
 	for rows.Next() {
 		var vocab entity.Vocabulary
+		var sqlTags []sql.NullString
 		err := rows.Scan(
 			&vocab.ID,
 			&vocab.UserID,
 			&vocab.Name,
 			&vocab.NativeLang,
 			&vocab.TranslateLang,
+			pq.Array(&sqlTags),
 		)
 		if err != nil {
 			return nil, fmt.Errorf("vocabulary.delivery.repository.VocabRepo.GetVocabularies - scan: %w", err)
+		}
+
+		for _, t := range sqlTags {
+			if t.Valid {
+				vocab.Tags = append(vocab.Tags, t.String)
+			}
 		}
 
 		vocabularies = append(vocabularies, vocab)
