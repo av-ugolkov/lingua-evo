@@ -3,15 +3,12 @@ package vocabulary
 import (
 	"context"
 	"fmt"
-	"log/slog"
 
 	"github.com/av-ugolkov/lingua-evo/internal/db/transactor"
 	"github.com/av-ugolkov/lingua-evo/internal/services/vocabulary/model"
 
 	"github.com/google/uuid"
 )
-
-var ()
 
 type (
 	repoVocab interface {
@@ -143,15 +140,6 @@ func (s *Service) GetVocabularies(ctx context.Context, userID uuid.UUID) ([]Voca
 	vocabularies, err := s.repoVocab.GetVocabularies(ctx, userID)
 	if err != nil {
 		return nil, fmt.Errorf("vocabulary.Service.GetVocabularies: %w", err)
-	}
-
-	for ind, vocab := range vocabularies {
-		tags, err := s.repoVocab.GetTagsVocabulary(ctx, vocab.ID)
-		if err != nil {
-			slog.Warn(fmt.Sprintf("vocabulary.Service.GetVocabularies: %v", err))
-			continue
-		}
-		vocabularies[ind].Tags = tags
 	}
 
 	return vocabularies, nil

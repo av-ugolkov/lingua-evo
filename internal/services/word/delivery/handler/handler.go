@@ -18,7 +18,6 @@ import (
 const (
 	ParamVocabID = "vocab_id"
 	ParamWordID  = "word_id"
-	ParamName    = "name"
 	ParamLimit   = "limit"
 )
 
@@ -41,7 +40,7 @@ func (h *Handler) register(r *mux.Router) {
 	r.HandleFunc(delivery.VocabularyWord, middleware.Auth(h.getWord)).Methods(http.MethodGet)
 	r.HandleFunc(delivery.VocabularyWord, middleware.Auth(h.addWord)).Methods(http.MethodPost)
 	r.HandleFunc(delivery.VocabularyWord, middleware.Auth(h.deleteWord)).Methods(http.MethodDelete)
-	r.HandleFunc(delivery.VocabularyWord, middleware.Auth(h.updateWord)).Methods(http.MethodPatch)
+	r.HandleFunc(delivery.VocabularyWordUpdate, middleware.Auth(h.updateWord)).Methods(http.MethodPost)
 	r.HandleFunc(delivery.VocabularySeveralWords, middleware.Auth(h.getSeveralWords)).Methods(http.MethodGet)
 	r.HandleFunc(delivery.VocabularyWords, middleware.Auth(h.getWords)).Methods(http.MethodGet)
 }
@@ -110,6 +109,7 @@ func (h *Handler) updateWord(ctx context.Context, ex *exchange.Exchanger) {
 	}
 
 	wordRs := &model.VocabWordsRs{
+		WordID:         word.ID,
 		NativeWord:     &word.NativeWord,
 		TranslateWords: word.TranslateWords,
 		Examples:       word.Examples,
@@ -122,7 +122,7 @@ func (h *Handler) updateWord(ctx context.Context, ex *exchange.Exchanger) {
 func (h *Handler) getSeveralWords(ctx context.Context, ex *exchange.Exchanger) {
 	vocabID, err := ex.QueryParamUUID(ParamVocabID)
 	if err != nil {
-		ex.SendError(http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getSeveralWords - get dict id: %w", err))
+		ex.SendError(http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getSeveralWords - get vocab id: %w", err))
 		return
 	}
 

@@ -13,7 +13,7 @@ type (
 		AddTag(ctx context.Context, id uuid.UUID, text string) (uuid.UUID, error)
 		FindTag(ctx context.Context, text string) ([]*Tag, error)
 		GetTag(ctx context.Context, text string) (uuid.UUID, error)
-		GetTags(ctx context.Context, tagIDs []uuid.UUID) ([]Tag, error)
+		GetTagsInVocabulary(ctx context.Context, vocabID uuid.UUID) ([]Tag, error)
 		GetAllTags(ctx context.Context) ([]Tag, error)
 	}
 )
@@ -79,13 +79,10 @@ func (s *Service) GetAllTag(ctx context.Context) ([]Tag, error) {
 	return tags, nil
 }
 
-func (s *Service) GetTags(ctx context.Context, tagIDs []uuid.UUID) ([]Tag, error) {
-	if len(tagIDs) == 0 {
-		return []Tag{}, nil
-	}
-	tags, err := s.repo.GetTags(ctx, tagIDs)
+func (s *Service) GetTagsInVocabulary(ctx context.Context, vocabID uuid.UUID) ([]Tag, error) {
+	tags, err := s.repo.GetTagsInVocabulary(ctx, vocabID)
 	if err != nil {
-		return nil, fmt.Errorf("tag.Service.GetTags: %w", err)
+		return nil, fmt.Errorf("tag.Service.GetTagsInVocabulary: %w", err)
 	}
 	return tags, nil
 }

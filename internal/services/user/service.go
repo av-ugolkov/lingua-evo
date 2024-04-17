@@ -6,11 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"time"
-
 	"github.com/google/uuid"
-
-	"github.com/av-ugolkov/lingua-evo/runtime"
 )
 
 type (
@@ -41,20 +37,10 @@ func NewService(repo userRepo, redis redis) *Service {
 	}
 }
 
-func (s *Service) CreateUser(ctx context.Context, username, password, email string, role runtime.Role) (uuid.UUID, error) {
-	user := &User{
-		ID:           uuid.New(),
-		Name:         username,
-		PasswordHash: password,
-		Email:        email,
-		Role:         role,
-		CreatedAt:    time.Now().UTC(),
-		LastVisitAt:  time.Now().UTC(),
-	}
-
+func (s *Service) AddUser(ctx context.Context, user *User) (uuid.UUID, error) {
 	uid, err := s.repo.AddUser(ctx, user)
 	if err != nil {
-		return uuid.Nil, err
+		return uuid.Nil, fmt.Errorf("user.Service.AddUser: %w", err)
 	}
 
 	return uid, nil

@@ -58,14 +58,14 @@ func NewService(
 	repo repoWord,
 	vocabSvc vocabSvc,
 	dictSvc dictSvc,
-	exexampleSvc exampleSvc,
+	exampleSvc exampleSvc,
 ) *Service {
 	return &Service{
 		tr:         tr,
 		repo:       repo,
 		vocabSvc:   vocabSvc,
 		dictSvc:    dictSvc,
-		exampleSvc: exexampleSvc,
+		exampleSvc: exampleSvc,
 	}
 }
 
@@ -140,7 +140,7 @@ func (s *Service) UpdateWord(ctx context.Context,
 	vocabID uuid.UUID,
 	wordID uuid.UUID,
 	nativeWord model.VocabWord,
-	tanslateWords Words,
+	translateWords Words,
 	examples []string) (VocabularyWord, error) {
 	vocab, err := s.vocabSvc.GetVocabularyByID(ctx, vocabID)
 	if err != nil {
@@ -152,8 +152,8 @@ func (s *Service) UpdateWord(ctx context.Context,
 		return VocabularyWord{}, fmt.Errorf("word.Service.UpdateWord - add native word in dictionary: %w", err)
 	}
 
-	translateWordIDs := make([]uuid.UUID, 0, len(tanslateWords))
-	for _, translateWord := range tanslateWords {
+	translateWordIDs := make([]uuid.UUID, 0, len(translateWords))
+	for _, translateWord := range translateWords {
 		translateWordID, err := s.dictSvc.UpdateWord(ctx, translateWord.Text, vocab.TranslateLang, translateWord.Pronunciation)
 		if err != nil {
 			return VocabularyWord{}, fmt.Errorf("word.Service.UpdateWord - add translate word in dictionary: %w", err)
@@ -183,8 +183,9 @@ func (s *Service) UpdateWord(ctx context.Context,
 			return VocabularyWord{}, fmt.Errorf("word.Service.UpdateWord - add new word: %w", err)
 		}
 		return VocabularyWord{
+			ID:             nativeWordID,
 			NativeWord:     nativeWord,
-			TranslateWords: tanslateWords.GetValues(),
+			TranslateWords: translateWords.GetValues(),
 			Examples:       examples,
 		}, nil
 	}
@@ -194,19 +195,20 @@ func (s *Service) UpdateWord(ctx context.Context,
 	}
 
 	return VocabularyWord{
+		ID:             nativeWordID,
 		NativeWord:     nativeWord,
-		TranslateWords: tanslateWords.GetValues(),
+		TranslateWords: translateWords.GetValues(),
 		Examples:       examples,
 	}, nil
 }
 
 func (s *Service) DeleteWord(ctx context.Context, vocabID, nativeWordID uuid.UUID) error {
-	vocabulary := Word{
+	vocabWord := Word{
 		ID:       vocabID,
 		NativeID: nativeWordID,
 	}
 
-	err := s.repo.DeleteWord(ctx, vocabulary)
+	err := s.repo.DeleteWord(ctx, vocabWord)
 	if err != nil {
 		return fmt.Errorf("word.Service.DeleteWord - delete word: %w", err)
 	}

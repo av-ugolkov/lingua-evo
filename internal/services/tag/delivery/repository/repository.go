@@ -52,13 +52,13 @@ func (r *TagRepo) FindTag(ctx context.Context, text string) ([]*entity.Tag, erro
 
 	var tags []*entity.Tag
 	for rows.Next() {
-		var tag *entity.Tag
+		var tag entity.Tag
 		err = rows.Scan(&tag.ID, &tag.Text)
 		if err != nil {
 			return nil, fmt.Errorf("example.repository.TagRepo.GetAllTags - scan: %w", err)
 		}
 
-		tags = append(tags, tag)
+		tags = append(tags, &tag)
 	}
 
 	return tags, nil
@@ -74,15 +74,15 @@ func (r *TagRepo) GetTag(ctx context.Context, text string) (uuid.UUID, error) {
 	return id, nil
 }
 
-func (r *TagRepo) GetTags(ctx context.Context, ids []uuid.UUID) ([]entity.Tag, error) {
-	query := `SELECT id, text FROM tag WHERE id = ANY($1)`
-	rows, err := r.db.QueryContext(ctx, query, ids)
+func (r *TagRepo) GetTagsInVocabulary(ctx context.Context, vocabID uuid.UUID) ([]entity.Tag, error) {
+	query := `SELECT id,text FROM tag WHERE id=ANY((SELECT tags FROM vocabulary WHERE id=$1)::uuid[]);`
+	rows, err := r.db.QueryContext(ctx, query, vocabID)
 	if err != nil {
 		return nil, fmt.Errorf("example.repository.TagRepo.GetTags: %w", err)
 	}
 	defer rows.Close()
 
-	tags := make([]entity.Tag, 0, len(ids))
+	tags := make([]entity.Tag, 0)
 	for rows.Next() {
 		var tag entity.Tag
 		err = rows.Scan(&tag.ID, &tag.Text)

@@ -3,7 +3,9 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
+	"log/slog"
 	"strings"
 	"time"
 
@@ -24,7 +26,8 @@ func NewRepo(db *sql.DB) *ExampleRepo {
 
 func (r *ExampleRepo) AddExamples(ctx context.Context, ids []uuid.UUID, texts []string, langCode string) ([]uuid.UUID, error) {
 	if len(texts) == 0 {
-		return nil, fmt.Errorf("example.repository.ExampleRepo.AddExample - empty texts")
+		slog.Warn("example.repository.ExampleRepo.AddExamples - empty texts")
+		return []uuid.UUID{}, nil
 	}
 
 	var insValues strings.Builder
@@ -69,9 +72,9 @@ func (r *ExampleRepo) GetExampleByValue(ctx context.Context, text, langCode stri
 	var id uuid.UUID
 	query := fmt.Sprintf(`SELECT id FROM example_%s WHERE text=$1`, langCode)
 	err := r.db.QueryRowContext(ctx, query, text).Scan(&id)
-	if err != nil && err != sql.ErrNoRows {
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return uuid.Nil, fmt.Errorf("example.repository.ExampleRepo.GetExample: %w", err)
-	} else if err == sql.ErrNoRows {
+	} else if errors.Is(err, sql.ErrNoRows) {
 		return uuid.Nil, nil
 	}
 
@@ -99,12 +102,12 @@ func (r *ExampleRepo) GetExamples(ctx context.Context, ids []uuid.UUID) ([]examp
 
 	examples := make([]example.Example, 0, len(ids))
 	for rows.Next() {
-		var example example.Example
-		err = rows.Scan(&example.Id, &example.Text)
+		var ex example.Example
+		err = rows.Scan(&ex.Id, &ex.Text)
 		if err != nil {
 			return nil, fmt.Errorf("example.repository.ExampleRepo.GetExamples - scan: %w", err)
 		}
-		examples = append(examples, example)
+		examples = append(examples, ex)
 	}
 
 	return examples, nil

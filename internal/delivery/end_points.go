@@ -1,21 +1,24 @@
 package delivery
 
 const (
-	//auth
-	SignIn  = "/auth/signin"  //post
-	Refresh = "/auth/refresh" //get
-	Logout  = "/auth/logout"  //get
+	SignIn   = "/auth/sign_in"  //post
+	Refresh  = "/auth/refresh"  //get
+	SignOut  = "/auth/sign_out" //get
+	SendCode = "/auth/send_code"
+	SignUp   = "/auth/sign_up" //post
 
-	//dictionary
+	UserByID = "/account/id" //get
+
 	DictionaryWord = "/dictionary/word"        //get post
 	GetRandomWord  = "/dictionary/word/random" //get
 
-	//vocabulary
-	Vocabulary   = "/account/vocabulary"   //get post, put, delete
-	Vocabularies = "/account/vocabularies" //get
+	Vocabulary   = "/vocabulary"   //get post, put, delete
+	Vocabularies = "/vocabularies" //get
 
-	//word
-	VocabularyWord         = "/vocabulary/word"         //get post delete patch
-	VocabularySeveralWords = "/vocabulary/word/several" //get
-	VocabularyWords        = "/vocabulary/word/all"     //get
+	VocabularyWord         = "/word/vocabulary"         //get post delete
+	VocabularyWordUpdate   = "/word/vocabulary/update"  //post
+	VocabularySeveralWords = "/word/vocabulary/several" //get
+	VocabularyWords        = "/word/vocabulary/all"     //get
+
+	VocabularyTags = "/tag/vocabulary"
 )

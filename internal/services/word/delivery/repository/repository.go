@@ -87,23 +87,22 @@ func (r *WordRepo) GetWordsFromVocabulary(ctx context.Context, dictID uuid.UUID,
 	return words, nil
 }
 
-func (r *WordRepo) GetRandomWord(ctx context.Context, vocadulary *entity.Word) (*entity.Word, error) {
+func (r *WordRepo) GetRandomWord(ctx context.Context, vocad *entity.Word) (*entity.Word, error) {
 	query := `SELECT native_word, translate_word, examples FROM vocabulary WHERE dictionary_id=$1 ORDER BY random() LIMIT 1;`
-	err := r.db.QueryRowContext(ctx, query, vocadulary.ID).Scan(
-		&vocadulary.NativeID,
-		&vocadulary.TranslateWords,
-		&vocadulary.Examples,
+	err := r.db.QueryRowContext(ctx, query, vocad.ID).Scan(
+		&vocad.NativeID,
+		&vocad.TranslateWords,
+		&vocad.Examples,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("word.repository.WordRepo.GetRandomWord - scan: %w", err)
 	}
-	return vocadulary, nil
+	return vocad, nil
 }
 
 func (r *WordRepo) DeleteWord(ctx context.Context, vocabulary entity.Word) error {
 	query := `DELETE FROM word WHERE vocabulary_id=$1 AND native_id=$2;`
-
-	result, err := r.db.Exec(query, vocabulary.ID, vocabulary.NativeID)
+	result, err := r.db.ExecContext(ctx, query, vocabulary.ID, vocabulary.NativeID)
 	if err != nil {
 		return fmt.Errorf("word.repository.WordRepo.DeleteWord - exec: %w", err)
 	}
@@ -159,7 +158,7 @@ func (r *WordRepo) GetVocabulary(ctx context.Context, vocabID uuid.UUID) ([]enti
 }
 
 func (r *WordRepo) UpdateWord(ctx context.Context, vocabulary entity.Word) error {
-	query := `UPDATE vocabulary SET translate_word=$1, examples=$2 WHERE vocabulary_id=$4 AND native_id=$5;`
+	query := `UPDATE word SET translate_words=$1, examples=$2 WHERE vocabulary_id=$3 AND native_id=$4;`
 
 	result, err := r.db.ExecContext(ctx, query, vocabulary.TranslateWords, vocabulary.Examples, vocabulary.ID, vocabulary.NativeID)
 	if err != nil {

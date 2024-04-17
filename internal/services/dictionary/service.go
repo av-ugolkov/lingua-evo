@@ -121,7 +121,7 @@ func (s *Service) FindWords(ctx context.Context, text, langCode string) ([]uuid.
 
 	wordIDs, err := s.repo.FindWords(ctx, &word)
 	if err != nil {
-		return nil, fmt.Errorf("word.Service.FindWord: %w", err)
+		return nil, fmt.Errorf("dictionary.Service.FindWord: %w", err)
 	}
 
 	return wordIDs, nil
@@ -135,7 +135,7 @@ func (s *Service) DeleteWord(ctx context.Context, text, langCode string) error {
 
 	i, err := s.repo.DeleteWord(ctx, &word)
 	if err != nil {
-		return fmt.Errorf("word.Service.DeleteWord: %w", err)
+		return fmt.Errorf("dictionary.Service.DeleteWord: %w", err)
 	}
 
 	slog.Debug(fmt.Sprintf("deleted %d rows", i))
@@ -154,7 +154,7 @@ func (s *Service) GetRandomWord(ctx context.Context, langCode string) (*Word, er
 
 	word, err := s.repo.GetRandomWord(ctx, word)
 	if err != nil {
-		return nil, fmt.Errorf("word.Service.GetRandomWord: %w", err)
+		return nil, fmt.Errorf("dictionary.Service.GetRandomWord: %w", err)
 	}
 
 	return word, nil
@@ -170,12 +170,12 @@ func (s *Service) UpdateWord(ctx context.Context, text, langCode, pronunciation 
 	wordID, err := s.repo.GetWordByText(ctx, word)
 
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		return uuid.Nil, fmt.Errorf("word.Service.UpdateWord - get word: %w", err)
+		return uuid.Nil, fmt.Errorf("dictionary.Service.UpdateWord - get word: %w", err)
 	} else if wordID == uuid.Nil {
 		word.ID = uuid.New()
 		wordIDs, err := s.repo.AddWords(ctx, []Word{*word})
 		if err != nil {
-			return uuid.Nil, fmt.Errorf("word.Service.UpdateWord - add word: %w", err)
+			return uuid.Nil, fmt.Errorf("dictionary.Service.UpdateWord - add word: %w", err)
 		}
 
 		return wordIDs[0], nil
@@ -192,6 +192,6 @@ func (s *Service) UpdateWord(ctx context.Context, text, langCode, pronunciation 
 }
 
 func (s *Service) SharedWord(ctx context.Context, w *Word) (*Word, error) {
-	slog.Error("word.Service.SharedWord - not implemented")
+	slog.Error("dictionary.Service.SharedWord - not implemented")
 	return nil, nil
 }
