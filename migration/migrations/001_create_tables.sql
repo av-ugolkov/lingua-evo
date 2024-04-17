@@ -28,28 +28,8 @@ CREATE TABLE IF NOT EXISTS
         "created_at" TIMESTAMP NOT NULL
     );
 
-create table
-    "dictionary_en" () INHERITS ("dictionary");
-
-CREATE UNIQUE INDEX IF NOT EXISTS "idx_unique_dictionary_en__text" ON "dictionary_en" ("text");
-
-create table
-    "dictionary_ru" () INHERITS ("dictionary");
-
-CREATE UNIQUE INDEX IF NOT EXISTS "idx_unique_dictionary_ru__text" ON "dictionary_ru" ("text");
-
 CREATE TABLE IF NOT EXISTS
     "example" ("id" UUID PRIMARY KEY, "text" TEXT, "created_at" TIMESTAMP NOT NULL);
-
-CREATE TABLE IF NOT EXISTS
-    "example_en" () INHERITS ("example");
-
-CREATE UNIQUE INDEX IF NOT EXISTS "idx_unique_example_en__text" ON "example_en" ("text");
-
-CREATE TABLE IF NOT EXISTS
-    "example_ru" () INHERITS ("example");
-
-CREATE UNIQUE INDEX IF NOT EXISTS "idx_unique_example_ru__text" ON "example_ru" ("text");
 
 CREATE TABLE IF NOT EXISTS
     "vocabulary" (
