@@ -16,12 +16,6 @@ DO NOTHING;
 INSERT INTO
     language (code, lang)
 VALUES
-    ('en-US', 'USA') ON CONFLICT
-DO NOTHING;
-
-INSERT INTO
-    language (code, lang)
-VALUES
     ('en', 'English') ON CONFLICT
 DO NOTHING;
 
@@ -36,6 +30,36 @@ INSERT INTO
 VALUES
     ('fi', 'Finnish') ON CONFLICT
 DO NOTHING;
+
+CREATE TABLE
+    "dictionary_en" () INHERITS ("dictionary");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "idx_unique_dictionary_en__text" ON "dictionary_en" ("text");
+
+CREATE TABLE
+    "dictionary_ru" () INHERITS ("dictionary");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "idx_unique_dictionary_ru__text" ON "dictionary_ru" ("text");
+
+CREATE TABLE
+    "dictionary_fi" () INHERITS ("dictionary");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "idx_unique_dictionary_fi__text" ON "dictionary_fi" ("text");
+
+CREATE TABLE IF NOT EXISTS
+    "example_en" () INHERITS ("example");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "idx_unique_example_en__text" ON "example_en" ("text");
+
+CREATE TABLE IF NOT EXISTS
+    "example_ru" () INHERITS ("example");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "idx_unique_example_ru__text" ON "example_ru" ("text");
+
+CREATE TABLE IF NOT EXISTS
+    "example_fi" () INHERITS ("example");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "idx_unique_example_fi__text" ON "example_fi" ("text");
 
 -- +goose Down
 TRUNCATE TABLE users RESTART IDENTITY CASCADE;
