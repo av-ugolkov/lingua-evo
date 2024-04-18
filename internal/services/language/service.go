@@ -2,13 +2,12 @@ package language
 
 import (
 	"context"
-	"errors"
 	"fmt"
 )
 
 type langRepo interface {
 	GetAvailableLanguages(ctx context.Context) ([]*Language, error)
-	GetLanguage(ctx context.Context, lang string) (*Language, error)
+	GetLanguage(ctx context.Context, lang string) (string, error)
 }
 
 type Service struct {
@@ -21,10 +20,10 @@ func NewService(repo langRepo) *Service {
 	}
 }
 
-func (s *Service) GetLanguage(ctx context.Context, lang string) (*Language, error) {
+func (s *Service) GetLangByCode(ctx context.Context, lang string) (string, error) {
 	language, err := s.repo.GetLanguage(ctx, lang)
 	if err != nil {
-		return nil, fmt.Errorf("language.Service.GetLanguage: %v", err)
+		return "", fmt.Errorf("language.Service.GetLanguage: %v", err)
 	}
 
 	return language, nil
@@ -41,7 +40,7 @@ func (s *Service) GetAvailableLanguages(ctx context.Context) ([]*Language, error
 
 func (s *Service) CheckLanguage(ctx context.Context, langCode string) error {
 	if len(langCode) == 0 {
-		return errors.New("language.Service.CheckLanguage - code language is empty")
+		return nil
 	}
 
 	if _, err := s.repo.GetLanguage(ctx, langCode); err != nil {

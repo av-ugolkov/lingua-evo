@@ -38,6 +38,10 @@ func (r *Redis) Get(ctx context.Context, key string) (string, error) {
 	return value, nil
 }
 
+func (r *Redis) Set(ctx context.Context, key string, value any, expiration time.Duration) (string, error) {
+	return r.client.Set(ctx, key, value, expiration).Result()
+}
+
 func (r *Redis) SetNX(ctx context.Context, key string, value any, expiration time.Duration) (bool, error) {
 	return r.client.SetNX(ctx, key, value, expiration).Result()
 }

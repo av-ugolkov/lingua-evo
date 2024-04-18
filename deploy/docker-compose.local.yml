@@ -1,68 +1,68 @@
 version: '3.5'
 services:
-    redis:
-        container_name: redis-base
-        image: redis:7.2.4-alpine
-        expose:
-            - "6379"
-        ports:
-            - "6379:6379"
-        networks:
-            - lingua
-        entrypoint:
-            - "/bin/sh"
-            - "-ecx"
-            - "redis-server --requirepass itBg40drEvZsw2gbHyp0"
+  redis:
+    container_name: redis-base
+    image: redis:7.2.4-alpine
+    expose:
+      - "6379"
+    ports:
+      - "6379:6379"
+    networks:
+      - lingua
+    entrypoint:
+      - "/bin/sh"
+      - "-ecx"
+      - "redis-server --requirepass itBg40drEvZsw2gbHyp0"
 
-    postgres:
-        container_name: postgres-base
-        image: postgres:16.1-alpine3.19
-        environment:
-            - POSTGRES_DB=pg-lingua-evo
-            - POSTGRES_PASSWORD=ib6vACdec2Fmht4lnX153
-            - POSTGRES_USER=lingua
-        volumes:
-            - /var/lib/postgresql/lingua-evo/data:/var/lib/postgresql/data
-        expose:
-            - "5432"
-        ports:
-            - "6432:5432"
-        networks:
-            - lingua
+  postgres:
+    container_name: postgres-base
+    image: postgres:16.1-alpine3.19
+    environment:
+      - POSTGRES_DB=pg-lingua-evo
+      - POSTGRES_PASSWORD=ib6vACdec2Fmht4lnX153
+      - POSTGRES_USER=lingua
+    volumes:
+      - /var/lib/postgresql/lingua-evo/data:/var/lib/postgresql/data
+    expose:
+      - "5432"
+    ports:
+      - "6432:5432"
+    networks:
+      - lingua
 
-    service:
-        container_name: lingua-evo
-        build:
-            context: ../.
-            dockerfile: Dockerfile
-            args:
-                config_dir: ${CONFIG:-docker}
-        depends_on:
-            - postgres
-        restart: always
-        extra_hosts:
-            - "host.docker.internal:host-gateway"
-        expose:
-            - "5000"
-        ports:
-            - "5000:5000"
-        networks:
-            - lingua
+  service:
+    container_name: lingua-evo
+    build:
+      context: ../.
+      dockerfile: Dockerfile
+      args:
+        config_dir: ${CONFIG:-docker}
+    depends_on:
+      - postgres
+      - redis
+    restart: always
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    expose:
+      - "5000"
+    ports:
+      - "5000:5000"
+    networks:
+      - lingua
 
-    migration:
-        container_name: migration
-        build:
-            context: ../migration
-        depends_on:
-            - postgres
-            - service
-        networks:
-            - lingua
-        entrypoint:
-            - "/bin/sh"
-            - "-ecx"
-            - "./migration -cmd up -url lingua:ib6vACdec2Fmht4lnX153@postgres-base:5432/pg-lingua-evo?sslmode=disable"
+  migration:
+    container_name: migration
+    build:
+      context: ../migration
+    depends_on:
+      - postgres
+    networks:
+      - lingua
+    entrypoint:
+      - "/bin/sh"
+      - "-ecx"
+      - "./migration -cmd up -url lingua:ib6vACdec2Fmht4lnX153@postgres-base:5432/pg-lingua-evo?sslmode=disable"
 
 networks:
-    lingua:
-        name: lingua
+  lingua:
+    name: lingua

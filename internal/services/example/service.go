@@ -3,12 +3,14 @@ package example
 import (
 	"context"
 	"fmt"
+	"slices"
+	"strings"
 
 	"github.com/google/uuid"
 )
 
 type repoExample interface {
-	AddExample(ctx context.Context, id uuid.UUID, text, langCode string) error
+	AddExamples(ctx context.Context, ids []uuid.UUID, texts []string, langCode string) ([]uuid.UUID, error)
 	GetExampleByValue(ctx context.Context, text string, langCode string) (uuid.UUID, error)
 	GetExampleById(ctx context.Context, id uuid.UUID, langCode string) (string, error)
 	GetExamples(ctx context.Context, exampleIDs []uuid.UUID) ([]Example, error)
@@ -24,14 +26,23 @@ func NewService(repo repoExample) *Service {
 	}
 }
 
-func (s *Service) AddExample(ctx context.Context, text, langCode string) (uuid.UUID, error) {
-	id := uuid.New()
-	err := s.repo.AddExample(ctx, id, text, langCode)
+func (s *Service) AddExamples(ctx context.Context, texts []string, langCode string) ([]uuid.UUID, error) {
+	ids := make([]uuid.UUID, 0, len(texts))
+	for i := 0; i < len(texts); i++ {
+		texts[i] = strings.TrimSpace(texts[i])
+		if texts[i] == "" {
+			texts = slices.Delete(texts, i, i+1)
+			i--
+			continue
+		}
+		ids = append(ids, uuid.New())
+	}
+	ids, err := s.repo.AddExamples(ctx, ids, texts, langCode)
 	if err != nil {
-		return uuid.Nil, err
+		return nil, err
 	}
 
-	return id, nil
+	return ids, nil
 }
 
 func (s *Service) GetExampleById(ctx context.Context, id uuid.UUID, langCode string) (string, error) {
@@ -52,20 +63,4 @@ func (s *Service) GetExamples(ctx context.Context, exampleIDs []uuid.UUID) ([]Ex
 		return nil, fmt.Errorf("example.Service.GetExamples: %w", err)
 	}
 	return examples, nil
-}
-
-func (s *Service) UpdateExample(ctx context.Context, text, langCode string) (uuid.UUID, error) {
-	id, err := s.repo.GetExampleByValue(ctx, text, langCode)
-	if err != nil {
-		return uuid.Nil, fmt.Errorf("example.Service.UpdateExample: %w", err)
-	}
-	if id != uuid.Nil {
-		return id, nil
-	}
-	id = uuid.New()
-	err = s.repo.AddExample(ctx, id, text, langCode)
-	if err != nil {
-		return uuid.Nil, fmt.Errorf("example.Service.UpdateExample: %w", err)
-	}
-	return id, nil
 }
