@@ -238,7 +238,7 @@ func (s *Service) CreateCode(ctx context.Context, email string) error {
 
 	err := smtp.SendMail(address, authEmail, from, to, message)
 	if err != nil {
-		return fmt.Errorf("auth.Service.CreateCode: %v", err)
+		return fmt.Errorf("auth.Service.CreateCode - send mail: %v", err)
 	}
 
 	err = s.repo.SetAccountCode(ctx, email, creatingCode, time.Duration(10)*time.Minute)
