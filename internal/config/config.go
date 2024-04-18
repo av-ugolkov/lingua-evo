@@ -32,8 +32,9 @@ type JWT struct {
 }
 
 type Service struct {
-	Type string `yaml:"type" env-default:"tcp"`
-	Port string `yaml:"port" env-default:"8080"`
+	Type           string   `yaml:"type" env-default:"tcp"`
+	Port           string   `yaml:"port" env-default:"8080"`
+	AllowedOrigins []string `yaml:"allowed_origins" env-default:"http://localhost:5173"`
 }
 
 type DbSQL struct {
