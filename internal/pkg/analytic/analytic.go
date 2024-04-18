@@ -14,8 +14,6 @@ import (
 
 var (
 	topic = []byte("user_action")
-
-	warnNotInit = "analytic not initialization"
 )
 
 type Analytic struct {
@@ -30,7 +28,6 @@ func SetKafka(w *kafka.Writer) {
 
 func SendToKafka(uid uuid.UUID, action string) {
 	if instant.writer == nil {
-		slog.Warn(warnNotInit)
 		return
 	}
 	go func() {
