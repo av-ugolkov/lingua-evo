@@ -1,2541 +1,2623 @@
 {
-    "dictionary": [
-        {
-            "word": "get by",
-            "pronunciation": "['get'baɪ]",
-            "translate": [
-                "получить"
-            ],
-            "example": [
-                "How much money do you need to get by each day?"
-            ]
-        },
-        {
-            "word": "get away",
-            "pronunciation": "['getə'weɪ]",
-            "translate": [
-                "уходить"
-            ],
-            "example": [
-                "How often do you get away from it all?"
-            ]
-        },
-        {
-            "word": "get into",
-            "pronunciation": "[get] ['ɪntu:]",
-            "translate": [
-                "попасть в"
-            ],
-            "example": [
-                "When was the last time you got into trouble?"
-            ]
-        },
-        {
-            "word": "get together",
-            "pronunciation": "['gettə'geðə]",
-            "translate": [
-                "собираться"
-            ],
-            "example": [
-                "When was the last time you got together with your friends?"
-            ]
-        },
-        {
-            "word": "get away with it",
-            "pronunciation": "['getə'weɪ] [wɪð] [ɪt]",
-            "translate": [
-                "сходить с рук"
-            ],
-            "example": [
-                "Have you ever done something wrong and gotten away with it?"
-            ]
-        },
-        {
-            "word": "get up to",
-            "pronunciation": "['get'ʌp] [tu:]",
-            "translate": [
-                "вставать",
-                "заниматься"
-            ],
-            "example": [
-                "What did you get up to last weekend?"
-            ]
-        },
-        {
-            "word": "get up",
-            "pronunciation": "['get'ʌp]",
-            "translate": [
-                "вставать"
-            ],
-            "example": [
-                "What time do you usually get up?",
-                "What do you do after you get up?"
-            ]
-        },
-        {
-            "word": "get rid of",
-            "pronunciation": "[get] [rɪd] [ɔv]",
-            "translate": [
-                "избавляться от"
-            ],
-            "example": [
-                "What would you like to get rid of in your house?"
-            ]
-        },
-        {
-            "word": "get to",
-            "pronunciation": "[get] [tu:]",
-            "translate": [
-                "добраться до"
-            ],
-            "example": [
-                "How long does it take you to get to class?"
-            ]
-        },
-        {
-            "word": "get over",
-            "pronunciation": "['get'əuvə]",
-            "translate": [
-                "забыть",
-                "пережить"
-            ],
-            "example": [
-                "What do you usually do to get over a big disappointment?"
-            ]
-        },
-        {
-            "word": "get through to",
-            "pronunciation": "['get'θru:] [tu:]",
-            "translate": [
-                "пройти к",
-                "дозвониться"
-            ],
-            "example": [
-                "What do you do when you can't get through to someone on the phone?"
-            ]
-        },
-        {
-            "word": "get off",
-            "pronunciation": "['get'ɔf]",
-            "translate": [
-                "отправиться",
-                "отделаться"
-            ],
-            "example": [
-                "What was the last time you did something wrong and got off lightly?"
-            ]
-        },
-        {
-            "word": "get wound up",
-            "pronunciation": "[get] [wu:nd] [ʌp]",
-            "translate": [
-                "заводиться"
-            ],
-            "example": [
-                "When was the last time you got wound up?"
-            ]
-        },
-        {
-            "word": "get out of",
-            "pronunciation": "['get'aut] [ɔv]",
-            "translate": [
-                "убираться из",
-                "избежать"
-            ],
-            "example": [
-                "What lies have you told to get out of doing something?"
-            ]
-        },
-        {
-            "word": "get down",
-            "pronunciation": "['get'daun]",
-            "translate": [
-                "спускаться"
-            ],
-            "example": [
-                "Have you ever had problems getting down from somewhere?"
-            ]
-        },
-        {
-            "word": "get on with",
-            "pronunciation": "['get'ɔn] [wɪð]",
-            "translate": [
-                "ужиться",
-                "ладить"
-            ],
-            "example": [
-                "How well do you get on with everyone in your family?"
-            ]
-        },
-        {
-            "word": "count on",
-            "pronunciation": "[kaunt] [ɔn]",
-            "translate": [
-                "рассчитывать на"
-            ]
-        },
-        {
-            "word": "calm down",
-            "pronunciation": "[kɑ:m] [daun]",
-            "translate": [
-                "успокоиться"
-            ]
-        },
-        {
-            "word": "over yonder",
-            "pronunciation": "['əuvə] ['jɔndə]",
-            "translate": []
-        },
-        {
-            "word": "on a roll",
-            "pronunciation": "[ɔn] [ə] [rəul]"
-        },
-        {
-            "word": "till the cows come home",
-            "pronunciation": "[tɪl] [ðə] [kauz] [kʌm] [həum]",
-            "translate": [
-                "повторять до посинения",
-                "после дождичка в четверг",
-                "когда рак свистнет"
-            ]
-        },
-        {
-            "word": "as all get out",
-            "pronunciation": "[æs] ['ɔ:l] ['get] [aut]",
-            "translate": [
-                "ужас как",
-                "адски",
-                "ужасно",
-                "чертовски"
-            ]
-        },
-        {
-            "word": "flake out",
-            "pronunciation": "['fleɪk'aut]",
-            "translate": [
-                "улизнуть",
-                "смыться"
-            ]
-        },
-        {
-            "word": "figure out",
-            "pronunciation": "['fɪgə(r)'aut]",
-            "translate": [
-                "понимать",
-                "вычислять"
-            ]
-        },
-        {
-            "word": "turn down",
-            "pronunciation": "['tɜ:n'daun]",
-            "translate": [
-                "отказываться",
-                "отклонять"
-            ]
-        },
-        {
-            "word": "put off",
-            "pronunciation": "['put'ɔf]",
-            "translate": [
-                "откладывать"
-            ]
-        },
-        {
-            "word": "come up with",
-            "pronunciation": "['kʌm] ['ʌp] [wɪð]",
-            "translate": [
-                "придумывать"
-            ]
-        },
-        {
-            "word": "mess up",
-            "pronunciation": "['mes'ʌp]",
-            "translate": [
-                "испортить",
-                "портачить"
-            ]
-        },
-        {
-            "word": "miss out",
-            "pronunciation": "['mɪs'aut]",
-            "translate": [
-                "пропустить"
-            ]
-        },
-        {
-            "word": "knuckle down",
-            "pronunciation": "['nʌk(ə)l'daun]",
-            "translate": [
-                "решительно взяться"
-            ]
-        },
-        {
-            "word": "fucked out",
-            "pronunciation": "['fʌkt'aut]",
-            "translate": [
-                "разбитый",
-                "уставший"
-            ]
-        },
-        {
-            "word": "clue",
-            "pronunciation": "[klu:]",
-            "translate": [
-                "зацепка"
-            ]
-        },
-        {
-            "word": "muggy",
-            "pronunciation": "['mʌgɪ]",
-            "translate": [
-                "душный"
-            ]
-        },
-        {
-            "word": "dump",
-            "pronunciation": "[dʌmp]",
-            "translate": [
-                "бросать"
-            ]
-        },
-        {
-            "word": "murder",
-            "pronunciation": "['mɜ:də]",
-            "translate": [
-                "убийца"
-            ]
-        },
-        {
-            "word": "droopy",
-            "pronunciation": "['dru:pɪ]",
-            "translate": [
-                "упавший духом",
-                "впавший в уныние",
-                "разбитый"
-            ]
-        },
-        {
-            "word": "solve a task/problem",
-            "pronunciation": "[sɔlv] [ə] [tɑ:sk]/['prɔbləm]",
-            "translate": [
-                "упавший духом",
-                "впавший в уныние",
-                "разбитый"
-            ]
-        },
-        {
-            "word": "widespread",
-            "pronunciation": "['waɪdsprεd]",
-            "translate": [
-                "распространённый",
-                "раскинувшийся",
-                "масштабный",
-                "обширный",
-                "повсеместный"
-            ]
-        },
-        {
-            "word": "surroundings",
-            "pronunciation": "[sə'raundɪŋz]",
-            "translate": [
-                "среда",
-                "окрестности"
-            ]
-        },
-        {
-            "word": "depend on",
-            "pronunciation": "[dɪ'pend] [ɔn]",
-            "translate": [
-                "зависит от"
-            ]
-        },
-        {
-            "word": "surrounded by",
-            "pronunciation": "[sə'raund] [baɪ]",
-            "translate": [
-                "окружен"
-            ]
-        },
-        {
-            "word": "under development",
-            "pronunciation": "['ʌndə] [dɪ'veləpmənt]",
-            "translate": [
-                "в разработке"
-            ]
-        },
-        {
-            "word": "pick us up",
-            "pronunciation": "[pɪk] [ʌs] [ʌp]",
-            "translate": [
-                "подбери нас"
-            ]
-        },
-        {
-            "word": "it stand for",
-            "pronunciation": "[ɪt] [stænd] [fɔ:]",
-            "translate": [
-                "это означает"
-            ]
-        },
-        {
-            "word": "explanation",
-            "pronunciation": "['eksplə'neɪʃ(ə)n]",
-            "translate": [
-                "объяснение"
-            ]
-        },
-        {
-            "word": "operate",
-            "pronunciation": "['ɔpəreɪt]",
-            "translate": [
-                "работать",
-                "управлять",
-                "действовать"
-            ]
-        },
-        {
-            "word": "foundational",
-            "pronunciation": "[faun'deɪʃ(ə)nəl]",
-            "translate": [
-                "основополагающий"
-            ]
-        },
-        {
-            "word": "quirk",
-            "translate": [
-                "причуда",
-                "каламбур",
-                "острота́",
-                "высмеивать"
-            ],
-            "pronunciation": "[kwɜ:k]"
-        },
-        {
-            "word": "impact",
-            "pronunciation": "['ɪmpækt]",
-            "translate": [
-                "влияние",
-                "воздействие",
-                "удар"
-            ]
-        },
-        {
-            "word": "decrease",
-            "pronunciation": "['di:kri:s]",
-            "translate": [
-                "уменьшение",
-                "понижение",
-                "спад"
-            ]
-        },
-        {
-            "word": "introduce",
-            "pronunciation": "['ɪntrə'dju:s]",
-            "translate": [
-                "вводить",
-                "вносить",
-                "представлять"
-            ]
-        },
-        {
-            "word": "relevant",
-            "pronunciation": "['relɪv(ə)nt]",
-            "translate": [
-                "релевантный",
-                "уместный"
-            ]
-        },
-        {
-            "word": "regardless",
-            "translate": [
-                "несмотря ни на что",
-                "не обращающий внимания",
-                "не заслуживающий внимания",
-                "не считающийся",
-                "не обращая внимания ни на что",
-                "не считаясь ни с чем"
-            ],
-            "pronunciation": "[rɪ'gɑ:dlɪs]"
-        },
-        {
-            "word": "spread",
-            "translate": [
-                "распространение",
-                "размах",
-                "протяженность"
-            ],
-            "pronunciation": "[spred]"
-        },
-        {
-            "word": "allocate",
-            "pronunciation": "['æləkeɪt]",
-            "translate": [
-                "распределять",
-                "предназначать"
-            ]
-        },
-        {
-            "word": "reason",
-            "translate": [
-                "причина",
-                "повод",
-                "основание"
-            ],
-            "pronunciation": "['ri:z(ə)n]"
-        },
-        {
-            "word": "entirely",
-            "translate": [
-                "полностью",
-                "целиком",
-                "совершенно"
-            ],
-            "pronunciation": "[ɪn'taɪəlɪ]"
-        },
-        {
-            "word": "entire",
-            "pronunciation": "[ɪn'taɪə]",
-            "translate": [
-                "весь",
-                "целый",
-                "полный"
-            ]
-        },
-        {
-            "word": "surgery",
-            "translate": [
-                "операция(хирургическая)"
-            ],
-            "pronunciation": "['sɜ:ʤ(ə)rɪ]"
-        },
-        {
-            "word": "operation",
-            "translate": [
-                "операция(хирургическая)"
-            ],
-            "pronunciation": "['ɔpə'reɪʃ(ə)n]"
-        },
-        {
-            "word": "abdomen",
-            "pronunciation": "['æbdəmən]",
-            "translate": [
-                "живот"
-            ]
-        },
-        {
-            "word": "appendicitis",
-            "pronunciation": "[əˌpendɪˈsaɪtɪs]",
-            "translate": [
-                "аппендицит"
-            ]
-        },
-        {
-            "word": "dismiss",
-            "translate": [
-                "снять",
-                "увольнение",
-                "отставка",
-                "выписать"
-            ],
-            "pronunciation": "[dɪs'mɪs]",
-            "example": [
-                "My father was dismissed from hospital"
-            ]
-        },
-        {
-            "word": "required",
-            "pronunciation": "[rɪ'kwaɪəd]",
-            "translate": [
-                "необходимый"
-            ]
-        },
-        {
-            "word": "capable",
-            "pronunciation": "['keɪpəb(ə)l]",
-            "translate": [
-                "способный",
-                "одарённый",
-                "умелый"
-            ]
-        },
-        {
-            "word": "response",
-            "pronunciation": "[rɪ'spɔns]",
-            "translate": [
-                "отклик",
-                "ответ",
-                "реакция",
-                "реагирование",
-                "ответное чувство"
-            ]
-        },
-        {
-            "word": "explore",
-            "pronunciation": "[ɪk'splɔ:]",
-            "translate": [
-                "изучать",
-                "исследовать",
-                "выяснять",
-                "обследовать",
-                "изучить"
-            ]
-        },
-        {
-            "word": "artificial",
-            "pronunciation": "['ɑ:tɪ'fɪʃ(ə)l]",
-            "translate": [
-                "фальшивый",
-                "искусственный",
-                "не природный",
-                "притворный",
-                "надуманный"
-            ]
-        },
-        {
-            "word": "consume",
-            "pronunciation": "[kən'sju:m]",
-            "translate": [
-                "потреблять",
-                "расходовать",
-                "поглощать",
-                "израсходовать"
-            ]
-        },
-        {
-            "word": "keep track of",
-            "pronunciation": "[ki:p] [træk] [ɔv]",
-            "translate": [
-                "следить за развитием",
-                "постоянно отслеживать",
-                "следить",
-                "следить за"
-            ]
-        },
-        {
-            "word": "gain",
-            "pronunciation": "[geɪn]",
-            "translate": [
-                "барыши",
-                "прибыль",
-                "положительный эффект"
-            ]
-        },
-        {
-            "word": "mental",
-            "pronunciation": "[mentl]",
-            "translate": [
-                "мысленный",
-                "психический",
-                "душевный"
-            ]
-        },
-        {
-            "word": "strengthen",
-            "pronunciation": "['streŋθ(ə)n]",
-            "translate": [
-                "усиливать",
-                "усилить",
-                "укреплять"
-            ]
-        },
-        {
-            "word": "widen",
-            "pronunciation": "['waɪdn]",
-            "translate": [
-                "расширять",
-                "расширяться",
-                "распространять",
-                "набирать обороты",
-                "пополниться"
-            ]
-        },
-        {
-            "word": "heighten",
-            "pronunciation": "[haɪtn]",
-            "translate": [
-                "повысить",
-                "усиливать",
-                "повышаться",
-                "усиливаться"
-            ]
-        },
-        {
-            "word": "lengthen",
-            "pronunciation": "['leŋθ(ə)n]",
-            "translate": [
-                "затягивать",
-                "прибавить",
-                "прибавлять",
-                "продлевать",
-                "надвивать"
-            ]
-        },
-        {
-            "word": "shorten",
-            "pronunciation": "['ʃɔ:tn]",
-            "translate": [
-                "урезать",
-                "сокращать",
-                "уменьшать"
-            ]
-        },
-        {
-            "word": "weaken",
-            "pronunciation": "['wi:kən]",
-            "translate": [
-                "слабеть",
-                "поддаваться",
-                "сдаваться",
-                "расслаблять"
-            ]
-        },
-        {
-            "word": "dedicate",
-            "pronunciation": "['dedɪkeɪt]",
-            "translate": [
-                "посвящать (чему-либо)",
-                "отдавать",
-                "заполнять время",
-                "надписывать",
-                "освящать"
-            ]
-        },
-        {
-            "word": "dig",
-            "pronunciation": "[dɪg]",
-            "translate": [
-                "копать",
-                "выкапывать"
-            ]
-        },
-        {
-            "word": "renovation",
-            "pronunciation": "['renə'veɪʃ(ə)n]",
-            "translate": [
-                "реставрация",
-                "освежение",
-                "обновление",
-                "реставрирование"
-            ]
-        },
-        {
-            "word": "violent",
-            "pronunciation": "['vaɪələnt]",
-            "translate": [
-                "ожесточённый",
-                "яростный",
-                "неистовый",
-                "отчаянный"
-            ]
-        },
-        {
-            "word": "mentality",
-            "pronunciation": "[men'tæliti]",
-            "translate": [
-                "менталитет"
-            ]
-        },
-        {
-            "word": "mind",
-            "pronunciation": "[maɪnd]",
-            "translate": [
-                "ум",
-                "разум"
-            ]
-        },
-        {
-            "word": "to converse",
-            "pronunciation": "[kən'vɜ:s]",
-            "translate": [
-                "общаться (с кем-либо)",
-                "беседовать (с кем-либо)"
-            ]
-        },
-        {
-            "word": "to raise",
-            "pronunciation": "[reɪz]",
-            "translate": [
-                "поднимать",
-                "повышать"
-            ]
-        },
-        {
-            "word": "concealing",
-            "pronunciation": "[kən'si:lɪŋ]",
-            "translate": [
-                "укрывание",
-                "скрывание",
-                "утаивание",
-                "укрывательство"
-            ]
-        },
-        {
-            "word": "occasionally",
-            "pronunciation": "[ə'keɪʒ(ə)nəlɪ]",
-            "translate": [
-                "изредка",
-                "временами",
-                "время от времени",
-                "иногда"
-            ]
-        },
-        {
-            "word": "fellow",
-            "pronunciation": "['feləu]",
-            "translate": [
-                "товарищ",
-                "собрат"
-            ]
-        },
-        {
-            "word": "pretext",
-            "pronunciation": "['pri:'tekst]",
-            "translate": [
-                "отговорка",
-                "отмазка",
-                "предлог"
-            ]
-        },
-        {
-            "word": "gossip",
-            "pronunciation": "['gɔsɪp]",
-            "translate": [
-                "болтовня",
-                "разговоры"
-            ]
-        },
-        {
-            "word": "inherited",
-            "pronunciation": "[ɪn'herɪt]",
-            "translate": [
-                "получать в наследство",
-                "унаследовать",
-                "перенять (свойство, качество и т.п.)",
-                "наследовать"
-            ]
-        },
-        {
-            "word": "turn out",
-            "pronunciation": "['tɜ:n'aut]",
-            "translate": [
-                "выворачивать",
-                "выяснять",
-                "оказываться",
-                "получаться"
-            ]
-        },
-        {
-            "word": "intimately",
-            "pronunciation": "['ɪntɪmɪtlɪ]",
-            "translate": [
-                "очень хорошо",
-                "отлично",
-                "досконально",
-                "задушевно",
-                "интимно"
-            ]
-        },
-        {
-            "word": "confesses",
-            "pronunciation": "[kən'fes]",
-            "translate": [
-                "исповедаться",
-                "исповедовать (веру, кающегося)",
-                "признавать",
-                "сознаться"
-            ]
-        },
-        {
-            "word": "doubt",
-            "pronunciation": "[daut]",
-            "translate": [
-                "сомнение",
-                "нерешительность",
-                "неясность",
-                "раздумье"
-            ]
-        },
-        {
-            "word": "private security",
-            "pronunciation": "['praɪvɪt] [sɪ'kju(ə)rɪtɪ]",
-            "translate": [
-                "безопасность частной собственности",
-                "безопасность частных лиц",
-                "личная безопасность"
-            ]
-        },
-        {
-            "word": "humidity",
-            "pronunciation": "[hju:'mɪdɪtɪ]",
-            "translate": [
-                "влажность",
-                "влагостойкость",
-                "сырость",
-                "влага"
-            ]
-        },
-        {
-            "word": "to melt",
-            "pronunciation": "[tu:] [melt]",
-            "translate": [
-                "плавить",
-                "растапливать",
-                "плавиться",
-                "умиляться",
-                "трогать",
-                "смягчать",
-                "слабеть",
-                "уменьшаться",
-                "исчезать"
-            ]
-        },
-        {
-            "word": "paw",
-            "pronunciation": "[pɔ:]",
-            "translate": [
-                "лапа",
-                "почерк",
-                "пятерня",
-                "скрестись",
-                "рука",
-                "лапка"
-            ]
-        },
-        {
-            "word": "take care of",
-            "pronunciation": "[tək] [kɛr] [ɔf]",
-            "translate": [
-                "заботиться (о ком-либо)",
-                "обеспечить (кого-либо)",
-                "пригреть (кого-либо)",
-                "приютить (кого-либо)"
-            ]
-        },
-        {
-            "word": "enquire",
-            "pronunciation": "[ɪn'kwaɪə]",
-            "translate": [
-                "спрашивать",
-                "узнавать",
-                "наводить справки",
-                "добиваться сведений",
-                "спросить",
-                "следовать",
-                "посылать запрос"
-            ]
-        },
-        {
-            "word": "accumulation",
-            "pronunciation": "[ə'kju:mju'leɪʃ(ə)n]",
-            "translate": [
-                "накопление",
-                "аккумуляция",
-                "груда",
-                "масса",
-                "скопление",
-                "собирание",
-                "аккумулирование"
-            ]
-        },
-        {
-            "word": "insulate",
-            "pronunciation": "['ɪnsjuleɪt]",
-            "translate": [
-                "отделять",
-                "обособлять",
-                "разобщать",
-                "ограждать"
-            ]
-        },
-        {
-            "word": "stinks up",
-            "pronunciation": "[stɪŋk] [ʌp]",
-            "translate": [
-                "провонять"
-            ]
-        },
-        {
-            "word": "solstice",
-            "pronunciation": "['sɔlstɪs]",
-            "translate": [
-                "солнцестояние",
-                "точка солнцестояния"
-            ]
-        },
-        {
-            "word": "recharged",
-            "pronunciation": "['ri:'ʧɑ:ʤ]",
-            "translate": [
-                "подкрепиться",
-                "подпитывать",
-                "перезарядиться",
-                "перезаряжаться",
-                "набираться сил",
-                "заряжать"
-            ]
-        },
-        {
-            "word": "grew out",
-            "pronunciation": "[ɡrɛw] [aʊt]",
-            "translate": [
-                "отрастить",
-                "распространяться",
-                "распускаться",
-                "прорастать",
-                "вырастать"
-            ]
-        },
-        {
-            "word": "rehearsal",
-            "pronunciation": "[rɪ'hɜ:s(ə)l]",
-            "translate": [
-                "репетиция",
-                "повторение",
-                "перечисление",
-                "пересказ",
-                "спевка",
-                "рассказ",
-                "повествование"
-            ]
-        },
-        {
-            "word": "self-employed",
-            "pronunciation": "['selfɪm'plɔɪd]",
-            "translate": [
-                "мелкий предприниматель",
-                "владелец собственного бизнеса"
-            ]
-        },
-        {
-            "word": "spoil",
-            "pronunciation": "[spɔɪl]",
-            "translate": [
-                "прибыль (полученная в результате конкуренции с кем-либо)",
-                "военная добыча",
-                "трофеи",
-                "выгода"
-            ]
-        },
-        {
-            "word": "light fixture",
-            "translate": [
-                "светильник",
-                "светящийся предмет"
-            ],
-            "pronunciation": "[laɪt] ['fɪksʧə]"
-        },
-        {
-            "word": "honk",
-            "pronunciation": "[hɔŋk]",
-            "translate": [
-                "сигналить",
-                "бибикать"
-            ]
-        },
-        {
-            "word": "pebbles",
-            "pronunciation": "['peb(ə)lz]",
-            "translate": [
-                "галька",
-                "булыжник",
-                "мелкий камень",
-                "щебень",
-                "гравий"
-            ]
-        },
-        {
-            "word": "mannerism",
-            "pronunciation": "['mænərɪz(ə)m]",
-            "translate": [
-                "особенность (присущая кому-либо)",
-                "манерность",
-                "характерная черта",
-                "привычка",
-                "причуда"
-            ]
-        },
-        {
-            "word": "sneeze",
-            "pronunciation": "[sni:z]",
-            "translate": [
-                "чиханье",
-                "чих",
-                "чихание"
-            ]
-        },
-        {
-            "word": "afraid off",
-            "pronunciation": "[ə'freɪd] [ɒf]",
-            "translate": [
-                "бояться",
-                "опасаться"
-            ]
-        },
-        {
-            "word": "ask for",
-            "pronunciation": "[ɑ:sk] [fɔ:]",
-            "translate": [
-                "просить (sth., у кого-л., что-л.)",
-                "хотеть видеть",
-                "просить о (чём-л.)",
-                "спрашивать о (ком-л.)",
-                "попросить"
-            ]
-        },
-        {
-            "word": "famous for",
-            "pronunciation": "['feɪməs] [fɔ:]",
-            "translate": [
-                "известный (чем-либо)",
-                "знаменит (чем-то)"
-            ]
-        },
-        {
-            "word": "proud off",
-            "pronunciation": "[praud] [ɒf]",
-            "translate": [
-                "гордиться"
-            ]
-        },
-        {
-            "word": "excited about",
-            "pronunciation": "[ɪk'saɪtɪd] [ə'baut]",
-            "translate": [
-                "полный энтузиазма",
-                "взволнованный (кем-л., чем-л.)"
-            ]
-        },
-        {
-            "word": "argue with",
-            "pronunciation": "['ɑ:gju:] [wɪð]",
-            "translate": [
-                "спорить с (кем-либо)",
-                "ссориться с (someone – кем-либо)"
-            ]
-        },
-        {
-            "word": "take care of",
-            "pronunciation": "[teɪk] [keə] [ɔv]",
-            "translate": [
-                "заботиться (о ком-либо)",
-                "обеспечить (кого-либо)",
-                "пригреть (кого-либо)",
-                "приютить (кого-либо)"
-            ]
-        },
-        {
-            "word": "familiar",
-            "pronunciation": "[fə'mɪlɪə]",
-            "translate": [
-                "знакомый",
-                "домовой (дух)"
-            ],
-            "example": [
-                "It sounds familiar"
-            ]
-        },
-        {
-            "word": "revive",
-            "pronunciation": "[rɪ'vaɪv]",
-            "translate": [
-                "вновь обретать бодрость",
-                "возвращаться к жизни",
-                "обновлять"
-            ]
-        },
-        {
-            "word": "numerous",
-            "pronunciation": "['nju:m(ə)rəs]",
-            "translate": [
-                "многочисленный",
-                "обширный",
-                "неоднократный"
-            ]
-        },
-        {
-            "word": "variety",
-            "pronunciation": "[və'raɪətɪ]",
-            "translate": [
-                "разнообразие",
-                "множество",
-                "многосторонность"
-            ]
-        },
-        {
-            "word": "rinse off",
-            "pronunciation": "[rɪns] [ɒf]",
-            "translate": [
-                "смыть (с себя в душе грязь и т.п.)",
-                "смывать (с себя в душе грязь и т.п.)",
-                "сполоснуться"
-            ]
-        },
-        {
-            "word": "pest",
-            "pronunciation": "[pest]",
-            "translate": [
-                "сельскохозяйственный вредитель",
-                "вредное насекомое",
-                "надоедливый человек",
-                "зараза",
-                "надоеда",
-                "несносный человек",
-                "вредитель"
-            ]
-        },
-        {
-            "word": "cope",
-            "pronunciation": "[kəup]",
-            "translate": [
-                "покров",
-                "будка",
-                "кабина"
-            ]
-        },
-        {
-            "word": "postpone",
-            "pronunciation": "[pə(u)'spəun]",
-            "translate": [
-                "откладывать",
-                "отсрочивать",
-                "относить в конец предложения",
-                "подчинять"
-            ]
-        },
-        {
-            "word": "homie",
-            "pronunciation": "[ˈhəʊmi]",
-            "translate": [
-                "земляк",
-                "приятель"
-            ]
-        },
-        {
-            "word": "counseling",
-            "pronunciation": "['kaʊnsǝlɪŋ]",
-            "translate": [
-                "напоминания",
-                "выдача рекомендаций",
-                "консультирование"
-            ]
-        },
-        {
-            "word": "clown",
-            "pronunciation": "[klaun]",
-            "translate": [
-                "шут",
-                "неотёсанный парень",
-                "деревенщина"
-            ]
-        },
-        {
-            "word": "cagey",
-            "pronunciation": "['keɪʤɪ]",
-            "translate": [
-                "осторожный",
-                "осмотрительный",
-                "неразговорчивый",
-                "скрытный"
-            ]
-        },
-        {
-            "word": "nasty",
-            "pronunciation": "['nɑ:stɪ]",
-            "translate": [
-                "тошнотворный",
-                "противный",
-                "мерзкий",
-                "грязный",
-                "непристойный",
-                "неприятный",
-                "скверный",
-                "злобный",
-                "угрожающий",
-                "опасный"
-            ]
-        },
-        {
-            "word": "shabby",
-            "pronunciation": "['ʃæbɪ]",
-            "translate": [
-                "поношенный",
-                "потрёпанный",
-                "потёртый",
-                "убогий",
-                "захудалый"
-            ]
-        },
-        {
-            "word": "fool",
-            "pronunciation": "[fu:l]",
-            "translate": [
-                "дурак",
-                "глупец",
-                "посмешище"
-            ]
-        },
-        {
-            "word": "urge",
-            "pronunciation": "[ɜ:ʤ]",
-            "translate": [
-                "побуждение",
-                "толчок",
-                "натиск",
-                "стремление",
-                "тяга (к чему-либо plushkina)",
-                "сильное желание",
-                "потребность"
-            ]
-        },
-        {
-            "word": "bulk",
-            "pronunciation": "[bʌlk]",
-            "translate": [
-                "основная масса (чего-либо, кого-либо)",
-                "величина",
-                "масса",
-                "объём",
-                "большие размеры",
-                "большое количество"
-            ],
-            "example": [
-                "The bulk of consumers are based in towns."
-            ]
-        },
-        {
-            "word": "addicted",
-            "pronunciation": "[ə'dɪktɪd]",
-            "translate": [
-                "помешанный"
-            ]
-        },
-        {
-            "word": "neither",
-            "pronunciation": "['naɪðə]",
-            "translate": [
-                "ни тот, ни другой",
-                "никто",
-                "ничто",
-                "ни один (из двух)"
-            ]
-        },
-        {
-            "word": "competent",
-            "pronunciation": "['kɔmpɪt(ə)nt]",
-            "translate": [
-                "компетентный",
-                "достаточный",
-                "правомочный",
-                "установленный",
-                "законный"
-            ]
-        },
-        {
-            "word": "consider",
-            "pronunciation": "[kən'sɪdə]",
-            "translate": [
-                "подумать",
-                "пораскинуть мозгом",
-                "пораскинуть умом",
-                "посоображать",
-                "раздумать",
-                "раскинуть мозгом"
-            ]
-        },
-        {
-            "word": "miserable",
-            "pronunciation": "['mɪz(ə)rəb(ə)l]",
-            "translate": [
-                "несчастный",
-                "тяжело"
-            ]
-        },
-        {
-            "word": "dough",
-            "pronunciation": "[dəu]",
-            "translate": [
-                "тесто",
-                "паста",
-                "густая масса",
-                "деньги",
-                "капуста"
-            ]
-        },
-        {
-            "word": "collar",
-            "pronunciation": "['kɔlə]",
-            "translate": [
-                "воротник",
-                "воротничок",
-                "ожерелье",
-                "ошейник"
-            ]
-        },
-        {
-            "word": "strip",
-            "pronunciation": "[strɪp]",
-            "translate": [
-                "узкая полоска (бумаги, материи и т.п.)"
-            ]
-        },
-        {
-            "word": "blow",
-            "pronunciation": "[bləu]",
-            "translate": [
-                "удар"
-            ]
-        },
-        {
-            "word": "tough",
-            "pronunciation": "[tʌf]",
-            "translate": [
-                "хулиган",
-                "бандит",
-                "драчун"
-            ]
-        },
-        {
-            "word": "chap",
-            "pronunciation": "[ʧæp]",
-            "translate": [
-                "малый",
-                "щель",
-                "челюсть (у скота)",
-                "щека"
-            ],
-            "example": [
-                "He a was short agreeable chap."
-            ]
-        },
-        {
-            "word": "turd",
-            "pronunciation": "[tɜ:d]",
-            "translate": [
-                "какашка",
-                "дерьмо",
-                "кал"
-            ]
-        },
-        {
-            "word": "fame",
-            "pronunciation": "[feɪm]",
-            "translate": [
-                "слава",
-                "известность",
-                "знаменитость",
-                "молва",
-                "репутация"
-            ]
-        },
-        {
-            "word": "shame",
-            "pronunciation": "[ʃeɪm]",
-            "translate": [
-                "стыд",
-                "скандал",
-                "позор",
-                "срам"
-            ]
-        },
-        {
-            "word": "endure",
-            "pronunciation": "[ɪn'djuə]",
-            "translate": [
-                "вынести",
-                "выдержать",
-                "вытерпеть",
-                "переносить"
-            ]
-        },
-        {
-            "word": "worth",
-            "pronunciation": "[wɜ:θ]",
-            "translate": [
-                "ценность",
-                "значение",
-                "достоинство"
-            ]
-        },
-        {
-            "word": "worthlessness",
-            "pronunciation": "['wɜːθləsnəs]",
-            "translate": [
-                "никчёмность",
-                "недостойность",
-                "низость",
-                "подлость"
-            ]
-        },
-        {
-            "word": "pissed",
-            "pronunciation": "[pɪst]",
-            "translate": [
-                "раздражённый",
-                "пьяный",
-                "сильно пьяный",
-                "пьянущий",
-                "обоссанный",
-                "злой"
-            ]
-        },
-        {
-            "word": "seizure",
-            "pronunciation": "['si:ʒə]",
-            "translate": [
-                "овладение",
-                "конфискация",
-                "наложение ареста",
-                "припадок",
-                "приступ",
-                "взятие",
-                "опись"
-            ]
-        },
-        {
-            "word": "fair enough",
-            "pronunciation": "[feə] [ɪ'nʌf]",
-            "translate": [
-                "ладно",
-                "согласен",
-                "принимается",
-                "приемлемо"
-            ]
-        },
-        {
-            "word": "infer",
-            "pronunciation": "[ɪn'fɜ:]",
-            "translate": [
-                "заключать",
-                "делать заключение",
-                "выводить",
-                "означать",
-                "подразумевать",
-                "делать вывод"
-            ]
-        },
-        {
-            "word": "refusing",
-            "pronunciation": "[rɪ'fju:zɪŋ]",
-            "translate": [
-                "отказ"
-            ]
-        },
-        {
-            "word": "suffer",
-            "pronunciation": "['sʌfə]",
-            "translate": [
-                "претерпевать",
-                "пострадать (за что-либо)",
-                "быть наказанным",
-                "отбывать наказание",
-                "терпеть"
-            ]
-        },
-        {
-            "word": "tribal",
-            "pronunciation": "['traɪb(ə)l]",
-            "translate": [
-                "туземец",
-                "абориген"
-            ]
-        },
-        {
-            "word": "mercenary",
-            "pronunciation": "['mɜ:s(ə)n(ə)rɪ]",
-            "translate": [
-                "наёмный солдат",
-                "наёмник"
-            ]
-        },
-        {
-            "word": "noggin",
-            "pronunciation": "['nɔgɪn]",
-            "translate": [
-                "маленькая кружка",
-                "небольшая кружка",
-                "кружечка"
-            ]
-        },
-        {
-            "word": "perception",
-            "pronunciation": "[pə'sepʃ(ə)n]",
-            "translate": [
-                "восприятие",
-                "осознание",
-                "понимание",
-                "сознание",
-                "познание",
-                "репутация",
-                "ощущение",
-                "понятие",
-                "познавание",
-                "чувствование",
-                "сбор"
-            ]
-        },
-        {
-            "word": "endurance",
-            "pronunciation": "[ɪn'dju(ə)rəns]",
-            "translate": [
-                "выносливость (боль, страдание и т. п.)",
-                "стойкость",
-                "терпеливость",
-                "прочность",
-                "способность переносить"
-            ]
-        },
-        {
-            "word": "shroud",
-            "pronunciation": "[ʃraud]",
-            "translate": [
-                "плащаница",
-                "покров",
-                "пелёнка",
-                "кожух",
-                "защитный экран",
-                "завеса"
-            ]
-        },
-        {
-            "word": "campfire",
-            "pronunciation": "['kæmp'faɪǝ]",
-            "translate": [
-                "бивачный костер",
-                "костёр",
-                "слёт"
-            ]
-        },
-        {
-            "word": "kin",
-            "pronunciation": "[kɪn]",
-            "translate": [
-                "семья",
-                "родня",
-                "родство",
-                "род",
-                "родственники",
-                "раса"
-            ]
-        },
-        {
-            "word": "reckon",
-            "pronunciation": "['rekən]",
-            "translate": [
-                "счёт",
-                "вести отсчёт (от какого-либо момента)"
-            ]
-        },
-        {
-            "word": "raise",
-            "pronunciation": "[reɪz]",
-            "translate": [
-                "повышение",
-                "поднятие",
-                "увеличение",
-                "прибавка",
-                "прибавление",
-                "надбавка"
-            ]
-        },
-        {
-            "word": "bartender",
-            "pronunciation": "['bɑ:'tendə]",
-            "translate": [
-                "буфетчик",
-                "бармен",
-                "содержатель бара"
-            ]
-        },
-        {
-            "word": "importance",
-            "pronunciation": "[ɪm'pɔ:t(ə)ns]",
-            "translate": [
-                "значение",
-                "важность",
-                "значительность",
-                "большое значение",
-                "роль"
-            ]
-        },
-        {
-            "word": "trickle",
-            "pronunciation": "['trɪk(ə)l]",
-            "translate": [
-                "струйка",
-                "утечка",
-                "горстка",
-                "кучка",
-                "капля"
-            ]
-        },
-        {
-            "word": "vernacular",
-            "pronunciation": "[və'nækjulə]",
-            "translate": [
-                "просторечие (в противоп. литературному языку)",
-                "родной язык",
-                "национальный язык",
-                "разговорный язык",
-                "местный диалект",
-                "жаргон"
-            ]
-        },
-        {
-            "word": "look at",
-            "pronunciation": "[luk] [æt]",
-            "translate": [
-                "посмотреть (в чем дело)",
-                "проверить",
-                "смотреть на (что-либо или кого-либо)",
-                "посмотреть на (что-либо или кого-либо)",
-                "смотреть (на кого-либо, что-либо)",
-                "обращать внимание"
-            ]
-        },
-        {
-            "word": "get rid of",
-            "pronunciation": "[get] [rɪd] [ɔv]",
-            "translate": [
-                "избавиться (отвязаться, отделаться, от кого-либо, чего-либо)",
-                "освободиться (отделаться, избавиться, от чего-либо, кого-либо)",
-                "отделываться (от чего-либо, кого-либо)"
-            ]
-        },
-        {
-            "word": "impede",
-            "pronunciation": "[ɪm'pi:d]",
-            "translate": [
-                "задерживаться",
-                "обставить",
-                "обставиться",
-                "обставлять",
-                "обставляться",
-                "создавать препятствия"
-            ]
-        },
-        {
-            "word": "lean toward",
-            "pronunciation": "[li:n] [tə'wɔ:d]",
-            "translate": [
-                "склоняться",
-                "быть склонным"
-            ]
-        },
-        {
-            "word": "bias",
-            "pronunciation": "['baɪəs]",
-            "translate": [
-                "уклон",
-                "наклон",
-                "склон",
-                "предубеждение",
-                "необъективность",
-                "пристрастие",
-                "склонность"
-            ]
-        },
-        {
-            "word": "expression",
-            "pronunciation": "[ɪk'spreʃ(ə)n]",
-            "translate": [
-                "выражение (лица, глаз и т.п.)",
-                "выразительность",
-                "экспрессия",
-                "выжимание (сока, масла и т. п.)"
-            ]
-        },
-        {
-            "word": "fire",
-            "pronunciation": "['faɪə]",
-            "translate": [
-                "огонь",
-                "пожар",
-                "костёр",
-                "воодушевление",
-                "пламя",
-                "орудийный огонь"
-            ]
-        },
-        {
-            "word": "pure",
-            "pronunciation": "[pjuə]",
-            "translate": [
-                "очищать",
-                "чистить",
-                "очищать",
-                "чистить"
-            ]
-        },
-        {
-            "word": "worthless",
-            "pronunciation": "['wɜ:θlɪs]",
-            "translate": [
-                "ничего не стоящий",
-                "не имеющий никакой ценности",
-                "бесполезный",
-                "никчёмный",
-                "никудышный"
-            ]
-        },
-        {
-            "word": "prove",
-            "pronunciation": "[pru:v]",
-            "translate": [
-                "доказать",
-                "удостоверять",
-                "удостоверить",
-                "подтверждать",
-                "подтвердить"
-            ]
-        },
-        {
-            "word": "garment",
-            "pronunciation": "['gɑ:mənt]",
-            "translate": [
-                "предмет одежды",
-                "одежда",
-                "покров",
-                "одеяние",
-                "наряд"
-            ]
-        },
-        {
-            "word": "hood",
-            "pronunciation": "[hud]",
-            "translate": [
-                "капюшон (плаща)",
-                "чепец",
-                "чепчик"
-            ]
-        },
-        {
-            "word": "unpredictable",
-            "pronunciation": "['ʌnprɪ'dɪktəb(ə)l]",
-            "translate": [
-                "непредсказуемый",
-                "непредвиденный"
-            ]
-        },
-        {
-            "word": "grand",
-            "pronunciation": "[grænd]",
-            "translate": [
-                "тысяча долларов",
-                "тысячедолларовая банкнота"
-            ]
-        },
-        {
-            "word": "clarity",
-            "pronunciation": "['klærɪtɪ]",
-            "translate": [
-                "чистота",
-                "прозрачность",
-                "ясность",
-                "разборчивость",
-                "наглядность",
-                "понятность (о манере изложения, стиле)",
-                "чёткость"
-            ]
-        },
-        {
-            "word": "bury",
-            "pronunciation": "['berɪ]",
-            "translate": [
-                "совершать погребальный обряд",
-                "зарыть в землю",
-                "похоронить",
-                "предать забвению"
-            ]
-        },
-        {
-            "word": "shoot out",
-            "pronunciation": "['ʃu:t'aut]",
-            "translate": [
-                "распускаться",
-                "извергать",
-                "выбрасывать",
-                "выбрасывать (ростки)"
-            ]
-        },
-        {
-            "word": "vantage",
-            "pronunciation": "['vɑ:ntɪʤ]",
-            "translate": [
-                "выгода",
-                "преимущество",
-                "польза",
-                "удобство"
-            ]
-        },
-        {
-            "word": "smash",
-            "pronunciation": "[smæʃ]",
-            "translate": [
-                "грохот",
-                "стук при падении",
-                "столкновении",
-                "столкновение",
-                "катастрофа"
-            ]
-        },
-        {
-            "word": "amauters",
-            "pronunciation": "['æmət(ʃ)ə]",
-            "translate": [
-                "любитель",
-                "непрофессионал",
-                "дилетант"
-            ]
-        },
-        {
-            "word": "funeral",
-            "pronunciation": "['fju:n(ə)rəl]",
-            "translate": [
-                "похороны",
-                "похоронная процессия",
-                "заупокойная служба",
-                "панихида"
-            ]
-        },
-        {
-            "word": "crew",
-            "pronunciation": "[kru:]",
-            "translate": [
-                "судовая команда",
-                "бригада",
-                "шайка",
-                "команда",
-                "экипаж корабля"
-            ]
-        },
-        {
-            "word": "van",
-            "pronunciation": "[væn]",
-            "translate": [
-                "фургон",
-                "багажный или товарный вагон"
-            ]
-        },
-        {
-            "word": "awkward",
-            "pronunciation": "['ɔ:kwəd]",
-            "translate": [
-                "неловкий",
-                "неуклюжий",
-                "нескладный"
-            ]
-        },
-        {
-            "word": "vouch",
-            "pronunciation": "[vauʧ]",
-            "translate": [
-                "ручаться",
-                "подтверждать",
-                "подкреплять"
-            ]
-        },
-        {
-            "word": "guidance",
-            "pronunciation": "['gaɪd(ə)ns]",
-            "translate": [
-                "руководство",
-                "водительство",
-                "наставничество",
-                "руководящее участие"
-            ]
-        },
-        {
-            "word": "borrow",
-            "pronunciation": "['bɔrəu]",
-            "translate": [
-                "поручительство",
-                "гарантия"
-            ]
-        },
-        {
-            "word": "bonding",
-            "pronunciation": "['bɔndɪŋ]",
-            "translate": [
-                "пайка",
-                "единение",
-                "сближение",
-                "сближающее общение "
-            ]
-        },
-        {
-            "word": "midlife",
-            "pronunciation": "['mɪdˌlaɪf]",
-            "translate": [
-                "зрелый возраст"
-            ]
-        },
-        {
-            "word": "jerk",
-            "pronunciation": "[ʤɜ:k]",
-            "translate": [
-                "рывок",
-                "толчок",
-                "вяленое мясо",
-                "вяленая говядина",
-                "козлина",
-                "недоносок",
-                "дурачок",
-                "глупый человек"
-            ]
-        },
-        {
-            "word": "cab",
-            "pronunciation": "[kæb]",
-            "translate": [
-                "будка машиниста",
-                "извозчик",
-                "такси",
-                "будка"
-            ]
-        },
-        {
-            "word": "mad",
-            "pronunciation": "[mæd]",
-            "translate": [
-                "совсем из ума выжил",
-                "быть без ума",
-                "помешанный на"
-            ]
-        },
-        {
-            "word": "stake",
-            "pronunciation": "[steɪk]",
-            "translate": [
-                "ставка",
-                "куш",
-                "заклад"
-            ]
-        },
-        {
-            "word": "pitch",
-            "pronunciation": "[pɪʧ]",
-            "translate": [
-                "высота (тона, звука, голоса)",
-                "питч",
-                "обычное место (уличного торговца)"
-            ]
-        },
-        {
-            "word": "penetrate",
-            "pronunciation": "['penɪtreɪt]",
-            "translate": [
-                "проникать",
-                "проникать внутрь",
-                "проходить",
-                "вторгаться",
-                "постигать"
-            ]
-        },
-        {
-            "word": "vent for",
-            "pronunciation": "[vent] [fɔ:]",
-            "translate": [
-                "дать выход"
-            ]
-        },
-        {
-            "word": "suspect",
-            "pronunciation": "['sʌspekt]",
-            "translate": [
-                "подозреваемый",
-                "подозреваемый человек",
-                "подозреваемое лицо"
-            ]
-        },
-        {
-            "word": "lurking",
-            "pronunciation": "['lɜ:kɪŋ]",
-            "translate": [
-                "сокрытие",
-                "скрытное наблюдение",
-                "пассивное участие"
-            ]
-        },
-        {
-            "word": "pounce",
-            "pronunciation": "[pauns]",
-            "translate": [
-                "внезапный налёт",
-                "наскок",
-                "прыжок",
-                "внезапный прыжок"
-            ]
-        },
-        {
-            "word": "faith",
-            "pronunciation": "[feɪθ]",
-            "translate": [
-                "вера",
-                "доверие",
-                "религия",
-                "вероисповедание",
-                "верность",
-                "лояльность"
-            ]
-        },
-        {
-            "word": "fragile",
-            "pronunciation": "['fræʤaɪl]",
-            "translate": [
-                "ломкий",
-                "слабый",
-                "недолговечный"
-            ]
-        },
-        {
-            "word": "fraud",
-            "pronunciation": "[frɔ:d]",
-            "translate": [
-                "мошенничество",
-                "мошеннические действия",
-                "мошенник"
-            ]
-        },
-        {
-            "word": "deserve",
-            "pronunciation": "[dɪ'zɜ:v]",
-            "translate": [
-                "быть достойным (чего-либо)",
-                "заслуживать (чего-либо)"
-            ]
-        },
-        {
-            "word": "owe",
-            "pronunciation": "[əu]",
-            "translate": [
-                "быть должным",
-                "быть в долгу"
-            ]
-        },
-        {
-            "word": "accurate",
-            "pronunciation": "['ækjərət]",
-            "translate": [
-                "точный",
-                "правильный",
-                "тщательный",
-                "прилежный"
-            ]
-        },
-        {
-            "word": "nurture",
-            "pronunciation": "['nɜ:ʧə]",
-            "translate": [
-                "вынашивать (план и т.п.)"
-            ]
-        },
-        {
-            "word": "guilty",
-            "pronunciation": "['gɪltɪ]",
-            "translate": [
-                "виновный",
-                "преступный",
-                "виноватый"
-            ]
-        },
-        {
-            "word": "concede",
-            "pronunciation": "[kən'si:d]",
-            "translate": [
-                "уступать (что-либо)",
-                "допускать",
-                "уступить",
-                "допустить",
-                "признавать"
-            ]
-        },
-        {
-            "word": "by the way",
-            "translate": [
-                "впрочем",
-                "к слову сказать",
-                "по дороге",
-                "по пути",
-                "ах да",
-                "между прочим",
-                "к слову",
-                "кстати"
-            ],
-            "description": "Used to change the subject, to say something that you have just thought about and that doesn't have to be connected to what was being said before.",
-            "example": [
-                "Well, it has been a very productive meeting, don't you think? By the way/Incidentally, what time is it?",
-                "I'll try to fix my car this afternoon. By the way/Incidentally, do you still have that screwdriver that I lent you?"
-            ]
-        },
-        {
-            "word": "incidentally",
-            "pronunciation": "['ɪnsɪ'dent(ə)lɪ]",
-            "translate": [
-                "время от времени",
-                "между прочим",
-                "кстати",
-                "мимоходом",
-                "периодически",
-                "в данном случае",
-                "несущественно"
-            ],
-            "description": "Used to change the subject, to say something that you have just thought about and that doesn't have to be connected to what was being said before.",
-            "example": [
-                "Well, it has been a very productive meeting, don't you think? By the way/Incidentally, what time is it?",
-                "I'll try to fix my car this afternoon. By the way/Incidentally, do you still have that screwdriver that I lent you?"
-            ]
-        },
-        {
-            "word": "actually",
-            "pronunciation": "['ækʧ(u)əlɪ]",
-            "translate": [
-                "в настоящее время",
-                "в данный момент",
-                "в действительности",
-                "в натуре"
-            ],
-            "description": "Used to introduce information that might be in some way surprising or unexpected.",
-            "example": [
-                "I don't really like chicken. Actually a matter of fact I have only eaten chicken once in my life.",
-                "Everybody thinks he has a very bad temper, but actually a matter of fact he is very kind."
-            ]
-        },
-        {
-            "word": "in fact",
-            "translate": [
-                "собственно",
-                "если точнее",
-                "на самом деле",
-                "и вообще",
-                "по сути дела",
-                "в действительности"
-            ],
-            "description": "Used to introduce information that might be in some way surprising or unexpected.",
-            "example": [
-                "I don't really like chicken. In fact I have only eaten chicken once in my life.",
-                "Everybody thinks he has a very bad temper, but in fact he is very kind."
-            ]
-        },
-        {
-            "word": "as a matter of fact",
-            "translate": [
-                "на самом деле",
-                "собственно говоря",
-                "фактически",
-                "действительно",
-                "по сути",
-                "в действительности"
-            ],
-            "description": "Used to introduce information that might be in some way surprising or unexpected.",
-            "example": [
-                "I don't really like chicken. As a matter of fact I have only eaten chicken once in my life.",
-                "Everybody thinks he has a very bad temper, but as a matter of fact he is very kind."
-            ]
-        },
-        {
-            "word": "anyway",
-            "pronunciation": "['enɪweɪ]",
-            "translate": [
-                "как придётся",
-                "что бы то ни было",
-                "так или иначе"
-            ],
-            "description": "Used to return to an earlier subject after a digression, or to get to the most interesting point. Used to give a more important reason for something you are saying.",
-            "example": [
-                "It's not so strange to lose documents. It happens to lots of people all the time. Anyway, we finally found the passports in …",
-                "I'm too tired to go and it's too late, and anyway it's too expensive."
-            ]
-        },
-        {
-            "word": "in any case",
-            "translate": [
-                "как бы там ни было",
-                "во всяком случае",
-                "при любых обстоятельствах",
-                "в любом случае",
-                "при любом раскладе",
-                "как бы то ни было"
-            ],
-            "description": "Used to return to an earlier subject after a digression, or to get to the most interesting point. Used to give a more important reason for something you are saying.",
-            "example": [
-                "It's not so strange to lose documents. It happens to lots of people all the time. In any case, we finally found the passports in …",
-                "I'm too tired to go and it's too late, and in any case it's too expensive."
-            ]
-        },
-        {
-            "word": "as I was saying",
-            "translate": [
-                "как я сказал ранее",
-                "как было сказано ранее",
-                "как я уже сказал"
-            ],
-            "description": "Used to return to an earlier subject in the conversation after an interruption or digression.",
-            "example": [
-                "As I was saying, we could get up early and spend the whole day there."
-            ]
-        },
-        {
-            "word": "after all",
-            "translate": [
-                "ведь",
-                "несмотря на",
-                "напоследок",
-                "пожалуй",
-                "в сущности",
-                "а ведь",
-                "к тому же",
-                "как-никак",
-                "всё-таки"
-            ],
-            "description": "Used to introduce an additional point that supports or explains what you have just said. Used to say that something is true despite what is believed or said.",
-            "example": [
-                "I might understand her better than you, after all, she is my wife.",
-                "Don't be too hard on him. After all, he is just a kid.",
-                "He is not such a bad professional after all."
-            ]
-        },
-        {
-            "word": "at least",
-            "translate": [
-                "минимум",
-                "минимально",
-                "хотя бы",
-                "по крайней мере",
-                "почти"
-            ],
-            "description": "Used to introduce positive information when talking about something negative. Used to reduce the effect of something we have said, or to make something less certain or definite.",
-            "example": [
-                "Lots of people got injured in the accident, but at least nobody died.",
-                "I finished last in the race, but at least I finished.",
-                "He knows the president, or at least that's what he says."
-            ]
-        },
-        {
-            "word": "all in all",
-            "pronunciation": "[ˌɔ:lɪn'ɔ:l]",
-            "translate": [
-                "в общем",
-                "итого",
-                "подводя итог изложенному выше, отметим следующее"
-            ],
-            "description": "Taking into consideration all the parts of a situation.",
-            "example": [
-                "There were some mistakes, but all in all, you did a pretty good job.",
-                "Both TVs are great, but all in all, I think this one is better for you."
-            ]
-        },
-        {
-            "word": "on the whole",
-            "translate": [
-                "вообще",
-                "в среднем",
-                "в общем",
-                "в целом",
-                "в итоге",
-                "в конечном счёте",
-                "в общем и целом",
-                "в большинстве своём"
-            ],
-            "description": "Generally",
-            "example": [
-                "On the whole, men tend to avoid talking about feelings.",
-                "There has been some criticism, but on the whole, customers like what we offer."
-            ]
-        },
-        {
-            "word": "besides",
-            "pronunciation": "[bɪ'saɪdz]",
-            "translate": [
-                "помимо того",
-                "также",
-                "вдобавок к тому",
-                "кроме",
-                "помимо",
-                "мало того",
-                "притом",
-                "заодно",
-                "наряду с",
-                "если не принимать во внимание"
-            ],
-            "description": "Used to add additional information (informal)",
-            "example": [
-                "I think it's a wonderful place, besides, it's very cheap."
-            ]
-        },
-        {
-            "word": "furthermore",
-            "pronunciation": "['fɜ:ðə'mɔ:]",
-            "translate": [
-                "также",
-                "к тому же",
-                "ещё",
-                "сверх того",
-                "притом",
-                "кроме того",
-                "более того"
-            ],
-            "description": "Used to add additional (an often more important) information (formal)",
-            "example": [
-                "Electric cars are becoming more powerful and energy-efficient. Furthermore, they are much cheaper than a few years ago."
-            ]
-        },
-        {
-            "word": "what's more",
-            "translate": [
-                "кроме этого",
-                "помимо этого",
-                "более того",
-                "к тому же"
-            ],
-            "description": "We use what's more to add something interesting to what we have just said. It's similar to furthermore but more informal.",
-            "example": [
-                "Scientists have found a big body of water under the surface of the planet. What's more, they think it's not the only body of water they are going to find.",
-                "He said that the new season is going to be premiered this September and, what's more, he confirmed that it's not going to be the last."
-            ]
-        },
-        {
-            "word": "obviously",
-            "pronunciation": "['ɔbvɪəslɪ]",
-            "translate": [
-                "безусловно",
-                "конечно",
-                "неуместно",
-                "чересчур открыто",
-                "разумеется",
-                "по всему видно"
-            ],
-            "description": "Used to introduce a fact that is easy to see or understand.",
-            "example": [
-                "Obviously, without qualifications it's harder to get a good job."
-            ]
-        },
-        {
-            "word": "basically",
-            "pronunciation": "['beɪsɪk(ə)lɪ]",
-            "translate": [
-                "в своей основе",
-                "по сути",
-                "собственно",
-                "попросту говоря"
-            ],
-            "description": "Used to introduce the most important point or characteristic of something.",
-            "example": [
-                "Basically, what we do here is produce the plastic parts of the phone."
-            ]
-        },
-        {
-            "word": "in other words",
-            "translate": [
-                "иначе говоря",
-                "то есть",
-                "другими словами",
-                "то есть"
-            ],
-            "description": "Used to say what has been said in simpler words.",
-            "example": [
-                "She said we should take a break and have time to ourselves, in other words, she dumped me."
-            ]
-        },
-        {
-            "word": "that is to say",
-            "translate": [
-                "другими словами",
-                "иначе говоря",
-                "иными словами",
-                "то есть"
-            ],
-            "description": "Used to explain or be more precise about something we have said. Similar to in other words.",
-            "example": [
-                "The best thing about music is its repeatability, that is to say, you can listen to the same songs again and again and never get bored."
-            ]
-        },
-        {
-            "word": "otherwise",
-            "pronunciation": "['ʌðəwaɪz]",
-            "translate": [
-                "иначе",
-                "иным способом",
-                "иным образом",
-                "или же"
-            ],
-            "description": "Used after an order or suggestion to say what will happen if that order or suggestion is not followed.",
-            "example": [
-                "Be here at 8 o'clock, otherwise, you will miss your turn."
-            ]
-        },
-        {
-            "word": "regarding",
-            "pronunciation": "[regarding]",
-            "translate": [
-                "рассмотрение",
-                "по вопросам",
-                "говоря о",
-                "по вопросу",
-                "на тему",
-                "в области",
-                "относящийся к"
-            ],
-            "description": "About. Used to introduce a topic of conversation.",
-            "example": [
-                "Regarding the new player, we'll have to decide if or when to sell him."
-            ]
-        },
-        {
-            "word": "as regards",
-            "translate": [
-                "касательно",
-                "если говорить о ...",
-                "что касается",
-                "по поводу",
-                "по отношению"
-            ],
-            "description": "About. Used to introduce a topic of conversation.",
-            "example": [
-                "As regards the new player, we'll have to decide if or when to sell him."
-            ]
-        },
-        {
-            "word": "as far as … is concerned",
-            "translate": [
-                "что касается",
-                "когда речь идёт о"
-            ],
-            "description": "About. Used to introduce a topic of conversation.",
-            "example": [
-                "As far as the new player is concerned, …"
-            ]
-        },
-        {
-            "word": "on the other hand",
-            "translate": [
-                "хотя",
-                "с другой стороны"
-            ],
-            "description": "Used to introduce a contrasting fact. It can be preceded by on the one hand.",
-            "example": [
-                "Cycling is good for your health, and it's a sport that is gentle with your muscles and joints. But on the other hand, there are many fatal accidents among cyclists.",
-                "On the one hand, cycling is good for your health, and it's a sport that is gentle with your muscles and joints. But on the other hand, there are many fatal accidents among cyclists."
-            ]
-        },
-        {
-            "word": "whereas",
-            "pronunciation": "[we(ə)'ræz]",
-            "translate": [
-                "потому что",
-                "так как",
-                "тогда как",
-                "принимая во внимание",
-                "поскольку",
-                "между тем как"
-            ],
-            "description": "We use whereas to compare and contrast two things or ideas. It means 'while' when it is used to express contrast.",
-            "example": [
-                "The north is cold whereas the south is very hot.",
-                "Whereas people used to aspire to have a big house, kids, dog etc., nowadays preferences are tending more towards apartments."
-            ]
-        },
-        {
-            "word": "coherent"
-        }
-    ]
+	"dictionary": [
+		{
+			"word": "get by",
+			"pronunciation": "['get'baɪ]",
+			"translate": [
+				"получить"
+			],
+			"example": [
+				"How much money do you need to get by each day?"
+			]
+		},
+		{
+			"word": "get away",
+			"pronunciation": "['getə'weɪ]",
+			"translate": [
+				"уходить"
+			],
+			"example": [
+				"How often do you get away from it all?"
+			]
+		},
+		{
+			"word": "get into",
+			"pronunciation": "[get] ['ɪntu:]",
+			"translate": [
+				"попасть в"
+			],
+			"example": [
+				"When was the last time you got into trouble?"
+			]
+		},
+		{
+			"word": "get together",
+			"pronunciation": "['gettə'geðə]",
+			"translate": [
+				"собираться"
+			],
+			"example": [
+				"When was the last time you got together with your friends?"
+			]
+		},
+		{
+			"word": "get away with it",
+			"pronunciation": "['getə'weɪ] [wɪð] [ɪt]",
+			"translate": [
+				"сходить с рук"
+			],
+			"example": [
+				"Have you ever done something wrong and gotten away with it?"
+			]
+		},
+		{
+			"word": "get up to",
+			"pronunciation": "['get'ʌp] [tu:]",
+			"translate": [
+				"вставать",
+				"заниматься"
+			],
+			"example": [
+				"What did you get up to last weekend?"
+			]
+		},
+		{
+			"word": "get up",
+			"pronunciation": "['get'ʌp]",
+			"translate": [
+				"вставать"
+			],
+			"example": [
+				"What time do you usually get up?",
+				"What do you do after you get up?"
+			]
+		},
+		{
+			"word": "get rid of",
+			"pronunciation": "[get] [rɪd] [ɔv]",
+			"translate": [
+				"избавляться от"
+			],
+			"example": [
+				"What would you like to get rid of in your house?"
+			]
+		},
+		{
+			"word": "get to",
+			"pronunciation": "[get] [tu:]",
+			"translate": [
+				"добраться до"
+			],
+			"example": [
+				"How long does it take you to get to class?"
+			]
+		},
+		{
+			"word": "get over",
+			"pronunciation": "['get'əuvə]",
+			"translate": [
+				"забыть",
+				"пережить"
+			],
+			"example": [
+				"What do you usually do to get over a big disappointment?"
+			]
+		},
+		{
+			"word": "get through to",
+			"pronunciation": "['get'θru:] [tu:]",
+			"translate": [
+				"пройти к",
+				"дозвониться"
+			],
+			"example": [
+				"What do you do when you can't get through to someone on the phone?"
+			]
+		},
+		{
+			"word": "get off",
+			"pronunciation": "['get'ɔf]",
+			"translate": [
+				"отправиться",
+				"отделаться"
+			],
+			"example": [
+				"What was the last time you did something wrong and got off lightly?"
+			]
+		},
+		{
+			"word": "get wound up",
+			"pronunciation": "[get] [wu:nd] [ʌp]",
+			"translate": [
+				"заводиться"
+			],
+			"example": [
+				"When was the last time you got wound up?"
+			]
+		},
+		{
+			"word": "get out of",
+			"pronunciation": "['get'aut] [ɔv]",
+			"translate": [
+				"убираться из",
+				"избежать"
+			],
+			"example": [
+				"What lies have you told to get out of doing something?"
+			]
+		},
+		{
+			"word": "get down",
+			"pronunciation": "['get'daun]",
+			"translate": [
+				"спускаться"
+			],
+			"example": [
+				"Have you ever had problems getting down from somewhere?"
+			]
+		},
+		{
+			"word": "get on with",
+			"pronunciation": "['get'ɔn] [wɪð]",
+			"translate": [
+				"ужиться",
+				"ладить"
+			],
+			"example": [
+				"How well do you get on with everyone in your family?"
+			]
+		},
+		{
+			"word": "count on",
+			"pronunciation": "[kaunt] [ɔn]",
+			"translate": [
+				"рассчитывать на"
+			]
+		},
+		{
+			"word": "calm down",
+			"pronunciation": "[kɑ:m] [daun]",
+			"translate": [
+				"успокоиться"
+			]
+		},
+		{
+			"word": "over yonder",
+			"pronunciation": "['əuvə] ['jɔndə]",
+			"translate": [
+				"там"
+			]
+		},
+		{
+			"word": "on a roll",
+			"pronunciation": "[ɔn] [ə] [rəul]"
+		},
+		{
+			"word": "till the cows come home",
+			"pronunciation": "[tɪl] [ðə] [kauz] [kʌm] [həum]",
+			"translate": [
+				"повторять до посинения",
+				"после дождичка в четверг",
+				"когда рак свистнет"
+			]
+		},
+		{
+			"word": "as all get out",
+			"pronunciation": "[æs] ['ɔ:l] ['get] [aut]",
+			"translate": [
+				"ужас как",
+				"адски",
+				"ужасно",
+				"чертовски"
+			]
+		},
+		{
+			"word": "flake out",
+			"pronunciation": "['fleɪk'aut]",
+			"translate": [
+				"улизнуть",
+				"смыться"
+			]
+		},
+		{
+			"word": "figure out",
+			"pronunciation": "['fɪgə(r)'aut]",
+			"translate": [
+				"понимать",
+				"вычислять"
+			]
+		},
+		{
+			"word": "turn down",
+			"pronunciation": "['tɜ:n'daun]",
+			"translate": [
+				"отказываться",
+				"отклонять"
+			]
+		},
+		{
+			"word": "put off",
+			"pronunciation": "['put'ɔf]",
+			"translate": [
+				"откладывать"
+			]
+		},
+		{
+			"word": "come up with",
+			"pronunciation": "['kʌm] ['ʌp] [wɪð]",
+			"translate": [
+				"придумывать"
+			]
+		},
+		{
+			"word": "mess up",
+			"pronunciation": "['mes'ʌp]",
+			"translate": [
+				"испортить",
+				"портачить"
+			]
+		},
+		{
+			"word": "miss out",
+			"pronunciation": "['mɪs'aut]",
+			"translate": [
+				"пропустить"
+			]
+		},
+		{
+			"word": "knuckle down",
+			"pronunciation": "['nʌk(ə)l'daun]",
+			"translate": [
+				"решительно взяться"
+			]
+		},
+		{
+			"word": "fucked out",
+			"pronunciation": "['fʌkt'aut]",
+			"translate": [
+				"разбитый",
+				"уставший"
+			]
+		},
+		{
+			"word": "clue",
+			"pronunciation": "[klu:]",
+			"translate": [
+				"зацепка"
+			]
+		},
+		{
+			"word": "muggy",
+			"pronunciation": "['mʌgɪ]",
+			"translate": [
+				"душный"
+			]
+		},
+		{
+			"word": "dump",
+			"pronunciation": "[dʌmp]",
+			"translate": [
+				"бросать"
+			]
+		},
+		{
+			"word": "murder",
+			"pronunciation": "['mɜ:də]",
+			"translate": [
+				"убийца"
+			]
+		},
+		{
+			"word": "droopy",
+			"pronunciation": "['dru:pɪ]",
+			"translate": [
+				"упавший духом",
+				"впавший в уныние",
+				"разбитый"
+			]
+		},
+		{
+			"word": "solve a task/problem",
+			"pronunciation": "[sɔlv] [ə] [tɑ:sk]/['prɔbləm]",
+			"translate": [
+				"упавший духом",
+				"впавший в уныние",
+				"разбитый"
+			]
+		},
+		{
+			"word": "widespread",
+			"pronunciation": "['waɪdsprεd]",
+			"translate": [
+				"распространённый",
+				"раскинувшийся",
+				"масштабный",
+				"обширный",
+				"повсеместный"
+			]
+		},
+		{
+			"word": "surroundings",
+			"pronunciation": "[sə'raundɪŋz]",
+			"translate": [
+				"среда",
+				"окрестности"
+			]
+		},
+		{
+			"word": "depend on",
+			"pronunciation": "[dɪ'pend] [ɔn]",
+			"translate": [
+				"зависит от"
+			]
+		},
+		{
+			"word": "surrounded by",
+			"pronunciation": "[sə'raund] [baɪ]",
+			"translate": [
+				"окружен"
+			]
+		},
+		{
+			"word": "under development",
+			"pronunciation": "['ʌndə] [dɪ'veləpmənt]",
+			"translate": [
+				"в разработке"
+			]
+		},
+		{
+			"word": "pick us up",
+			"pronunciation": "[pɪk] [ʌs] [ʌp]",
+			"translate": [
+				"подбери нас"
+			]
+		},
+		{
+			"word": "it stand for",
+			"pronunciation": "[ɪt] [stænd] [fɔ:]",
+			"translate": [
+				"это означает"
+			]
+		},
+		{
+			"word": "explanation",
+			"pronunciation": "['eksplə'neɪʃ(ə)n]",
+			"translate": [
+				"объяснение"
+			]
+		},
+		{
+			"word": "operate",
+			"pronunciation": "['ɔpəreɪt]",
+			"translate": [
+				"работать",
+				"управлять",
+				"действовать"
+			]
+		},
+		{
+			"word": "foundational",
+			"pronunciation": "[faun'deɪʃ(ə)nəl]",
+			"translate": [
+				"основополагающий"
+			]
+		},
+		{
+			"word": "quirk",
+			"translate": [
+				"причуда",
+				"каламбур",
+				"острота́",
+				"высмеивать"
+			],
+			"pronunciation": "[kwɜ:k]"
+		},
+		{
+			"word": "impact",
+			"pronunciation": "['ɪmpækt]",
+			"translate": [
+				"влияние",
+				"воздействие",
+				"удар"
+			]
+		},
+		{
+			"word": "decrease",
+			"pronunciation": "['di:kri:s]",
+			"translate": [
+				"уменьшение",
+				"понижение",
+				"спад"
+			]
+		},
+		{
+			"word": "introduce",
+			"pronunciation": "['ɪntrə'dju:s]",
+			"translate": [
+				"вводить",
+				"вносить",
+				"представлять"
+			]
+		},
+		{
+			"word": "relevant",
+			"pronunciation": "['relɪv(ə)nt]",
+			"translate": [
+				"релевантный",
+				"уместный"
+			]
+		},
+		{
+			"word": "regardless",
+			"translate": [
+				"несмотря ни на что",
+				"не обращающий внимания",
+				"не заслуживающий внимания",
+				"не считающийся",
+				"не обращая внимания ни на что",
+				"не считаясь ни с чем"
+			],
+			"pronunciation": "[rɪ'gɑ:dlɪs]"
+		},
+		{
+			"word": "spread",
+			"translate": [
+				"распространение",
+				"размах",
+				"протяженность"
+			],
+			"pronunciation": "[spred]"
+		},
+		{
+			"word": "allocate",
+			"pronunciation": "['æləkeɪt]",
+			"translate": [
+				"распределять",
+				"предназначать"
+			]
+		},
+		{
+			"word": "reason",
+			"translate": [
+				"причина",
+				"повод",
+				"основание"
+			],
+			"pronunciation": "['ri:z(ə)n]"
+		},
+		{
+			"word": "entirely",
+			"translate": [
+				"полностью",
+				"целиком",
+				"совершенно"
+			],
+			"pronunciation": "[ɪn'taɪəlɪ]"
+		},
+		{
+			"word": "entire",
+			"pronunciation": "[ɪn'taɪə]",
+			"translate": [
+				"весь",
+				"целый",
+				"полный"
+			]
+		},
+		{
+			"word": "surgery",
+			"translate": [
+				"операция(хирургическая)"
+			],
+			"pronunciation": "['sɜ:ʤ(ə)rɪ]"
+		},
+		{
+			"word": "operation",
+			"translate": [
+				"операция(хирургическая)"
+			],
+			"pronunciation": "['ɔpə'reɪʃ(ə)n]"
+		},
+		{
+			"word": "abdomen",
+			"pronunciation": "['æbdəmən]",
+			"translate": [
+				"живот"
+			]
+		},
+		{
+			"word": "appendicitis",
+			"pronunciation": "[əˌpendɪˈsaɪtɪs]",
+			"translate": [
+				"аппендицит"
+			]
+		},
+		{
+			"word": "dismiss",
+			"translate": [
+				"снять",
+				"увольнение",
+				"отставка",
+				"выписать"
+			],
+			"pronunciation": "[dɪs'mɪs]",
+			"example": [
+				"My father was dismissed from hospital"
+			]
+		},
+		{
+			"word": "required",
+			"pronunciation": "[rɪ'kwaɪəd]",
+			"translate": [
+				"необходимый"
+			]
+		},
+		{
+			"word": "capable",
+			"pronunciation": "['keɪpəb(ə)l]",
+			"translate": [
+				"способный",
+				"одарённый",
+				"умелый"
+			]
+		},
+		{
+			"word": "response",
+			"pronunciation": "[rɪ'spɔns]",
+			"translate": [
+				"отклик",
+				"ответ",
+				"реакция",
+				"реагирование",
+				"ответное чувство"
+			]
+		},
+		{
+			"word": "explore",
+			"pronunciation": "[ɪk'splɔ:]",
+			"translate": [
+				"изучать",
+				"исследовать",
+				"выяснять",
+				"обследовать",
+				"изучить"
+			]
+		},
+		{
+			"word": "artificial",
+			"pronunciation": "['ɑ:tɪ'fɪʃ(ə)l]",
+			"translate": [
+				"фальшивый",
+				"искусственный",
+				"не природный",
+				"притворный",
+				"надуманный"
+			]
+		},
+		{
+			"word": "consume",
+			"pronunciation": "[kən'sju:m]",
+			"translate": [
+				"потреблять",
+				"расходовать",
+				"поглощать",
+				"израсходовать"
+			]
+		},
+		{
+			"word": "keep track of",
+			"pronunciation": "[ki:p] [træk] [ɔv]",
+			"translate": [
+				"следить за развитием",
+				"постоянно отслеживать",
+				"следить",
+				"следить за"
+			]
+		},
+		{
+			"word": "gain",
+			"pronunciation": "[geɪn]",
+			"translate": [
+				"барыши",
+				"прибыль",
+				"положительный эффект"
+			]
+		},
+		{
+			"word": "mental",
+			"pronunciation": "[mentl]",
+			"translate": [
+				"мысленный",
+				"психический",
+				"душевный"
+			]
+		},
+		{
+			"word": "strengthen",
+			"pronunciation": "['streŋθ(ə)n]",
+			"translate": [
+				"усиливать",
+				"усилить",
+				"укреплять"
+			]
+		},
+		{
+			"word": "widen",
+			"pronunciation": "['waɪdn]",
+			"translate": [
+				"расширять",
+				"расширяться",
+				"распространять",
+				"набирать обороты",
+				"пополниться"
+			]
+		},
+		{
+			"word": "heighten",
+			"pronunciation": "[haɪtn]",
+			"translate": [
+				"повысить",
+				"усиливать",
+				"повышаться",
+				"усиливаться"
+			]
+		},
+		{
+			"word": "lengthen",
+			"pronunciation": "['leŋθ(ə)n]",
+			"translate": [
+				"затягивать",
+				"прибавить",
+				"прибавлять",
+				"продлевать",
+				"надвивать"
+			]
+		},
+		{
+			"word": "shorten",
+			"pronunciation": "['ʃɔ:tn]",
+			"translate": [
+				"урезать",
+				"сокращать",
+				"уменьшать"
+			]
+		},
+		{
+			"word": "weaken",
+			"pronunciation": "['wi:kən]",
+			"translate": [
+				"слабеть",
+				"поддаваться",
+				"сдаваться",
+				"расслаблять"
+			]
+		},
+		{
+			"word": "dedicate",
+			"pronunciation": "['dedɪkeɪt]",
+			"translate": [
+				"посвящать (чему-либо)",
+				"отдавать",
+				"заполнять время",
+				"надписывать",
+				"освящать"
+			]
+		},
+		{
+			"word": "dig",
+			"pronunciation": "[dɪg]",
+			"translate": [
+				"копать",
+				"выкапывать"
+			]
+		},
+		{
+			"word": "renovation",
+			"pronunciation": "['renə'veɪʃ(ə)n]",
+			"translate": [
+				"реставрация",
+				"освежение",
+				"обновление",
+				"реставрирование"
+			]
+		},
+		{
+			"word": "violent",
+			"pronunciation": "['vaɪələnt]",
+			"translate": [
+				"ожесточённый",
+				"яростный",
+				"неистовый",
+				"отчаянный"
+			]
+		},
+		{
+			"word": "mentality",
+			"pronunciation": "[men'tæliti]",
+			"translate": [
+				"менталитет"
+			]
+		},
+		{
+			"word": "mind",
+			"pronunciation": "[maɪnd]",
+			"translate": [
+				"ум",
+				"разум"
+			]
+		},
+		{
+			"word": "to converse",
+			"pronunciation": "[kən'vɜ:s]",
+			"translate": [
+				"общаться (с кем-либо)",
+				"беседовать (с кем-либо)"
+			]
+		},
+		{
+			"word": "to raise",
+			"pronunciation": "[reɪz]",
+			"translate": [
+				"поднимать",
+				"повышать"
+			]
+		},
+		{
+			"word": "concealing",
+			"pronunciation": "[kən'si:lɪŋ]",
+			"translate": [
+				"укрывание",
+				"скрывание",
+				"утаивание",
+				"укрывательство"
+			]
+		},
+		{
+			"word": "occasionally",
+			"pronunciation": "[ə'keɪʒ(ə)nəlɪ]",
+			"translate": [
+				"изредка",
+				"временами",
+				"время от времени",
+				"иногда"
+			]
+		},
+		{
+			"word": "fellow",
+			"pronunciation": "['feləu]",
+			"translate": [
+				"товарищ",
+				"собрат"
+			]
+		},
+		{
+			"word": "pretext",
+			"pronunciation": "['pri:'tekst]",
+			"translate": [
+				"отговорка",
+				"отмазка",
+				"предлог"
+			]
+		},
+		{
+			"word": "gossip",
+			"pronunciation": "['gɔsɪp]",
+			"translate": [
+				"болтовня",
+				"разговоры"
+			]
+		},
+		{
+			"word": "inherited",
+			"pronunciation": "[ɪn'herɪt]",
+			"translate": [
+				"получать в наследство",
+				"унаследовать",
+				"перенять (свойство, качество и т.п.)",
+				"наследовать"
+			]
+		},
+		{
+			"word": "turn out",
+			"pronunciation": "['tɜ:n'aut]",
+			"translate": [
+				"выворачивать",
+				"выяснять",
+				"оказываться",
+				"получаться"
+			]
+		},
+		{
+			"word": "intimately",
+			"pronunciation": "['ɪntɪmɪtlɪ]",
+			"translate": [
+				"очень хорошо",
+				"отлично",
+				"досконально",
+				"задушевно",
+				"интимно"
+			]
+		},
+		{
+			"word": "confesses",
+			"pronunciation": "[kən'fes]",
+			"translate": [
+				"исповедаться",
+				"исповедовать (веру, кающегося)",
+				"признавать",
+				"сознаться"
+			]
+		},
+		{
+			"word": "doubt",
+			"pronunciation": "[daut]",
+			"translate": [
+				"сомнение",
+				"нерешительность",
+				"неясность",
+				"раздумье"
+			]
+		},
+		{
+			"word": "private security",
+			"pronunciation": "['praɪvɪt] [sɪ'kju(ə)rɪtɪ]",
+			"translate": [
+				"безопасность частной собственности",
+				"безопасность частных лиц",
+				"личная безопасность"
+			]
+		},
+		{
+			"word": "humidity",
+			"pronunciation": "[hju:'mɪdɪtɪ]",
+			"translate": [
+				"влажность",
+				"влагостойкость",
+				"сырость",
+				"влага"
+			]
+		},
+		{
+			"word": "to melt",
+			"pronunciation": "[tu:] [melt]",
+			"translate": [
+				"плавить",
+				"растапливать",
+				"плавиться",
+				"умиляться",
+				"трогать",
+				"смягчать",
+				"слабеть",
+				"уменьшаться",
+				"исчезать"
+			]
+		},
+		{
+			"word": "paw",
+			"pronunciation": "[pɔ:]",
+			"translate": [
+				"лапа",
+				"почерк",
+				"пятерня",
+				"скрестись",
+				"рука",
+				"лапка"
+			]
+		},
+		{
+			"word": "take care of",
+			"pronunciation": "[tək] [kɛr] [ɔf]",
+			"translate": [
+				"заботиться (о ком-либо)",
+				"обеспечить (кого-либо)",
+				"пригреть (кого-либо)",
+				"приютить (кого-либо)"
+			]
+		},
+		{
+			"word": "enquire",
+			"pronunciation": "[ɪn'kwaɪə]",
+			"translate": [
+				"спрашивать",
+				"узнавать",
+				"наводить справки",
+				"добиваться сведений",
+				"спросить",
+				"следовать",
+				"посылать запрос"
+			]
+		},
+		{
+			"word": "accumulation",
+			"pronunciation": "[ə'kju:mju'leɪʃ(ə)n]",
+			"translate": [
+				"накопление",
+				"аккумуляция",
+				"груда",
+				"масса",
+				"скопление",
+				"собирание",
+				"аккумулирование"
+			]
+		},
+		{
+			"word": "insulate",
+			"pronunciation": "['ɪnsjuleɪt]",
+			"translate": [
+				"отделять",
+				"обособлять",
+				"разобщать",
+				"ограждать"
+			]
+		},
+		{
+			"word": "stinks up",
+			"pronunciation": "[stɪŋk] [ʌp]",
+			"translate": [
+				"провонять"
+			]
+		},
+		{
+			"word": "solstice",
+			"pronunciation": "['sɔlstɪs]",
+			"translate": [
+				"солнцестояние",
+				"точка солнцестояния"
+			]
+		},
+		{
+			"word": "recharged",
+			"pronunciation": "['ri:'ʧɑ:ʤ]",
+			"translate": [
+				"подкрепиться",
+				"подпитывать",
+				"перезарядиться",
+				"перезаряжаться",
+				"набираться сил",
+				"заряжать"
+			]
+		},
+		{
+			"word": "grew out",
+			"pronunciation": "[ɡrɛw] [aʊt]",
+			"translate": [
+				"отрастить",
+				"распространяться",
+				"распускаться",
+				"прорастать",
+				"вырастать"
+			]
+		},
+		{
+			"word": "rehearsal",
+			"pronunciation": "[rɪ'hɜ:s(ə)l]",
+			"translate": [
+				"репетиция",
+				"повторение",
+				"перечисление",
+				"пересказ",
+				"спевка",
+				"рассказ",
+				"повествование"
+			]
+		},
+		{
+			"word": "self-employed",
+			"pronunciation": "['selfɪm'plɔɪd]",
+			"translate": [
+				"мелкий предприниматель",
+				"владелец собственного бизнеса"
+			]
+		},
+		{
+			"word": "spoil",
+			"pronunciation": "[spɔɪl]",
+			"translate": [
+				"прибыль (полученная в результате конкуренции с кем-либо)",
+				"военная добыча",
+				"трофеи",
+				"выгода"
+			]
+		},
+		{
+			"word": "light fixture",
+			"translate": [
+				"светильник",
+				"светящийся предмет"
+			],
+			"pronunciation": "[laɪt] ['fɪksʧə]"
+		},
+		{
+			"word": "honk",
+			"pronunciation": "[hɔŋk]",
+			"translate": [
+				"сигналить",
+				"бибикать"
+			]
+		},
+		{
+			"word": "pebbles",
+			"pronunciation": "['peb(ə)lz]",
+			"translate": [
+				"галька",
+				"булыжник",
+				"мелкий камень",
+				"щебень",
+				"гравий"
+			]
+		},
+		{
+			"word": "mannerism",
+			"pronunciation": "['mænərɪz(ə)m]",
+			"translate": [
+				"особенность (присущая кому-либо)",
+				"манерность",
+				"характерная черта",
+				"привычка",
+				"причуда"
+			]
+		},
+		{
+			"word": "sneeze",
+			"pronunciation": "[sni:z]",
+			"translate": [
+				"чиханье",
+				"чих",
+				"чихание"
+			]
+		},
+		{
+			"word": "afraid off",
+			"pronunciation": "[ə'freɪd] [ɒf]",
+			"translate": [
+				"бояться",
+				"опасаться"
+			]
+		},
+		{
+			"word": "ask for",
+			"pronunciation": "[ɑ:sk] [fɔ:]",
+			"translate": [
+				"просить (sth., у кого-л., что-л.)",
+				"хотеть видеть",
+				"просить о (чём-л.)",
+				"спрашивать о (ком-л.)",
+				"попросить"
+			]
+		},
+		{
+			"word": "famous for",
+			"pronunciation": "['feɪməs] [fɔ:]",
+			"translate": [
+				"известный (чем-либо)",
+				"знаменит (чем-то)"
+			]
+		},
+		{
+			"word": "proud off",
+			"pronunciation": "[praud] [ɒf]",
+			"translate": [
+				"гордиться"
+			]
+		},
+		{
+			"word": "excited about",
+			"pronunciation": "[ɪk'saɪtɪd] [ə'baut]",
+			"translate": [
+				"полный энтузиазма",
+				"взволнованный (кем-л., чем-л.)"
+			]
+		},
+		{
+			"word": "argue with",
+			"pronunciation": "['ɑ:gju:] [wɪð]",
+			"translate": [
+				"спорить с (кем-либо)",
+				"ссориться с (someone – кем-либо)"
+			]
+		},
+		{
+			"word": "take care of",
+			"pronunciation": "[teɪk] [keə] [ɔv]",
+			"translate": [
+				"заботиться (о ком-либо)",
+				"обеспечить (кого-либо)",
+				"пригреть (кого-либо)",
+				"приютить (кого-либо)"
+			]
+		},
+		{
+			"word": "familiar",
+			"pronunciation": "[fə'mɪlɪə]",
+			"translate": [
+				"знакомый",
+				"домовой (дух)"
+			],
+			"example": [
+				"It sounds familiar"
+			]
+		},
+		{
+			"word": "revive",
+			"pronunciation": "[rɪ'vaɪv]",
+			"translate": [
+				"вновь обретать бодрость",
+				"возвращаться к жизни",
+				"обновлять"
+			]
+		},
+		{
+			"word": "numerous",
+			"pronunciation": "['nju:m(ə)rəs]",
+			"translate": [
+				"многочисленный",
+				"обширный",
+				"неоднократный"
+			]
+		},
+		{
+			"word": "variety",
+			"pronunciation": "[və'raɪətɪ]",
+			"translate": [
+				"разнообразие",
+				"множество",
+				"многосторонность"
+			]
+		},
+		{
+			"word": "rinse off",
+			"pronunciation": "[rɪns] [ɒf]",
+			"translate": [
+				"смыть (с себя в душе грязь и т.п.)",
+				"смывать (с себя в душе грязь и т.п.)",
+				"сполоснуться"
+			]
+		},
+		{
+			"word": "pest",
+			"pronunciation": "[pest]",
+			"translate": [
+				"сельскохозяйственный вредитель",
+				"вредное насекомое",
+				"надоедливый человек",
+				"зараза",
+				"надоеда",
+				"несносный человек",
+				"вредитель"
+			]
+		},
+		{
+			"word": "cope",
+			"pronunciation": "[kəup]",
+			"translate": [
+				"покров",
+				"будка",
+				"кабина"
+			]
+		},
+		{
+			"word": "postpone",
+			"pronunciation": "[pə(u)'spəun]",
+			"translate": [
+				"откладывать",
+				"отсрочивать",
+				"относить в конец предложения",
+				"подчинять"
+			]
+		},
+		{
+			"word": "homie",
+			"pronunciation": "[ˈhəʊmi]",
+			"translate": [
+				"земляк",
+				"приятель"
+			]
+		},
+		{
+			"word": "counseling",
+			"pronunciation": "['kaʊnsǝlɪŋ]",
+			"translate": [
+				"напоминания",
+				"выдача рекомендаций",
+				"консультирование"
+			]
+		},
+		{
+			"word": "clown",
+			"pronunciation": "[klaun]",
+			"translate": [
+				"шут",
+				"неотёсанный парень",
+				"деревенщина"
+			]
+		},
+		{
+			"word": "cagey",
+			"pronunciation": "['keɪʤɪ]",
+			"translate": [
+				"осторожный",
+				"осмотрительный",
+				"неразговорчивый",
+				"скрытный"
+			]
+		},
+		{
+			"word": "nasty",
+			"pronunciation": "['nɑ:stɪ]",
+			"translate": [
+				"тошнотворный",
+				"противный",
+				"мерзкий",
+				"грязный",
+				"непристойный",
+				"неприятный",
+				"скверный",
+				"злобный",
+				"угрожающий",
+				"опасный"
+			]
+		},
+		{
+			"word": "shabby",
+			"pronunciation": "['ʃæbɪ]",
+			"translate": [
+				"поношенный",
+				"потрёпанный",
+				"потёртый",
+				"убогий",
+				"захудалый"
+			]
+		},
+		{
+			"word": "fool",
+			"pronunciation": "[fu:l]",
+			"translate": [
+				"дурак",
+				"глупец",
+				"посмешище"
+			]
+		},
+		{
+			"word": "urge",
+			"pronunciation": "[ɜ:ʤ]",
+			"translate": [
+				"побуждение",
+				"толчок",
+				"натиск",
+				"стремление",
+				"тяга (к чему-либо plushkina)",
+				"сильное желание",
+				"потребность"
+			]
+		},
+		{
+			"word": "bulk",
+			"pronunciation": "[bʌlk]",
+			"translate": [
+				"основная масса (чего-либо, кого-либо)",
+				"величина",
+				"масса",
+				"объём",
+				"большие размеры",
+				"большое количество"
+			],
+			"example": [
+				"The bulk of consumers are based in towns."
+			]
+		},
+		{
+			"word": "addicted",
+			"pronunciation": "[ə'dɪktɪd]",
+			"translate": [
+				"помешанный"
+			]
+		},
+		{
+			"word": "neither",
+			"pronunciation": "['naɪðə]",
+			"translate": [
+				"ни тот, ни другой",
+				"никто",
+				"ничто",
+				"ни один (из двух)"
+			]
+		},
+		{
+			"word": "competent",
+			"pronunciation": "['kɔmpɪt(ə)nt]",
+			"translate": [
+				"компетентный",
+				"достаточный",
+				"правомочный",
+				"установленный",
+				"законный"
+			]
+		},
+		{
+			"word": "consider",
+			"pronunciation": "[kən'sɪdə]",
+			"translate": [
+				"подумать",
+				"пораскинуть мозгом",
+				"пораскинуть умом",
+				"посоображать",
+				"раздумать",
+				"раскинуть мозгом"
+			]
+		},
+		{
+			"word": "miserable",
+			"pronunciation": "['mɪz(ə)rəb(ə)l]",
+			"translate": [
+				"несчастный",
+				"тяжело"
+			]
+		},
+		{
+			"word": "dough",
+			"pronunciation": "[dəu]",
+			"translate": [
+				"тесто",
+				"паста",
+				"густая масса",
+				"деньги",
+				"капуста"
+			]
+		},
+		{
+			"word": "collar",
+			"pronunciation": "['kɔlə]",
+			"translate": [
+				"воротник",
+				"воротничок",
+				"ожерелье",
+				"ошейник"
+			]
+		},
+		{
+			"word": "strip",
+			"pronunciation": "[strɪp]",
+			"translate": [
+				"узкая полоска (бумаги, материи и т.п.)"
+			]
+		},
+		{
+			"word": "blow",
+			"pronunciation": "[bləu]",
+			"translate": [
+				"удар"
+			]
+		},
+		{
+			"word": "tough",
+			"pronunciation": "[tʌf]",
+			"translate": [
+				"хулиган",
+				"бандит",
+				"драчун"
+			]
+		},
+		{
+			"word": "chap",
+			"pronunciation": "[ʧæp]",
+			"translate": [
+				"малый",
+				"щель",
+				"челюсть (у скота)",
+				"щека"
+			],
+			"example": [
+				"He a was short agreeable chap."
+			]
+		},
+		{
+			"word": "turd",
+			"pronunciation": "[tɜ:d]",
+			"translate": [
+				"какашка",
+				"дерьмо",
+				"кал"
+			]
+		},
+		{
+			"word": "fame",
+			"pronunciation": "[feɪm]",
+			"translate": [
+				"слава",
+				"известность",
+				"знаменитость",
+				"молва",
+				"репутация"
+			]
+		},
+		{
+			"word": "shame",
+			"pronunciation": "[ʃeɪm]",
+			"translate": [
+				"стыд",
+				"скандал",
+				"позор",
+				"срам"
+			]
+		},
+		{
+			"word": "endure",
+			"pronunciation": "[ɪn'djuə]",
+			"translate": [
+				"вынести",
+				"выдержать",
+				"вытерпеть",
+				"переносить"
+			]
+		},
+		{
+			"word": "worth",
+			"pronunciation": "[wɜ:θ]",
+			"translate": [
+				"ценность",
+				"значение",
+				"достоинство"
+			]
+		},
+		{
+			"word": "worthlessness",
+			"pronunciation": "['wɜːθləsnəs]",
+			"translate": [
+				"никчёмность",
+				"недостойность",
+				"низость",
+				"подлость"
+			]
+		},
+		{
+			"word": "pissed",
+			"pronunciation": "[pɪst]",
+			"translate": [
+				"раздражённый",
+				"пьяный",
+				"сильно пьяный",
+				"пьянущий",
+				"обоссанный",
+				"злой"
+			]
+		},
+		{
+			"word": "seizure",
+			"pronunciation": "['si:ʒə]",
+			"translate": [
+				"овладение",
+				"конфискация",
+				"наложение ареста",
+				"припадок",
+				"приступ",
+				"взятие",
+				"опись"
+			]
+		},
+		{
+			"word": "fair enough",
+			"pronunciation": "[feə] [ɪ'nʌf]",
+			"translate": [
+				"ладно",
+				"согласен",
+				"принимается",
+				"приемлемо"
+			]
+		},
+		{
+			"word": "infer",
+			"pronunciation": "[ɪn'fɜ:]",
+			"translate": [
+				"заключать",
+				"делать заключение",
+				"выводить",
+				"означать",
+				"подразумевать",
+				"делать вывод"
+			]
+		},
+		{
+			"word": "refusing",
+			"pronunciation": "[rɪ'fju:zɪŋ]",
+			"translate": [
+				"отказ"
+			]
+		},
+		{
+			"word": "suffer",
+			"pronunciation": "['sʌfə]",
+			"translate": [
+				"претерпевать",
+				"пострадать (за что-либо)",
+				"быть наказанным",
+				"отбывать наказание",
+				"терпеть"
+			]
+		},
+		{
+			"word": "tribal",
+			"pronunciation": "['traɪb(ə)l]",
+			"translate": [
+				"туземец",
+				"абориген"
+			]
+		},
+		{
+			"word": "mercenary",
+			"pronunciation": "['mɜ:s(ə)n(ə)rɪ]",
+			"translate": [
+				"наёмный солдат",
+				"наёмник"
+			]
+		},
+		{
+			"word": "noggin",
+			"pronunciation": "['nɔgɪn]",
+			"translate": [
+				"маленькая кружка",
+				"небольшая кружка",
+				"кружечка"
+			]
+		},
+		{
+			"word": "perception",
+			"pronunciation": "[pə'sepʃ(ə)n]",
+			"translate": [
+				"восприятие",
+				"осознание",
+				"понимание",
+				"сознание",
+				"познание",
+				"репутация",
+				"ощущение",
+				"понятие",
+				"познавание",
+				"чувствование",
+				"сбор"
+			]
+		},
+		{
+			"word": "endurance",
+			"pronunciation": "[ɪn'dju(ə)rəns]",
+			"translate": [
+				"выносливость (боль, страдание и т. п.)",
+				"стойкость",
+				"терпеливость",
+				"прочность",
+				"способность переносить"
+			]
+		},
+		{
+			"word": "shroud",
+			"pronunciation": "[ʃraud]",
+			"translate": [
+				"плащаница",
+				"покров",
+				"пелёнка",
+				"кожух",
+				"защитный экран",
+				"завеса"
+			]
+		},
+		{
+			"word": "campfire",
+			"pronunciation": "['kæmp'faɪǝ]",
+			"translate": [
+				"бивачный костер",
+				"костёр",
+				"слёт"
+			]
+		},
+		{
+			"word": "kin",
+			"pronunciation": "[kɪn]",
+			"translate": [
+				"семья",
+				"родня",
+				"родство",
+				"род",
+				"родственники",
+				"раса"
+			]
+		},
+		{
+			"word": "reckon",
+			"pronunciation": "['rekən]",
+			"translate": [
+				"счёт",
+				"вести отсчёт (от какого-либо момента)"
+			]
+		},
+		{
+			"word": "raise",
+			"pronunciation": "[reɪz]",
+			"translate": [
+				"повышение",
+				"поднятие",
+				"увеличение",
+				"прибавка",
+				"прибавление",
+				"надбавка"
+			]
+		},
+		{
+			"word": "bartender",
+			"pronunciation": "['bɑ:'tendə]",
+			"translate": [
+				"буфетчик",
+				"бармен",
+				"содержатель бара"
+			]
+		},
+		{
+			"word": "importance",
+			"pronunciation": "[ɪm'pɔ:t(ə)ns]",
+			"translate": [
+				"значение",
+				"важность",
+				"значительность",
+				"большое значение",
+				"роль"
+			]
+		},
+		{
+			"word": "trickle",
+			"pronunciation": "['trɪk(ə)l]",
+			"translate": [
+				"струйка",
+				"утечка",
+				"горстка",
+				"кучка",
+				"капля"
+			]
+		},
+		{
+			"word": "vernacular",
+			"pronunciation": "[və'nækjulə]",
+			"translate": [
+				"просторечие (в противоп. литературному языку)",
+				"родной язык",
+				"национальный язык",
+				"разговорный язык",
+				"местный диалект",
+				"жаргон"
+			]
+		},
+		{
+			"word": "look at",
+			"pronunciation": "[luk] [æt]",
+			"translate": [
+				"посмотреть (в чем дело)",
+				"проверить",
+				"смотреть на (что-либо или кого-либо)",
+				"посмотреть на (что-либо или кого-либо)",
+				"смотреть (на кого-либо, что-либо)",
+				"обращать внимание"
+			]
+		},
+		{
+			"word": "get rid of",
+			"pronunciation": "[get] [rɪd] [ɔv]",
+			"translate": [
+				"избавиться (отвязаться, отделаться, от кого-либо, чего-либо)",
+				"освободиться (отделаться, избавиться, от чего-либо, кого-либо)",
+				"отделываться (от чего-либо, кого-либо)"
+			]
+		},
+		{
+			"word": "impede",
+			"pronunciation": "[ɪm'pi:d]",
+			"translate": [
+				"задерживаться",
+				"обставить",
+				"обставиться",
+				"обставлять",
+				"обставляться",
+				"создавать препятствия"
+			]
+		},
+		{
+			"word": "lean toward",
+			"pronunciation": "[li:n] [tə'wɔ:d]",
+			"translate": [
+				"склоняться",
+				"быть склонным"
+			]
+		},
+		{
+			"word": "bias",
+			"pronunciation": "['baɪəs]",
+			"translate": [
+				"уклон",
+				"наклон",
+				"склон",
+				"предубеждение",
+				"необъективность",
+				"пристрастие",
+				"склонность"
+			]
+		},
+		{
+			"word": "expression",
+			"pronunciation": "[ɪk'spreʃ(ə)n]",
+			"translate": [
+				"выражение (лица, глаз и т.п.)",
+				"выразительность",
+				"экспрессия",
+				"выжимание (сока, масла и т. п.)"
+			]
+		},
+		{
+			"word": "fire",
+			"pronunciation": "['faɪə]",
+			"translate": [
+				"огонь",
+				"пожар",
+				"костёр",
+				"воодушевление",
+				"пламя",
+				"орудийный огонь"
+			]
+		},
+		{
+			"word": "pure",
+			"pronunciation": "[pjuə]",
+			"translate": [
+				"очищать",
+				"чистить",
+				"очищать",
+				"чистить"
+			]
+		},
+		{
+			"word": "worthless",
+			"pronunciation": "['wɜ:θlɪs]",
+			"translate": [
+				"ничего не стоящий",
+				"не имеющий никакой ценности",
+				"бесполезный",
+				"никчёмный",
+				"никудышный"
+			]
+		},
+		{
+			"word": "prove",
+			"pronunciation": "[pru:v]",
+			"translate": [
+				"доказать",
+				"удостоверять",
+				"удостоверить",
+				"подтверждать",
+				"подтвердить"
+			]
+		},
+		{
+			"word": "garment",
+			"pronunciation": "['gɑ:mənt]",
+			"translate": [
+				"предмет одежды",
+				"одежда",
+				"покров",
+				"одеяние",
+				"наряд"
+			]
+		},
+		{
+			"word": "hood",
+			"pronunciation": "[hud]",
+			"translate": [
+				"капюшон (плаща)",
+				"чепец",
+				"чепчик"
+			]
+		},
+		{
+			"word": "unpredictable",
+			"pronunciation": "['ʌnprɪ'dɪktəb(ə)l]",
+			"translate": [
+				"непредсказуемый",
+				"непредвиденный"
+			]
+		},
+		{
+			"word": "grand",
+			"pronunciation": "[grænd]",
+			"translate": [
+				"тысяча долларов",
+				"тысячедолларовая банкнота"
+			]
+		},
+		{
+			"word": "clarity",
+			"pronunciation": "['klærɪtɪ]",
+			"translate": [
+				"чистота",
+				"прозрачность",
+				"ясность",
+				"разборчивость",
+				"наглядность",
+				"понятность (о манере изложения, стиле)",
+				"чёткость"
+			]
+		},
+		{
+			"word": "bury",
+			"pronunciation": "['berɪ]",
+			"translate": [
+				"совершать погребальный обряд",
+				"зарыть в землю",
+				"похоронить",
+				"предать забвению"
+			]
+		},
+		{
+			"word": "shoot out",
+			"pronunciation": "['ʃu:t'aut]",
+			"translate": [
+				"распускаться",
+				"извергать",
+				"выбрасывать",
+				"выбрасывать (ростки)"
+			]
+		},
+		{
+			"word": "vantage",
+			"pronunciation": "['vɑ:ntɪʤ]",
+			"translate": [
+				"выгода",
+				"преимущество",
+				"польза",
+				"удобство"
+			]
+		},
+		{
+			"word": "smash",
+			"pronunciation": "[smæʃ]",
+			"translate": [
+				"грохот",
+				"стук при падении",
+				"столкновении",
+				"столкновение",
+				"катастрофа"
+			]
+		},
+		{
+			"word": "amauters",
+			"pronunciation": "['æmət(ʃ)ə]",
+			"translate": [
+				"любитель",
+				"непрофессионал",
+				"дилетант"
+			]
+		},
+		{
+			"word": "funeral",
+			"pronunciation": "['fju:n(ə)rəl]",
+			"translate": [
+				"похороны",
+				"похоронная процессия",
+				"заупокойная служба",
+				"панихида"
+			]
+		},
+		{
+			"word": "crew",
+			"pronunciation": "[kru:]",
+			"translate": [
+				"судовая команда",
+				"бригада",
+				"шайка",
+				"команда",
+				"экипаж корабля"
+			]
+		},
+		{
+			"word": "van",
+			"pronunciation": "[væn]",
+			"translate": [
+				"фургон",
+				"багажный или товарный вагон"
+			]
+		},
+		{
+			"word": "awkward",
+			"pronunciation": "['ɔ:kwəd]",
+			"translate": [
+				"неловкий",
+				"неуклюжий",
+				"нескладный"
+			]
+		},
+		{
+			"word": "vouch",
+			"pronunciation": "[vauʧ]",
+			"translate": [
+				"ручаться",
+				"подтверждать",
+				"подкреплять"
+			]
+		},
+		{
+			"word": "guidance",
+			"pronunciation": "['gaɪd(ə)ns]",
+			"translate": [
+				"руководство",
+				"водительство",
+				"наставничество",
+				"руководящее участие"
+			]
+		},
+		{
+			"word": "borrow",
+			"pronunciation": "['bɔrəu]",
+			"translate": [
+				"поручительство",
+				"гарантия"
+			]
+		},
+		{
+			"word": "bonding",
+			"pronunciation": "['bɔndɪŋ]",
+			"translate": [
+				"пайка",
+				"единение",
+				"сближение",
+				"сближающее общение "
+			]
+		},
+		{
+			"word": "midlife",
+			"pronunciation": "['mɪdˌlaɪf]",
+			"translate": [
+				"зрелый возраст"
+			]
+		},
+		{
+			"word": "jerk",
+			"pronunciation": "[ʤɜ:k]",
+			"translate": [
+				"рывок",
+				"толчок",
+				"вяленое мясо",
+				"вяленая говядина",
+				"козлина",
+				"недоносок",
+				"дурачок",
+				"глупый человек"
+			]
+		},
+		{
+			"word": "cab",
+			"pronunciation": "[kæb]",
+			"translate": [
+				"будка машиниста",
+				"извозчик",
+				"такси",
+				"будка"
+			]
+		},
+		{
+			"word": "mad",
+			"pronunciation": "[mæd]",
+			"translate": [
+				"совсем из ума выжил",
+				"быть без ума",
+				"помешанный на"
+			]
+		},
+		{
+			"word": "stake",
+			"pronunciation": "[steɪk]",
+			"translate": [
+				"ставка",
+				"куш",
+				"заклад"
+			]
+		},
+		{
+			"word": "pitch",
+			"pronunciation": "[pɪʧ]",
+			"translate": [
+				"высота (тона, звука, голоса)",
+				"питч",
+				"обычное место (уличного торговца)"
+			]
+		},
+		{
+			"word": "penetrate",
+			"pronunciation": "['penɪtreɪt]",
+			"translate": [
+				"проникать",
+				"проникать внутрь",
+				"проходить",
+				"вторгаться",
+				"постигать"
+			]
+		},
+		{
+			"word": "vent for",
+			"pronunciation": "[vent] [fɔ:]",
+			"translate": [
+				"дать выход"
+			]
+		},
+		{
+			"word": "suspect",
+			"pronunciation": "['sʌspekt]",
+			"translate": [
+				"подозреваемый",
+				"подозреваемый человек",
+				"подозреваемое лицо"
+			]
+		},
+		{
+			"word": "lurking",
+			"pronunciation": "['lɜ:kɪŋ]",
+			"translate": [
+				"сокрытие",
+				"скрытное наблюдение",
+				"пассивное участие"
+			]
+		},
+		{
+			"word": "pounce",
+			"pronunciation": "[pauns]",
+			"translate": [
+				"внезапный налёт",
+				"наскок",
+				"прыжок",
+				"внезапный прыжок"
+			]
+		},
+		{
+			"word": "faith",
+			"pronunciation": "[feɪθ]",
+			"translate": [
+				"вера",
+				"доверие",
+				"религия",
+				"вероисповедание",
+				"верность",
+				"лояльность"
+			]
+		},
+		{
+			"word": "fragile",
+			"pronunciation": "['fræʤaɪl]",
+			"translate": [
+				"ломкий",
+				"слабый",
+				"недолговечный"
+			]
+		},
+		{
+			"word": "fraud",
+			"pronunciation": "[frɔ:d]",
+			"translate": [
+				"мошенничество",
+				"мошеннические действия",
+				"мошенник"
+			]
+		},
+		{
+			"word": "deserve",
+			"pronunciation": "[dɪ'zɜ:v]",
+			"translate": [
+				"быть достойным (чего-либо)",
+				"заслуживать (чего-либо)"
+			]
+		},
+		{
+			"word": "owe",
+			"pronunciation": "[əu]",
+			"translate": [
+				"быть должным",
+				"быть в долгу"
+			]
+		},
+		{
+			"word": "accurate",
+			"pronunciation": "['ækjərət]",
+			"translate": [
+				"точный",
+				"правильный",
+				"тщательный",
+				"прилежный"
+			]
+		},
+		{
+			"word": "nurture",
+			"pronunciation": "['nɜ:ʧə]",
+			"translate": [
+				"вынашивать (план и т.п.)"
+			]
+		},
+		{
+			"word": "guilty",
+			"pronunciation": "['gɪltɪ]",
+			"translate": [
+				"виновный",
+				"преступный",
+				"виноватый"
+			]
+		},
+		{
+			"word": "concede",
+			"pronunciation": "[kən'si:d]",
+			"translate": [
+				"уступать (что-либо)",
+				"допускать",
+				"уступить",
+				"допустить",
+				"признавать"
+			]
+		},
+		{
+			"word": "by the way",
+			"translate": [
+				"впрочем",
+				"к слову сказать",
+				"по дороге",
+				"по пути",
+				"ах да",
+				"между прочим",
+				"к слову",
+				"кстати"
+			],
+			"description": "Used to change the subject, to say something that you have just thought about and that doesn't have to be connected to what was being said before.",
+			"example": [
+				"Well, it has been a very productive meeting, don't you think? By the way/Incidentally, what time is it?",
+				"I'll try to fix my car this afternoon. By the way/Incidentally, do you still have that screwdriver that I lent you?"
+			]
+		},
+		{
+			"word": "incidentally",
+			"pronunciation": "['ɪnsɪ'dent(ə)lɪ]",
+			"translate": [
+				"время от времени",
+				"между прочим",
+				"кстати",
+				"мимоходом",
+				"периодически",
+				"в данном случае",
+				"несущественно"
+			],
+			"description": "Used to change the subject, to say something that you have just thought about and that doesn't have to be connected to what was being said before.",
+			"example": [
+				"Well, it has been a very productive meeting, don't you think? By the way/Incidentally, what time is it?",
+				"I'll try to fix my car this afternoon. By the way/Incidentally, do you still have that screwdriver that I lent you?"
+			]
+		},
+		{
+			"word": "actually",
+			"pronunciation": "['ækʧ(u)əlɪ]",
+			"translate": [
+				"в настоящее время",
+				"в данный момент",
+				"в действительности",
+				"в натуре"
+			],
+			"description": "Used to introduce information that might be in some way surprising or unexpected.",
+			"example": [
+				"I don't really like chicken. Actually a matter of fact I have only eaten chicken once in my life.",
+				"Everybody thinks he has a very bad temper, but actually a matter of fact he is very kind."
+			]
+		},
+		{
+			"word": "in fact",
+			"translate": [
+				"собственно",
+				"если точнее",
+				"на самом деле",
+				"и вообще",
+				"по сути дела",
+				"в действительности"
+			],
+			"description": "Used to introduce information that might be in some way surprising or unexpected.",
+			"example": [
+				"I don't really like chicken. In fact I have only eaten chicken once in my life.",
+				"Everybody thinks he has a very bad temper, but in fact he is very kind."
+			]
+		},
+		{
+			"word": "as a matter of fact",
+			"translate": [
+				"на самом деле",
+				"собственно говоря",
+				"фактически",
+				"действительно",
+				"по сути",
+				"в действительности"
+			],
+			"description": "Used to introduce information that might be in some way surprising or unexpected.",
+			"example": [
+				"I don't really like chicken. As a matter of fact I have only eaten chicken once in my life.",
+				"Everybody thinks he has a very bad temper, but as a matter of fact he is very kind."
+			]
+		},
+		{
+			"word": "anyway",
+			"pronunciation": "['enɪweɪ]",
+			"translate": [
+				"как придётся",
+				"что бы то ни было",
+				"так или иначе"
+			],
+			"description": "Used to return to an earlier subject after a digression, or to get to the most interesting point. Used to give a more important reason for something you are saying.",
+			"example": [
+				"It's not so strange to lose documents. It happens to lots of people all the time. Anyway, we finally found the passports in …",
+				"I'm too tired to go and it's too late, and anyway it's too expensive."
+			]
+		},
+		{
+			"word": "in any case",
+			"translate": [
+				"как бы там ни было",
+				"во всяком случае",
+				"при любых обстоятельствах",
+				"в любом случае",
+				"при любом раскладе",
+				"как бы то ни было"
+			],
+			"description": "Used to return to an earlier subject after a digression, or to get to the most interesting point. Used to give a more important reason for something you are saying.",
+			"example": [
+				"It's not so strange to lose documents. It happens to lots of people all the time. In any case, we finally found the passports in …",
+				"I'm too tired to go and it's too late, and in any case it's too expensive."
+			]
+		},
+		{
+			"word": "as I was saying",
+			"translate": [
+				"как я сказал ранее",
+				"как было сказано ранее",
+				"как я уже сказал"
+			],
+			"description": "Used to return to an earlier subject in the conversation after an interruption or digression.",
+			"example": [
+				"As I was saying, we could get up early and spend the whole day there."
+			]
+		},
+		{
+			"word": "after all",
+			"translate": [
+				"ведь",
+				"несмотря на",
+				"напоследок",
+				"пожалуй",
+				"в сущности",
+				"а ведь",
+				"к тому же",
+				"как-никак",
+				"всё-таки"
+			],
+			"description": "Used to introduce an additional point that supports or explains what you have just said. Used to say that something is true despite what is believed or said.",
+			"example": [
+				"I might understand her better than you, after all, she is my wife.",
+				"Don't be too hard on him. After all, he is just a kid.",
+				"He is not such a bad professional after all."
+			]
+		},
+		{
+			"word": "at least",
+			"translate": [
+				"минимум",
+				"минимально",
+				"хотя бы",
+				"по крайней мере",
+				"почти"
+			],
+			"description": "Used to introduce positive information when talking about something negative. Used to reduce the effect of something we have said, or to make something less certain or definite.",
+			"example": [
+				"Lots of people got injured in the accident, but at least nobody died.",
+				"I finished last in the race, but at least I finished.",
+				"He knows the president, or at least that's what he says."
+			]
+		},
+		{
+			"word": "all in all",
+			"pronunciation": "[ˌɔ:lɪn'ɔ:l]",
+			"translate": [
+				"в общем",
+				"итого",
+				"подводя итог изложенному выше, отметим следующее"
+			],
+			"description": "Taking into consideration all the parts of a situation.",
+			"example": [
+				"There were some mistakes, but all in all, you did a pretty good job.",
+				"Both TVs are great, but all in all, I think this one is better for you."
+			]
+		},
+		{
+			"word": "on the whole",
+			"translate": [
+				"вообще",
+				"в среднем",
+				"в общем",
+				"в целом",
+				"в итоге",
+				"в конечном счёте",
+				"в общем и целом",
+				"в большинстве своём"
+			],
+			"description": "Generally",
+			"example": [
+				"On the whole, men tend to avoid talking about feelings.",
+				"There has been some criticism, but on the whole, customers like what we offer."
+			]
+		},
+		{
+			"word": "besides",
+			"pronunciation": "[bɪ'saɪdz]",
+			"translate": [
+				"помимо того",
+				"также",
+				"вдобавок к тому",
+				"кроме",
+				"помимо",
+				"мало того",
+				"притом",
+				"заодно",
+				"наряду с",
+				"если не принимать во внимание"
+			],
+			"description": "Used to add additional information (informal)",
+			"example": [
+				"I think it's a wonderful place, besides, it's very cheap."
+			]
+		},
+		{
+			"word": "furthermore",
+			"pronunciation": "['fɜ:ðə'mɔ:]",
+			"translate": [
+				"также",
+				"к тому же",
+				"ещё",
+				"сверх того",
+				"притом",
+				"кроме того",
+				"более того"
+			],
+			"description": "Used to add additional (an often more important) information (formal)",
+			"example": [
+				"Electric cars are becoming more powerful and energy-efficient. Furthermore, they are much cheaper than a few years ago."
+			]
+		},
+		{
+			"word": "what's more",
+			"translate": [
+				"кроме этого",
+				"помимо этого",
+				"более того",
+				"к тому же"
+			],
+			"description": "We use what's more to add something interesting to what we have just said. It's similar to furthermore but more informal.",
+			"example": [
+				"Scientists have found a big body of water under the surface of the planet. What's more, they think it's not the only body of water they are going to find.",
+				"He said that the new season is going to be premiered this September and, what's more, he confirmed that it's not going to be the last."
+			]
+		},
+		{
+			"word": "obviously",
+			"pronunciation": "['ɔbvɪəslɪ]",
+			"translate": [
+				"безусловно",
+				"конечно",
+				"неуместно",
+				"чересчур открыто",
+				"разумеется",
+				"по всему видно"
+			],
+			"description": "Used to introduce a fact that is easy to see or understand.",
+			"example": [
+				"Obviously, without qualifications it's harder to get a good job."
+			]
+		},
+		{
+			"word": "basically",
+			"pronunciation": "['beɪsɪk(ə)lɪ]",
+			"translate": [
+				"в своей основе",
+				"по сути",
+				"собственно",
+				"попросту говоря"
+			],
+			"description": "Used to introduce the most important point or characteristic of something.",
+			"example": [
+				"Basically, what we do here is produce the plastic parts of the phone."
+			]
+		},
+		{
+			"word": "in other words",
+			"translate": [
+				"иначе говоря",
+				"то есть",
+				"другими словами",
+				"то есть"
+			],
+			"description": "Used to say what has been said in simpler words.",
+			"example": [
+				"She said we should take a break and have time to ourselves, in other words, she dumped me."
+			]
+		},
+		{
+			"word": "that is to say",
+			"translate": [
+				"другими словами",
+				"иначе говоря",
+				"иными словами",
+				"то есть"
+			],
+			"description": "Used to explain or be more precise about something we have said. Similar to in other words.",
+			"example": [
+				"The best thing about music is its repeatability, that is to say, you can listen to the same songs again and again and never get bored."
+			]
+		},
+		{
+			"word": "otherwise",
+			"pronunciation": "['ʌðəwaɪz]",
+			"translate": [
+				"иначе",
+				"иным способом",
+				"иным образом",
+				"или же"
+			],
+			"description": "Used after an order or suggestion to say what will happen if that order or suggestion is not followed.",
+			"example": [
+				"Be here at 8 o'clock, otherwise, you will miss your turn."
+			]
+		},
+		{
+			"word": "regarding",
+			"pronunciation": "[regarding]",
+			"translate": [
+				"рассмотрение",
+				"по вопросам",
+				"говоря о",
+				"по вопросу",
+				"на тему",
+				"в области",
+				"относящийся к"
+			],
+			"description": "About. Used to introduce a topic of conversation.",
+			"example": [
+				"Regarding the new player, we'll have to decide if or when to sell him."
+			]
+		},
+		{
+			"word": "as regards",
+			"translate": [
+				"касательно",
+				"если говорить о ...",
+				"что касается",
+				"по поводу",
+				"по отношению"
+			],
+			"description": "About. Used to introduce a topic of conversation.",
+			"example": [
+				"As regards the new player, we'll have to decide if or when to sell him."
+			]
+		},
+		{
+			"word": "as far as … is concerned",
+			"translate": [
+				"что касается",
+				"когда речь идёт о"
+			],
+			"description": "About. Used to introduce a topic of conversation.",
+			"example": [
+				"As far as the new player is concerned, …"
+			]
+		},
+		{
+			"word": "on the other hand",
+			"translate": [
+				"хотя",
+				"с другой стороны"
+			],
+			"description": "Used to introduce a contrasting fact. It can be preceded by on the one hand.",
+			"example": [
+				"Cycling is good for your health, and it's a sport that is gentle with your muscles and joints. But on the other hand, there are many fatal accidents among cyclists.",
+				"On the one hand, cycling is good for your health, and it's a sport that is gentle with your muscles and joints. But on the other hand, there are many fatal accidents among cyclists."
+			]
+		},
+		{
+			"word": "whereas",
+			"pronunciation": "[we(ə)'ræz]",
+			"translate": [
+				"потому что",
+				"так как",
+				"тогда как",
+				"принимая во внимание",
+				"поскольку",
+				"между тем как"
+			],
+			"description": "We use whereas to compare and contrast two things or ideas. It means 'while' when it is used to express contrast.",
+			"example": [
+				"The north is cold whereas the south is very hot.",
+				"Whereas people used to aspire to have a big house, kids, dog etc., nowadays preferences are tending more towards apartments."
+			]
+		},
+		{
+			"word": "coherent"
+		},
+		{
+			"word": "insanity"
+		},
+		{
+			"word": "nondisclosure"
+		},
+		{
+			"word": "agreement"
+		},
+		{
+			"word": "excuse"
+		},
+		{
+			"word": "attend"
+		},
+		{
+			"word": "untoward"
+		},
+		{
+			"word": "attempt"
+		},
+		{
+			"word": "precision"
+		},
+		{
+			"word": "reusable"
+		},
+		{
+			"word": "to each their own"
+		},
+		{
+			"word": "prevent",
+			"translate": [
+				"предотвращать"
+			],
+			"example": [
+				"Just to prevent any confusion."
+			]
+		},
+		{
+			"word": "confusion",
+			"translate": [
+				"путаница"
+			],
+			"example": [
+				"Just to prevent any confusion."
+			]
+		},
+		{
+			"word": "sense",
+			"translate": [
+				"смысл",
+				"чувство",
+				"ощущение"
+			],
+			"example": [
+				"This comparison makes no sense at all."
+			]
+		},
+		{
+			"word": "provide",
+			"translate": [
+				"предоставлять",
+				"обеспечивать",
+				"предусматривать"
+			],
+			"example": [
+				"Local storage doesn't provide any of the same security mechanisms that cookies do."
+			]
+		},
+		{
+			"word": "mess up",
+			"translate": [
+				"испортить",
+				"разлаживать"
+			],
+			"example": [
+				"I can't have someone like you mess up what I've built."
+			]
+		}
+	]
 }

@@ -7,9 +7,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/google/uuid"
-
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/word"
+
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/lib/pq"
 )
 
 type WordRepo struct {
@@ -22,135 +24,151 @@ func NewRepo(db *sql.DB) *WordRepo {
 	}
 }
 
-func (r *WordRepo) AddWord(ctx context.Context, w *entity.Word) (uuid.UUID, error) {
-	var id uuid.UUID
-	table := getTable(w.LanguageCode)
-	query := fmt.Sprintf(
-		`WITH w AS (
-    		SELECT id FROM "%[1]s" WHERE text = $2),
-		ins AS (
-    		INSERT INTO "%[1]s" (id, text, pronunciation, lang_code, created_at)
-			VALUES($1, $2, $3, $4, $5)
-    		ON CONFLICT DO NOTHING RETURNING id)
-		SELECT id
-		FROM ins
-		UNION ALL
-		SELECT id
-		FROM w;`, table)
-	err := r.db.QueryRowContext(ctx, query, w.ID, w.Text, w.Pronunciation, w.LanguageCode, time.Now().UTC()).Scan(&id)
+func (r *WordRepo) GetWord(ctx context.Context, vocabID, nativeID uuid.UUID) (entity.Word, error) {
+	const query = `SELECT id, translate_words, examples FROM word WHERE vocabulary_id=$1 and native_id=$2;`
+
+	var word entity.Word
+	err := r.db.QueryRowContext(ctx, query, vocabID, nativeID).Scan(
+		&word.ID,
+		pq.Array(&word.TranslateWords),
+		pq.Array(&word.Examples))
 	if err != nil {
-		return uuid.Nil, fmt.Errorf("word.repository.WordRepo.AddWord - query: %w", err)
+		return word, fmt.Errorf("word.repository.WordRepo.GetWord: %w", err)
 	}
 
-	return id, nil
+	return word, nil
 }
 
-func (r *WordRepo) GetWordByText(ctx context.Context, w *entity.Word) (uuid.UUID, error) {
-	word := &entity.Word{}
-	table := getTable(w.LanguageCode)
-	query := fmt.Sprintf(`SELECT id FROM "%s" WHERE text=$1 AND lang_code=$2;`, table)
-	err := r.db.QueryRowContext(ctx, query, w.Text, w.LanguageCode).Scan(&word.ID)
-	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		return uuid.Nil, fmt.Errorf("word.repository.WordRepo.GetWordByText - query: %w", err)
-	} else if errors.Is(err, sql.ErrNoRows) {
-		return uuid.Nil, nil
-	}
-	return word.ID, nil
-}
-
-func (r *WordRepo) GetWords(ctx context.Context, ids []uuid.UUID) ([]entity.Word, error) {
-	query := `SELECT id, text, pronunciation FROM word WHERE id=ANY($1);`
-	rows, err := r.db.QueryContext(ctx, query, ids)
+func (r *WordRepo) AddWord(ctx context.Context, word entity.Word) error {
+	const query = `INSERT INTO word (id, vocabulary_id, native_id, translate_words, examples, updated_at, created_at) VALUES($1, $2, $3, $4, $5, $6, $6);`
+	_, err := r.db.ExecContext(ctx, query, word.ID, word.VocabID, word.NativeID, word.TranslateWords, word.Examples, time.Now().UTC())
 	if err != nil {
-		return nil, fmt.Errorf("word.repository.WordRepo.GetWords - query: %w", err)
-	}
-	defer rows.Close()
-
-	words := make([]entity.Word, 0, len(ids))
-	for rows.Next() {
-		var word entity.Word
-		err = rows.Scan(&word.ID, &word.Text, &word.Pronunciation)
-		if err != nil {
-			return nil, fmt.Errorf("word.repository.WordRepo.GetWords - scan: %w", err)
+		var pgErr *pgconn.PgError
+		switch {
+		case errors.As(err, &pgErr) && pgErr.Code == "23505":
+			return fmt.Errorf("word.repository.WordRepo.AddWord: %w", entity.ErrDuplicate)
+		default:
+			return fmt.Errorf("word.repository.WordRepo.AddWord: %w", err)
 		}
-		words = append(words, word)
-	}
-	return words, nil
-}
-
-func (r *WordRepo) UpdateWord(ctx context.Context, w *entity.Word) error {
-	query := `UPDATE word SET text=$1, pronunciation=$2 WHERE id=$3`
-	result, err := r.db.ExecContext(ctx, query, w.Text, w.Pronunciation, w.ID)
-	if err != nil {
-		return fmt.Errorf("word.repository.WordRepo.EditWord - exec: %w", err)
-	}
-
-	if rows, err := result.RowsAffected(); rows == 0 {
-		return fmt.Errorf("word.repository.WordRepo.EditWord: not fount effected rows")
-	} else if err != nil {
-		return fmt.Errorf("word.repository.WordRepo.EditWord - rows affected: %w", err)
 	}
 
 	return nil
 }
 
-func (r *WordRepo) FindWords(ctx context.Context, w *entity.Word) ([]uuid.UUID, error) {
-	var ids []uuid.UUID
-	query := `SELECT id FROM word WHERE text=$1% AND lang_code=$2;`
-	rows, err := r.db.QueryContext(ctx, query, w.Text, w.LanguageCode)
+func (r *WordRepo) EditVocabulary(ctx context.Context, vocabulary entity.Word) (int64, error) {
+	return 0, nil
+}
+
+func (r *WordRepo) GetWordsFromVocabulary(ctx context.Context, dictID uuid.UUID, capacity int) ([]string, error) {
+	const query = `
+	SELECT text 
+	FROM word 
+	WHERE id=any(
+		SELECT native_word 
+		FROM vocabulary 
+		WHERE dictionary_id=$1
+			ORDER BY random() LIMIT $2)`
+	rows, err := r.db.QueryContext(ctx, query, dictID, capacity)
 	if err != nil {
-		return nil, fmt.Errorf("word.repository.WordRepo.FindWords - query: %w", err)
+		return nil, fmt.Errorf("word.repository.WordRepo.GetWordsFromDictionary: %w", err)
 	}
 	defer rows.Close()
 
+	words := make([]string, 0, capacity)
 	for rows.Next() {
-		var id uuid.UUID
-		err := rows.Scan(&id)
+		var word string
+		err = rows.Scan(&word)
 		if err != nil {
-			return nil, fmt.Errorf("word.repository.WordRepo.FindWords - scan: %w", err)
+			return nil, fmt.Errorf("word.repository.WordRepo.GetWordsFromDictionary - scan: %w", err)
 		}
-		ids = append(ids, id)
+		words = append(words, word)
 	}
 
-	return ids, nil
+	return words, nil
 }
 
-func (r *WordRepo) DeleteWord(ctx context.Context, w *entity.Word) (int64, error) {
-	query := `DELETE FROM word WHERE id=$1`
-	result, err := r.db.ExecContext(ctx, query, w.ID)
-	if err != nil {
-		return 0, fmt.Errorf("word.repository.WordRepo.DeleteWord - exec: %w", err)
-	}
-	rows, err := result.RowsAffected()
-	if err != nil {
-		return 0, fmt.Errorf("word.repository.WordRepo.DeleteWord - rows affected: %w", err)
-	}
-	return rows, nil
-}
-
-func (r *WordRepo) GetRandomWord(ctx context.Context, w *entity.Word) (*entity.Word, error) {
-	table := getTable(w.LanguageCode)
-	query := fmt.Sprintf(`SELECT text, pronunciation FROM "%s" WHERE moderator IS NOT NULL ORDER BY RANDOM() LIMIT 1;`, table)
-	word := &entity.Word{}
-	err := r.db.QueryRowContext(ctx, query).Scan(&word.Text, &word.Pronunciation)
+func (r *WordRepo) GetRandomWord(ctx context.Context, vocad *entity.Word) (*entity.Word, error) {
+	query := `SELECT native_word, translate_word, examples FROM vocabulary WHERE dictionary_id=$1 ORDER BY random() LIMIT 1;`
+	err := r.db.QueryRowContext(ctx, query, vocad.ID).Scan(
+		&vocad.NativeID,
+		&vocad.TranslateWords,
+		&vocad.Examples,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("word.repository.WordRepo.GetRandomWord - scan: %w", err)
 	}
-
-	word.LanguageCode = w.LanguageCode
-
-	return word, nil
+	return vocad, nil
 }
 
-func (r *WordRepo) SharedWord(ctx context.Context, w *entity.Word) (*entity.Word, error) {
-	// TODO implement me later
-	return nil, nil
-}
-
-func getTable(langCode string) string {
-	table := "word"
-	if len(langCode) != 0 {
-		table = fmt.Sprintf(`%s_%s`, table, langCode)
+func (r *WordRepo) DeleteWord(ctx context.Context, vocabulary entity.Word) error {
+	query := `DELETE FROM word WHERE vocabulary_id=$1 AND native_id=$2;`
+	result, err := r.db.ExecContext(ctx, query, vocabulary.ID, vocabulary.NativeID)
+	if err != nil {
+		return fmt.Errorf("word.repository.WordRepo.DeleteWord - exec: %w", err)
 	}
-	return table
+
+	if rowsAffected, err := result.RowsAffected(); rowsAffected == 0 {
+		return fmt.Errorf("word.repository.WordRepo.DeleteWord - rows affected: %w", sql.ErrNoRows)
+	} else if err != nil {
+		return fmt.Errorf("word.repository.WordRepo.DeleteWord: %w", err)
+	}
+	return nil
+}
+
+func (r *WordRepo) GetRandomVocabulary(ctx context.Context, vocabID uuid.UUID, limit int) ([]entity.Word, error) {
+	query := `SELECT native_id, translate_words, examples FROM word WHERE vocabulary_id=$1 ORDER BY RANDOM() LIMIT $2;`
+	rows, err := r.db.QueryContext(ctx, query, vocabID, limit)
+	if err != nil {
+		return nil, fmt.Errorf("word.repository.WordRepo.GetRandomVocabulary: %w", err)
+	}
+	defer rows.Close()
+
+	vocabularies := make([]entity.Word, 0, limit)
+	for rows.Next() {
+		var vocabulary entity.Word
+		err = rows.Scan(&vocabulary.NativeID, pq.Array(&vocabulary.TranslateWords), pq.Array(&vocabulary.Examples))
+		if err != nil {
+			return nil, fmt.Errorf("word.repository.WordRepo.GetRandomVocabulary - scan: %w", err)
+		}
+		vocabularies = append(vocabularies, vocabulary)
+	}
+
+	return vocabularies, nil
+}
+
+func (r *WordRepo) GetVocabulary(ctx context.Context, vocabID uuid.UUID) ([]entity.Word, error) {
+	query := `SELECT native_id, translate_words, examples FROM word WHERE vocabulary_id=$1;`
+	rows, err := r.db.QueryContext(ctx, query, vocabID)
+	if err != nil {
+		return nil, fmt.Errorf("word.repository.WordRepo.GetVocabulary: %w", err)
+	}
+	defer rows.Close()
+
+	vocabularies := make([]entity.Word, 0, 25)
+	for rows.Next() {
+		var vocabulary entity.Word
+		err = rows.Scan(&vocabulary.NativeID, pq.Array(&vocabulary.TranslateWords), pq.Array(&vocabulary.Examples))
+		if err != nil {
+			return nil, fmt.Errorf("word.repository.WordRepo.GetVocabulary - scan: %w", err)
+		}
+		vocabularies = append(vocabularies, vocabulary)
+	}
+
+	return vocabularies, nil
+}
+
+func (r *WordRepo) UpdateWord(ctx context.Context, vocabulary entity.Word) error {
+	query := `UPDATE word SET translate_words=$1, examples=$2 WHERE vocabulary_id=$3 AND native_id=$4;`
+
+	result, err := r.db.ExecContext(ctx, query, vocabulary.TranslateWords, vocabulary.Examples, vocabulary.ID, vocabulary.NativeID)
+	if err != nil {
+		return fmt.Errorf("word.repository.WordRepo.UpdateWord - exec: %w", err)
+	}
+
+	if rowsAffected, err := result.RowsAffected(); rowsAffected == 0 {
+		return fmt.Errorf("word.repository.WordRepo.UpdateWord - rows affected: %w", sql.ErrNoRows)
+	} else if err != nil {
+		return fmt.Errorf("word.repository.WordRepo.UpdateWord: %w", err)
+	}
+	return nil
 }

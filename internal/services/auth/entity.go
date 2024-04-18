@@ -2,6 +2,8 @@ package auth
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -24,6 +26,22 @@ type (
 		UserID    uuid.UUID
 		ExpiresAt time.Time
 	}
+)
+
+// TODO вынести в конфиги
+const (
+	UsernameLen    = 3
+	MinPasswordLen = 6
+)
+
+var (
+	ErrEmailNotCorrect   = errors.New("email is not correct")
+	ErrItIsAdmin         = errors.New("it is admin")
+	ErrEmailBusy         = errors.New("this email is busy")
+	ErrUsernameLen       = fmt.Errorf("username must be more %d characters", UsernameLen)
+	ErrUsernameBusy      = errors.New("this username is busy")
+	ErrPasswordLen       = fmt.Errorf("password must be more %d characters", MinPasswordLen)
+	ErrPasswordDifficult = errors.New("password must be more difficult")
 )
 
 func (s *Session) MarshalBinary() ([]byte, error) {

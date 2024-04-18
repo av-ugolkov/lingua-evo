@@ -12,10 +12,10 @@ import (
 	"github.com/av-ugolkov/lingua-evo/runtime"
 )
 
-type ExangerFunc func(ctx context.Context, ex *exchange.Exchanger)
+type ExchangerFunc func(ctx context.Context, ex *exchange.Exchanger)
 
-func Auth(next ExangerFunc) http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+func Auth(next ExchangerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ex := exchange.NewExchanger(w, r)
 		var bearerToken string
 		var err error
@@ -32,6 +32,6 @@ func Auth(next ExangerFunc) http.HandlerFunc {
 
 		analytics.SendToKafka(claims.UserID, r.URL.Path)
 
-		next(ctx, exchange.NewExchanger(w, r))
-	})
+		next(ctx, ex)
+	}
 }

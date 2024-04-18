@@ -3,7 +3,11 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
+	"log/slog"
+	"strings"
+	"time"
 
 	"github.com/google/uuid"
 
@@ -20,23 +24,57 @@ func NewRepo(db *sql.DB) *ExampleRepo {
 	}
 }
 
-func (r *ExampleRepo) AddExample(ctx context.Context, id uuid.UUID, text, langCode string) error {
-	query := fmt.Sprintf(`INSERT INTO example_%s (id, text) VALUES($1, $2) ON CONFLICT DO NOTHING`, langCode)
-	_, err := r.db.ExecContext(ctx, query, id, text)
-	if err != nil {
-		return fmt.Errorf("example.repository.ExampleRepo.AddExample: %w", err)
+func (r *ExampleRepo) AddExamples(ctx context.Context, ids []uuid.UUID, texts []string, langCode string) ([]uuid.UUID, error) {
+	if len(texts) == 0 {
+		slog.Warn("example.repository.ExampleRepo.AddExamples - empty texts")
+		return []uuid.UUID{}, nil
 	}
 
-	return nil
+	var insValues strings.Builder
+	for i := 0; i < len(texts); i++ {
+		insValues.WriteString(fmt.Sprintf("('%s','%s','%q')", ids[i], texts[i], time.Now().UTC().Format(time.RFC3339)))
+		if i < len(texts)-1 {
+			insValues.WriteString(",")
+		}
+	}
+
+	query := fmt.Sprintf(`
+	WITH s AS (
+    		SELECT id FROM example_%[1]s WHERE text = any($1::text[])),
+		ins AS (
+    		INSERT INTO example_%[1]s (id, text, created_at)
+			VALUES %[2]s
+    		ON CONFLICT DO NOTHING RETURNING id)
+		SELECT id
+		FROM ins
+		UNION ALL
+		SELECT id
+		FROM s;`, langCode, insValues.String())
+	rows, err := r.db.QueryContext(ctx, query, texts)
+	if err != nil {
+		return nil, fmt.Errorf("example.repository.ExampleRepo.AddExamples - query: %w", err)
+	}
+
+	tagIDs := make([]uuid.UUID, 0, len(texts))
+	for rows.Next() {
+		var id uuid.UUID
+		err = rows.Scan(&id)
+		if err != nil {
+			return nil, fmt.Errorf("example.repository.ExampleRepo.AddExamples - scan: %w", err)
+		}
+		tagIDs = append(tagIDs, id)
+	}
+
+	return tagIDs, nil
 }
 
 func (r *ExampleRepo) GetExampleByValue(ctx context.Context, text, langCode string) (uuid.UUID, error) {
 	var id uuid.UUID
 	query := fmt.Sprintf(`SELECT id FROM example_%s WHERE text=$1`, langCode)
 	err := r.db.QueryRowContext(ctx, query, text).Scan(&id)
-	if err != nil && err != sql.ErrNoRows {
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return uuid.Nil, fmt.Errorf("example.repository.ExampleRepo.GetExample: %w", err)
-	} else if err == sql.ErrNoRows {
+	} else if errors.Is(err, sql.ErrNoRows) {
 		return uuid.Nil, nil
 	}
 
@@ -64,12 +102,12 @@ func (r *ExampleRepo) GetExamples(ctx context.Context, ids []uuid.UUID) ([]examp
 
 	examples := make([]example.Example, 0, len(ids))
 	for rows.Next() {
-		var example example.Example
-		err = rows.Scan(&example.Id, &example.Text)
+		var ex example.Example
+		err = rows.Scan(&ex.Id, &ex.Text)
 		if err != nil {
 			return nil, fmt.Errorf("example.repository.ExampleRepo.GetExamples - scan: %w", err)
 		}
-		examples = append(examples, example)
+		examples = append(examples, ex)
 	}
 
 	return examples, nil

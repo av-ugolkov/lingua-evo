@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"time"
 
 	authEntity "github.com/av-ugolkov/lingua-evo/internal/services/auth"
@@ -14,6 +15,7 @@ import (
 type (
 	redis interface {
 		Get(ctx context.Context, key string) (string, error)
+		Set(ctx context.Context, key string, value any, expiration time.Duration) (string, error)
 		SetNX(ctx context.Context, key string, value any, expiration time.Duration) (bool, error)
 		ExpireAt(ctx context.Context, key string, tm time.Time) (bool, error)
 		Delete(ctx context.Context, key string) (int64, error)
@@ -79,4 +81,28 @@ func (r *SessionRepo) DeleteSession(ctx context.Context, session uuid.UUID) erro
 
 func (r *SessionRepo) DeleteAllUserSessions(ctx context.Context, userID uuid.UUID) error {
 	return nil
+}
+
+func (r *SessionRepo) SetAccountCode(ctx context.Context, email string, code int, expiration time.Duration) error {
+	value, err := r.redis.Set(ctx, email, code, expiration)
+	if err != nil {
+		return fmt.Errorf("auth.repository.SessionRepo.SetAccountCode: %w", err)
+	}
+
+	fmt.Println(value)
+	return nil
+}
+
+func (r *SessionRepo) GetAccountCode(ctx context.Context, email string) (int, error) {
+	codeStr, err := r.redis.Get(ctx, email)
+	if err != nil {
+		return 0, fmt.Errorf("auth.repository.SessionRepo.SetAccountCode: %w", err)
+	}
+
+	code, err := strconv.Atoi(codeStr)
+	if err != nil {
+		return 0, fmt.Errorf("auth.repository.SessionRepo.SetAccountCode: %w", err)
+	}
+
+	return code, nil
 }

@@ -2,6 +2,8 @@ package main
 
 import (
 	"flag"
+	"fmt"
+	"log/slog"
 
 	"github.com/av-ugolkov/lingua-evo/internal/app"
 	"github.com/av-ugolkov/lingua-evo/internal/config"
@@ -13,6 +15,7 @@ func main() {
 
 	flag.Parse()
 
+	slog.Info(fmt.Sprintf("config path: %s", configPath))
 	cfg := config.InitConfig(configPath)
 	app.ServerStart(cfg)
 }
