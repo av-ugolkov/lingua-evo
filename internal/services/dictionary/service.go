@@ -30,7 +30,7 @@ type (
 	}
 )
 
-//go:generate mockery --inpackage --outpkg dictionary --testonly --name "repoDictionary"
+//go:generate mockery --inpackage --outpkg dictionary --testonly --name "repoDictionary|langSvc"
 
 type Service struct {
 	repo    repoDictionary
