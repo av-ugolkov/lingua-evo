@@ -28,8 +28,8 @@ func NewService(repo repoTag) *Service {
 	}
 }
 
-func (s *Service) AddTag(ctx context.Context, text string) (uuid.UUID, error) {
-	id, err := s.repo.AddTag(ctx, uuid.New(), text)
+func (s *Service) AddTag(ctx context.Context, tagID uuid.UUID, text string) (uuid.UUID, error) {
+	id, err := s.repo.AddTag(ctx, tagID, text)
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("tag.Service.AddTag: %w", err)
 	}
@@ -96,7 +96,7 @@ func (s *Service) UpdateTag(ctx context.Context, text string) (uuid.UUID, error)
 		return id, nil
 	}
 
-	id, err = s.AddTag(ctx, text)
+	id, err = s.AddTag(ctx, uuid.New(), text)
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("tag.Service.UpdateTag: %w", err)
 	}

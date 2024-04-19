@@ -143,8 +143,8 @@ func (s *Service) SignIn(ctx context.Context, user, password, fingerprint string
 }
 
 // RefreshSessionToken - the method is called from the client
-func (s *Service) RefreshSessionToken(ctx context.Context, refreshToken uuid.UUID, fingerprint string) (*Tokens, error) {
-	oldRefreshSession, err := s.repo.GetSession(ctx, refreshToken)
+func (s *Service) RefreshSessionToken(ctx context.Context, refreshTokenID uuid.UUID, fingerprint string) (*Tokens, error) {
+	oldRefreshSession, err := s.repo.GetSession(ctx, refreshTokenID)
 	if err != nil {
 		return nil, fmt.Errorf("auth.Service.RefreshSessionToken - get session: %v", err)
 	}
@@ -153,19 +153,19 @@ func (s *Service) RefreshSessionToken(ctx context.Context, refreshToken uuid.UUI
 		return nil, fmt.Errorf("auth.Service.RefreshSessionToken: %w", errNotEqualFingerprints)
 	}
 
-	tokenID := uuid.New()
 	newSession := &Session{
 		UserID:      oldRefreshSession.UserID,
 		Fingerprint: oldRefreshSession.Fingerprint,
 		CreatedAt:   time.Now().UTC(),
 	}
 
+	tokenID := uuid.New()
 	err = s.addRefreshSession(ctx, tokenID, newSession)
 	if err != nil {
 		return nil, fmt.Errorf("auth.Service.RefreshSessionToken - addRefreshSession: %v", err)
 	}
 
-	err = s.repo.DeleteSession(ctx, refreshToken)
+	err = s.repo.DeleteSession(ctx, refreshTokenID)
 	if err != nil {
 		return nil, fmt.Errorf("auth.Service.RefreshSessionToken - delete session: %v", err)
 	}
