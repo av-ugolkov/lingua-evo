@@ -218,14 +218,14 @@ func (s *Service) CreateCode(ctx context.Context, email string) error {
 		return fmt.Errorf("user.delivery.Handler.createAccount - validateEmail: %v", err)
 	}
 
-	from := "makedonskiy07@gmail.com"
-	password := "zseo awvn mmjd sklz"
+	from := "amak07@yandex.ru"     //"makedonskiy07@gmail.com"
+	password := "sbdkuhybqeesvqvg" //"zseo awvn mmjd sklz"
 
 	toEmailAddress := email
 	to := []string{toEmailAddress}
 
-	host := "smtp.gmail.com"
-	port := "587"
+	host := "smtp.yandex.ru" //"smtp.gmail.com"
+	port := "587"            //"587"
 	address := host + ":" + port
 
 	creatingCode := rand.Intn(999999-100000) + 100000
