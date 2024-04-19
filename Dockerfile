@@ -14,7 +14,7 @@ ARG config_dir
 RUN apk --update --upgrade add ca-certificates git
 
 WORKDIR /lingua-evo
-COPY /configs/${config_dir}/server_config.yaml ./configs/server_config.yaml
+COPY /configs/${config_dir}.yaml ./configs/server_config.yaml
 COPY --from=builder ./build/cmd/main ./
 
 EXPOSE 5000

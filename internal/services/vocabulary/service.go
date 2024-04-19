@@ -3,7 +3,6 @@ package vocabulary
 import (
 	"context"
 	"fmt"
-
 	"github.com/av-ugolkov/lingua-evo/internal/db/transactor"
 	"github.com/av-ugolkov/lingua-evo/internal/services/vocabulary/model"
 
