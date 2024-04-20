@@ -5,9 +5,10 @@ import (
 	"database/sql"
 	"fmt"
 	"log/slog"
+	"slices"
 	"strings"
 
-	"github.com/av-ugolkov/lingua-evo/internal/services/dictionary/model"
+	entityLanguage "github.com/av-ugolkov/lingua-evo/internal/services/language"
 	"github.com/av-ugolkov/lingua-evo/runtime"
 
 	"github.com/google/uuid"
@@ -17,7 +18,7 @@ import (
 type (
 	repoDictionary interface {
 		AddWords(ctx context.Context, words []Word) ([]uuid.UUID, error)
-		GetWordByText(ctx context.Context, w *Word) (uuid.UUID, error)
+		GetWordIDByText(ctx context.Context, w *Word) (uuid.UUID, error)
 		GetWords(ctx context.Context, ids []uuid.UUID) ([]Word, error)
 		UpdateWord(ctx context.Context, w *Word) error
 		FindWords(ctx context.Context, w *Word) ([]uuid.UUID, error)
@@ -27,6 +28,7 @@ type (
 
 	langSvc interface {
 		CheckLanguage(ctx context.Context, langCode string) error
+		GetAvailableLanguages(ctx context.Context) ([]*entityLanguage.Language, error)
 	}
 )
 
@@ -44,30 +46,34 @@ func NewService(repo repoDictionary, langSvc langSvc) *Service {
 	}
 }
 
-func (s *Service) AddWord(ctx context.Context, data model.WordRq) (uuid.UUID, error) {
-	data.Text = strings.TrimSpace(data.Text)
-	if data.Text == runtime.EmptyString {
-		return uuid.Nil, fmt.Errorf("dictionary.Service.AddWord - empty text")
-	}
-
-	err := s.langSvc.CheckLanguage(ctx, data.LangCode)
+func (s *Service) AddWords(ctx context.Context, words []Word) ([]uuid.UUID, error) {
+	languages, err := s.langSvc.GetAvailableLanguages(ctx)
 	if err != nil {
-		return uuid.Nil, fmt.Errorf("dictionary.Service.AddWord - check language: %v", err)
+		return nil, fmt.Errorf("dictionary.Service.AddWord - get languages: %v", err)
 	}
+	for i := 0; i < len(words); {
+		word := words[i]
+		if !slices.ContainsFunc(languages, func(language *entityLanguage.Language) bool {
+			return word.LangCode == language.Code
+		}) {
+			slog.Warn(fmt.Sprintf("dictionary.Service.AddWord - check language: %v", err))
+			words = slices.Delete(words, i, i+1)
+			continue
+		}
 
-	wordIDs, err := s.repo.AddWords(ctx, []Word{
-		{
-			ID:            uuid.New(),
-			Text:          data.Text,
-			LangCode:      data.LangCode,
-			Pronunciation: data.Pronunciation,
-		},
-	})
+		word.Text = strings.TrimSpace(word.Text)
+		if word.Text == runtime.EmptyString {
+			slog.Warn("dictionary.Service.AddWord - empty text")
+			words = slices.Delete(words, i, i+1)
+		}
+		i++
+	}
+	wordIDs, err := s.repo.AddWords(ctx, words)
 	if err != nil {
-		return uuid.Nil, fmt.Errorf("dictionary.Service.AddWord: %v", err)
+		return nil, fmt.Errorf("dictionary.Service.AddWord: %v", err)
 	}
 
-	return wordIDs[0], nil
+	return wordIDs, nil
 }
 
 func (s *Service) GetWordByText(ctx context.Context, text, langCode string) (uuid.UUID, error) {
@@ -85,7 +91,7 @@ func (s *Service) GetWordByText(ctx context.Context, text, langCode string) (uui
 		LangCode: langCode,
 	}
 
-	wordID, err := s.repo.GetWordByText(ctx, &word)
+	wordID, err := s.repo.GetWordIDByText(ctx, &word)
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("dictionary.Service.GetWordByText: %v", err)
 	}
@@ -101,16 +107,6 @@ func (s *Service) GetWords(ctx context.Context, wordIDs []uuid.UUID) ([]Word, er
 		return nil, fmt.Errorf("dictionary.Service.GetWords: %w", err)
 	}
 	return words, nil
-}
-
-func (s *Service) EditWord(ctx context.Context, text, langCode string) error {
-	word := Word{
-		Text:     text,
-		LangCode: langCode,
-	}
-	fmt.Println(word)
-
-	return nil
 }
 
 func (s *Service) FindWords(ctx context.Context, text, langCode string) ([]uuid.UUID, error) {
@@ -160,20 +156,20 @@ func (s *Service) GetRandomWord(ctx context.Context, langCode string) (*Word, er
 	return word, nil
 }
 
-func (s *Service) UpdateWord(ctx context.Context, text, langCode, pronunciation string) (uuid.UUID, error) {
-	word := &Word{
-		Text:          text,
-		LangCode:      langCode,
-		Pronunciation: pronunciation,
-	}
+func (s *Service) UpdateWord(ctx context.Context, word Word) (uuid.UUID, error) {
+	//word := &Word{
+	//	ID:            word.ID,
+	//	Text:          text,
+	//	LangCode:      langCode,
+	//	Pronunciation: pronunciation,
+	//}
 
-	wordID, err := s.repo.GetWordByText(ctx, word)
-
+	wordID, err := s.repo.GetWordIDByText(ctx, &word)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return uuid.Nil, fmt.Errorf("dictionary.Service.UpdateWord - get word: %w", err)
 	} else if wordID == uuid.Nil {
-		word.ID = uuid.New()
-		wordIDs, err := s.repo.AddWords(ctx, []Word{*word})
+		//TODO check correct work
+		wordIDs, err := s.repo.AddWords(ctx, []Word{word})
 		if err != nil {
 			return uuid.Nil, fmt.Errorf("dictionary.Service.UpdateWord - add word: %w", err)
 		}
@@ -183,15 +179,10 @@ func (s *Service) UpdateWord(ctx context.Context, text, langCode, pronunciation 
 
 	word.ID = wordID
 
-	err = s.repo.UpdateWord(ctx, word)
+	err = s.repo.UpdateWord(ctx, &word)
 	if err != nil {
 		return uuid.Nil, err
 	}
 
 	return wordID, nil
-}
-
-func (s *Service) SharedWord(ctx context.Context, w *Word) (*Word, error) {
-	slog.Error("dictionary.Service.SharedWord - not implemented")
-	return nil, nil
 }
