@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/av-ugolkov/lingua-evo/runtime"
 	"time"
 
 	"github.com/google/uuid"
@@ -14,6 +15,15 @@ type (
 		UserID      uuid.UUID `json:"user_id"`
 		Fingerprint string    `json:"fingerprint"`
 		CreatedAt   time.Time `json:"created_at"`
+	}
+
+	User struct {
+		ID       uuid.UUID
+		Username string
+		Password string
+		Email    string
+		Role     runtime.Role
+		Code     int
 	}
 
 	Tokens struct {

@@ -74,7 +74,7 @@ func (r *DictionaryRepo) AddWords(ctx context.Context, words []entity.Word) ([]u
 	return wordIDs, nil
 }
 
-func (r *DictionaryRepo) GetWordByText(ctx context.Context, w *entity.Word) (uuid.UUID, error) {
+func (r *DictionaryRepo) GetWordIDByText(ctx context.Context, w *entity.Word) (uuid.UUID, error) {
 	word := &entity.Word{}
 	table := getTable(w.LangCode)
 	query := fmt.Sprintf(`SELECT id FROM "%s" WHERE text=$1 AND lang_code=$2;`, table)

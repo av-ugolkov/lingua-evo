@@ -116,8 +116,8 @@ func (_m *mockRepoDictionary) GetRandomWord(ctx context.Context, w *Word) (*Word
 	return r0, r1
 }
 
-// GetWordByText provides a mock function with given fields: ctx, w
-func (_m *mockRepoDictionary) GetWordByText(ctx context.Context, w *Word) (uuid.UUID, error) {
+// GetWordIDByText provides a mock function with given fields: ctx, w
+func (_m *mockRepoDictionary) GetWordIDByText(ctx context.Context, w *Word) (uuid.UUID, error) {
 	ret := _m.Called(ctx, w)
 
 	var r0 uuid.UUID

@@ -103,7 +103,7 @@ func (r *ExampleRepo) GetExamples(ctx context.Context, ids []uuid.UUID) ([]examp
 	examples := make([]example.Example, 0, len(ids))
 	for rows.Next() {
 		var ex example.Example
-		err = rows.Scan(&ex.Id, &ex.Text)
+		err = rows.Scan(&ex.ID, &ex.Text)
 		if err != nil {
 			return nil, fmt.Errorf("example.repository.ExampleRepo.GetExamples - scan: %w", err)
 		}

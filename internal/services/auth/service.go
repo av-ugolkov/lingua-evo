@@ -12,10 +12,7 @@ import (
 	"github.com/av-ugolkov/lingua-evo/internal/config"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/token"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/utils"
-	"github.com/av-ugolkov/lingua-evo/internal/services/auth/model"
 	entityUser "github.com/av-ugolkov/lingua-evo/internal/services/user"
-	"github.com/av-ugolkov/lingua-evo/runtime"
-
 	"github.com/google/uuid"
 )
 
@@ -54,39 +51,39 @@ func NewService(repo sessionRepo, userSvc userSvc) *Service {
 	}
 }
 
-func (s *Service) SignUp(ctx context.Context, data model.CreateUserRq, role runtime.Role) (uuid.UUID, error) {
-	if err := s.validateEmail(ctx, data.Email); err != nil {
+func (s *Service) SignUp(ctx context.Context, userData User) (uuid.UUID, error) {
+	if err := s.validateEmail(ctx, userData.Email); err != nil {
 		return uuid.Nil, fmt.Errorf("auth.Service.SignUp - validateEmail: %v", err)
 	}
 
-	code, err := s.repo.GetAccountCode(ctx, data.Email)
+	code, err := s.repo.GetAccountCode(ctx, userData.Email)
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("auth.Service.SignUp - GetAccountCode: %v", err)
 	}
 
-	if code != data.Code {
+	if code != userData.Code {
 		return uuid.Nil, fmt.Errorf("auth.Service.SignUp: code mismatch")
 	}
 
-	if err := s.validateUsername(ctx, data.Username); err != nil {
+	if err := s.validateUsername(ctx, userData.Username); err != nil {
 		return uuid.Nil, fmt.Errorf("auth.Service.SignUp - validateUsername: %v", err)
 	}
 
-	if err := validatePassword(data.Password); err != nil {
+	if err := validatePassword(userData.Password); err != nil {
 		return uuid.Nil, fmt.Errorf("auth.Service.SignUp - validatePassword: %v", err)
 	}
 
-	hashPassword, err := utils.HashPassword(data.Password)
+	hashPassword, err := utils.HashPassword(userData.Password)
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("auth.Service.SignUp - hashPassword: %v", err)
 	}
 
 	user := &entityUser.User{
-		ID:           uuid.New(),
-		Name:         data.Username,
+		ID:           userData.ID,
+		Name:         userData.Username,
 		PasswordHash: hashPassword,
-		Email:        data.Email,
-		Role:         role,
+		Email:        userData.Email,
+		Role:         userData.Role,
 		CreatedAt:    time.Now().UTC(),
 		LastVisitAt:  time.Now().UTC(),
 	}
@@ -99,7 +96,7 @@ func (s *Service) SignUp(ctx context.Context, data model.CreateUserRq, role runt
 	return uid, nil
 }
 
-func (s *Service) SignIn(ctx context.Context, user, password, fingerprint string) (*Tokens, error) {
+func (s *Service) SignIn(ctx context.Context, user, password, fingerprint string, refreshTokenID uuid.UUID) (*Tokens, error) {
 	u, err := s.userSvc.GetUser(ctx, user)
 	if err != nil {
 		return nil, fmt.Errorf("auth.Service.SignIn - getUser: %v", err)
@@ -117,7 +114,6 @@ func (s *Service) SignIn(ctx context.Context, user, password, fingerprint string
 		CreatedAt:   now,
 	}
 
-	refreshTokenID := uuid.New()
 	err = s.addRefreshSession(ctx, refreshTokenID, session)
 	if err != nil {
 		return nil, fmt.Errorf("auth.Service.SignIn - addRefreshSession: %v", err)
@@ -143,7 +139,7 @@ func (s *Service) SignIn(ctx context.Context, user, password, fingerprint string
 }
 
 // RefreshSessionToken - the method is called from the client
-func (s *Service) RefreshSessionToken(ctx context.Context, refreshTokenID uuid.UUID, fingerprint string) (*Tokens, error) {
+func (s *Service) RefreshSessionToken(ctx context.Context, tokenID, refreshTokenID uuid.UUID, fingerprint string) (*Tokens, error) {
 	oldRefreshSession, err := s.repo.GetSession(ctx, refreshTokenID)
 	if err != nil {
 		return nil, fmt.Errorf("auth.Service.RefreshSessionToken - get session: %v", err)
@@ -159,7 +155,6 @@ func (s *Service) RefreshSessionToken(ctx context.Context, refreshTokenID uuid.U
 		CreatedAt:   time.Now().UTC(),
 	}
 
-	tokenID := uuid.New()
 	err = s.addRefreshSession(ctx, tokenID, newSession)
 	if err != nil {
 		return nil, fmt.Errorf("auth.Service.RefreshSessionToken - addRefreshSession: %v", err)

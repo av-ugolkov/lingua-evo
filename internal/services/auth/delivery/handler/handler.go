@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
-	"github.com/av-ugolkov/lingua-evo/internal/services/auth/model"
 	"github.com/av-ugolkov/lingua-evo/runtime"
 	"net/http"
 	"strings"
@@ -15,6 +14,8 @@ import (
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/http/exchange"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/middleware"
 	"github.com/av-ugolkov/lingua-evo/internal/services/auth"
+	entity "github.com/av-ugolkov/lingua-evo/internal/services/auth"
+	"github.com/av-ugolkov/lingua-evo/internal/services/auth/model"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
@@ -52,7 +53,14 @@ func (h *Handler) signUp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	uid, err := h.authSvc.SignUp(ex.Context(), data, runtime.User)
+	uid, err := h.authSvc.SignUp(ex.Context(), entity.User{
+		ID:       uuid.New(),
+		Username: data.Username,
+		Password: data.Password,
+		Email:    data.Email,
+		Role:     runtime.User,
+		Code:     data.Code,
+	})
 	if err != nil {
 		ex.SendError(http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.createAccount - create user: %v", err))
 		return
@@ -85,7 +93,8 @@ func (h *Handler) signIn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	ctx := r.Context()
-	tokens, err := h.authSvc.SignIn(ctx, data.User, data.Password, data.Fingerprint)
+	refreshTokenID := uuid.New()
+	tokens, err := h.authSvc.SignIn(ctx, data.User, data.Password, data.Fingerprint, refreshTokenID)
 	if err != nil {
 		ex.SendError(http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.signin - create session: %v", err))
 		return
@@ -128,7 +137,8 @@ func (h *Handler) refresh(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := r.Context()
-	tokens, err := h.authSvc.RefreshSessionToken(ctx, refreshID, fingerprint)
+	tokenID := uuid.New()
+	tokens, err := h.authSvc.RefreshSessionToken(ctx, tokenID, refreshID, fingerprint)
 	if err != nil {
 		ex.SendError(http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.refresh - refresh token: %v", err))
 		return

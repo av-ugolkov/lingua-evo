@@ -2,6 +2,7 @@ package vocabulary
 
 import (
 	"errors"
+	entityTag "github.com/av-ugolkov/lingua-evo/internal/services/tag"
 
 	"github.com/google/uuid"
 )
@@ -17,5 +18,5 @@ type Vocabulary struct {
 	Name          string
 	NativeLang    string
 	TranslateLang string
-	Tags          []string
+	Tags          []entityTag.Tag
 }
