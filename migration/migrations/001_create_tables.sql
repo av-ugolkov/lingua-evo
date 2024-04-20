@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS
         "text" TEXT NOT NULL,
         "pronunciation" TEXT,
         "lang_code" TEXT REFERENCES "language" ("code") ON DELETE CASCADE,
+        "creator" UUID,
         "moderator" UUID,
         "updated_at" TIMESTAMP NOT NULL,
         "created_at" TIMESTAMP NOT NULL
@@ -55,8 +56,8 @@ CREATE TABLE IF NOT EXISTS
         "id" UUID PRIMARY KEY,
         "vocabulary_id" UUID REFERENCES "vocabulary" ("id") ON DELETE CASCADE,
         "native_id" UUID NOT NULL,
-        "translate_words" UUID[],
-        "examples" UUID[],
+        "translate_ids" UUID[],
+        "example_ids" UUID[],
         "updated_at" TIMESTAMP NOT NULL,
         "created_at" TIMESTAMP NOT NULL
     );
