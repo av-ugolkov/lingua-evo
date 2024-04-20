@@ -12,6 +12,7 @@ import (
 	"github.com/av-ugolkov/lingua-evo/internal/delivery"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/http/exchange"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/middleware"
+	entityTag "github.com/av-ugolkov/lingua-evo/internal/services/tag"
 	"github.com/av-ugolkov/lingua-evo/internal/services/vocabulary"
 	"github.com/av-ugolkov/lingua-evo/internal/services/vocabulary/model"
 	"github.com/av-ugolkov/lingua-evo/runtime"
@@ -58,7 +59,22 @@ func (h *Handler) addVocabulary(ctx context.Context, ex *exchange.Exchanger) {
 		return
 	}
 
-	vocab, err := h.vocabularySvc.AddVocabulary(ctx, userID, data)
+	tags := make([]entityTag.Tag, 0, len(data.Tags))
+	for _, tag := range data.Tags {
+		tags = append(tags, entityTag.Tag{
+			ID:   uuid.New(),
+			Text: tag,
+		})
+	}
+
+	vocab, err := h.vocabularySvc.AddVocabulary(ctx, vocabulary.Vocabulary{
+		ID:            uuid.New(),
+		UserID:        userID,
+		Name:          data.Name,
+		NativeLang:    data.NativeLang,
+		TranslateLang: data.TranslateLang,
+		Tags:          tags,
+	})
 	if err != nil {
 		ex.SendError(http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.addVocabulary: %v", err))
 	}
@@ -69,7 +85,7 @@ func (h *Handler) addVocabulary(ctx context.Context, ex *exchange.Exchanger) {
 		Name:          vocab.Name,
 		NativeLang:    vocab.NativeLang,
 		TranslateLang: vocab.TranslateLang,
-		Tags:          vocab.Tags,
+		//Tags:          vocab.Tags,
 	}
 
 	ex.SetContentType(exchange.ContentTypeJSON)
@@ -125,13 +141,18 @@ func (h *Handler) getVocabulary(ctx context.Context, ex *exchange.Exchanger) {
 		return
 	}
 
+	tags := make([]string, 0, len(vocab.Tags))
+	for _, tag := range vocab.Tags {
+		tags = append(tags, tag.Text)
+	}
+
 	vocabRs := &model.VocabularyRs{
 		ID:            vocab.ID,
 		UserID:        vocab.UserID,
 		Name:          vocab.Name,
 		NativeLang:    vocab.NativeLang,
 		TranslateLang: vocab.TranslateLang,
-		Tags:          vocab.Tags,
+		Tags:          tags,
 	}
 
 	ex.SetContentType(exchange.ContentTypeJSON)
@@ -152,13 +173,18 @@ func (h *Handler) getVocabularies(ctx context.Context, ex *exchange.Exchanger) {
 
 	vocabulariesRs := make([]model.VocabularyRs, 0, len(vocabularies))
 	for _, vocab := range vocabularies {
+		tags := make([]string, 0, len(vocab.Tags))
+		for _, tag := range vocab.Tags {
+			tags = append(tags, tag.Text)
+		}
+
 		vocabulariesRs = append(vocabulariesRs, model.VocabularyRs{
 			ID:            vocab.ID,
 			UserID:        vocab.UserID,
 			Name:          vocab.Name,
 			NativeLang:    vocab.NativeLang,
 			TranslateLang: vocab.TranslateLang,
-			Tags:          vocab.Tags,
+			Tags:          tags,
 		})
 	}
 

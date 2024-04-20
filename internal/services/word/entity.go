@@ -2,6 +2,7 @@ package word
 
 import (
 	"errors"
+	"github.com/av-ugolkov/lingua-evo/internal/services/example"
 
 	"github.com/av-ugolkov/lingua-evo/internal/services/word/model"
 
@@ -21,6 +22,20 @@ type (
 		NativeID       uuid.UUID
 		TranslateWords []uuid.UUID
 		Examples       []uuid.UUID
+	}
+
+	DataWord struct {
+		ID            uuid.UUID
+		Text          string
+		Pronunciation string
+	}
+
+	VocabWord struct {
+		VocabID        uuid.UUID
+		WordID         uuid.UUID
+		NativeWord     DataWord
+		TranslateWords []DataWord
+		Examples       []example.Example
 	}
 
 	VocabularyWord struct {

@@ -10,8 +10,10 @@ import (
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/http/exchange"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/middleware"
 	dictionarySvc "github.com/av-ugolkov/lingua-evo/internal/services/dictionary"
+	entity "github.com/av-ugolkov/lingua-evo/internal/services/dictionary"
 	"github.com/av-ugolkov/lingua-evo/internal/services/dictionary/model"
 
+	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 )
 
@@ -43,14 +45,21 @@ func (h *Handler) addWord(ctx context.Context, ex *exchange.Exchanger) {
 		return
 	}
 
-	wordID, err := h.dictSvc.AddWord(ctx, data)
+	wordIDs, err := h.dictSvc.AddWords(ctx, []entity.Word{
+		{
+			ID:            uuid.New(),
+			Text:          data.Text,
+			Pronunciation: data.Pronunciation,
+			LangCode:      data.LangCode,
+		},
+	})
 	if err != nil {
 		ex.SendError(http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.addWord: %v", err))
 		return
 	}
 
 	wordRs := &model.WordIDRs{
-		ID: wordID,
+		ID: wordIDs[0],
 	}
 
 	ex.SetContentType(exchange.ContentTypeJSON)

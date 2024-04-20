@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	entityTag "github.com/av-ugolkov/lingua-evo/internal/services/tag"
 	"time"
 
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary"
@@ -60,8 +61,9 @@ WHERE user_id=$1 AND name=$2;`
 }
 
 func (r *VocabRepo) GetTagsVocabulary(ctx context.Context, vocabID uuid.UUID) ([]string, error) {
-	query := `SELECT "text" from tag 
-where id=any(select tag_id from vocabulary_tag where vocabulary_id=$1);`
+	query := `SELECT "text" from tag t
+left join vocabulary v on t.id=any(v.tags)
+where v.id=$1;`
 	rows, err := r.db.QueryContext(ctx, query, vocabID)
 	if err != nil {
 		return nil, fmt.Errorf("vocabulary.delivery.repository.VocabRepo.GetByName: %w", err)
@@ -120,7 +122,7 @@ GROUP BY v.id, n.lang, t.lang;`
 
 		for _, t := range sqlTags {
 			if t.Valid {
-				vocab.Tags = append(vocab.Tags, t.String)
+				vocab.Tags = append(vocab.Tags, entityTag.Tag{Text: t.String})
 			}
 		}
 
