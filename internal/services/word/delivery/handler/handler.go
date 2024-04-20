@@ -4,12 +4,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	entityExample "github.com/av-ugolkov/lingua-evo/internal/services/example"
+	"github.com/google/uuid"
 	"net/http"
 
 	"github.com/av-ugolkov/lingua-evo/internal/delivery"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/http/exchange"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/middleware"
 	"github.com/av-ugolkov/lingua-evo/internal/services/word"
+	entity "github.com/av-ugolkov/lingua-evo/internal/services/word"
 	"github.com/av-ugolkov/lingua-evo/internal/services/word/model"
 
 	"github.com/gorilla/mux"
@@ -53,7 +56,33 @@ func (h *Handler) addWord(ctx context.Context, ex *exchange.Exchanger) {
 		return
 	}
 
-	vocabWord, err := h.wordSvc.AddWord(ctx, data)
+	translateWords := make([]entity.DataWord, 0, len(data.TanslateWords))
+	for _, translateWord := range data.TanslateWords {
+		translateWords = append(translateWords, entity.DataWord{
+			ID:   uuid.New(),
+			Text: translateWord,
+		})
+	}
+
+	examples := make([]entityExample.Example, 0, len(data.Examples))
+	for _, example := range data.Examples {
+		examples = append(examples, entityExample.Example{
+			ID:   uuid.New(),
+			Text: example,
+		})
+	}
+
+	vocabWord, err := h.wordSvc.AddWord(ctx, entity.VocabWord{
+		VocabID: uuid.New(),
+		WordID:  data.WordID,
+		NativeWord: entity.DataWord{
+			ID:            data.WordID,
+			Text:          data.NativeWord.Text,
+			Pronunciation: data.NativeWord.Pronunciation,
+		},
+		TranslateWords: translateWords,
+		Examples:       examples,
+	})
 	if err != nil {
 		switch {
 		case errors.Is(err, word.ErrDuplicate):
@@ -102,17 +131,25 @@ func (h *Handler) updateWord(ctx context.Context, ex *exchange.Exchanger) {
 		translateWords = append(translateWords, model.VocabWord{Text: tr})
 	}
 
-	word, err := h.wordSvc.UpdateWord(ctx, data.VocabID, data.WordID, data.NativeWord, translateWords, data.Examples)
+	examples := make([]entityExample.Example, 0, len(data.Examples))
+	for _, example := range data.Examples {
+		examples = append(examples, entityExample.Example{
+			ID:   uuid.New(),
+			Text: example,
+		})
+	}
+
+	vocabWord, err := h.wordSvc.UpdateWord(ctx, data.VocabID, data.WordID, data.NativeWord, translateWords, examples)
 	if err != nil {
 		ex.SendError(http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.updateWord: %v", err))
 		return
 	}
 
 	wordRs := &model.VocabWordsRs{
-		WordID:         word.ID,
-		NativeWord:     &word.NativeWord,
-		TranslateWords: word.TranslateWords,
-		Examples:       word.Examples,
+		WordID:         vocabWord.ID,
+		NativeWord:     &vocabWord.NativeWord,
+		TranslateWords: vocabWord.TranslateWords,
+		Examples:       vocabWord.Examples,
 	}
 
 	ex.SetContentType(exchange.ContentTypeJSON)
@@ -131,18 +168,18 @@ func (h *Handler) getSeveralWords(ctx context.Context, ex *exchange.Exchanger) {
 		ex.SendError(http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getSeveralWords - get limit: %w", err))
 		return
 	}
-	words, err := h.wordSvc.GetRandomWords(ctx, vocabID, limit)
+	vocabWords, err := h.wordSvc.GetRandomWords(ctx, vocabID, limit)
 	if err != nil {
 		ex.SendError(http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getSeveralWords: %w", err))
 		return
 	}
 
-	wordsRs := make([]model.VocabWordsRs, 0, len(words))
-	for _, word := range words {
+	wordsRs := make([]model.VocabWordsRs, 0, len(vocabWords))
+	for _, vocabWord := range vocabWords {
 		wordRs := model.VocabWordsRs{
-			NativeWord:     &word.NativeWord,
-			TranslateWords: word.TranslateWords,
-			Examples:       word.Examples,
+			NativeWord:     &vocabWord.NativeWord,
+			TranslateWords: vocabWord.TranslateWords,
+			Examples:       vocabWord.Examples,
 		}
 
 		wordsRs = append(wordsRs, wordRs)
@@ -165,17 +202,17 @@ func (h *Handler) getWord(ctx context.Context, ex *exchange.Exchanger) {
 		return
 	}
 
-	word, err := h.wordSvc.GetWord(ctx, vocabID, wordID)
+	vocabWord, err := h.wordSvc.GetWord(ctx, vocabID, wordID)
 	if err != nil {
 		ex.SendError(http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getWords: %w", err))
 		return
 	}
 
 	wordRs := model.VocabWordsRs{
-		WordID:         word.ID,
-		NativeWord:     &word.NativeWord,
-		TranslateWords: word.TranslateWords,
-		Examples:       word.Examples,
+		WordID:         vocabWord.ID,
+		NativeWord:     &vocabWord.NativeWord,
+		TranslateWords: vocabWord.TranslateWords,
+		Examples:       vocabWord.Examples,
 	}
 
 	ex.SetContentType(exchange.ContentTypeJSON)
@@ -189,19 +226,19 @@ func (h *Handler) getWords(ctx context.Context, ex *exchange.Exchanger) {
 		return
 	}
 
-	words, err := h.wordSvc.GetWords(ctx, vocabID)
+	vocabWords, err := h.wordSvc.GetWords(ctx, vocabID)
 	if err != nil {
 		ex.SendError(http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getWords: %w", err))
 		return
 	}
 
-	wordsRs := make([]model.VocabWordsRs, 0, len(words))
-	for _, word := range words {
+	wordsRs := make([]model.VocabWordsRs, 0, len(vocabWords))
+	for _, vocabWord := range vocabWords {
 		wordRs := model.VocabWordsRs{
-			WordID:         word.ID,
-			NativeWord:     &word.NativeWord,
-			TranslateWords: word.TranslateWords,
-			Examples:       word.Examples,
+			WordID:         vocabWord.ID,
+			NativeWord:     &vocabWord.NativeWord,
+			TranslateWords: vocabWord.TranslateWords,
+			Examples:       vocabWord.Examples,
 		}
 
 		wordsRs = append(wordsRs, wordRs)

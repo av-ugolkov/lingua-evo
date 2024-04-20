@@ -28,22 +28,22 @@ func NewService(repo repoTag) *Service {
 	}
 }
 
-func (s *Service) AddTag(ctx context.Context, tagID uuid.UUID, text string) (uuid.UUID, error) {
-	id, err := s.repo.AddTag(ctx, tagID, text)
+func (s *Service) AddTag(ctx context.Context, tag Tag) (uuid.UUID, error) {
+	id, err := s.repo.AddTag(ctx, tag.ID, tag.Text)
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("tag.Service.AddTag: %w", err)
 	}
 	return id, nil
 }
 
-func (s *Service) AddTags(ctx context.Context, tags []string) ([]uuid.UUID, error) {
+func (s *Service) AddTags(ctx context.Context, tags []Tag) ([]uuid.UUID, error) {
 	ids := make([]uuid.UUID, 0, len(tags))
 	for _, tag := range tags {
-		id, err := s.GetTag(ctx, tag)
+		id, err := s.GetTag(ctx, tag.Text)
 		if err != nil {
 			slog.Warn(fmt.Sprintf("tag.Service.AddTags: %v", err))
 
-			id, err = s.repo.AddTag(ctx, uuid.New(), tag)
+			id, err = s.repo.AddTag(ctx, tag.ID, tag.Text)
 			if err != nil {
 				return nil, fmt.Errorf("tag.Service.AddTags: %w", err)
 			}
@@ -87,8 +87,8 @@ func (s *Service) GetTagsInVocabulary(ctx context.Context, vocabID uuid.UUID) ([
 	return tags, nil
 }
 
-func (s *Service) UpdateTag(ctx context.Context, text string) (uuid.UUID, error) {
-	id, err := s.repo.GetTag(ctx, text)
+func (s *Service) UpdateTag(ctx context.Context, tag Tag) (uuid.UUID, error) {
+	id, err := s.repo.GetTag(ctx, tag.Text)
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("tag.Service.UpdateTag: %w", err)
 	}
@@ -96,7 +96,7 @@ func (s *Service) UpdateTag(ctx context.Context, text string) (uuid.UUID, error)
 		return id, nil
 	}
 
-	id, err = s.AddTag(ctx, uuid.New(), text)
+	id, err = s.AddTag(ctx, tag)
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("tag.Service.UpdateTag: %w", err)
 	}
