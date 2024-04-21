@@ -3,16 +3,26 @@ package handler
 import (
 	"context"
 	"fmt"
-	"github.com/av-ugolkov/lingua-evo/internal/pkg/http/exchange"
-	"github.com/av-ugolkov/lingua-evo/internal/services/tag/model"
-	"github.com/google/uuid"
 	"net/http"
 
 	"github.com/av-ugolkov/lingua-evo/internal/delivery"
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/http/exchange"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/middleware"
 	tagSvc "github.com/av-ugolkov/lingua-evo/internal/services/tag"
 
+	"github.com/google/uuid"
 	"github.com/gorilla/mux"
+)
+
+const (
+	queryVocabID = "vocab_id"
+)
+
+type (
+	TagRs struct {
+		ID   uuid.UUID `json:"id"`
+		Text string    `json:"text"`
+	}
 )
 
 type Handler struct {
@@ -35,28 +45,27 @@ func (h *Handler) register(r *mux.Router) {
 }
 
 func (h *Handler) getTags(ctx context.Context, ex *exchange.Exchanger) {
-	const queryVocabID = "vocab_id"
-	vocabID, err := ex.QueryParamString(queryVocabID)
+	vocabIDStr, err := ex.QueryParamString(queryVocabID)
 	if err != nil {
 		ex.SendError(http.StatusBadRequest, fmt.Errorf("tag.delivery.Handler.getTags - query param [%s]: %v", queryVocabID, err))
 		return
 	}
 
-	vid, err := uuid.Parse(vocabID)
+	vocabID, err := uuid.Parse(vocabIDStr)
 	if err != nil {
 		ex.SendError(http.StatusBadRequest, fmt.Errorf("tag.delivery.Handler.getTags - invalid id: %v", err))
 		return
 	}
 
-	tags, err := h.tagSvc.GetTagsInVocabulary(ctx, vid)
+	tags, err := h.tagSvc.GetTagsInVocabulary(ctx, vocabID)
 	if err != nil {
 		ex.SendError(http.StatusInternalServerError, fmt.Errorf("tag.delivery.Handler.getTags: %v", err))
 		return
 	}
 
-	tagsRs := make([]model.TagRs, 0, len(tags))
+	tagsRs := make([]TagRs, 0, len(tags))
 	for _, tag := range tags {
-		tagsRs = append(tagsRs, model.TagRs{
+		tagsRs = append(tagsRs, TagRs{
 			ID:   tag.ID,
 			Text: tag.Text,
 		})

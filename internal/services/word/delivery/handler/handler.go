@@ -4,17 +4,17 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	entityExample "github.com/av-ugolkov/lingua-evo/internal/services/example"
-	"github.com/google/uuid"
+	entityDict "github.com/av-ugolkov/lingua-evo/internal/services/dictionary"
 	"net/http"
 
 	"github.com/av-ugolkov/lingua-evo/internal/delivery"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/http/exchange"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/middleware"
+	entityExample "github.com/av-ugolkov/lingua-evo/internal/services/example"
 	"github.com/av-ugolkov/lingua-evo/internal/services/word"
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/word"
-	"github.com/av-ugolkov/lingua-evo/internal/services/word/model"
 
+	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 )
 
@@ -22,6 +22,33 @@ const (
 	ParamVocabID = "vocab_id"
 	ParamWordID  = "word_id"
 	ParamLimit   = "limit"
+)
+
+type (
+	VocabWord struct {
+		Text          string `json:"text"`
+		Pronunciation string `json:"pronunciation,omitempty"`
+	}
+
+	VocabWordRq struct {
+		VocabID       uuid.UUID `json:"vocab_id"`
+		WordID        uuid.UUID `json:"word_id,omitempty"`
+		NativeWord    VocabWord `json:"native_word"`
+		TanslateWords []string  `json:"translate_words,omitempty"`
+		Examples      []string  `json:"examples,omitempty"`
+	}
+
+	RemoveVocabWordRq struct {
+		VocabID uuid.UUID `json:"vocab_id"`
+		WordID  uuid.UUID `json:"word_id"`
+	}
+
+	VocabWordRs struct {
+		WordID         uuid.UUID  `json:"word_id"`
+		NativeWord     *VocabWord `json:"native,omitempty"`
+		TranslateWords []string   `json:"translate_words,omitempty"`
+		Examples       []string   `json:"examples,omitempty"`
+	}
 )
 
 type Handler struct {
@@ -49,16 +76,16 @@ func (h *Handler) register(r *mux.Router) {
 }
 
 func (h *Handler) addWord(ctx context.Context, ex *exchange.Exchanger) {
-	var data model.VocabWordRq
+	var data VocabWordRq
 	err := ex.CheckBody(&data)
 	if err != nil {
 		ex.SendError(http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.addWord - check body: %v", err))
 		return
 	}
 
-	translateWords := make([]entity.DataWord, 0, len(data.TanslateWords))
+	translateWords := make([]entityDict.DictWord, 0, len(data.TanslateWords))
 	for _, translateWord := range data.TanslateWords {
-		translateWords = append(translateWords, entity.DataWord{
+		translateWords = append(translateWords, entityDict.DictWord{
 			ID:   uuid.New(),
 			Text: translateWord,
 		})
@@ -72,16 +99,16 @@ func (h *Handler) addWord(ctx context.Context, ex *exchange.Exchanger) {
 		})
 	}
 
-	vocabWord, err := h.wordSvc.AddWord(ctx, entity.VocabWord{
-		VocabID: uuid.New(),
-		WordID:  data.WordID,
-		NativeWord: entity.DataWord{
-			ID:            data.WordID,
+	vocabWord, err := h.wordSvc.AddWord(ctx, entity.VocabWordData{
+		ID:      uuid.New(),
+		VocabID: data.VocabID,
+		Native: entityDict.DictWord{
+			ID:            uuid.New(),
 			Text:          data.NativeWord.Text,
 			Pronunciation: data.NativeWord.Pronunciation,
 		},
-		TranslateWords: translateWords,
-		Examples:       examples,
+		Translates: translateWords,
+		Examples:   examples,
 	})
 	if err != nil {
 		switch {
@@ -94,7 +121,52 @@ func (h *Handler) addWord(ctx context.Context, ex *exchange.Exchanger) {
 		}
 	}
 
-	wordRs := model.VocabWordsRs{
+	wordRs := VocabWordRs{
+		WordID: vocabWord.ID,
+	}
+
+	ex.SetContentType(exchange.ContentTypeJSON)
+	ex.SendData(http.StatusCreated, wordRs)
+}
+
+func (h *Handler) updateWord(ctx context.Context, ex *exchange.Exchanger) {
+	var data VocabWordRq
+	err := ex.CheckBody(&data)
+	if err != nil {
+		ex.SendError(http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.updateWord - check body: %v", err))
+		return
+	}
+
+	translates := make([]entityDict.DictWord, 0, len(data.TanslateWords))
+	for _, tr := range data.TanslateWords {
+		translates = append(translates, entityDict.DictWord{Text: tr})
+	}
+
+	examples := make([]entityExample.Example, 0, len(data.Examples))
+	for _, example := range data.Examples {
+		examples = append(examples, entityExample.Example{
+			ID:   uuid.New(),
+			Text: example,
+		})
+	}
+
+	vocabWord, err := h.wordSvc.UpdateWord(ctx, entity.VocabWordData{
+		ID:      uuid.New(),
+		VocabID: data.VocabID,
+		Native: entityDict.DictWord{
+			ID:            data.WordID,
+			Text:          data.NativeWord.Text,
+			Pronunciation: data.NativeWord.Pronunciation,
+		},
+		Translates: translates,
+		Examples:   examples,
+	})
+	if err != nil {
+		ex.SendError(http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.updateWord: %v", err))
+		return
+	}
+
+	wordRs := &VocabWordRs{
 		WordID: vocabWord.ID,
 	}
 
@@ -103,7 +175,7 @@ func (h *Handler) addWord(ctx context.Context, ex *exchange.Exchanger) {
 }
 
 func (h *Handler) deleteWord(ctx context.Context, ex *exchange.Exchanger) {
-	var data model.RemoveVocabWordRq
+	var data RemoveVocabWordRq
 	err := ex.CheckBody(&data)
 	if err != nil {
 		ex.SendError(http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.deleteWord - check body: %v", err))
@@ -116,44 +188,6 @@ func (h *Handler) deleteWord(ctx context.Context, ex *exchange.Exchanger) {
 		return
 	}
 	ex.SendEmptyData(http.StatusOK)
-}
-
-func (h *Handler) updateWord(ctx context.Context, ex *exchange.Exchanger) {
-	var data model.VocabWordRq
-	err := ex.CheckBody(&data)
-	if err != nil {
-		ex.SendError(http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.updateWord - check body: %v", err))
-		return
-	}
-
-	translateWords := make([]model.VocabWord, 0, len(data.TanslateWords))
-	for _, tr := range data.TanslateWords {
-		translateWords = append(translateWords, model.VocabWord{Text: tr})
-	}
-
-	examples := make([]entityExample.Example, 0, len(data.Examples))
-	for _, example := range data.Examples {
-		examples = append(examples, entityExample.Example{
-			ID:   uuid.New(),
-			Text: example,
-		})
-	}
-
-	vocabWord, err := h.wordSvc.UpdateWord(ctx, data.VocabID, data.WordID, data.NativeWord, translateWords, examples)
-	if err != nil {
-		ex.SendError(http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.updateWord: %v", err))
-		return
-	}
-
-	wordRs := &model.VocabWordsRs{
-		WordID:         vocabWord.ID,
-		NativeWord:     &vocabWord.NativeWord,
-		TranslateWords: vocabWord.TranslateWords,
-		Examples:       vocabWord.Examples,
-	}
-
-	ex.SetContentType(exchange.ContentTypeJSON)
-	ex.SendData(http.StatusCreated, wordRs)
 }
 
 func (h *Handler) getSeveralWords(ctx context.Context, ex *exchange.Exchanger) {
@@ -174,12 +208,25 @@ func (h *Handler) getSeveralWords(ctx context.Context, ex *exchange.Exchanger) {
 		return
 	}
 
-	wordsRs := make([]model.VocabWordsRs, 0, len(vocabWords))
+	wordsRs := make([]VocabWordRs, 0, len(vocabWords))
 	for _, vocabWord := range vocabWords {
-		wordRs := model.VocabWordsRs{
-			NativeWord:     &vocabWord.NativeWord,
-			TranslateWords: vocabWord.TranslateWords,
-			Examples:       vocabWord.Examples,
+		translates := make([]string, 0, len(vocabWord.Translates))
+		for _, translate := range vocabWord.Translates {
+			translates = append(translates, translate.Text)
+		}
+
+		examples := make([]string, 0, len(vocabWord.Examples))
+		for _, example := range vocabWord.Examples {
+			examples = append(examples, example.Text)
+		}
+
+		wordRs := VocabWordRs{
+			NativeWord: &VocabWord{
+				Text:          vocabWord.Native.Text,
+				Pronunciation: vocabWord.Native.Pronunciation,
+			},
+			TranslateWords: translates,
+			Examples:       examples,
 		}
 
 		wordsRs = append(wordsRs, wordRs)
@@ -208,11 +255,24 @@ func (h *Handler) getWord(ctx context.Context, ex *exchange.Exchanger) {
 		return
 	}
 
-	wordRs := model.VocabWordsRs{
-		WordID:         vocabWord.ID,
-		NativeWord:     &vocabWord.NativeWord,
-		TranslateWords: vocabWord.TranslateWords,
-		Examples:       vocabWord.Examples,
+	translates := make([]string, 0, len(vocabWord.Translates))
+	for _, translate := range vocabWord.Translates {
+		translates = append(translates, translate.Text)
+	}
+
+	examples := make([]string, 0, len(vocabWord.Examples))
+	for _, example := range vocabWord.Examples {
+		examples = append(examples, example.Text)
+	}
+
+	wordRs := VocabWordRs{
+		WordID: vocabWord.ID,
+		NativeWord: &VocabWord{
+			Text:          vocabWord.Native.Text,
+			Pronunciation: vocabWord.Native.Pronunciation,
+		},
+		TranslateWords: translates,
+		Examples:       examples,
 	}
 
 	ex.SetContentType(exchange.ContentTypeJSON)
@@ -232,13 +292,26 @@ func (h *Handler) getWords(ctx context.Context, ex *exchange.Exchanger) {
 		return
 	}
 
-	wordsRs := make([]model.VocabWordsRs, 0, len(vocabWords))
+	wordsRs := make([]VocabWordRs, 0, len(vocabWords))
 	for _, vocabWord := range vocabWords {
-		wordRs := model.VocabWordsRs{
-			WordID:         vocabWord.ID,
-			NativeWord:     &vocabWord.NativeWord,
-			TranslateWords: vocabWord.TranslateWords,
-			Examples:       vocabWord.Examples,
+		translates := make([]string, 0, len(vocabWord.Translates))
+		for _, translate := range vocabWord.Translates {
+			translates = append(translates, translate.Text)
+		}
+
+		examples := make([]string, 0, len(vocabWord.Examples))
+		for _, example := range vocabWord.Examples {
+			examples = append(examples, example.Text)
+		}
+
+		wordRs := VocabWordRs{
+			WordID: vocabWord.ID,
+			NativeWord: &VocabWord{
+				Text:          vocabWord.Native.Text,
+				Pronunciation: vocabWord.Native.Pronunciation,
+			},
+			TranslateWords: translates,
+			Examples:       examples,
 		}
 
 		wordsRs = append(wordsRs, wordRs)

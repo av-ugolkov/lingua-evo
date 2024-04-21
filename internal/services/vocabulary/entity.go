@@ -12,11 +12,13 @@ var (
 	ErrCountVocabulary    = errors.New("too much dictionaries for user")
 )
 
-type Vocabulary struct {
-	ID            uuid.UUID
-	UserID        uuid.UUID
-	Name          string
-	NativeLang    string
-	TranslateLang string
-	Tags          []entityTag.Tag
-}
+type (
+	Vocabulary struct {
+		ID            uuid.UUID
+		UserID        uuid.UUID
+		Name          string
+		NativeLang    string
+		TranslateLang string
+		Tags          []entityTag.Tag
+	}
+)

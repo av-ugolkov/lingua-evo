@@ -14,7 +14,7 @@ func TestService_AddWord(t *testing.T) {
 	t.Run("AddWord", func(t *testing.T) {
 		var (
 			ctx  = context.Background()
-			data = []Word{
+			data = []DictWord{
 				{
 					ID:            uuid.New(),
 					Text:          "word",

@@ -11,10 +11,31 @@ import (
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/middleware"
 	dictionarySvc "github.com/av-ugolkov/lingua-evo/internal/services/dictionary"
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/dictionary"
-	"github.com/av-ugolkov/lingua-evo/internal/services/dictionary/model"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
+)
+
+type (
+	WordRq struct {
+		Text          string `json:"text"`
+		LangCode      string `json:"lang_code"`
+		Pronunciation string `json:"pronunciation,omitempty"`
+	}
+
+	WordIDRq struct {
+		ID uuid.UUID `json:"id"`
+	}
+
+	WordRs struct {
+		Text          string `json:"text"`
+		LangCode      string `json:"lang_code"`
+		Pronunciation string `json:"pronunciation,omitempty"`
+	}
+
+	WordIDRs struct {
+		ID uuid.UUID `json:"id"`
+	}
 )
 
 type Handler struct {
@@ -39,13 +60,13 @@ func (h *Handler) register(r *mux.Router) {
 }
 
 func (h *Handler) addWord(ctx context.Context, ex *exchange.Exchanger) {
-	var data model.WordRq
+	var data WordRq
 	if err := ex.CheckBody(&data); err != nil {
 		ex.SendError(http.StatusBadRequest, fmt.Errorf("dictionary.delivery.Handler.addWord - check body: %v", err))
 		return
 	}
 
-	wordIDs, err := h.dictSvc.AddWords(ctx, []entity.Word{
+	wordIDs, err := h.dictSvc.AddWords(ctx, []entity.DictWord{
 		{
 			ID:            uuid.New(),
 			Text:          data.Text,
@@ -58,7 +79,7 @@ func (h *Handler) addWord(ctx context.Context, ex *exchange.Exchanger) {
 		return
 	}
 
-	wordRs := &model.WordIDRs{
+	wordRs := &WordIDRs{
 		ID: wordIDs[0],
 	}
 
@@ -88,7 +109,7 @@ func (h *Handler) getWord(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	wordRs := &model.WordIDRs{
+	wordRs := &WordIDRs{
 		ID: wordID,
 	}
 
@@ -111,7 +132,7 @@ func (h *Handler) getRandomWord(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	randomWordRs := &model.WordRs{
+	randomWordRs := &WordRs{
 		Text:          word.Text,
 		LangCode:      word.LangCode,
 		Pronunciation: word.Pronunciation,
