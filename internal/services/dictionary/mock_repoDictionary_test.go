@@ -15,15 +15,15 @@ type mockRepoDictionary struct {
 }
 
 // AddWords provides a mock function with given fields: ctx, words
-func (_m *mockRepoDictionary) AddWords(ctx context.Context, words []Word) ([]uuid.UUID, error) {
+func (_m *mockRepoDictionary) AddWords(ctx context.Context, words []DictWord) ([]uuid.UUID, error) {
 	ret := _m.Called(ctx, words)
 
 	var r0 []uuid.UUID
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, []Word) ([]uuid.UUID, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, []DictWord) ([]uuid.UUID, error)); ok {
 		return rf(ctx, words)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, []Word) []uuid.UUID); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, []DictWord) []uuid.UUID); ok {
 		r0 = rf(ctx, words)
 	} else {
 		if ret.Get(0) != nil {
@@ -31,7 +31,7 @@ func (_m *mockRepoDictionary) AddWords(ctx context.Context, words []Word) ([]uui
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, []Word) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, []DictWord) error); ok {
 		r1 = rf(ctx, words)
 	} else {
 		r1 = ret.Error(1)
@@ -40,23 +40,47 @@ func (_m *mockRepoDictionary) AddWords(ctx context.Context, words []Word) ([]uui
 	return r0, r1
 }
 
-// DeleteWord provides a mock function with given fields: ctx, w
-func (_m *mockRepoDictionary) DeleteWord(ctx context.Context, w *Word) (int64, error) {
-	ret := _m.Called(ctx, w)
+// DeleteWordByID provides a mock function with given fields: ctx, id
+func (_m *mockRepoDictionary) DeleteWordByID(ctx context.Context, id uuid.UUID) (int64, error) {
+	ret := _m.Called(ctx, id)
 
 	var r0 int64
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *Word) (int64, error)); ok {
-		return rf(ctx, w)
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) (int64, error)); ok {
+		return rf(ctx, id)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *Word) int64); ok {
-		r0 = rf(ctx, w)
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) int64); ok {
+		r0 = rf(ctx, id)
 	} else {
 		r0 = ret.Get(0).(int64)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *Word) error); ok {
-		r1 = rf(ctx, w)
+	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID) error); ok {
+		r1 = rf(ctx, id)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// DeleteWordByText provides a mock function with given fields: ctx, text, langCode
+func (_m *mockRepoDictionary) DeleteWordByText(ctx context.Context, text string, langCode string) (int64, error) {
+	ret := _m.Called(ctx, text, langCode)
+
+	var r0 int64
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) (int64, error)); ok {
+		return rf(ctx, text, langCode)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) int64); ok {
+		r0 = rf(ctx, text, langCode)
+	} else {
+		r0 = ret.Get(0).(int64)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = rf(ctx, text, langCode)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -65,15 +89,15 @@ func (_m *mockRepoDictionary) DeleteWord(ctx context.Context, w *Word) (int64, e
 }
 
 // FindWords provides a mock function with given fields: ctx, w
-func (_m *mockRepoDictionary) FindWords(ctx context.Context, w *Word) ([]uuid.UUID, error) {
+func (_m *mockRepoDictionary) FindWords(ctx context.Context, w *DictWord) ([]uuid.UUID, error) {
 	ret := _m.Called(ctx, w)
 
 	var r0 []uuid.UUID
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *Word) ([]uuid.UUID, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *DictWord) ([]uuid.UUID, error)); ok {
 		return rf(ctx, w)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *Word) []uuid.UUID); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *DictWord) []uuid.UUID); ok {
 		r0 = rf(ctx, w)
 	} else {
 		if ret.Get(0) != nil {
@@ -81,7 +105,7 @@ func (_m *mockRepoDictionary) FindWords(ctx context.Context, w *Word) ([]uuid.UU
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *Word) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *DictWord) error); ok {
 		r1 = rf(ctx, w)
 	} else {
 		r1 = ret.Error(1)
@@ -90,25 +114,23 @@ func (_m *mockRepoDictionary) FindWords(ctx context.Context, w *Word) ([]uuid.UU
 	return r0, r1
 }
 
-// GetRandomWord provides a mock function with given fields: ctx, w
-func (_m *mockRepoDictionary) GetRandomWord(ctx context.Context, w *Word) (*Word, error) {
-	ret := _m.Called(ctx, w)
+// GetRandomWord provides a mock function with given fields: ctx, langCode
+func (_m *mockRepoDictionary) GetRandomWord(ctx context.Context, langCode string) (DictWord, error) {
+	ret := _m.Called(ctx, langCode)
 
-	var r0 *Word
+	var r0 DictWord
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *Word) (*Word, error)); ok {
-		return rf(ctx, w)
+	if rf, ok := ret.Get(0).(func(context.Context, string) (DictWord, error)); ok {
+		return rf(ctx, langCode)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *Word) *Word); ok {
-		r0 = rf(ctx, w)
+	if rf, ok := ret.Get(0).(func(context.Context, string) DictWord); ok {
+		r0 = rf(ctx, langCode)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*Word)
-		}
+		r0 = ret.Get(0).(DictWord)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *Word) error); ok {
-		r1 = rf(ctx, w)
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, langCode)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -117,15 +139,15 @@ func (_m *mockRepoDictionary) GetRandomWord(ctx context.Context, w *Word) (*Word
 }
 
 // GetWordIDByText provides a mock function with given fields: ctx, w
-func (_m *mockRepoDictionary) GetWordIDByText(ctx context.Context, w *Word) (uuid.UUID, error) {
+func (_m *mockRepoDictionary) GetWordIDByText(ctx context.Context, w *DictWord) (uuid.UUID, error) {
 	ret := _m.Called(ctx, w)
 
 	var r0 uuid.UUID
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *Word) (uuid.UUID, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *DictWord) (uuid.UUID, error)); ok {
 		return rf(ctx, w)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *Word) uuid.UUID); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *DictWord) uuid.UUID); ok {
 		r0 = rf(ctx, w)
 	} else {
 		if ret.Get(0) != nil {
@@ -133,7 +155,7 @@ func (_m *mockRepoDictionary) GetWordIDByText(ctx context.Context, w *Word) (uui
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *Word) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *DictWord) error); ok {
 		r1 = rf(ctx, w)
 	} else {
 		r1 = ret.Error(1)
@@ -143,19 +165,19 @@ func (_m *mockRepoDictionary) GetWordIDByText(ctx context.Context, w *Word) (uui
 }
 
 // GetWords provides a mock function with given fields: ctx, ids
-func (_m *mockRepoDictionary) GetWords(ctx context.Context, ids []uuid.UUID) ([]Word, error) {
+func (_m *mockRepoDictionary) GetWords(ctx context.Context, ids []uuid.UUID) ([]DictWord, error) {
 	ret := _m.Called(ctx, ids)
 
-	var r0 []Word
+	var r0 []DictWord
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, []uuid.UUID) ([]Word, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, []uuid.UUID) ([]DictWord, error)); ok {
 		return rf(ctx, ids)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, []uuid.UUID) []Word); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, []uuid.UUID) []DictWord); ok {
 		r0 = rf(ctx, ids)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]Word)
+			r0 = ret.Get(0).([]DictWord)
 		}
 	}
 
@@ -169,11 +191,11 @@ func (_m *mockRepoDictionary) GetWords(ctx context.Context, ids []uuid.UUID) ([]
 }
 
 // UpdateWord provides a mock function with given fields: ctx, w
-func (_m *mockRepoDictionary) UpdateWord(ctx context.Context, w *Word) error {
+func (_m *mockRepoDictionary) UpdateWord(ctx context.Context, w *DictWord) error {
 	ret := _m.Called(ctx, w)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *Word) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *DictWord) error); ok {
 		r0 = rf(ctx, w)
 	} else {
 		r0 = ret.Error(0)
