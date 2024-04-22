@@ -3,7 +3,6 @@ package auth
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"github.com/av-ugolkov/lingua-evo/runtime"
 	"time"
 
@@ -19,7 +18,7 @@ type (
 
 	User struct {
 		ID       uuid.UUID
-		Username string
+		Name     string
 		Password string
 		Email    string
 		Role     runtime.Role
@@ -38,20 +37,10 @@ type (
 	}
 )
 
-// TODO вынести в конфиги
-const (
-	UsernameLen    = 3
-	MinPasswordLen = 6
-)
-
 var (
-	ErrEmailNotCorrect   = errors.New("email is not correct")
-	ErrItIsAdmin         = errors.New("it is admin")
-	ErrEmailBusy         = errors.New("this email is busy")
-	ErrUsernameLen       = fmt.Errorf("username must be more %d characters", UsernameLen)
-	ErrUsernameBusy      = errors.New("this username is busy")
-	ErrPasswordLen       = fmt.Errorf("password must be more %d characters", MinPasswordLen)
-	ErrPasswordDifficult = errors.New("password must be more difficult")
+	ErrEmailNotCorrect = errors.New("email is not correct")
+	ErrItIsAdmin       = errors.New("it is admin")
+	ErrEmailBusy       = errors.New("this email is busy")
 )
 
 func (s *Session) MarshalBinary() ([]byte, error) {
