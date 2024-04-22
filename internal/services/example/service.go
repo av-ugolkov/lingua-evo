@@ -26,6 +26,10 @@ func NewService(repo repoExample) *Service {
 }
 
 func (s *Service) AddExamples(ctx context.Context, examples []Example, langCode string) ([]uuid.UUID, error) {
+	if len(examples) == 0 {
+		return nil, fmt.Errorf("example.Service.AddExamples - empty examples list")
+	}
+
 	ids := make([]uuid.UUID, 0, len(examples))
 	texts := make([]string, 0, len(examples))
 	for i := 0; i < len(examples); i++ {

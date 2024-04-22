@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -23,25 +24,25 @@ func NewRepo(db *sql.DB) *DictionaryRepo {
 }
 
 func (r *DictionaryRepo) AddWords(ctx context.Context, words []entity.DictWord) ([]uuid.UUID, error) {
-	if len(words) == 0 {
-		return nil, fmt.Errorf("dictionary.repository.DictionaryRepo.AddWord - empty words")
-	}
-
 	wordTexts := make([]string, 0, len(words))
-	var insValues strings.Builder
-	for i := 0; i < len(words); i++ {
-		wordTexts = append(wordTexts, words[i].Text)
-		insValues.WriteString(fmt.Sprintf("('%v','%s','%s','%s','%q','%q')",
-			words[i].ID,
-			words[i].Text,
-			words[i].Pronunciation,
-			words[i].LangCode,
-			time.Now().UTC().Format(time.RFC3339),
-			time.Now().UTC().Format(time.RFC3339),
-		))
-		if i < len(words)-1 {
-			insValues.WriteString(",")
-		}
+	statements := make([]string, 0, len(words))
+	params := make([]any, 0, len(words)+1)
+	params = append(params, &wordTexts)
+	counter := len(params)
+	for _, word := range words {
+		wordTexts = append(wordTexts, word.Text)
+		statement := "$" + strconv.Itoa(counter+1) +
+			",$" + strconv.Itoa(counter+2) +
+			",$" + strconv.Itoa(counter+3) +
+			",$" + strconv.Itoa(counter+4) +
+			",$" + strconv.Itoa(counter+5) +
+			",$" + strconv.Itoa(counter+6)
+
+		counter += 6
+		statements = append(statements, "("+statement+")")
+
+		params = append(params, word.ID, word.Text, word.Pronunciation, word.LangCode,
+			time.Now().UTC().Format(time.RFC3339), time.Now().UTC().Format(time.RFC3339))
 	}
 
 	table := getTable(words[0].LangCode)
@@ -56,8 +57,8 @@ func (r *DictionaryRepo) AddWords(ctx context.Context, words []entity.DictWord) 
 		FROM ins 
 		UNION ALL 
 		SELECT id 
-		FROM d;`, table, insValues.String())
-	rows, err := r.db.QueryContext(ctx, query, wordTexts)
+		FROM d;`, table, strings.Join(statements, ", "))
+	rows, err := r.db.QueryContext(ctx, query, params...)
 	if err != nil {
 		return nil, fmt.Errorf("dictionary.repository.DictionaryRepo.AddWord - query: %w", err)
 	}
@@ -91,7 +92,9 @@ func (r *DictionaryRepo) GetWords(ctx context.Context, ids []uuid.UUID) ([]entit
 	if err != nil {
 		return nil, fmt.Errorf("dictionary.repository.DictionaryRepo.GetWords - query: %w", err)
 	}
-	defer rows.Close()
+	defer func() {
+		_ = rows.Close()
+	}()
 
 	words := make([]entity.DictWord, 0, len(ids))
 	for rows.Next() {
@@ -128,7 +131,9 @@ func (r *DictionaryRepo) FindWords(ctx context.Context, w *entity.DictWord) ([]u
 	if err != nil {
 		return nil, fmt.Errorf("dictionary.repository.DictionaryRepo.FindWords - query: %w", err)
 	}
-	defer rows.Close()
+	defer func() {
+		_ = rows.Close()
+	}()
 
 	for rows.Next() {
 		var id uuid.UUID

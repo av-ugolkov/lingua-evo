@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS
     );
 
 CREATE TABLE IF NOT EXISTS
-    "example" ("id" UUID PRIMARY KEY, "text" TEXT, "created_at" TIMESTAMP NOT NULL);
+    "example" ("id" UUID PRIMARY KEY, "text" TEXT NOT NULL, "created_at" TIMESTAMP NOT NULL);
 
 CREATE TABLE IF NOT EXISTS
     "vocabulary" (

@@ -48,30 +48,34 @@ func NewService(repo repoDictionary, langSvc langSvc) *Service {
 }
 
 func (s *Service) AddWords(ctx context.Context, words []DictWord) ([]uuid.UUID, error) {
+	if len(words) == 0 {
+		return nil, fmt.Errorf("dictionary.Service.AddWords - empty word list")
+	}
+
 	languages, err := s.langSvc.GetAvailableLanguages(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("dictionary.Service.AddWord - get languages: %v", err)
+		return nil, fmt.Errorf("dictionary.Service.AddWords - get languages: %v", err)
 	}
 	for i := 0; i < len(words); {
 		word := words[i]
 		if !slices.ContainsFunc(languages, func(language *entityLanguage.Language) bool {
 			return word.LangCode == language.Code
 		}) {
-			slog.Warn(fmt.Sprintf("dictionary.Service.AddWord - check language: %v", err))
+			slog.Warn(fmt.Sprintf("dictionary.Service.AddWords - check language: %v", err))
 			words = slices.Delete(words, i, i+1)
 			continue
 		}
 
 		word.Text = strings.TrimSpace(word.Text)
 		if word.Text == runtime.EmptyString {
-			slog.Warn("dictionary.Service.AddWord - empty text")
+			slog.Warn("dictionary.Service.AddWords - empty text")
 			words = slices.Delete(words, i, i+1)
 		}
 		i++
 	}
 	wordIDs, err := s.repo.AddWords(ctx, words)
 	if err != nil {
-		return nil, fmt.Errorf("dictionary.Service.AddWord: %v", err)
+		return nil, fmt.Errorf("dictionary.Service.AddWords: %v", err)
 	}
 
 	return wordIDs, nil
