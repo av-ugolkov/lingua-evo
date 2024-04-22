@@ -1,24 +1,27 @@
 package delivery
 
 const (
-	SignIn   = "/auth/sign_in"  //post
-	Refresh  = "/auth/refresh"  //get
-	SignOut  = "/auth/sign_out" //get
-	SendCode = "/auth/send_code"
+	CurrentLanguage    = "/current_language" //get
+	AvailableLanguages = "/languages"        //get
 
-	SignUp   = "/account/sign_up" //post
-	UserByID = "/account/id"      //get
+	SignIn   = "/auth/sign_in"   //post
+	Refresh  = "/auth/refresh"   //get
+	SignOut  = "/auth/sign_out"  //get
+	SendCode = "/auth/send_code" //post
+
+	SignUp   = "/user/sign_up" //post
+	UserByID = "/user/id"      //get
 
 	DictionaryWord = "/dictionary/word"        //get post
 	GetRandomWord  = "/dictionary/word/random" //get
 
-	Vocabulary   = "/vocabulary"   //get post, put, delete
-	Vocabularies = "/vocabularies" //get
+	Vocabulary   = "/account/vocabulary"   //get post, put, delete
+	Vocabularies = "/account/vocabularies" //get
 
-	VocabularyWord         = "/word/vocabulary"         //get post delete
-	VocabularyWordUpdate   = "/word/vocabulary/update"  //post
-	VocabularySeveralWords = "/word/vocabulary/several" //get
-	VocabularyWords        = "/word/vocabulary/all"     //get
+	VocabularyWord         = "/vocabulary/word"         //get post delete
+	VocabularyWordUpdate   = "/vocabulary/word/update"  //post
+	VocabularySeveralWords = "/vocabulary/word/several" //get
+	VocabularyWords        = "/vocabulary/word/all"     //get
 
-	VocabularyTags = "/tag/vocabulary"
+	VocabularyTags = "/vocabulary/tag" //get
 )

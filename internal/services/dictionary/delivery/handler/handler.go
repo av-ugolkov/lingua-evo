@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"fmt"
+	"github.com/av-ugolkov/lingua-evo/runtime"
 	"log/slog"
 	"net/http"
 
@@ -100,6 +101,11 @@ func (h *Handler) getWord(w http.ResponseWriter, r *http.Request) {
 	langCode, err := ex.QueryParamString("lang_code")
 	if err != nil {
 		ex.SendError(http.StatusBadRequest, fmt.Errorf("dictionary.delivery.Handler.getWord - check body: %v", err))
+		return
+	}
+
+	if langCode == runtime.EmptyString {
+		ex.SendError(http.StatusBadRequest, fmt.Errorf("dictionary.delivery.Handler.getWord - empty lang code"))
 		return
 	}
 
