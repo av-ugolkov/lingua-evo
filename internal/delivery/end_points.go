@@ -5,9 +5,9 @@ const (
 	Refresh  = "/auth/refresh"  //get
 	SignOut  = "/auth/sign_out" //get
 	SendCode = "/auth/send_code"
-	SignUp   = "/auth/sign_up" //post
 
-	UserByID = "/account/id" //get
+	SignUp   = "/account/sign_up" //post
+	UserByID = "/account/id"      //get
 
 	DictionaryWord = "/dictionary/word"        //get post
 	GetRandomWord  = "/dictionary/word/random" //get
