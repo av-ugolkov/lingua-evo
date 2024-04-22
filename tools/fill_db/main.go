@@ -6,25 +6,26 @@ import (
 	"embed"
 	"encoding/json"
 	"fmt"
+	"github.com/av-ugolkov/lingua-evo/internal/db/transactor"
+	"github.com/google/uuid"
 	"io"
 	"log/slog"
 
 	pg "github.com/av-ugolkov/lingua-evo/internal/db/postgres"
-	// "github.com/av-ugolkov/lingua-evo/internal/services/dictionary"
-	// dictRepo "github.com/av-ugolkov/lingua-evo/internal/services/dictionary/delivery/repository"
-	// "github.com/av-ugolkov/lingua-evo/internal/services/example"
-	// repoExample "github.com/av-ugolkov/lingua-evo/internal/services/example/delivery/repository"
-	// "github.com/av-ugolkov/lingua-evo/internal/services/language"
-	// repoLang "github.com/av-ugolkov/lingua-evo/internal/services/language/delivery/repository"
-	// "github.com/av-ugolkov/lingua-evo/internal/services/tag"
-	// repoTag "github.com/av-ugolkov/lingua-evo/internal/services/tag/delivery/repository"
+	"github.com/av-ugolkov/lingua-evo/internal/services/dictionary"
+	dictRepo "github.com/av-ugolkov/lingua-evo/internal/services/dictionary/delivery/repository"
+	"github.com/av-ugolkov/lingua-evo/internal/services/example"
+	repoExample "github.com/av-ugolkov/lingua-evo/internal/services/example/delivery/repository"
+	"github.com/av-ugolkov/lingua-evo/internal/services/language"
+	repoLang "github.com/av-ugolkov/lingua-evo/internal/services/language/delivery/repository"
+	"github.com/av-ugolkov/lingua-evo/internal/services/tag"
+	repoTag "github.com/av-ugolkov/lingua-evo/internal/services/tag/delivery/repository"
 	"github.com/av-ugolkov/lingua-evo/internal/services/user"
 	repoUser "github.com/av-ugolkov/lingua-evo/internal/services/user/delivery/repository"
-	// "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary"
-	// repoVocabulary "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary/delivery/repository"
-	// "github.com/av-ugolkov/lingua-evo/internal/services/word"
-	// repoWord "github.com/av-ugolkov/lingua-evo/internal/services/word/delivery/repository"
-	// "github.com/google/uuid"
+	"github.com/av-ugolkov/lingua-evo/internal/services/vocabulary"
+	repoVocabulary "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary/delivery/repository"
+	"github.com/av-ugolkov/lingua-evo/internal/services/word"
+	repoWord "github.com/av-ugolkov/lingua-evo/internal/services/word/delivery/repository"
 )
 
 //go:embed words_en.json
@@ -72,44 +73,70 @@ func fillWord(db *sql.DB) error {
 	}
 
 	userSvc := user.NewService(repoUser.NewRepo(db), nil)
-	user, err := userSvc.GetUser(context.Background(), "makedonskiy")
+	userData, err := userSvc.GetUser(context.Background(), "makedonskiy")
 	if err != nil {
 		return fmt.Errorf("fildDB.fillWord - GetUser: %w", err)
 	}
 
-	fmt.Println(user)
+	fmt.Println(userData)
+	tr := transactor.NewTransactor(db)
 
-	// langSvc := language.NewService(repoLang.NewRepo(db))
-	// wordSvc := word.NewService(repoWord.NewRepo(db))
-	// exampleSvc := example.NewService(repoExample.NewRepo(db))
-	// tagSvc := tag.NewService(repoTag.NewRepo(db))
-	// repoVocab := repoVocabulary.NewRepo(db)
-	// dictSvc := dictionary.NewService(dictRepo.NewRepo(db), repoVocab, langSvc)
-	// vocabSvc := vocabulary.NewService(repoVocab, dictSvc, wordSvc, exampleSvc, tagSvc)
+	langSvc := language.NewService(repoLang.NewRepo(db))
+	exampleSvc := example.NewService(repoExample.NewRepo(db))
+	tagSvc := tag.NewService(repoTag.NewRepo(db))
+	repoVocab := repoVocabulary.NewRepo(db)
+	dictSvc := dictionary.NewService(dictRepo.NewRepo(db), langSvc)
+	vocabSvc := vocabulary.NewService(tr, repoVocab, langSvc, tagSvc)
+	wordSvc := word.NewService(tr, repoWord.NewRepo(db), vocabSvc, dictSvc, exampleSvc)
 
-	// dict, err := dictSvc.AddDictionary(context.Background(), user.ID, uuid.New(), "default", "en", "ru")
-	// if err != nil {
-	// 	return fmt.Errorf("fildDB.fillWord - AddDictionary: %w", err)
-	// }
+	vocab, err := vocabSvc.AddVocabulary(context.Background(), vocabulary.Vocabulary{
+		ID:            uuid.New(),
+		UserID:        userData.ID,
+		Name:          "default",
+		NativeLang:    "en",
+		TranslateLang: "ru",
+	})
+	if err != nil {
+		return fmt.Errorf("fildDB.fillWord - AddDictionary: %w", err)
+	}
 
-	// const (
-	// 	nativeTable    = "en"
-	// 	translateTable = "ru"
-	// )
+	for _, d := range data.Dictionary {
+		translates := make([]dictionary.DictWord, 0, len(d.Translates))
+		for _, text := range d.Translates {
+			translates = append(translates, dictionary.DictWord{
+				ID:            uuid.New(),
+				Text:          text,
+				Pronunciation: "",
+				LangCode:      vocab.TranslateLang,
+			})
+		}
 
-	// for _, d := range data.Dictionary {
-	// 	translateWords := make([]vocabulary.Word, 0, len(d.Translates))
-	// 	for _, word := range d.Translates {
-	// 		translateWords = append(translateWords, vocabulary.Word{Text: word, Pronunciation: "", LangCode: translateTable})
-	// 	}
-	// 	vocabulary, err := vocabSvc.AddWord(context.Background(), dict.ID, vocabulary.Word{Text: d.Word, Pronunciation: d.Pronunciation, LangCode: nativeTable},
-	// 		translateWords, d.Examples, nil)
-	// 	if err != nil {
-	// 		slog.Error(fmt.Errorf("fail insert word [%s]: %v", d.Word, err).Error())
-	// 		continue
-	// 	}
+		examples := make([]example.Example, 0, len(d.Examples))
+		for _, text := range d.Examples {
+			examples = append(examples, example.Example{
+				ID:   uuid.New(),
+				Text: text,
+			})
+		}
 
-	// 	slog.Info(fmt.Sprintf("inserted word [%s]", vocabulary.NativeWord))
-	// }
+		vocabWord, err := wordSvc.AddWord(context.Background(), word.VocabWordData{
+			ID:      uuid.New(),
+			VocabID: vocab.ID,
+			Native: dictionary.DictWord{
+				ID:            uuid.New(),
+				Text:          d.Word,
+				Pronunciation: d.Pronunciation,
+				LangCode:      vocab.NativeLang,
+			},
+			Translates: translates,
+			Examples:   examples,
+		})
+		if err != nil {
+			slog.Error(fmt.Errorf("fail insert word [%s]: %v", d.Word, err).Error())
+			continue
+		}
+
+		slog.Info(fmt.Sprintf("inserted word [%s]", vocabWord.ID))
+	}
 	return nil
 }
