@@ -2,7 +2,7 @@
 	"dictionary": [
 		{
 			"word": "get by",
-			"pronunciation": "['get'baɪ]",
+			"pronunciation": "['get] ['baɪ]",
 			"translate": [
 				"получить"
 			],
@@ -12,7 +12,7 @@
 		},
 		{
 			"word": "get away",
-			"pronunciation": "['getə'weɪ]",
+			"pronunciation": "['get] [ə'weɪ]",
 			"translate": [
 				"уходить"
 			],
@@ -32,7 +32,7 @@
 		},
 		{
 			"word": "get together",
-			"pronunciation": "['gettə'geðə]",
+			"pronunciation": "['get] [tə'geðə]",
 			"translate": [
 				"собираться"
 			],
@@ -42,7 +42,7 @@
 		},
 		{
 			"word": "get away with it",
-			"pronunciation": "['getə'weɪ] [wɪð] [ɪt]",
+			"pronunciation": "['get] [ə'weɪ] [wɪð] [ɪt]",
 			"translate": [
 				"сходить с рук"
 			],
@@ -52,7 +52,7 @@
 		},
 		{
 			"word": "get up to",
-			"pronunciation": "['get'ʌp] [tu:]",
+			"pronunciation": "['get] ['ʌp] [tu:]",
 			"translate": [
 				"вставать",
 				"заниматься"
@@ -63,7 +63,7 @@
 		},
 		{
 			"word": "get up",
-			"pronunciation": "['get'ʌp]",
+			"pronunciation": "['get] ['ʌp]",
 			"translate": [
 				"вставать"
 			],
@@ -94,7 +94,7 @@
 		},
 		{
 			"word": "get over",
-			"pronunciation": "['get'əuvə]",
+			"pronunciation": "['get] ['əuvə]",
 			"translate": [
 				"забыть",
 				"пережить"
@@ -105,7 +105,7 @@
 		},
 		{
 			"word": "get through to",
-			"pronunciation": "['get'θru:] [tu:]",
+			"pronunciation": "['get] ['θru:] [tu:]",
 			"translate": [
 				"пройти к",
 				"дозвониться"
@@ -116,7 +116,7 @@
 		},
 		{
 			"word": "get off",
-			"pronunciation": "['get'ɔf]",
+			"pronunciation": "['get] ['ɔf]",
 			"translate": [
 				"отправиться",
 				"отделаться"
@@ -137,7 +137,7 @@
 		},
 		{
 			"word": "get out of",
-			"pronunciation": "['get'aut] [ɔv]",
+			"pronunciation": "['get] ['aut] [ɔv]",
 			"translate": [
 				"убираться из",
 				"избежать"
@@ -148,7 +148,7 @@
 		},
 		{
 			"word": "get down",
-			"pronunciation": "['get'daun]",
+			"pronunciation": "['get] ['daun]",
 			"translate": [
 				"спускаться"
 			],
@@ -158,7 +158,7 @@
 		},
 		{
 			"word": "get on with",
-			"pronunciation": "['get'ɔn] [wɪð]",
+			"pronunciation": "['get] ['ɔn] [wɪð]",
 			"translate": [
 				"ужиться",
 				"ладить"
@@ -213,7 +213,7 @@
 		},
 		{
 			"word": "flake out",
-			"pronunciation": "['fleɪk'aut]",
+			"pronunciation": "['fleɪk] ['aut]",
 			"translate": [
 				"улизнуть",
 				"смыться"
@@ -221,7 +221,7 @@
 		},
 		{
 			"word": "figure out",
-			"pronunciation": "['fɪgə(r)'aut]",
+			"pronunciation": "['fɪgə(r)] ['aut]",
 			"translate": [
 				"понимать",
 				"вычислять"
@@ -229,7 +229,7 @@
 		},
 		{
 			"word": "turn down",
-			"pronunciation": "['tɜ:n'daun]",
+			"pronunciation": "['tɜ:n] ['daun]",
 			"translate": [
 				"отказываться",
 				"отклонять"
@@ -237,7 +237,7 @@
 		},
 		{
 			"word": "put off",
-			"pronunciation": "['put'ɔf]",
+			"pronunciation": "['put] ['ɔf]",
 			"translate": [
 				"откладывать"
 			]
@@ -251,7 +251,7 @@
 		},
 		{
 			"word": "mess up",
-			"pronunciation": "['mes'ʌp]",
+			"pronunciation": "['mes] ['ʌp]",
 			"translate": [
 				"испортить",
 				"портачить"
@@ -259,21 +259,21 @@
 		},
 		{
 			"word": "miss out",
-			"pronunciation": "['mɪs'aut]",
+			"pronunciation": "['mɪs] ['aut]",
 			"translate": [
 				"пропустить"
 			]
 		},
 		{
 			"word": "knuckle down",
-			"pronunciation": "['nʌk(ə)l'daun]",
+			"pronunciation": "['nʌk(ə)l] ['daun]",
 			"translate": [
 				"решительно взяться"
 			]
 		},
 		{
 			"word": "fucked out",
-			"pronunciation": "['fʌkt'aut]",
+			"pronunciation": "['fʌkt] ['aut]",
 			"translate": [
 				"разбитый",
 				"уставший"
@@ -747,7 +747,7 @@
 		},
 		{
 			"word": "to converse",
-			"pronunciation": "[kən'vɜ:s]",
+			"pronunciation": "[tu:] [kən'vɜ:s]",
 			"translate": [
 				"общаться (с кем-либо)",
 				"беседовать (с кем-либо)"
@@ -755,7 +755,7 @@
 		},
 		{
 			"word": "to raise",
-			"pronunciation": "[reɪz]",
+			"pronunciation": "[tu:] [reɪz]",
 			"translate": [
 				"поднимать",
 				"повышать"
@@ -818,7 +818,7 @@
 		},
 		{
 			"word": "turn out",
-			"pronunciation": "['tɜ:n'aut]",
+			"pronunciation": "['tɜ:n] ['aut]",
 			"translate": [
 				"выворачивать",
 				"выяснять",
@@ -978,7 +978,7 @@
 		},
 		{
 			"word": "grew out",
-			"pronunciation": "[ɡrɛw] [aʊt]",
+			"pronunciation": "[ɡrɛw] [aut]",
 			"translate": [
 				"отрастить",
 				"распространяться",
@@ -1851,7 +1851,7 @@
 		},
 		{
 			"word": "shoot out",
-			"pronunciation": "['ʃu:t'aut]",
+			"pronunciation": "['ʃu:t] ['aut]",
 			"translate": [
 				"распускаться",
 				"извергать",
@@ -2314,7 +2314,7 @@
 		},
 		{
 			"word": "all in all",
-			"pronunciation": "[ˌɔ:lɪn'ɔ:l]",
+			"pronunciation": "[ˌɔ:l] [ɪn] ['ɔ:l]",
 			"translate": [
 				"в общем",
 				"итого",
