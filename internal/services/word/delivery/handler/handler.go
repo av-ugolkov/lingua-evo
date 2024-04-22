@@ -26,8 +26,9 @@ const (
 
 type (
 	VocabWord struct {
-		Text          string `json:"text"`
-		Pronunciation string `json:"pronunciation,omitempty"`
+		ID            uuid.UUID `json:"id"`
+		Text          string    `json:"text"`
+		Pronunciation string    `json:"pronunciation,omitempty"`
 	}
 
 	VocabWordRq struct {
@@ -44,7 +45,7 @@ type (
 	}
 
 	VocabWordRs struct {
-		WordID         uuid.UUID  `json:"word_id"`
+		ID             uuid.UUID  `json:"id"`
 		NativeWord     *VocabWord `json:"native,omitempty"`
 		TranslateWords []string   `json:"translate_words,omitempty"`
 		Examples       []string   `json:"examples,omitempty"`
@@ -122,7 +123,7 @@ func (h *Handler) addWord(ctx context.Context, ex *exchange.Exchanger) {
 	}
 
 	wordRs := VocabWordRs{
-		WordID: vocabWord.ID,
+		ID: vocabWord.ID,
 	}
 
 	ex.SetContentType(exchange.ContentTypeJSON)
@@ -167,7 +168,7 @@ func (h *Handler) updateWord(ctx context.Context, ex *exchange.Exchanger) {
 	}
 
 	wordRs := &VocabWordRs{
-		WordID: vocabWord.ID,
+		ID: vocabWord.ID,
 	}
 
 	ex.SetContentType(exchange.ContentTypeJSON)
@@ -266,8 +267,9 @@ func (h *Handler) getWord(ctx context.Context, ex *exchange.Exchanger) {
 	}
 
 	wordRs := VocabWordRs{
-		WordID: vocabWord.ID,
+		ID: vocabWord.ID,
 		NativeWord: &VocabWord{
+			ID:            vocabWord.Native.ID,
 			Text:          vocabWord.Native.Text,
 			Pronunciation: vocabWord.Native.Pronunciation,
 		},
@@ -305,8 +307,9 @@ func (h *Handler) getWords(ctx context.Context, ex *exchange.Exchanger) {
 		}
 
 		wordRs := VocabWordRs{
-			WordID: vocabWord.ID,
+			ID: vocabWord.ID,
 			NativeWord: &VocabWord{
+				ID:            vocabWord.Native.ID,
 				Text:          vocabWord.Native.Text,
 				Pronunciation: vocabWord.Native.Pronunciation,
 			},

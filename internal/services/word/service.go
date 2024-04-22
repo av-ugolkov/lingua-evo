@@ -81,6 +81,7 @@ func (s *Service) AddWord(ctx context.Context, vocabWord VocabWordData) (VocabWo
 				Text:          vocabWord.Native.Text,
 				Pronunciation: vocabWord.Native.Pronunciation,
 				LangCode:      vocab.NativeLang,
+				Creator:       vocab.UserID,
 			},
 		})
 		if err != nil {
@@ -94,6 +95,7 @@ func (s *Service) AddWord(ctx context.Context, vocabWord VocabWordData) (VocabWo
 				ID:       translate.ID,
 				Text:     translate.Text,
 				LangCode: vocab.TranslateLang,
+				Creator:  vocab.UserID,
 			})
 		}
 		translateWordIDs, err := s.dictSvc.AddWords(ctx, translateWords)
@@ -146,6 +148,7 @@ func (s *Service) UpdateWord(ctx context.Context, vocabWordData VocabWordData) (
 		Text:          vocabWordData.Native.Text,
 		Pronunciation: vocabWordData.Native.Pronunciation,
 		LangCode:      vocab.NativeLang,
+		Creator:       vocab.UserID,
 	})
 	if err != nil {
 		return VocabWord{}, fmt.Errorf("word.Service.UpdateWord - add native word in dictionary: %w", err)
@@ -158,6 +161,7 @@ func (s *Service) UpdateWord(ctx context.Context, vocabWordData VocabWordData) (
 			Text:          translate.Text,
 			Pronunciation: translate.Pronunciation,
 			LangCode:      vocab.TranslateLang,
+			Creator:       vocab.UserID,
 		})
 		if err != nil {
 			return VocabWord{}, fmt.Errorf("word.Service.UpdateWord - add translate word in dictionary: %w", err)
@@ -203,7 +207,7 @@ func (s *Service) UpdateWord(ctx context.Context, vocabWordData VocabWordData) (
 
 func (s *Service) DeleteWord(ctx context.Context, vocabID, nativeWordID uuid.UUID) error {
 	vocabWord := VocabWord{
-		ID:       vocabID,
+		VocabID:  vocabID,
 		NativeID: nativeWordID,
 	}
 
@@ -391,6 +395,7 @@ func (s *Service) workerForGetWord(
 
 		result <- ResultJob{
 			value: VocabWordData{
+				ID:         vocabWord.ID,
 				Native:     words[0],
 				Translates: translates,
 				Examples:   examples,

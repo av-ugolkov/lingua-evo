@@ -134,17 +134,19 @@ func (r *WordRepo) GetRandomVocabulary(ctx context.Context, vocabID uuid.UUID, l
 }
 
 func (r *WordRepo) GetVocabulary(ctx context.Context, vocabID uuid.UUID) ([]entity.VocabWord, error) {
-	query := `SELECT native_id, translate_ids, example_ids FROM word WHERE vocabulary_id=$1;`
+	query := `SELECT id, native_id, translate_ids, example_ids FROM word WHERE vocabulary_id=$1;`
 	rows, err := r.db.QueryContext(ctx, query, vocabID)
 	if err != nil {
 		return nil, fmt.Errorf("word.repository.WordRepo.GetVocabulary: %w", err)
 	}
-	defer rows.Close()
+	defer func() {
+		_ = rows.Close()
+	}()
 
 	vocabularies := make([]entity.VocabWord, 0, 25)
 	for rows.Next() {
 		var vocabulary entity.VocabWord
-		err = rows.Scan(&vocabulary.NativeID, pq.Array(&vocabulary.TranslateIDs), pq.Array(&vocabulary.ExampleIDs))
+		err = rows.Scan(&vocabulary.ID, &vocabulary.NativeID, pq.Array(&vocabulary.TranslateIDs), pq.Array(&vocabulary.ExampleIDs))
 		if err != nil {
 			return nil, fmt.Errorf("word.repository.WordRepo.GetVocabulary - scan: %w", err)
 		}

@@ -2,6 +2,7 @@ package handler
 
 import (
 	"fmt"
+	"github.com/av-ugolkov/lingua-evo/internal/delivery"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -10,14 +11,9 @@ import (
 	"github.com/av-ugolkov/lingua-evo/internal/services/language"
 )
 
-const (
-	getCurrentLanguage    = "/current_languages"
-	getAvailableLanguages = "/languages"
-)
-
 type (
 	LanguageRs struct {
-		Language string `json:"language"`
+		Language string `json:"language,omitempty"`
 		Code     string `json:"code"`
 	}
 
@@ -38,8 +34,8 @@ func newHandler(langSvc *language.Service) *Handler {
 }
 
 func (h *Handler) register(r *mux.Router) {
-	r.HandleFunc(getCurrentLanguage, h.getCurrentLanguage).Methods(http.MethodGet)
-	r.HandleFunc(getAvailableLanguages, h.getAvailableLanguages).Methods(http.MethodGet)
+	r.HandleFunc(delivery.CurrentLanguage, h.getCurrentLanguage).Methods(http.MethodGet)
+	r.HandleFunc(delivery.AvailableLanguages, h.getAvailableLanguages).Methods(http.MethodGet)
 }
 
 func (h *Handler) getCurrentLanguage(w http.ResponseWriter, r *http.Request) {
