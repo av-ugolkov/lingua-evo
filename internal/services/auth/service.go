@@ -27,11 +27,9 @@ type (
 		GetCountSession(ctx context.Context, userID uuid.UUID) (int64, error)
 		DeleteSession(ctx context.Context, session uuid.UUID) error
 		SetAccountCode(ctx context.Context, email string, code int, expiration time.Duration) error
-		GetAccountCode(ctx context.Context, email string) (int, error)
 	}
 
 	userSvc interface {
-		AddUser(ctx context.Context, user *entityUser.User) (uuid.UUID, error)
 		GetUser(ctx context.Context, login string) (*entityUser.User, error)
 		GetUserByID(ctx context.Context, uid uuid.UUID) (*entityUser.User, error)
 		GetUserByEmail(ctx context.Context, email string) (*entityUser.User, error)
@@ -49,51 +47,6 @@ func NewService(repo sessionRepo, userSvc userSvc) *Service {
 		repo:    repo,
 		userSvc: userSvc,
 	}
-}
-
-func (s *Service) SignUp(ctx context.Context, userData User) (uuid.UUID, error) {
-	if err := s.validateEmail(ctx, userData.Email); err != nil {
-		return uuid.Nil, fmt.Errorf("auth.Service.SignUp - validateEmail: %v", err)
-	}
-
-	code, err := s.repo.GetAccountCode(ctx, userData.Email)
-	if err != nil {
-		return uuid.Nil, fmt.Errorf("auth.Service.SignUp - GetAccountCode: %v", err)
-	}
-
-	if code != userData.Code {
-		return uuid.Nil, fmt.Errorf("auth.Service.SignUp: code mismatch")
-	}
-
-	if err := s.validateUsername(ctx, userData.Username); err != nil {
-		return uuid.Nil, fmt.Errorf("auth.Service.SignUp - validateUsername: %v", err)
-	}
-
-	if err := validatePassword(userData.Password); err != nil {
-		return uuid.Nil, fmt.Errorf("auth.Service.SignUp - validatePassword: %v", err)
-	}
-
-	hashPassword, err := utils.HashPassword(userData.Password)
-	if err != nil {
-		return uuid.Nil, fmt.Errorf("auth.Service.SignUp - hashPassword: %v", err)
-	}
-
-	user := &entityUser.User{
-		ID:           userData.ID,
-		Name:         userData.Username,
-		PasswordHash: hashPassword,
-		Email:        userData.Email,
-		Role:         userData.Role,
-		CreatedAt:    time.Now().UTC(),
-		LastVisitAt:  time.Now().UTC(),
-	}
-
-	uid, err := s.userSvc.AddUser(ctx, user)
-	if err != nil {
-		return uuid.Nil, fmt.Errorf("auth.Service.SignUp: %w", err)
-	}
-
-	return uid, nil
 }
 
 func (s *Service) SignIn(ctx context.Context, user, password, fingerprint string, refreshTokenID uuid.UUID) (*Tokens, error) {
@@ -267,37 +220,6 @@ func (s *Service) validateEmail(ctx context.Context, email string) error {
 		return ErrItIsAdmin
 	} else if userData.ID != uuid.Nil {
 		return ErrEmailBusy
-	}
-
-	return nil
-}
-
-func (s *Service) validateUsername(ctx context.Context, username string) error {
-	if len(username) <= UsernameLen {
-		return ErrUsernameLen
-	}
-
-	userData, err := s.userSvc.GetUserByName(ctx, username)
-	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		return err
-	} else if errors.Is(err, sql.ErrNoRows) {
-		return nil
-	} else if userData.ID == uuid.Nil && err == nil {
-		return ErrItIsAdmin
-	} else if userData.ID != uuid.Nil {
-		return ErrUsernameBusy
-	}
-
-	return nil
-}
-
-func validatePassword(password string) error {
-	if len(password) < MinPasswordLen {
-		return ErrPasswordLen
-	}
-
-	if !utils.IsPasswordValid(password) {
-		return ErrPasswordDifficult
 	}
 
 	return nil
