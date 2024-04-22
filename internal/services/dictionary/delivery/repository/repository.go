@@ -36,12 +36,13 @@ func (r *DictionaryRepo) AddWords(ctx context.Context, words []entity.DictWord) 
 			",$" + strconv.Itoa(counter+3) +
 			",$" + strconv.Itoa(counter+4) +
 			",$" + strconv.Itoa(counter+5) +
-			",$" + strconv.Itoa(counter+6)
+			",$" + strconv.Itoa(counter+6) +
+			",$" + strconv.Itoa(counter+7)
 
-		counter += 6
+		counter += 7
 		statements = append(statements, "("+statement+")")
 
-		params = append(params, word.ID, word.Text, word.Pronunciation, word.LangCode,
+		params = append(params, word.ID, word.Text, word.Pronunciation, word.LangCode, word.Creator,
 			time.Now().UTC().Format(time.RFC3339), time.Now().UTC().Format(time.RFC3339))
 	}
 
@@ -50,7 +51,7 @@ func (r *DictionaryRepo) AddWords(ctx context.Context, words []entity.DictWord) 
 		`WITH d AS (
     		SELECT id FROM %[1]s WHERE text = ANY($1::text[])),
 		ins AS (
-    		INSERT INTO %[1]s (id, text, pronunciation, lang_code, updated_at, created_at)
+    		INSERT INTO %[1]s (id, text, pronunciation, lang_code, creator, updated_at, created_at)
 			VALUES %[2]s
     		ON CONFLICT DO NOTHING RETURNING id)
 		SELECT id 
