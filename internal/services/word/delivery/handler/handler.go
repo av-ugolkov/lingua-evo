@@ -32,11 +32,11 @@ type (
 	}
 
 	VocabWordRq struct {
-		VocabID       uuid.UUID `json:"vocab_id"`
-		WordID        uuid.UUID `json:"word_id,omitempty"`
-		NativeWord    VocabWord `json:"native_word"`
-		TanslateWords []string  `json:"translate_words,omitempty"`
-		Examples      []string  `json:"examples,omitempty"`
+		VocabID    uuid.UUID `json:"vocab_id"`
+		WordID     uuid.UUID `json:"word_id,omitempty"`
+		NativeWord VocabWord `json:"native_word"`
+		Translates []string  `json:"translates,omitempty"`
+		Examples   []string  `json:"examples,omitempty"`
 	}
 
 	RemoveVocabWordRq struct {
@@ -45,10 +45,10 @@ type (
 	}
 
 	VocabWordRs struct {
-		ID             uuid.UUID  `json:"id"`
-		NativeWord     *VocabWord `json:"native,omitempty"`
-		TranslateWords []string   `json:"translate_words,omitempty"`
-		Examples       []string   `json:"examples,omitempty"`
+		ID         uuid.UUID  `json:"id"`
+		NativeWord *VocabWord `json:"native,omitempty"`
+		Translates []string   `json:"translates,omitempty"`
+		Examples   []string   `json:"examples,omitempty"`
 	}
 )
 
@@ -84,8 +84,8 @@ func (h *Handler) addWord(ctx context.Context, ex *exchange.Exchanger) {
 		return
 	}
 
-	translateWords := make([]entityDict.DictWord, 0, len(data.TanslateWords))
-	for _, translateWord := range data.TanslateWords {
+	translateWords := make([]entityDict.DictWord, 0, len(data.Translates))
+	for _, translateWord := range data.Translates {
 		translateWords = append(translateWords, entityDict.DictWord{
 			ID:   uuid.New(),
 			Text: translateWord,
@@ -138,8 +138,8 @@ func (h *Handler) updateWord(ctx context.Context, ex *exchange.Exchanger) {
 		return
 	}
 
-	translates := make([]entityDict.DictWord, 0, len(data.TanslateWords))
-	for _, tr := range data.TanslateWords {
+	translates := make([]entityDict.DictWord, 0, len(data.Translates))
+	for _, tr := range data.Translates {
 		translates = append(translates, entityDict.DictWord{Text: tr})
 	}
 
@@ -226,8 +226,8 @@ func (h *Handler) getSeveralWords(ctx context.Context, ex *exchange.Exchanger) {
 				Text:          vocabWord.Native.Text,
 				Pronunciation: vocabWord.Native.Pronunciation,
 			},
-			TranslateWords: translates,
-			Examples:       examples,
+			Translates: translates,
+			Examples:   examples,
 		}
 
 		wordsRs = append(wordsRs, wordRs)
@@ -273,8 +273,8 @@ func (h *Handler) getWord(ctx context.Context, ex *exchange.Exchanger) {
 			Text:          vocabWord.Native.Text,
 			Pronunciation: vocabWord.Native.Pronunciation,
 		},
-		TranslateWords: translates,
-		Examples:       examples,
+		Translates: translates,
+		Examples:   examples,
 	}
 
 	ex.SetContentType(exchange.ContentTypeJSON)
@@ -313,8 +313,8 @@ func (h *Handler) getWords(ctx context.Context, ex *exchange.Exchanger) {
 				Text:          vocabWord.Native.Text,
 				Pronunciation: vocabWord.Native.Pronunciation,
 			},
-			TranslateWords: translates,
-			Examples:       examples,
+			Translates: translates,
+			Examples:   examples,
 		}
 
 		wordsRs = append(wordsRs, wordRs)
