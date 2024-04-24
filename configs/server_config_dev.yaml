@@ -4,7 +4,7 @@ pprof_debug:
 jwt:
     secret: 5tV3so&v5Qzn
     expire_access: 600 #10 min
-    expire_refresh: 36000 #10 hour
+    expire_refresh: 36000 #10 hours
 service:
     type: tcp
     port: 5000
@@ -13,6 +13,7 @@ service:
         - "http://localhost:5173"
         - "http://localhost:8080"
         - "http://192.168.0.184:8080"
+        - "http://77.222.37.98"
 postgres:
     name: pg-lingua-evo
     user: lingua

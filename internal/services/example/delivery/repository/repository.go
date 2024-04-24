@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"log/slog"
+	"strconv"
 	"strings"
 	"time"
 
@@ -25,17 +25,21 @@ func NewRepo(db *sql.DB) *ExampleRepo {
 }
 
 func (r *ExampleRepo) AddExamples(ctx context.Context, ids []uuid.UUID, texts []string, langCode string) ([]uuid.UUID, error) {
-	if len(texts) == 0 {
-		slog.Warn("example.repository.ExampleRepo.AddExamples - empty texts")
-		return []uuid.UUID{}, nil
-	}
-
-	var insValues strings.Builder
+	wordTexts := make([]string, 0, len(texts))
+	statements := make([]string, 0, len(texts))
+	params := make([]any, 0, len(texts)+1)
+	params = append(params, &wordTexts)
+	counter := len(params)
 	for i := 0; i < len(texts); i++ {
-		insValues.WriteString(fmt.Sprintf("('%s','%s','%q')", ids[i], texts[i], time.Now().UTC().Format(time.RFC3339)))
-		if i < len(texts)-1 {
-			insValues.WriteString(",")
-		}
+		wordTexts = append(wordTexts, texts[i])
+		statement := "$" + strconv.Itoa(counter+1) +
+			",$" + strconv.Itoa(counter+2) +
+			",$" + strconv.Itoa(counter+3)
+
+		counter += 3
+		statements = append(statements, "("+statement+")")
+
+		params = append(params, ids[i], texts[i], time.Now().UTC().Format(time.RFC3339))
 	}
 
 	query := fmt.Sprintf(`
@@ -49,8 +53,8 @@ func (r *ExampleRepo) AddExamples(ctx context.Context, ids []uuid.UUID, texts []
 		FROM ins
 		UNION ALL
 		SELECT id
-		FROM s;`, langCode, insValues.String())
-	rows, err := r.db.QueryContext(ctx, query, texts)
+		FROM s;`, langCode, strings.Join(statements, ", "))
+	rows, err := r.db.QueryContext(ctx, query, params...)
 	if err != nil {
 		return nil, fmt.Errorf("example.repository.ExampleRepo.AddExamples - query: %w", err)
 	}
@@ -103,7 +107,7 @@ func (r *ExampleRepo) GetExamples(ctx context.Context, ids []uuid.UUID) ([]examp
 	examples := make([]example.Example, 0, len(ids))
 	for rows.Next() {
 		var ex example.Example
-		err = rows.Scan(&ex.Id, &ex.Text)
+		err = rows.Scan(&ex.ID, &ex.Text)
 		if err != nil {
 			return nil, fmt.Errorf("example.repository.ExampleRepo.GetExamples - scan: %w", err)
 		}

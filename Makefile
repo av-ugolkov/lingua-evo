@@ -8,7 +8,12 @@ run:
 
 .PHONY: run.docker
 run.docker:
+	docker compose -p lingua-evo -f deploy/docker-compose.yml up --build --force-recreate
+
+.PHONY: run.docker.dev
+run.docker.dev:
 	docker compose -p lingua-evo -f deploy/docker-compose.local.yml up --build --force-recreate
+
 
 .PHONY: run.docker.database
 run.docker.database:

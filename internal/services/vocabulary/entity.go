@@ -2,6 +2,7 @@ package vocabulary
 
 import (
 	"errors"
+	entityTag "github.com/av-ugolkov/lingua-evo/internal/services/tag"
 
 	"github.com/google/uuid"
 )
@@ -11,11 +12,13 @@ var (
 	ErrCountVocabulary    = errors.New("too much dictionaries for user")
 )
 
-type Vocabulary struct {
-	ID            uuid.UUID
-	UserID        uuid.UUID
-	Name          string
-	NativeLang    string
-	TranslateLang string
-	Tags          []string
-}
+type (
+	Vocabulary struct {
+		ID            uuid.UUID
+		UserID        uuid.UUID
+		Name          string
+		NativeLang    string
+		TranslateLang string
+		Tags          []entityTag.Tag
+	}
+)
