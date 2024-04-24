@@ -2,29 +2,35 @@ package dictionary
 
 import (
 	"context"
+	entityLanguage "github.com/av-ugolkov/lingua-evo/internal/services/language"
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/mock"
 	"testing"
 
-	"github.com/av-ugolkov/lingua-evo/internal/services/dictionary/model"
-
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestService_AddWord(t *testing.T) {
 	t.Run("AddWord", func(t *testing.T) {
 		var (
 			ctx  = context.Background()
-			data = model.WordRq{
-				Text:          "word",
-				Pronunciation: "[wɜ:d]",
-				LangCode:      "en",
+			data = []DictWord{
+				{
+					ID:            uuid.New(),
+					Text:          "word",
+					Pronunciation: "[wɜ:d]",
+					LangCode:      "en",
+				},
 			}
 		)
 		repoWordMock := new(mockRepoDictionary)
-		repoWordMock.On("AddWords", ctx, mock.Anything).Return(mock.Anything, nil)
-		s := &Service{repo: repoWordMock}
+		repoWordMock.On("AddWords", ctx, mock.Anything).Return([]uuid.UUID{data[0].ID}, nil)
+		langSvcMock := new(mockLangSvc)
+		langSvcMock.On("GetAvailableLanguages", ctx).Return([]*entityLanguage.Language{{Code: data[0].LangCode}}, nil)
 
-		got, err := s.AddWord(ctx, data)
+		s := &Service{repo: repoWordMock, langSvc: langSvcMock}
+
+		got, err := s.AddWords(ctx, data)
 		assert.NoError(t, err)
 		assert.NotNil(t, got)
 	})

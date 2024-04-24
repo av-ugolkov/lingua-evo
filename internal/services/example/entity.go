@@ -4,7 +4,7 @@ import "github.com/google/uuid"
 
 type (
 	Example struct {
-		Id   uuid.UUID
+		ID   uuid.UUID
 		Text string
 	}
 )

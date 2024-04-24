@@ -9,10 +9,7 @@ service:
     type: tcp
     port: 5000
     allowed_origins:
-        - "http://localhost:4173"
-        - "http://localhost:5173"
-        - "http://localhost:8080"
-        - "http://192.168.0.184:8080"
+        - "http://77.222.37.98"
 postgres:
     name: pg-lingua-evo
     user: lingua
@@ -27,7 +24,7 @@ redis:
     password: itBg40drEvZsw2gbHyp0
     db: 0
 kafka:
-    enable: true
+    enable: false
     host: lingua-kafka
     port: 9091
     topics:

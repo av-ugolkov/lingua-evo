@@ -3,10 +3,8 @@ package vocabulary
 import (
 	"context"
 	"fmt"
-
 	"github.com/av-ugolkov/lingua-evo/internal/db/transactor"
-	"github.com/av-ugolkov/lingua-evo/internal/services/vocabulary/model"
-
+	entityTag "github.com/av-ugolkov/lingua-evo/internal/services/tag"
 	"github.com/google/uuid"
 )
 
@@ -22,7 +20,7 @@ type (
 	}
 
 	tagSvc interface {
-		AddTags(ctx context.Context, tags []string) ([]uuid.UUID, error)
+		AddTags(ctx context.Context, tags []entityTag.Tag) ([]uuid.UUID, error)
 	}
 
 	langSvc interface {
@@ -46,16 +44,7 @@ func NewService(tr *transactor.Transactor, repoVocab repoVocab, langSvc langSvc,
 	}
 }
 
-func (s *Service) AddVocabulary(ctx context.Context, userID uuid.UUID, data model.VocabularyRq) (Vocabulary, error) {
-	vocabulary := Vocabulary{
-		ID:            uuid.New(),
-		UserID:        userID,
-		Name:          data.Name,
-		NativeLang:    data.NativeLang,
-		TranslateLang: data.TranslateLang,
-		Tags:          data.Tags,
-	}
-
+func (s *Service) AddVocabulary(ctx context.Context, vocabulary Vocabulary) (Vocabulary, error) {
 	vocabularies, err := s.repoVocab.GetVocabularies(ctx, vocabulary.UserID)
 	if err != nil {
 		return Vocabulary{}, fmt.Errorf("vocabulary.Service.AddVocabulary - get count vocabularies: %w", err)
@@ -72,7 +61,7 @@ func (s *Service) AddVocabulary(ctx context.Context, userID uuid.UUID, data mode
 	}
 
 	err = s.tr.CreateTransaction(ctx, func(ctx context.Context) error {
-		tagIDs, err := s.tagSvc.AddTags(ctx, data.Tags)
+		tagIDs, err := s.tagSvc.AddTags(ctx, vocabulary.Tags)
 		if err != nil {
 			return fmt.Errorf("add tags: %w", err)
 		}
@@ -120,9 +109,12 @@ func (s *Service) GetVocabulary(ctx context.Context, userID uuid.UUID, name stri
 		return Vocabulary{}, fmt.Errorf("vocabulary.Service.GetVocabulary: %w", err)
 	}
 
-	vocab.Tags, err = s.repoVocab.GetTagsVocabulary(ctx, vocab.ID)
+	tags, err := s.repoVocab.GetTagsVocabulary(ctx, vocab.ID)
 	if err != nil {
 		return Vocabulary{}, fmt.Errorf("vocabulary.Service.GetVocabulary: %w", err)
+	}
+	for _, tag := range tags {
+		vocab.Tags = append(vocab.Tags, entityTag.Tag{Text: tag})
 	}
 	return vocab, nil
 }

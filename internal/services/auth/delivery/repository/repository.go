@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strconv"
 	"time"
 
 	authEntity "github.com/av-ugolkov/lingua-evo/internal/services/auth"
@@ -91,18 +90,4 @@ func (r *SessionRepo) SetAccountCode(ctx context.Context, email string, code int
 
 	fmt.Println(value)
 	return nil
-}
-
-func (r *SessionRepo) GetAccountCode(ctx context.Context, email string) (int, error) {
-	codeStr, err := r.redis.Get(ctx, email)
-	if err != nil {
-		return 0, fmt.Errorf("auth.repository.SessionRepo.SetAccountCode: %w", err)
-	}
-
-	code, err := strconv.Atoi(codeStr)
-	if err != nil {
-		return 0, fmt.Errorf("auth.repository.SessionRepo.SetAccountCode: %w", err)
-	}
-
-	return code, nil
 }

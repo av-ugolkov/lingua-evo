@@ -3,7 +3,6 @@ package example
 import (
 	"context"
 	"fmt"
-	"slices"
 	"strings"
 
 	"github.com/google/uuid"
@@ -26,16 +25,20 @@ func NewService(repo repoExample) *Service {
 	}
 }
 
-func (s *Service) AddExamples(ctx context.Context, texts []string, langCode string) ([]uuid.UUID, error) {
-	ids := make([]uuid.UUID, 0, len(texts))
-	for i := 0; i < len(texts); i++ {
-		texts[i] = strings.TrimSpace(texts[i])
-		if texts[i] == "" {
-			texts = slices.Delete(texts, i, i+1)
-			i--
+func (s *Service) AddExamples(ctx context.Context, examples []Example, langCode string) ([]uuid.UUID, error) {
+	if len(examples) == 0 {
+		return nil, fmt.Errorf("example.Service.AddExamples - empty examples list")
+	}
+
+	ids := make([]uuid.UUID, 0, len(examples))
+	texts := make([]string, 0, len(examples))
+	for i := 0; i < len(examples); i++ {
+		text := strings.TrimSpace(examples[i].Text)
+		if text == "" {
 			continue
 		}
-		ids = append(ids, uuid.New())
+		texts = append(texts, text)
+		ids = append(ids, examples[i].ID)
 	}
 	ids, err := s.repo.AddExamples(ctx, ids, texts, langCode)
 	if err != nil {

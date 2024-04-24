@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"fmt"
+	"github.com/av-ugolkov/lingua-evo/runtime"
 	"log/slog"
 	"net/http"
 
@@ -10,9 +11,32 @@ import (
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/http/exchange"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/middleware"
 	dictionarySvc "github.com/av-ugolkov/lingua-evo/internal/services/dictionary"
-	"github.com/av-ugolkov/lingua-evo/internal/services/dictionary/model"
+	entity "github.com/av-ugolkov/lingua-evo/internal/services/dictionary"
 
+	"github.com/google/uuid"
 	"github.com/gorilla/mux"
+)
+
+type (
+	WordRq struct {
+		Text          string `json:"text"`
+		LangCode      string `json:"lang_code"`
+		Pronunciation string `json:"pronunciation,omitempty"`
+	}
+
+	WordIDRq struct {
+		ID uuid.UUID `json:"id"`
+	}
+
+	WordRs struct {
+		Text          string `json:"text"`
+		LangCode      string `json:"lang_code"`
+		Pronunciation string `json:"pronunciation,omitempty"`
+	}
+
+	WordIDRs struct {
+		ID uuid.UUID `json:"id"`
+	}
 )
 
 type Handler struct {
@@ -37,20 +61,27 @@ func (h *Handler) register(r *mux.Router) {
 }
 
 func (h *Handler) addWord(ctx context.Context, ex *exchange.Exchanger) {
-	var data model.WordRq
+	var data WordRq
 	if err := ex.CheckBody(&data); err != nil {
 		ex.SendError(http.StatusBadRequest, fmt.Errorf("dictionary.delivery.Handler.addWord - check body: %v", err))
 		return
 	}
 
-	wordID, err := h.dictSvc.AddWord(ctx, data)
+	wordIDs, err := h.dictSvc.AddWords(ctx, []entity.DictWord{
+		{
+			ID:            uuid.New(),
+			Text:          data.Text,
+			Pronunciation: data.Pronunciation,
+			LangCode:      data.LangCode,
+		},
+	})
 	if err != nil {
 		ex.SendError(http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.addWord: %v", err))
 		return
 	}
 
-	wordRs := &model.WordIDRs{
-		ID: wordID,
+	wordRs := &WordIDRs{
+		ID: wordIDs[0],
 	}
 
 	ex.SetContentType(exchange.ContentTypeJSON)
@@ -73,13 +104,18 @@ func (h *Handler) getWord(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if langCode == runtime.EmptyString {
+		ex.SendError(http.StatusBadRequest, fmt.Errorf("dictionary.delivery.Handler.getWord - empty lang code"))
+		return
+	}
+
 	wordID, err := h.dictSvc.GetWordByText(ctx, text, langCode)
 	if err != nil {
 		ex.SendError(http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.getWord: %v", err))
 		return
 	}
 
-	wordRs := &model.WordIDRs{
+	wordRs := &WordIDRs{
 		ID: wordID,
 	}
 
@@ -102,7 +138,7 @@ func (h *Handler) getRandomWord(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	randomWordRs := &model.WordRs{
+	randomWordRs := &WordRs{
 		Text:          word.Text,
 		LangCode:      word.LangCode,
 		Pronunciation: word.Pronunciation,
