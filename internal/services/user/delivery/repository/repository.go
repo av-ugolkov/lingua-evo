@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/user"
 
 	"github.com/google/uuid"
