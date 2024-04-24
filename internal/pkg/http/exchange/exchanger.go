@@ -141,7 +141,7 @@ func (e *Exchanger) DeleteCookie(name string) {
 	cookie := &http.Cookie{
 		Name:     name,
 		Value:    runtime.EmptyString,
-		MaxAge:   0,
+		MaxAge:   -1,
 		HttpOnly: true,
 		Secure:   true,
 	}

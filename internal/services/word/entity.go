@@ -2,8 +2,10 @@ package word
 
 import (
 	"errors"
+	entityExample "github.com/av-ugolkov/lingua-evo/internal/services/example"
+	"time"
 
-	"github.com/av-ugolkov/lingua-evo/internal/services/word/model"
+	entityDict "github.com/av-ugolkov/lingua-evo/internal/services/dictionary"
 
 	"github.com/google/uuid"
 )
@@ -13,28 +15,21 @@ var (
 )
 
 type (
-	Words []model.VocabWord
-
-	Word struct {
-		ID             uuid.UUID
-		VocabID        uuid.UUID
-		NativeID       uuid.UUID
-		TranslateWords []uuid.UUID
-		Examples       []uuid.UUID
+	VocabWord struct {
+		ID           uuid.UUID
+		VocabID      uuid.UUID
+		NativeID     uuid.UUID
+		TranslateIDs []uuid.UUID
+		ExampleIDs   []uuid.UUID
+		UpdatedAt    time.Time
+		CreatedAt    time.Time
 	}
 
-	VocabularyWord struct {
-		ID             uuid.UUID
-		NativeWord     model.VocabWord
-		TranslateWords []string
-		Examples       []string
+	VocabWordData struct {
+		ID         uuid.UUID
+		VocabID    uuid.UUID
+		Native     entityDict.DictWord
+		Translates []entityDict.DictWord
+		Examples   []entityExample.Example
 	}
 )
-
-func (w *Words) GetValues() []string {
-	var values []string
-	for _, word := range *w {
-		values = append(values, word.Text)
-	}
-	return values
-}

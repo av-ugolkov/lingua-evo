@@ -4,8 +4,6 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
-	"github.com/av-ugolkov/lingua-evo/internal/services/auth/model"
-	"github.com/av-ugolkov/lingua-evo/runtime"
 	"net/http"
 	"strings"
 	"time"
@@ -15,9 +13,24 @@ import (
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/http/exchange"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/middleware"
 	"github.com/av-ugolkov/lingua-evo/internal/services/auth"
-
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
+)
+
+type (
+	CreateSessionRq struct {
+		User        string `json:"user"`
+		Password    string `json:"password"`
+		Fingerprint string `json:"fingerprint"`
+	}
+
+	CreateCodeRq struct {
+		Email string `json:"email"`
+	}
+
+	CreateSessionRs struct {
+		AccessToken string `json:"access_token"`
+	}
 )
 
 type Handler struct {
@@ -36,34 +49,10 @@ func newHandler(authSvc *auth.Service) *Handler {
 }
 
 func (h *Handler) register(r *mux.Router) {
-	r.HandleFunc(delivery.SignUp, h.signUp).Methods(http.MethodPost)
 	r.HandleFunc(delivery.SignIn, h.signIn).Methods(http.MethodPost)
 	r.HandleFunc(delivery.Refresh, h.refresh).Methods(http.MethodGet)
 	r.HandleFunc(delivery.SignOut, middleware.Auth(h.signOut)).Methods(http.MethodGet)
 	r.HandleFunc(delivery.SendCode, h.sendCode).Methods(http.MethodPost)
-}
-
-func (h *Handler) signUp(w http.ResponseWriter, r *http.Request) {
-	ex := exchange.NewExchanger(w, r)
-	var data model.CreateUserRq
-	err := ex.CheckBody(&data)
-	if err != nil {
-		ex.SendError(http.StatusBadRequest, fmt.Errorf("user.delivery.Handler.createAccount - check body: %v", err))
-		return
-	}
-
-	uid, err := h.authSvc.SignUp(ex.Context(), data, runtime.User)
-	if err != nil {
-		ex.SendError(http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.createAccount - create user: %v", err))
-		return
-	}
-
-	createUserRs := &model.CreateUserRs{
-		UserID: uid,
-	}
-
-	ex.SetContentType(exchange.ContentTypeJSON)
-	ex.SendData(http.StatusCreated, createUserRs)
 }
 
 func (h *Handler) signIn(w http.ResponseWriter, r *http.Request) {
@@ -73,7 +62,7 @@ func (h *Handler) signIn(w http.ResponseWriter, r *http.Request) {
 		ex.SendError(http.StatusBadRequest, fmt.Errorf("auth.delivery.Handler.signin: %v", err))
 		return
 	}
-	var data model.CreateSessionRq
+	var data CreateSessionRq
 	err = decodeBasicAuth(authorization, &data)
 	if err != nil {
 		ex.SendError(http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.signin - check body: %v", err))
@@ -85,13 +74,14 @@ func (h *Handler) signIn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	ctx := r.Context()
-	tokens, err := h.authSvc.SignIn(ctx, data.User, data.Password, data.Fingerprint)
+	refreshTokenID := uuid.New()
+	tokens, err := h.authSvc.SignIn(ctx, data.User, data.Password, data.Fingerprint, refreshTokenID)
 	if err != nil {
 		ex.SendError(http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.signin - create session: %v", err))
 		return
 	}
 
-	sessionRs := &model.CreateSessionRs{
+	sessionRs := &CreateSessionRs{
 		AccessToken: tokens.AccessToken,
 	}
 
@@ -128,13 +118,14 @@ func (h *Handler) refresh(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := r.Context()
-	tokens, err := h.authSvc.RefreshSessionToken(ctx, refreshID, fingerprint)
+	tokenID := uuid.New()
+	tokens, err := h.authSvc.RefreshSessionToken(ctx, tokenID, refreshID, fingerprint)
 	if err != nil {
 		ex.SendError(http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.refresh - refresh token: %v", err))
 		return
 	}
 
-	sessionRs := &model.CreateSessionRs{
+	sessionRs := &CreateSessionRs{
 		AccessToken: tokens.AccessToken,
 	}
 
@@ -152,7 +143,7 @@ func (h *Handler) signOut(ctx context.Context, ex *exchange.Exchanger) {
 		return
 	}
 	if refreshToken == nil {
-		ex.SendError(http.StatusUnauthorized, fmt.Errorf("auth.delivery.Handler.logout: %v", err))
+		ex.SendError(http.StatusUnauthorized, fmt.Errorf("auth.delivery.Handler.logout - not fount refresh token"))
 		return
 	}
 
@@ -181,7 +172,7 @@ func (h *Handler) signOut(ctx context.Context, ex *exchange.Exchanger) {
 func (h *Handler) sendCode(w http.ResponseWriter, r *http.Request) {
 	ex := exchange.NewExchanger(w, r)
 
-	var data model.CreateCodeRq
+	var data CreateCodeRq
 	err := ex.CheckBody(&data)
 	if err != nil {
 		ex.SendError(http.StatusBadRequest, fmt.Errorf("auth.delivery.handler.Handler.sendCode - check body: %v", err))
@@ -197,7 +188,7 @@ func (h *Handler) sendCode(w http.ResponseWriter, r *http.Request) {
 	ex.SendEmptyData(http.StatusOK)
 }
 
-func decodeBasicAuth(basicToken string, data *model.CreateSessionRq) error {
+func decodeBasicAuth(basicToken string, data *CreateSessionRq) error {
 	base, err := base64.StdEncoding.DecodeString(basicToken)
 	if err != nil {
 		return fmt.Errorf("auth.delivery.decodeBasicAuth - decode base64: %v", err)

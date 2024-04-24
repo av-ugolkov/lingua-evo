@@ -12,13 +12,35 @@ import (
 	"github.com/av-ugolkov/lingua-evo/internal/delivery"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/http/exchange"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/middleware"
+	entityTag "github.com/av-ugolkov/lingua-evo/internal/services/tag"
 	"github.com/av-ugolkov/lingua-evo/internal/services/vocabulary"
-	"github.com/av-ugolkov/lingua-evo/internal/services/vocabulary/model"
 	"github.com/av-ugolkov/lingua-evo/runtime"
 )
 
 const (
-	ParamsName = "name"
+	paramsVocabName = "name"
+)
+
+type (
+	VocabularyRq struct {
+		Name          string   `json:"name"`
+		NativeLang    string   `json:"native_lang"`
+		TranslateLang string   `json:"translate_lang"`
+		Tags          []string `json:"tags"`
+	}
+
+	VocabularyIDRs struct {
+		ID uuid.UUID `json:"id"`
+	}
+
+	VocabularyRs struct {
+		ID            uuid.UUID `json:"id"`
+		UserID        uuid.UUID `json:"user_id"`
+		Name          string    `json:"name"`
+		NativeLang    string    `json:"native_lang"`
+		TranslateLang string    `json:"translate_lang"`
+		Tags          []string  `json:"tags"`
+	}
 )
 
 type Handler struct {
@@ -51,25 +73,40 @@ func (h *Handler) addVocabulary(ctx context.Context, ex *exchange.Exchanger) {
 		return
 	}
 
-	var data model.VocabularyRq
+	var data VocabularyRq
 	err = ex.CheckBody(&data)
 	if err != nil {
 		ex.SendError(http.StatusUnauthorized, fmt.Errorf("vocabulary.delivery.Handler.addVocabulary - check body: %v", err))
 		return
 	}
 
-	vocab, err := h.vocabularySvc.AddVocabulary(ctx, userID, data)
+	tags := make([]entityTag.Tag, 0, len(data.Tags))
+	for _, tag := range data.Tags {
+		tags = append(tags, entityTag.Tag{
+			ID:   uuid.New(),
+			Text: tag,
+		})
+	}
+
+	vocab, err := h.vocabularySvc.AddVocabulary(ctx, vocabulary.Vocabulary{
+		ID:            uuid.New(),
+		UserID:        userID,
+		Name:          data.Name,
+		NativeLang:    data.NativeLang,
+		TranslateLang: data.TranslateLang,
+		Tags:          tags,
+	})
 	if err != nil {
 		ex.SendError(http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.addVocabulary: %v", err))
 	}
 
-	vocabRs := &model.VocabularyRs{
+	vocabRs := &VocabularyRs{
 		ID:            vocab.ID,
 		UserID:        vocab.UserID,
 		Name:          vocab.Name,
 		NativeLang:    vocab.NativeLang,
 		TranslateLang: vocab.TranslateLang,
-		Tags:          vocab.Tags,
+		//Tags:          vocab.Tags,
 	}
 
 	ex.SetContentType(exchange.ContentTypeJSON)
@@ -83,7 +120,7 @@ func (h *Handler) deleteVocabulary(ctx context.Context, ex *exchange.Exchanger) 
 		return
 	}
 
-	name, err := ex.QueryParamString(ParamsName)
+	name, err := ex.QueryParamString(paramsVocabName)
 	if err != nil {
 		ex.SendError(http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.deleteVocabulary - get query [name]: %v", err))
 		return
@@ -109,7 +146,7 @@ func (h *Handler) getVocabulary(ctx context.Context, ex *exchange.Exchanger) {
 		return
 	}
 
-	name, err := ex.QueryParamString(ParamsName)
+	name, err := ex.QueryParamString(paramsVocabName)
 	if err != nil {
 		ex.SendError(http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.getVocabulary - get query [name]: %v", err))
 		return
@@ -125,13 +162,18 @@ func (h *Handler) getVocabulary(ctx context.Context, ex *exchange.Exchanger) {
 		return
 	}
 
-	vocabRs := &model.VocabularyRs{
+	tags := make([]string, 0, len(vocab.Tags))
+	for _, tag := range vocab.Tags {
+		tags = append(tags, tag.Text)
+	}
+
+	vocabRs := &VocabularyRs{
 		ID:            vocab.ID,
 		UserID:        vocab.UserID,
 		Name:          vocab.Name,
 		NativeLang:    vocab.NativeLang,
 		TranslateLang: vocab.TranslateLang,
-		Tags:          vocab.Tags,
+		Tags:          tags,
 	}
 
 	ex.SetContentType(exchange.ContentTypeJSON)
@@ -150,15 +192,20 @@ func (h *Handler) getVocabularies(ctx context.Context, ex *exchange.Exchanger) {
 		ex.SendError(http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.getVocabularies: %v", err))
 	}
 
-	vocabulariesRs := make([]model.VocabularyRs, 0, len(vocabularies))
+	vocabulariesRs := make([]VocabularyRs, 0, len(vocabularies))
 	for _, vocab := range vocabularies {
-		vocabulariesRs = append(vocabulariesRs, model.VocabularyRs{
+		tags := make([]string, 0, len(vocab.Tags))
+		for _, tag := range vocab.Tags {
+			tags = append(tags, tag.Text)
+		}
+
+		vocabulariesRs = append(vocabulariesRs, VocabularyRs{
 			ID:            vocab.ID,
 			UserID:        vocab.UserID,
 			Name:          vocab.Name,
 			NativeLang:    vocab.NativeLang,
 			TranslateLang: vocab.TranslateLang,
-			Tags:          vocab.Tags,
+			Tags:          tags,
 		})
 	}
 
@@ -167,13 +214,13 @@ func (h *Handler) getVocabularies(ctx context.Context, ex *exchange.Exchanger) {
 }
 
 func (h *Handler) renameVocabulary(ctx context.Context, ex *exchange.Exchanger) {
-	name, err := ex.QueryParamString(ParamsName)
+	name, err := ex.QueryParamString(paramsVocabName)
 	if err != nil {
 		ex.SendError(http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.renameVocabulary - get query [name]: %v", err))
 		return
 	}
 
-	var vocab model.VocabularyIDRs
+	var vocab VocabularyIDRs
 	err = ex.CheckBody(&vocab)
 	if err != nil {
 		ex.SendError(http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.renameVocabulary - get body: %v", err))

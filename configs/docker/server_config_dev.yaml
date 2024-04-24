@@ -1,10 +1,10 @@
 pprof_debug:
-    enable: true
+    enable: false
     port: 6060
 jwt:
     secret: 5tV3so&v5Qzn
-    expire_access: 600 #10 min
-    expire_refresh: 2592000 #30 days
+    expire_access: 600 #60 min
+    expire_refresh: 36000 #10 hours
 service:
     type: tcp
     port: 5000
@@ -13,17 +13,17 @@ service:
         - "http://localhost:5173"
         - "http://localhost:8080"
         - "http://192.168.0.184:8080"
-        - "http://77.222.37.98"
 postgres:
     name: pg-lingua-evo
     user: lingua
     password: ib6vACdec2Fmht4lnX153
-    host: localhost
-    port: 6432
+    host: postgres-base
+    port: 5432
 redis:
-    name: redis-lingua-evo
-    host: localhost
+    name: redis
+    host: redis
     port: 6379
+    user: lingua
     password: 
     db: 0
 kafka:

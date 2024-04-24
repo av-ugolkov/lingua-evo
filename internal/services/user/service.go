@@ -6,7 +6,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/utils"
 	"github.com/google/uuid"
+	"time"
 )
 
 type (
@@ -22,6 +24,7 @@ type (
 
 	redis interface {
 		Get(ctx context.Context, key string) (string, error)
+		GetAccountCode(ctx context.Context, email string) (int, error)
 	}
 
 	Service struct {
@@ -37,7 +40,43 @@ func NewService(repo userRepo, redis redis) *Service {
 	}
 }
 
-func (s *Service) AddUser(ctx context.Context, user *User) (uuid.UUID, error) {
+func (s *Service) SignUp(ctx context.Context, userData UserData) (uuid.UUID, error) {
+	if err := s.validateEmail(ctx, userData.Email); err != nil {
+		return uuid.Nil, fmt.Errorf("auth.Service.SignUp - validateEmail: %v", err)
+	}
+
+	code, err := s.redis.GetAccountCode(ctx, userData.Email)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("auth.Service.SignUp - GetAccountCode: %v", err)
+	}
+
+	if code != userData.Code {
+		return uuid.Nil, fmt.Errorf("auth.Service.SignUp: code mismatch")
+	}
+
+	if err := s.validateUsername(ctx, userData.Name); err != nil {
+		return uuid.Nil, fmt.Errorf("auth.Service.SignUp - validateUsername: %v", err)
+	}
+
+	if err := validatePassword(userData.Password); err != nil {
+		return uuid.Nil, fmt.Errorf("auth.Service.SignUp - validatePassword: %v", err)
+	}
+
+	hashPassword, err := utils.HashPassword(userData.Password)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("auth.Service.SignUp - hashPassword: %v", err)
+	}
+
+	user := &User{
+		ID:           userData.ID,
+		Name:         userData.Name,
+		PasswordHash: hashPassword,
+		Email:        userData.Email,
+		Role:         userData.Role,
+		CreatedAt:    time.Now().UTC(),
+		LastVisitAt:  time.Now().UTC(),
+	}
+
 	uid, err := s.repo.AddUser(ctx, user)
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("user.Service.AddUser: %w", err)
@@ -96,5 +135,55 @@ func (s *Service) GetUserByRefreshToken(ctx context.Context, token uuid.UUID) (*
 }
 
 func (s *Service) RemoveUser(ctx context.Context, user *User) error {
+	return nil
+}
+
+func (s *Service) validateEmail(ctx context.Context, email string) error {
+	if !utils.IsEmailValid(email) {
+		return ErrEmailNotCorrect
+	}
+
+	userData, err := s.GetUserByEmail(ctx, email)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return err
+	} else if errors.Is(err, sql.ErrNoRows) {
+		return nil
+	} else if userData.ID == uuid.Nil && err == nil {
+		return ErrItIsAdmin
+	} else if userData.ID != uuid.Nil {
+		return ErrEmailBusy
+	}
+
+	return nil
+}
+
+func (s *Service) validateUsername(ctx context.Context, username string) error {
+	if len(username) <= UsernameLen {
+		return ErrUsernameLen
+	}
+
+	userData, err := s.GetUserByName(ctx, username)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return err
+	} else if errors.Is(err, sql.ErrNoRows) {
+		return nil
+	} else if userData.ID == uuid.Nil && err == nil {
+		return ErrItIsAdmin
+	} else if userData.ID != uuid.Nil {
+		return ErrUsernameBusy
+	}
+
+	return nil
+}
+
+func validatePassword(password string) error {
+	if len(password) < MinPasswordLen {
+		return ErrPasswordLen
+	}
+
+	if !utils.IsPasswordValid(password) {
+		return ErrPasswordDifficult
+	}
+
 	return nil
 }
