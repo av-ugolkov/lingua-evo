@@ -143,7 +143,7 @@ func (h *Handler) signOut(ctx context.Context, ex *exchange.Exchanger) {
 		return
 	}
 	if refreshToken == nil {
-		ex.SendError(http.StatusUnauthorized, fmt.Errorf("auth.delivery.Handler.logout: %v", err))
+		ex.SendError(http.StatusUnauthorized, fmt.Errorf("auth.delivery.Handler.logout - not fount refresh token"))
 		return
 	}
 
