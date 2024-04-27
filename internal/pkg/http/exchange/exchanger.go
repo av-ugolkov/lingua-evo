@@ -32,6 +32,15 @@ var (
 	emptyJson = []byte(runtime.EmptyJson)
 )
 
+type ExData struct {
+	Code int `json:"code"`
+	Data any `json:"data,omitempty"`
+}
+
+type ExError struct {
+	Msg string `json:"msg"`
+}
+
 type Exchanger struct {
 	responseWriter http.ResponseWriter
 	request        *http.Request
@@ -66,10 +75,14 @@ func (e *Exchanger) CheckBody(body any) error {
 }
 
 func (e *Exchanger) SendData(httpStatus int, data any) {
-	b, err := json.Marshal(data)
+	exData := ExData{
+		Code: httpStatus,
+		Data: data,
+	}
+
+	b, err := json.Marshal(&exData)
 	if err != nil {
-		err = fmt.Errorf("http.exchange.Exchanger.SendData - marshal: %v", err)
-		slog.Error(err.Error())
+		slog.Error(fmt.Sprintf("http.exchange.Exchanger.SendData - marshal: %v", err))
 		e.SendError(http.StatusInternalServerError, err)
 		return
 	}
@@ -77,23 +90,45 @@ func (e *Exchanger) SendData(httpStatus int, data any) {
 	e.responseWriter.WriteHeader(httpStatus)
 	_, err = e.responseWriter.Write(b)
 	if err != nil {
-		err = fmt.Errorf("http.exchange.Exchanger.SendData: %v", err)
-		slog.Error(err.Error())
+		slog.Error(fmt.Sprintf("http.exchange.Exchanger.SendData: %v", err))
 		e.SendError(http.StatusInternalServerError, err)
 	}
 }
 
 func (e *Exchanger) SendEmptyData(httpStatus int) {
-	e.responseWriter.WriteHeader(httpStatus)
-	_, err := e.responseWriter.Write(emptyJson)
+	exData := ExData{
+		Code: httpStatus,
+	}
+	b, err := json.Marshal(&exData)
 	if err != nil {
-		slog.Error(fmt.Errorf("http.exchange.Exchanger.SendError: %v", err).Error())
+		slog.Error(fmt.Sprintf("http.exchange.Exchanger.SendEmptyData - marshal: %v", err))
+		e.SendError(http.StatusInternalServerError, err)
+		return
+	}
+	e.responseWriter.WriteHeader(httpStatus)
+	_, err = e.responseWriter.Write(b)
+	if err != nil {
+		slog.Error(fmt.Sprintf("http.exchange.Exchanger.SendEmptyData: %v", err))
 	}
 }
 
 func (e *Exchanger) SendError(httpStatus int, err error) {
-	slog.Error(fmt.Errorf("http.exchange.Exchanger.SendError: %v", err).Error())
-	http.Error(e.responseWriter, err.Error(), httpStatus)
+	slog.Error(fmt.Sprintf("http.exchange.Exchanger.SendError: %v", err))
+	exData := ExData{
+		Code: httpStatus,
+		Data: ExError{Msg: err.Error()},
+	}
+
+	b, err := json.Marshal(&exData)
+	if err != nil {
+		slog.Error(fmt.Sprintf("http.exchange.Exchanger.SendError - marshal: %v", err))
+		return
+	}
+	e.responseWriter.WriteHeader(httpStatus)
+	_, err = e.responseWriter.Write(b)
+	if err != nil {
+		slog.Error(fmt.Sprintf("http.exchange.Exchanger.SendError: %v", err))
+	}
 }
 
 func (e *Exchanger) setCookie(name, value string) {
