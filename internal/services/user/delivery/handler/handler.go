@@ -8,6 +8,7 @@ import (
 	"github.com/av-ugolkov/lingua-evo/internal/delivery"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/http/exchange"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/middleware"
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/utils"
 	"github.com/av-ugolkov/lingua-evo/internal/services/user"
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/user"
 	"github.com/av-ugolkov/lingua-evo/runtime"
@@ -66,6 +67,21 @@ func (h *Handler) signUp(w http.ResponseWriter, r *http.Request) {
 	err := ex.CheckBody(&data)
 	if err != nil {
 		ex.SendError(http.StatusBadRequest, fmt.Errorf("user.delivery.Handler.createAccount - check body: %v", err))
+		return
+	}
+
+	if !utils.IsUsernameValid(data.Username) {
+		ex.SendError(http.StatusBadRequest, fmt.Errorf("user.delivery.Handler.createAccount - invalid user name"))
+		return
+	}
+
+	if !utils.IsPasswordValid(data.Password) {
+		ex.SendError(http.StatusBadRequest, fmt.Errorf("user.delivery.Handler.createAccount - invalid password"))
+		return
+	}
+
+	if !utils.IsEmailValid(data.Email) {
+		ex.SendError(http.StatusBadRequest, fmt.Errorf("user.delivery.Handler.createAccount - invalid email"))
 		return
 	}
 
