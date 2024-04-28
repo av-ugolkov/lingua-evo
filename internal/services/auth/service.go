@@ -35,15 +35,17 @@ type (
 		GetUserByEmail(ctx context.Context, email string) (*entityUser.User, error)
 		GetUserByName(ctx context.Context, name string) (*entityUser.User, error)
 	}
-
-	Service struct {
-		repo    sessionRepo
-		userSvc userSvc
-	}
 )
 
-func NewService(repo sessionRepo, userSvc userSvc) *Service {
+type Service struct {
+	email   config.Email
+	repo    sessionRepo
+	userSvc userSvc
+}
+
+func NewService(email config.Email, repo sessionRepo, userSvc userSvc) *Service {
 	return &Service{
+		email:   email,
 		repo:    repo,
 		userSvc: userSvc,
 	}
@@ -162,21 +164,22 @@ func (s *Service) SignOut(ctx context.Context, refreshToken uuid.UUID, fingerpri
 }
 
 func (s *Service) CreateCode(ctx context.Context, email string) error {
-	if err := s.validateEmail(ctx, email); err != nil {
+	err := s.validateEmail(ctx, email)
+	if err != nil {
 		return fmt.Errorf("user.delivery.Handler.createAccount - validateEmail: %v", err)
 	}
 
-	from := "amak07@yandex.ru"     //"makedonskiy07@gmail.com"
-	password := "sbdkuhybqeesvqvg" //"zseo awvn mmjd sklz"
+	creatingCode := rand.Intn(999999-100000) + 100000
+
+	from := s.email.Address
+	password := s.email.Password
 
 	toEmailAddress := email
 	to := []string{toEmailAddress}
 
-	host := "smtp.yandex.ru" //"smtp.gmail.com"
-	port := "587"            //"587"
+	host := "smtp.gmail.com"
+	port := "587"
 	address := host + ":" + port
-
-	creatingCode := rand.Intn(999999-100000) + 100000
 
 	subject := "Subject: Create account on Lingua Evo\r\n\r\n"
 	body := fmt.Sprintf("Аccount creation code: %d", creatingCode)
@@ -184,7 +187,7 @@ func (s *Service) CreateCode(ctx context.Context, email string) error {
 
 	authEmail := smtp.PlainAuth("", from, password, host)
 
-	err := smtp.SendMail(address, authEmail, from, to, message)
+	err = smtp.SendMail(address, authEmail, from, to, message)
 	if err != nil {
 		return fmt.Errorf("auth.Service.CreateCode - send mail: %v", err)
 	}

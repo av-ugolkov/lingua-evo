@@ -19,7 +19,7 @@ services:
     image: postgres:16.1-alpine3.19
     environment:
       - POSTGRES_DB=pg-lingua-evo
-      - POSTGRES_PASSWORD=ib6vACdec2Fmht4lnX153
+      - POSTGRES_PASSWORD=
       - POSTGRES_USER=lingua
     volumes:
       - /var/lib/postgresql/lingua-evo/data:/var/lib/postgresql/data
@@ -61,7 +61,7 @@ services:
     entrypoint:
       - "/bin/sh"
       - "-ecx"
-      - "./migration -cmd up -url lingua:ib6vACdec2Fmht4lnX153@postgres-base:5432/pg-lingua-evo?sslmode=disable"
+      - "./migration -cmd up -url lingua:@postgres-base:5432/pg-lingua-evo?sslmode=disable"
 
 networks:
   lingua:

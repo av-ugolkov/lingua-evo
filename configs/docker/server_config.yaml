@@ -2,18 +2,18 @@ pprof_debug:
     enable: false
     port: 6060
 jwt:
-    secret: 5tV3so&v5Qzn
+    secret: 
     expire_access: 3600 #60 min
     expire_refresh: 2592000 #30 days
 service:
     type: tcp
     port: 5000
     allowed_origins:
-        - "http://77.222.37.98"
+        - "http://89.223.127.122"
 postgres:
     name: pg-lingua-evo
     user: lingua
-    password: ib6vACdec2Fmht4lnX153
+    password: 
     host: postgres-base
     port: 5432
 redis:
@@ -23,6 +23,9 @@ redis:
     user: lingua
     password: 
     db: 0
+email:
+    address: ugolkov.prog@gmail.com
+    password: 'rhgd axtv fsrl jnht'
 kafka:
     enable: false
     host: lingua-kafka
