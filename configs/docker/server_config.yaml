@@ -1,5 +1,5 @@
 pprof_debug:
-    enable: false
+    enable: true
     port: 6060
 jwt:
     secret: 54f3sY%v0kzQ
