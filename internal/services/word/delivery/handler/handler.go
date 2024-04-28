@@ -32,8 +32,8 @@ type (
 	}
 
 	VocabWordRq struct {
+		ID         uuid.UUID `json:"id,omitempty"`
 		VocabID    uuid.UUID `json:"vocab_id"`
-		WordID     uuid.UUID `json:"word_id,omitempty"`
 		NativeWord VocabWord `json:"native_word"`
 		Translates []string  `json:"translates,omitempty"`
 		Examples   []string  `json:"examples,omitempty"`
@@ -155,7 +155,7 @@ func (h *Handler) updateWord(ctx context.Context, ex *exchange.Exchanger) {
 		ID:      uuid.New(),
 		VocabID: data.VocabID,
 		Native: entityDict.DictWord{
-			ID:            data.WordID,
+			ID:            data.NativeWord.ID,
 			Text:          data.NativeWord.Text,
 			Pronunciation: data.NativeWord.Pronunciation,
 		},

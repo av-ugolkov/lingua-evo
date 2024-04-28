@@ -13,6 +13,7 @@ type Config struct {
 	Service    Service    `yaml:"service"`
 	DbSQL      DbSQL      `yaml:"postgres"`
 	DbRedis    DbRedis    `yaml:"redis"`
+	Email      Email      `yaml:"email"`
 	Kafka      Kafka      `yaml:"kafka"`
 }
 
@@ -57,6 +58,11 @@ type DbRedis struct {
 	DB       int    `yaml:"db"`
 }
 
+type Email struct {
+	Address  string `yaml:"address"`
+	Password string `yaml:"password"`
+}
+
 type Kafka struct {
 	Enable bool     `yaml:"enable"`
 	Host   string   `yaml:"host"`
@@ -77,7 +83,12 @@ func InitConfig(pathConfig string) *Config {
 		slog.Error(fmt.Errorf("Fail read config: %v", err).Error())
 		return nil
 	}
+
 	return instance
+}
+
+func SetEmailPassword(emailPsw string) {
+	instance.Email.Password = emailPsw
 }
 
 func GetConfig() *Config {

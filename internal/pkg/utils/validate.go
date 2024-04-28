@@ -4,12 +4,26 @@ import (
 	"regexp"
 )
 
+var (
+	usernameRegex *regexp.Regexp
+	emailRegex    *regexp.Regexp
+	passwordRegex *regexp.Regexp
+)
+
+func init() {
+	usernameRegex = regexp.MustCompile(`^[a-zA-Z0-9]{3,16}$`)
+	emailRegex = regexp.MustCompile(`^[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,4}$`)
+	passwordRegex = regexp.MustCompile(`^[a-zA-Z0-9.!@#$^&*(){}\[\]_%+\-]`)
+}
+
+func IsUsernameValid(u string) bool {
+	return usernameRegex.MatchString(u)
+}
+
 func IsEmailValid(e string) bool {
-	emailRegex := regexp.MustCompile(`^[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,4}$`)
 	return emailRegex.MatchString(e)
 }
 
 func IsPasswordValid(p string) bool {
-	emailRegex := regexp.MustCompile(`^[a-zA-Z0-9.!@#$^&*(){}\[\]_%+\-]`)
-	return emailRegex.MatchString(p)
+	return passwordRegex.MatchString(p)
 }

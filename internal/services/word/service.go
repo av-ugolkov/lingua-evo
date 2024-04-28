@@ -205,10 +205,10 @@ func (s *Service) UpdateWord(ctx context.Context, vocabWordData VocabWordData) (
 	return vocabWord, nil
 }
 
-func (s *Service) DeleteWord(ctx context.Context, vocabID, nativeWordID uuid.UUID) error {
+func (s *Service) DeleteWord(ctx context.Context, vocabID, wordID uuid.UUID) error {
 	vocabWord := VocabWord{
-		VocabID:  vocabID,
-		NativeID: nativeWordID,
+		ID:      wordID,
+		VocabID: vocabID,
 	}
 
 	err := s.repo.DeleteWord(ctx, vocabWord)

@@ -49,7 +49,7 @@ func NewService(repo repoDictionary, langSvc langSvc) *Service {
 
 func (s *Service) AddWords(ctx context.Context, words []DictWord) ([]uuid.UUID, error) {
 	if len(words) == 0 {
-		return nil, fmt.Errorf("dictionary.Service.AddWords - empty word list")
+		return []uuid.UUID{}, nil
 	}
 
 	languages, err := s.langSvc.GetAvailableLanguages(ctx)
