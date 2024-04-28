@@ -68,7 +68,7 @@ func ServerStart(cfg *config.Config) {
 	redisDB := redis.New(cfg)
 
 	router := mux.NewRouter()
-	initServer(router, db, redisDB)
+	initServer(cfg, router, db, redisDB)
 
 	address := fmt.Sprintf(":%s", cfg.Service.Port)
 
@@ -117,7 +117,7 @@ func ServerStart(cfg *config.Config) {
 	slog.Info("final")
 }
 
-func initServer(r *mux.Router, db *sql.DB, redis *redis.Redis) {
+func initServer(cfg *config.Config, r *mux.Router, db *sql.DB, redis *redis.Redis) {
 	tr := transactor.NewTransactor(db)
 	slog.Info("create services")
 	userRepo := userRepository.NewRepo(db)
@@ -135,7 +135,7 @@ func initServer(r *mux.Router, db *sql.DB, redis *redis.Redis) {
 	wordRepo := wordRepository.NewRepo(db)
 	wordSvc := wordService.NewService(tr, wordRepo, vocabSvc, dictSvc, exampleSvc)
 	authRepo := authRepository.NewRepo(redis)
-	authSvc := authService.NewService(authRepo, userSvc)
+	authSvc := authService.NewService(cfg.Email, authRepo, userSvc)
 
 	slog.Info("create handlers")
 	userHandler.Create(r, userSvc)

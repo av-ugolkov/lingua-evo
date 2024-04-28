@@ -17,7 +17,7 @@ service:
 postgres:
     name: pg-lingua-evo
     user: lingua
-    password: ib6vACdec2Fmht4lnX153
+    password: pb6v0CdeN3FmKt4anX1j3
     host: localhost
     port: 6432
 redis:
@@ -26,6 +26,9 @@ redis:
     port: 6379
     password: itBg40drEvZsw2gbHyp0
     db: 0
+email:
+    address: ugolkov.prog@gmail.com
+    password: 'rhgd axtv fsrl jnht'
 kafka:
     enable: false
     host: lingua-kafka
