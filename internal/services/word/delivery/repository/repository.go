@@ -98,8 +98,8 @@ func (r *WordRepo) GetRandomWord(ctx context.Context, vocabID uuid.UUID) (entity
 }
 
 func (r *WordRepo) DeleteWord(ctx context.Context, vocabWord entity.VocabWord) error {
-	query := `DELETE FROM word WHERE vocabulary_id=$1 AND native_id=$2;`
-	result, err := r.db.ExecContext(ctx, query, vocabWord.VocabID, vocabWord.NativeID)
+	query := `DELETE FROM word WHERE vocabulary_id=$1 AND id=$2;`
+	result, err := r.db.ExecContext(ctx, query, vocabWord.VocabID, vocabWord.ID)
 	if err != nil {
 		return fmt.Errorf("word.repository.WordRepo.DeleteWord - exec: %w", err)
 	}
