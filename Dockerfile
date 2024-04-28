@@ -1,6 +1,6 @@
 FROM golang:1.22.0-alpine as builder
 
-RUN apk --no-cache --update --upgrade add git make ca-certificates openssl
+RUN --mount=type=cache,target=/var/cache/apk apk --no-cache --update --upgrade add git make ca-certificates openssl
 
 WORKDIR /build
 COPY . .
@@ -11,7 +11,7 @@ LABEL key="Lingua-evo"
 
 ARG config_dir
 
-RUN apk --update --upgrade add ca-certificates git
+RUN --mount=type=cache,target=/var/cache/apk apk --update --upgrade add ca-certificates git
 
 WORKDIR /lingua-evo
 COPY /configs/${config_dir}.yaml ./configs/server_config.yaml
