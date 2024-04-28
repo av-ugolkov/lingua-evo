@@ -26,6 +26,9 @@ redis:
     user: lingua
     password: 
     db: 0
+email:
+    address: ugolkov.prog@gmail.com
+    password: 'rhgd axtv fsrl jnht'
 kafka:
     enable: false
     host: lingua-kafka
