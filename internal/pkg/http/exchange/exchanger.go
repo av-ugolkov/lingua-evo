@@ -28,10 +28,6 @@ var (
 	errHeaderNotFound = errors.New("header not found")
 )
 
-var (
-	emptyJson = []byte(runtime.EmptyJson)
-)
-
 type ExData struct {
 	Code int `json:"code"`
 	Data any `json:"data,omitempty"`
