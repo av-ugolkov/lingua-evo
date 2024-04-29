@@ -12,12 +12,11 @@ run.docker:
 
 .PHONY: run.docker.dev
 run.docker.dev:
-	docker compose -p lingua-evo -f deploy/docker-compose.local.yml up --build --force-recreate
-
+	docker compose -p lingua-evo-dev -f deploy/docker-compose.dev.yml up --build --force-recreate
 
 .PHONY: run.docker.database
 run.docker.database:
-	docker compose -p lingua-evo -f deploy/docker-compose.local.yml up redis postgres migration --build --force-recreate
+	docker compose -p lingua-evo-dev -f deploy/docker-compose.dev.yml up redis postgres migration --build --force-recreate
 
 .PHONY: lint
 lint:
