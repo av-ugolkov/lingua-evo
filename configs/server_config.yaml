@@ -2,7 +2,7 @@ pprof_debug:
     enable: true
     port: 6060
 jwt:
-    secret: 5tV3so&v5Qzn
+    secret: 
     expire_access: 600 #10 min
     expire_refresh: 2592000 #30 days
 service:

@@ -255,6 +255,9 @@
 			"translate": [
 				"испортить",
 				"портачить"
+			],
+			"example": [
+				"I can't have someone like you mess up what I've built."
 			]
 		},
 		{
@@ -2607,16 +2610,6 @@
 			],
 			"example": [
 				"Local storage doesn't provide any of the same security mechanisms that cookies do."
-			]
-		},
-		{
-			"word": "mess up",
-			"translate": [
-				"испортить",
-				"разлаживать"
-			],
-			"example": [
-				"I can't have someone like you mess up what I've built."
 			]
 		}
 	]
