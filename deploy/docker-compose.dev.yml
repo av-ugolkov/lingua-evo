@@ -19,7 +19,7 @@ services:
     image: postgres:16.1-alpine3.19
     environment:
       - POSTGRES_DB=pg-lingua-evo
-      - POSTGRES_PASSWORD=ib6vACdec2Fmht4lnX153
+      - POSTGRES_PASSWORD=
       - POSTGRES_USER=lingua
     volumes:
       - /var/lib/postgresql/lingua-evo-dev/data:/var/lib/postgresql/data
@@ -34,9 +34,10 @@ services:
     container_name: lingua-evo-dev
     build:
       context: ../.
-      dockerfile: Dockerfile-dev
+      dockerfile: Dockerfile
       args:
         config_dir: ${CONFIG:-docker/server_config_dev}
+        epsw: ${EPSW}
     depends_on:
       - postgres
       - redis
@@ -61,7 +62,7 @@ services:
     entrypoint:
       - "/bin/sh"
       - "-ecx"
-      - "./migration -cmd up -url lingua:ib6vACdec2Fmht4lnX153@postgres-base-dev:5432/pg-lingua-evo?sslmode=disable"
+      - "./migration -cmd up -url lingua:@postgres-base-dev:5432/pg-lingua-evo?sslmode=disable"
 
 networks:
   lingua-dev:
