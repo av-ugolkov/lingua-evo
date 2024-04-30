@@ -34,7 +34,7 @@ services:
     container_name: lingua-evo-dev
     build:
       context: ../.
-      dockerfile: Dockerfile-dev
+      dockerfile: Dockerfile
       args:
         config_dir: ${CONFIG:-docker/server_config_dev}
     depends_on:
