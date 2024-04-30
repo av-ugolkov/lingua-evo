@@ -32,7 +32,7 @@ import (
 var words embed.FS
 
 func main() {
-	connStr := "postgresql://lingua:ib6vACdec2Fmht4lnX153@localhost:6432/pg-lingua-evo"
+	connStr := "postgresql://lingua:@localhost:6432/pg-lingua-evo"
 
 	db, err := pg.NewDB(connStr)
 	if err != nil {
