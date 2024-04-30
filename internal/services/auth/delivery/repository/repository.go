@@ -83,11 +83,10 @@ func (r *SessionRepo) DeleteAllUserSessions(ctx context.Context, userID uuid.UUI
 }
 
 func (r *SessionRepo) SetAccountCode(ctx context.Context, email string, code int, expiration time.Duration) error {
-	value, err := r.redis.Set(ctx, email, code, expiration)
+	_, err := r.redis.Set(ctx, email, code, expiration)
 	if err != nil {
 		return fmt.Errorf("auth.repository.SessionRepo.SetAccountCode: %w", err)
 	}
 
-	fmt.Println(value)
 	return nil
 }

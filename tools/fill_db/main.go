@@ -32,7 +32,7 @@ import (
 var words embed.FS
 
 func main() {
-	connStr := "postgresql://lingua:ib6vACdec2Fmht4lnX153@localhost:6432/pg-lingua-evo"
+	connStr := "postgresql://lingua:pb6v0CdeN3FmKt4anX1j3@localhost:6432/pg-lingua-evo"
 
 	db, err := pg.NewDB(connStr)
 	if err != nil {
@@ -73,7 +73,7 @@ func fillWord(db *sql.DB) error {
 	}
 
 	userSvc := user.NewService(repoUser.NewRepo(db), nil)
-	userData, err := userSvc.GetUser(context.Background(), "makedonskiy")
+	userData, err := userSvc.GetUser(context.Background(), "admin")
 	if err != nil {
 		return fmt.Errorf("fildDB.fillWord - GetUser: %w", err)
 	}
