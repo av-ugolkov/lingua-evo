@@ -37,6 +37,7 @@ services:
       dockerfile: Dockerfile
       args:
         config_dir: ${CONFIG:-docker/server_config_dev}
+        epsw: ${EPSW}
     depends_on:
       - postgres
       - redis

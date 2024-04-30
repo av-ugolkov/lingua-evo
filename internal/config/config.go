@@ -60,7 +60,7 @@ type DbRedis struct {
 
 type Email struct {
 	Address  string `yaml:"address"`
-	Password string `yaml:"password"`
+	Password string `yaml:"password,omitempty"`
 }
 
 type Kafka struct {
