@@ -7,7 +7,7 @@ COPY . .
 RUN --mount=type=cache,target=/go make build
 
 FROM alpine:3.19
-LABEL key="Lingua-evo"
+LABEL key="Lingua Evo"
 
 ARG config_dir
 
