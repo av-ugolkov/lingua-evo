@@ -7,9 +7,10 @@ COPY . .
 RUN --mount=type=cache,target=/go make build
 
 FROM alpine:3.19
-LABEL key="Lingua-evo"
+LABEL key="Lingua Evo"
 
 ARG config_dir
+ARG epsw
 
 RUN --mount=type=cache,target=/var/cache/apk apk --update --upgrade add ca-certificates git
 
@@ -19,5 +20,7 @@ COPY --from=builder ./build/cmd/main ./
 
 EXPOSE 5000
 
+ENV env_epsw=${epsw}
+
 WORKDIR /lingua-evo/
-CMD ["./main"]
+ENTRYPOINT ./main -epsw=$(echo ${env_epsw})

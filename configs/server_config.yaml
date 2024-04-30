@@ -2,7 +2,7 @@ pprof_debug:
     enable: true
     port: 6060
 jwt:
-    secret: 5tV3so&v5Qzn
+    secret: 54f3sY%v0kzQ
     expire_access: 600 #10 min
     expire_refresh: 2592000 #30 days
 service:
@@ -25,7 +25,6 @@ redis:
     db: 0
 email:
     address: ugolkov.prog@gmail.com
-    password: 'rhgd axtv fsrl jnht'
 kafka:
     enable: false
     host: lingua-kafka

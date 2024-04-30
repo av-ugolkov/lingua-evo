@@ -1,9 +1,9 @@
 -- +goose Up
 INSERT INTO users (id, name, email, password_hash, role, last_visit_at, created_at)
 VALUES (gen_random_uuid(),
-        'makedonskiy',
-        'makedonskiy07@gmail.com',
-        '$2a$11$Br7apwhrxr1yvfCSzsz3rec0m9MXRUiyBeY6V543cBXVwl/TKd.fO',
+        'admin',
+        'ugolkov.prog@gmail.com',
+        '$2a$11$oP15pJXtp2ErbHWvGN05ouiMphIzrf8yXJEHkmtf.25JzgWFRaQO6',
         'admin',
         now(),
         now())
