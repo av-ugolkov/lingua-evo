@@ -14,7 +14,7 @@ service:
 postgres:
     name: pg-lingua-evo
     user: lingua
-    password: ib6vACdec2Fmht4lnX153
+    password: 
     host: postgres-base-dev
     port: 5432
 redis:
