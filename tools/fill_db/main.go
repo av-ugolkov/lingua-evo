@@ -73,7 +73,7 @@ func fillWord(db *sql.DB) error {
 	}
 
 	userSvc := user.NewService(repoUser.NewRepo(db), nil)
-	userData, err := userSvc.GetUser(context.Background(), "makedonskiy")
+	userData, err := userSvc.GetUser(context.Background(), "admin")
 	if err != nil {
 		return fmt.Errorf("fildDB.fillWord - GetUser: %w", err)
 	}
