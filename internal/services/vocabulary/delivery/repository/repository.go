@@ -48,7 +48,7 @@ func (r *VocabRepo) Delete(ctx context.Context, vocab entity.Vocabulary) error {
 }
 
 func (r *VocabRepo) GetByName(ctx context.Context, userID uuid.UUID, name string) (entity.Vocabulary, error) {
-	query := `SELECT id, user_id, name, n.lang native_lang, t.lang translate_lang FROM vocabulary v
+	query := `SELECT id, user_id, name, n.lang as native_lang, t.lang as translate_lang FROM vocabulary v
 left join "language" n on n.code =v.native_lang 
 left join "language" t on t.code =v.translate_lang 
 WHERE user_id=$1 AND name=$2;`
@@ -81,18 +81,21 @@ where v.id=$1;`
 	return tags, nil
 }
 
-func (r *VocabRepo) GetByID(ctx context.Context, dictID uuid.UUID) (entity.Vocabulary, error) {
+func (r *VocabRepo) GetByID(ctx context.Context, vocabID uuid.UUID) (entity.Vocabulary, error) {
 	query := `SELECT user_id, name, native_lang, translate_lang FROM vocabulary WHERE id=$1;`
 	var vocab entity.Vocabulary
-	err := r.db.QueryRowContext(ctx, query, dictID).Scan(&vocab.UserID, &vocab.Name, &vocab.NativeLang, &vocab.TranslateLang)
+	err := r.db.QueryRowContext(ctx, query, vocabID).Scan(&vocab.UserID, &vocab.Name, &vocab.NativeLang, &vocab.TranslateLang)
 	if err != nil {
 		return vocab, fmt.Errorf("vocabulary.delivery.repository.VocabRepo.GetByID: %w", err)
 	}
+
+	vocab.ID = vocabID
+
 	return vocab, nil
 }
 
 func (r *VocabRepo) GetVocabularies(ctx context.Context, userID uuid.UUID) ([]entity.Vocabulary, error) {
-	query := `SELECT v.id, v.user_id, name, n.lang native_lang, t.lang translate_lang, array_agg(tg."text") tags FROM vocabulary v
+	query := `SELECT v.id, v.user_id, name, n.lang as native_lang, t.lang as translate_lang, array_agg(tg."text") as tags FROM vocabulary v
 LEFT JOIN "language" n ON n.code = v.native_lang
 LEFT JOIN "language" t ON t.code = v.translate_lang 
 LEFT JOIN "tag" tg ON tg.id = any(v.tags)

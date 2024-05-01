@@ -24,12 +24,12 @@ func NewRepo(db *sql.DB) *WordRepo {
 	}
 }
 
-func (r *WordRepo) GetWord(ctx context.Context, vocabID, nativeID uuid.UUID) (entity.VocabWord, error) {
-	const query = `SELECT id, translate_ids, example_ids FROM word WHERE vocabulary_id=$1 and native_id=$2;`
+func (r *WordRepo) GetWord(ctx context.Context, id uuid.UUID) (entity.VocabWord, error) {
+	const query = `SELECT native_id, translate_ids, example_ids FROM word WHERE id=$1;`
 
 	var word entity.VocabWord
-	err := r.db.QueryRowContext(ctx, query, vocabID, nativeID).Scan(
-		&word.ID,
+	err := r.db.QueryRowContext(ctx, query, id).Scan(
+		&word.NativeID,
 		pq.Array(&word.TranslateIDs),
 		pq.Array(&word.ExampleIDs))
 	if err != nil {
@@ -157,9 +157,9 @@ func (r *WordRepo) GetVocabulary(ctx context.Context, vocabID uuid.UUID) ([]enti
 }
 
 func (r *WordRepo) UpdateWord(ctx context.Context, vocabWord entity.VocabWord) error {
-	query := `UPDATE word SET translate_ids=$1, example_ids=$2 WHERE vocabulary_id=$3 AND native_id=$4;`
+	query := `UPDATE word SET native_id=$1, translate_ids=$2, example_ids=$3 WHERE id=$4;`
 
-	result, err := r.db.ExecContext(ctx, query, vocabWord.TranslateIDs, vocabWord.ExampleIDs, vocabWord.VocabID, vocabWord.NativeID)
+	result, err := r.db.ExecContext(ctx, query, vocabWord.NativeID, vocabWord.TranslateIDs, vocabWord.ExampleIDs, vocabWord.ID)
 	if err != nil {
 		return fmt.Errorf("word.repository.WordRepo.UpdateWord - exec: %w", err)
 	}
