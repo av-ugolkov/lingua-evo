@@ -36,13 +36,13 @@ func main() {
 
 	db, err := pg.NewDB(connStr)
 	if err != nil {
-		slog.Error(fmt.Errorf("can't create pg pool: %v", err).Error())
+		slog.Error(fmt.Sprintf("can't create pg pool: %v", err))
 		return
 	}
 
 	err = fillWord(db)
 	if err != nil {
-		slog.Error(fmt.Errorf("can't fill db: %v", err).Error())
+		slog.Error(fmt.Sprintf("can't fill db: %v", err))
 	}
 }
 
@@ -132,7 +132,7 @@ func fillWord(db *sql.DB) error {
 			Examples:   examples,
 		})
 		if err != nil {
-			slog.Error(fmt.Errorf("fail insert word [%s]: %v", d.Word, err).Error())
+			slog.Error(fmt.Sprintf("fail insert word [%s]: %v", d.Word, err))
 			continue
 		}
 
