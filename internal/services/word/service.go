@@ -19,7 +19,7 @@ const countWorker = 6
 
 type (
 	repoWord interface {
-		GetWord(ctx context.Context, vocabID, wordID uuid.UUID) (VocabWord, error)
+		GetWord(ctx context.Context, wordID uuid.UUID) (VocabWord, error)
 		AddWord(ctx context.Context, word VocabWord) error
 		DeleteWord(ctx context.Context, word VocabWord) error
 		GetRandomVocabulary(ctx context.Context, vocabID uuid.UUID, limit int) ([]VocabWord, error)
@@ -131,7 +131,8 @@ func (s *Service) AddWord(ctx context.Context, vocabWord VocabWordData) (VocabWo
 	}
 
 	vocabularyWord := VocabWord{
-		ID: vocabWord.ID,
+		ID:       vocabWord.ID,
+		NativeID: nativeWordID,
 	}
 
 	return vocabularyWord, nil
@@ -177,26 +178,11 @@ func (s *Service) UpdateWord(ctx context.Context, vocabWordData VocabWordData) (
 	vocabWord := VocabWord{
 		ID:           vocabWordData.ID,
 		VocabID:      vocabWordData.VocabID,
-		NativeID:     vocabWordData.Native.ID,
+		NativeID:     nativeWordID,
 		TranslateIDs: translateWordIDs,
 		ExampleIDs:   exampleIDs,
 	}
 
-	if vocabWordData.Native.ID != nativeWordID {
-		err = s.repo.DeleteWord(ctx, vocabWord)
-		if err != nil {
-			return VocabWord{}, fmt.Errorf("word.Service.UpdateWord - delete old word: %w", err)
-		}
-
-		err = s.repo.AddWord(ctx, vocabWord)
-		if err != nil {
-			return VocabWord{}, fmt.Errorf("word.Service.UpdateWord - add new word: %w", err)
-		}
-
-		return VocabWord{
-			ID: vocabWord.ID,
-		}, nil
-	}
 	err = s.repo.UpdateWord(ctx, vocabWord)
 	if err != nil {
 		return VocabWord{}, fmt.Errorf("word.Service.UpdateWord - update vocabulary: %w", err)
@@ -264,15 +250,15 @@ func (s *Service) GetRandomWords(ctx context.Context, vocabID uuid.UUID, limit i
 	return vocabularyWords, nil
 }
 
-func (s *Service) GetWord(ctx context.Context, vocabID, wordID uuid.UUID) (*VocabWordData, error) {
-	vocabWord, err := s.repo.GetWord(ctx, vocabID, wordID)
+func (s *Service) GetWord(ctx context.Context, wordID uuid.UUID) (*VocabWordData, error) {
+	vocabWord, err := s.repo.GetWord(ctx, wordID)
 	if err != nil {
 		return nil, fmt.Errorf("word.Service.GetWord: %w", err)
 	}
 	var vocabWordData VocabWordData
 	var eg errgroup.Group
 	eg.Go(func() error {
-		words, err := s.dictSvc.GetWords(ctx, []uuid.UUID{wordID})
+		words, err := s.dictSvc.GetWords(ctx, []uuid.UUID{vocabWord.NativeID})
 		if err != nil {
 			return fmt.Errorf("get words: %w", err)
 		}

@@ -20,14 +20,14 @@ import (
 
 const (
 	ParamVocabID = "vocab_id"
-	ParamWordID  = "word_id"
+	ParamID      = "id"
 	ParamLimit   = "limit"
 )
 
 type (
 	VocabWord struct {
-		ID            uuid.UUID `json:"id"`
-		Text          string    `json:"text"`
+		ID            uuid.UUID `json:"id,omitempty"`
+		Text          string    `json:"text,omitempty"`
 		Pronunciation string    `json:"pronunciation,omitempty"`
 	}
 
@@ -124,6 +124,9 @@ func (h *Handler) addWord(ctx context.Context, ex *exchange.Exchanger) {
 
 	wordRs := VocabWordRs{
 		ID: vocabWord.ID,
+		NativeWord: &VocabWord{
+			ID: vocabWord.NativeID,
+		},
 	}
 
 	ex.SetContentType(exchange.ContentTypeJSON)
@@ -152,7 +155,7 @@ func (h *Handler) updateWord(ctx context.Context, ex *exchange.Exchanger) {
 	}
 
 	vocabWord, err := h.wordSvc.UpdateWord(ctx, entity.VocabWordData{
-		ID:      uuid.New(),
+		ID:      data.ID,
 		VocabID: data.VocabID,
 		Native: entityDict.DictWord{
 			ID:            data.NativeWord.ID,
@@ -169,10 +172,13 @@ func (h *Handler) updateWord(ctx context.Context, ex *exchange.Exchanger) {
 
 	wordRs := &VocabWordRs{
 		ID: vocabWord.ID,
+		NativeWord: &VocabWord{
+			ID: vocabWord.NativeID,
+		},
 	}
 
 	ex.SetContentType(exchange.ContentTypeJSON)
-	ex.SendData(http.StatusCreated, wordRs)
+	ex.SendData(http.StatusOK, wordRs)
 }
 
 func (h *Handler) deleteWord(ctx context.Context, ex *exchange.Exchanger) {
@@ -238,19 +244,13 @@ func (h *Handler) getSeveralWords(ctx context.Context, ex *exchange.Exchanger) {
 }
 
 func (h *Handler) getWord(ctx context.Context, ex *exchange.Exchanger) {
-	vocabID, err := ex.QueryParamUUID(ParamVocabID)
-	if err != nil {
-		ex.SendError(http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getWords - get dict id: %w", err))
-		return
-	}
-
-	wordID, err := ex.QueryParamUUID(ParamWordID)
+	wordID, err := ex.QueryParamUUID(ParamID)
 	if err != nil {
 		ex.SendError(http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getWords - get word id: %w", err))
 		return
 	}
 
-	vocabWord, err := h.wordSvc.GetWord(ctx, vocabID, wordID)
+	vocabWord, err := h.wordSvc.GetWord(ctx, wordID)
 	if err != nil {
 		ex.SendError(http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getWords: %w", err))
 		return

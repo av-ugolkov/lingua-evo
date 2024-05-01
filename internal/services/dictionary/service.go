@@ -2,7 +2,6 @@ package dictionary
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"log/slog"
 	"slices"
@@ -12,7 +11,6 @@ import (
 	"github.com/av-ugolkov/lingua-evo/runtime"
 
 	"github.com/google/uuid"
-	"github.com/pkg/errors"
 )
 
 type (
@@ -153,25 +151,23 @@ func (s *Service) GetRandomWord(ctx context.Context, langCode string) (DictWord,
 }
 
 func (s *Service) UpdateWord(ctx context.Context, word DictWord) (uuid.UUID, error) {
-	wordID, err := s.repo.GetWordIDByText(ctx, &word)
-	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		return uuid.Nil, fmt.Errorf("dictionary.Service.UpdateWord - get word: %w", err)
-	} else if wordID == uuid.Nil {
-		//TODO check correct work
-		wordIDs, err := s.repo.AddWords(ctx, []DictWord{word})
-		if err != nil {
-			return uuid.Nil, fmt.Errorf("dictionary.Service.UpdateWord - add word: %w", err)
-		}
-
-		return wordIDs[0], nil
+	words, err := s.repo.GetWords(ctx, []uuid.UUID{word.ID})
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("dictionary.Service.UpdateWord - get word by id: %w", err)
 	}
 
-	word.ID = wordID
+	if len(words) != 0 {
+		word.ID = uuid.New()
+	}
+
+	wordIDs, err := s.repo.AddWords(ctx, []DictWord{word})
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("dictionary.Service.UpdateWord - add word: %w", err)
+	}
 
 	err = s.repo.UpdateWord(ctx, &word)
 	if err != nil {
-		return uuid.Nil, err
+		return uuid.Nil, fmt.Errorf("dictionary.Service.UpdateWord: %w", err)
 	}
-
-	return wordID, nil
+	return wordIDs[0], nil
 }
