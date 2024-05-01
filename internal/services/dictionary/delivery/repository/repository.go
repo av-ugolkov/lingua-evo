@@ -116,8 +116,8 @@ func (r *DictionaryRepo) UpdateWord(ctx context.Context, w *entity.DictWord) err
 		return fmt.Errorf("dictionary.repository.DictionaryRepo.EditWord - exec: %w", err)
 	}
 
-	if rows, err := result.RowsAffected(); rows == 0 {
-		return fmt.Errorf("dictionary.repository.DictionaryRepo.EditWord: not fount effected rows")
+	if rows, err := result.RowsAffected(); rows > 1 {
+		return fmt.Errorf("dictionary.repository.DictionaryRepo.EditWord: %w", entity.ErrorAffectRows)
 	} else if err != nil {
 		return fmt.Errorf("dictionary.repository.DictionaryRepo.EditWord - rows affected: %w", err)
 	}
