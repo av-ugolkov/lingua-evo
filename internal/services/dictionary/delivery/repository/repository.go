@@ -23,13 +23,13 @@ func NewRepo(db *sql.DB) *DictionaryRepo {
 	}
 }
 
-func (r *DictionaryRepo) AddWords(ctx context.Context, words []entity.DictWord) ([]uuid.UUID, error) {
-	wordTexts := make([]string, 0, len(words))
-	statements := make([]string, 0, len(words))
-	params := make([]any, 0, len(words)+1)
+func (r *DictionaryRepo) AddWords(ctx context.Context, inWords []entity.DictWord) ([]entity.DictWord, error) {
+	wordTexts := make([]string, 0, len(inWords))
+	statements := make([]string, 0, len(inWords))
+	params := make([]any, 0, len(inWords)+1)
 	params = append(params, &wordTexts)
 	counter := len(params)
-	for _, word := range words {
+	for _, word := range inWords {
 		wordTexts = append(wordTexts, word.Text)
 		statement := "$" + strconv.Itoa(counter+1) +
 			",$" + strconv.Itoa(counter+2) +
@@ -42,38 +42,37 @@ func (r *DictionaryRepo) AddWords(ctx context.Context, words []entity.DictWord) 
 		counter += 7
 		statements = append(statements, "("+statement+")")
 
-		params = append(params, word.ID, word.Text, word.Pronunciation, word.LangCode, word.Creator,
-			time.Now().UTC().Format(time.RFC3339), time.Now().UTC().Format(time.RFC3339))
+		params = append(params, word.ID, word.Text, word.Pronunciation, word.LangCode, word.Creator, word.UpdatedAt.Format(time.RFC3339), word.CreatedAt.Format(time.RFC3339))
 	}
 
-	table := getTable(words[0].LangCode)
+	table := getTable(inWords[0].LangCode)
 	query := fmt.Sprintf(
-		`WITH d AS (
-    		SELECT id FROM %[1]s WHERE text = ANY($1::text[])),
+		`WITH s AS (
+    		SELECT id, text, pronunciation, lang_code, creator, updated_at, created_at FROM %[1]s WHERE text = ANY($1::text[])),
 		ins AS (
     		INSERT INTO %[1]s (id, text, pronunciation, lang_code, creator, updated_at, created_at)
 			VALUES %[2]s
-    		ON CONFLICT DO NOTHING RETURNING id)
-		SELECT id 
+    		ON CONFLICT DO NOTHING RETURNING id, text, pronunciation, lang_code, creator, updated_at, created_at)
+		SELECT id, text, pronunciation, lang_code, creator, updated_at, created_at 
 		FROM ins 
 		UNION ALL 
-		SELECT id 
-		FROM d;`, table, strings.Join(statements, ", "))
+		SELECT id, text, pronunciation, lang_code, creator, updated_at, created_at 
+		FROM s;`, table, strings.Join(statements, ", "))
 	rows, err := r.db.QueryContext(ctx, query, params...)
 	if err != nil {
 		return nil, fmt.Errorf("dictionary.repository.DictionaryRepo.AddWord - query: %w", err)
 	}
 
-	wordIDs := make([]uuid.UUID, 0, len(words))
+	words := make([]entity.DictWord, 0, len(inWords))
 	for rows.Next() {
-		var id uuid.UUID
-		if err := rows.Scan(&id); err != nil {
+		var word entity.DictWord
+		if err := rows.Scan(&word.ID, &word.Text, &word.Pronunciation, &word.LangCode, &word.Creator, &word.UpdatedAt, &word.CreatedAt); err != nil {
 			return nil, fmt.Errorf("dictionary.repository.DictionaryRepo.AddWord - scan: %w", err)
 		}
-		wordIDs = append(wordIDs, id)
+		words = append(words, word)
 	}
 
-	return wordIDs, nil
+	return words, nil
 }
 
 func (r *DictionaryRepo) GetWordIDByText(ctx context.Context, w *entity.DictWord) (uuid.UUID, error) {
@@ -110,8 +109,8 @@ func (r *DictionaryRepo) GetWords(ctx context.Context, ids []uuid.UUID) ([]entit
 }
 
 func (r *DictionaryRepo) UpdateWord(ctx context.Context, w *entity.DictWord) error {
-	query := `UPDATE dictionary SET text=$1, pronunciation=$2 WHERE id=$3`
-	result, err := r.db.ExecContext(ctx, query, w.Text, w.Pronunciation, w.ID)
+	query := `UPDATE dictionary SET text=$2, pronunciation=$3, updated_at=$4 WHERE id=$1`
+	result, err := r.db.ExecContext(ctx, query, w.ID, w.Text, w.Pronunciation, w.UpdatedAt)
 	if err != nil {
 		return fmt.Errorf("dictionary.repository.DictionaryRepo.EditWord - exec: %w", err)
 	}
