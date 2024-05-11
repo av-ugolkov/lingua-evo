@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"slices"
 	"strings"
+	"time"
 
 	entityLanguage "github.com/av-ugolkov/lingua-evo/internal/services/language"
 	"github.com/av-ugolkov/lingua-evo/runtime"
@@ -15,7 +16,7 @@ import (
 
 type (
 	repoDictionary interface {
-		AddWords(ctx context.Context, words []DictWord) ([]uuid.UUID, error)
+		AddWords(ctx context.Context, words []DictWord) ([]DictWord, error)
 		GetWordIDByText(ctx context.Context, w *DictWord) (uuid.UUID, error)
 		GetWords(ctx context.Context, ids []uuid.UUID) ([]DictWord, error)
 		UpdateWord(ctx context.Context, w *DictWord) error
@@ -45,9 +46,9 @@ func NewService(repo repoDictionary, langSvc langSvc) *Service {
 	}
 }
 
-func (s *Service) AddWords(ctx context.Context, words []DictWord) ([]uuid.UUID, error) {
+func (s *Service) AddWords(ctx context.Context, words []DictWord) ([]DictWord, error) {
 	if len(words) == 0 {
-		return []uuid.UUID{}, nil
+		return []DictWord{}, nil
 	}
 
 	languages, err := s.langSvc.GetAvailableLanguages(ctx)
@@ -71,12 +72,12 @@ func (s *Service) AddWords(ctx context.Context, words []DictWord) ([]uuid.UUID, 
 		}
 		i++
 	}
-	wordIDs, err := s.repo.AddWords(ctx, words)
+	words, err = s.repo.AddWords(ctx, words)
 	if err != nil {
 		return nil, fmt.Errorf("dictionary.Service.AddWords: %v", err)
 	}
 
-	return wordIDs, nil
+	return words, nil
 }
 
 func (s *Service) GetWordByText(ctx context.Context, text, langCode string) (uuid.UUID, error) {
@@ -150,24 +151,26 @@ func (s *Service) GetRandomWord(ctx context.Context, langCode string) (DictWord,
 	return word, nil
 }
 
-func (s *Service) UpdateWord(ctx context.Context, word DictWord) (uuid.UUID, error) {
+func (s *Service) UpdateWord(ctx context.Context, word DictWord) (DictWord, error) {
 	words, err := s.repo.GetWords(ctx, []uuid.UUID{word.ID})
 	if err != nil {
-		return uuid.Nil, fmt.Errorf("dictionary.Service.UpdateWord - get word by id: %w", err)
+		return DictWord{}, fmt.Errorf("dictionary.Service.UpdateWord - get word by id: %w", err)
 	}
 
 	if len(words) != 0 {
 		word.ID = uuid.New()
 	}
 
-	wordIDs, err := s.repo.AddWords(ctx, []DictWord{word})
+	word.UpdatedAt = time.Now().UTC()
+
+	words, err = s.repo.AddWords(ctx, []DictWord{word})
 	if err != nil {
-		return uuid.Nil, fmt.Errorf("dictionary.Service.UpdateWord - add word: %w", err)
+		return DictWord{}, fmt.Errorf("dictionary.Service.UpdateWord - add word: %w", err)
 	}
 
 	err = s.repo.UpdateWord(ctx, &word)
 	if err != nil {
-		return uuid.Nil, fmt.Errorf("dictionary.Service.UpdateWord: %w", err)
+		return DictWord{}, fmt.Errorf("dictionary.Service.UpdateWord: %w", err)
 	}
-	return wordIDs[0], nil
+	return words[0], nil
 }

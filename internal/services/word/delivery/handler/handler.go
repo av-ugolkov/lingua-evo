@@ -6,6 +6,7 @@ import (
 	"fmt"
 	entityDict "github.com/av-ugolkov/lingua-evo/internal/services/dictionary"
 	"net/http"
+	"time"
 
 	"github.com/av-ugolkov/lingua-evo/internal/delivery"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/http/exchange"
@@ -49,6 +50,8 @@ type (
 		NativeWord *VocabWord `json:"native,omitempty"`
 		Translates []string   `json:"translates,omitempty"`
 		Examples   []string   `json:"examples,omitempty"`
+		Created    time.Time  `json:"created,omitempty"`
+		Updated    time.Time  `json:"updated,omitempty"`
 	}
 )
 
@@ -87,16 +90,19 @@ func (h *Handler) addWord(ctx context.Context, ex *exchange.Exchanger) {
 	translateWords := make([]entityDict.DictWord, 0, len(data.Translates))
 	for _, translateWord := range data.Translates {
 		translateWords = append(translateWords, entityDict.DictWord{
-			ID:   uuid.New(),
-			Text: translateWord,
+			ID:        uuid.New(),
+			Text:      translateWord,
+			CreatedAt: time.Now().UTC(),
+			UpdatedAt: time.Now().UTC(),
 		})
 	}
 
 	examples := make([]entityExample.Example, 0, len(data.Examples))
 	for _, example := range data.Examples {
 		examples = append(examples, entityExample.Example{
-			ID:   uuid.New(),
-			Text: example,
+			ID:        uuid.New(),
+			Text:      example,
+			CreatedAt: time.Now().UTC(),
 		})
 	}
 
@@ -107,9 +113,13 @@ func (h *Handler) addWord(ctx context.Context, ex *exchange.Exchanger) {
 			ID:            uuid.New(),
 			Text:          data.NativeWord.Text,
 			Pronunciation: data.NativeWord.Pronunciation,
+			CreatedAt:     time.Now().UTC(),
+			UpdatedAt:     time.Now().UTC(),
 		},
 		Translates: translateWords,
 		Examples:   examples,
+		CreatedAt:  time.Now().UTC(),
+		UpdatedAt:  time.Now().UTC(),
 	})
 	if err != nil {
 		switch {
@@ -127,6 +137,8 @@ func (h *Handler) addWord(ctx context.Context, ex *exchange.Exchanger) {
 		NativeWord: &VocabWord{
 			ID: vocabWord.NativeID,
 		},
+		Created: vocabWord.CreatedAt,
+		Updated: vocabWord.UpdatedAt,
 	}
 
 	ex.SetContentType(exchange.ContentTypeJSON)
@@ -315,6 +327,8 @@ func (h *Handler) getWords(ctx context.Context, ex *exchange.Exchanger) {
 			},
 			Translates: translates,
 			Examples:   examples,
+			Created:    vocabWord.CreatedAt,
+			Updated:    vocabWord.UpdatedAt,
 		}
 
 		wordsRs = append(wordsRs, wordRs)
