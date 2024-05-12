@@ -3,13 +3,11 @@ package dictionary
 import (
 	"context"
 	"fmt"
+	entityLanguage "github.com/av-ugolkov/lingua-evo/internal/services/language"
+	"github.com/av-ugolkov/lingua-evo/runtime"
 	"log/slog"
 	"slices"
 	"strings"
-	"time"
-
-	entityLanguage "github.com/av-ugolkov/lingua-evo/internal/services/language"
-	"github.com/av-ugolkov/lingua-evo/runtime"
 
 	"github.com/google/uuid"
 )
@@ -17,12 +15,11 @@ import (
 type (
 	repoDictionary interface {
 		AddWords(ctx context.Context, words []DictWord) ([]DictWord, error)
-		GetWordIDByText(ctx context.Context, w *DictWord) (uuid.UUID, error)
+		GetWordsByText(ctx context.Context, words []DictWord) ([]DictWord, error)
 		GetWords(ctx context.Context, ids []uuid.UUID) ([]DictWord, error)
 		UpdateWord(ctx context.Context, w *DictWord) error
 		FindWords(ctx context.Context, w *DictWord) ([]uuid.UUID, error)
-		DeleteWordByID(ctx context.Context, id uuid.UUID) (int64, error)
-		DeleteWordByText(ctx context.Context, text, langCode string) (int64, error)
+		DeleteWordByText(ctx context.Context, word *DictWord) error
 		GetRandomWord(ctx context.Context, langCode string) (DictWord, error)
 	}
 
@@ -46,96 +43,67 @@ func NewService(repo repoDictionary, langSvc langSvc) *Service {
 	}
 }
 
-func (s *Service) AddWords(ctx context.Context, words []DictWord) ([]DictWord, error) {
-	if len(words) == 0 {
-		return []DictWord{}, nil
-	}
-
+func (s *Service) GetOrAddWords(ctx context.Context, inWords []DictWord) ([]DictWord, error) {
 	languages, err := s.langSvc.GetAvailableLanguages(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("dictionary.Service.AddWords - get languages: %v", err)
 	}
-	for i := 0; i < len(words); {
-		word := words[i]
-		if !slices.ContainsFunc(languages, func(language *entityLanguage.Language) bool {
-			return word.LangCode == language.Code
-		}) {
-			slog.Warn(fmt.Sprintf("dictionary.Service.AddWords - check language: %v", err))
-			words = slices.Delete(words, i, i+1)
-			continue
-		}
 
-		word.Text = strings.TrimSpace(word.Text)
-		if word.Text == runtime.EmptyString {
-			slog.Warn("dictionary.Service.AddWords - empty text")
-			words = slices.Delete(words, i, i+1)
-		}
-		i++
+	dictWords := checkWords(inWords, languages)
+	if len(dictWords) == 0 {
+		return []DictWord{}, nil
 	}
-	words, err = s.repo.AddWords(ctx, words)
+
+	getWords, err := s.repo.GetWordsByText(ctx, dictWords)
+	if err != nil {
+		return nil, fmt.Errorf("dictionary.Service.AddWords - get words: %v", err)
+	}
+
+	addWords, err := s.repo.AddWords(ctx, dictWords)
 	if err != nil {
 		return nil, fmt.Errorf("dictionary.Service.AddWords: %v", err)
 	}
 
+	words := make([]DictWord, 0, len(getWords)+len(addWords))
+	for _, w := range getWords {
+		words = append(words, w)
+	}
+	for _, w := range addWords {
+		words = append(words, w)
+	}
+
 	return words, nil
 }
 
-func (s *Service) GetWordByText(ctx context.Context, text, langCode string) (uuid.UUID, error) {
-	text = strings.TrimSpace(text)
-	if text == runtime.EmptyString {
-		return uuid.Nil, fmt.Errorf("dictionary.Service.GetWordByText - empty text")
-	}
-
-	if err := s.langSvc.CheckLanguage(ctx, langCode); err != nil {
-		return uuid.Nil, fmt.Errorf("dictionary.Service.GetWordByText - check language: %v", err)
-	}
-
-	word := DictWord{
-		Text:     text,
-		LangCode: langCode,
-	}
-
-	wordID, err := s.repo.GetWordIDByText(ctx, &word)
-	if err != nil {
-		return uuid.Nil, fmt.Errorf("dictionary.Service.GetWordByText: %v", err)
-	}
-	return wordID, nil
-}
-
-func (s *Service) GetWords(ctx context.Context, wordIDs []uuid.UUID) ([]DictWord, error) {
+func (s *Service) GetWordsByID(ctx context.Context, wordIDs []uuid.UUID) ([]DictWord, error) {
 	if len(wordIDs) == 0 {
 		return []DictWord{}, nil
 	}
+
 	words, err := s.repo.GetWords(ctx, wordIDs)
 	if err != nil {
 		return nil, fmt.Errorf("dictionary.Service.GetWords: %w", err)
 	}
+
 	return words, nil
 }
 
-func (s *Service) FindWords(ctx context.Context, text, langCode string) ([]uuid.UUID, error) {
-	word := DictWord{
-		Text:     text,
-		LangCode: langCode,
-	}
-
-	wordIDs, err := s.repo.FindWords(ctx, &word)
+func (s *Service) GetWordsByText(ctx context.Context, inWords []DictWord) ([]DictWord, error) {
+	languages, err := s.langSvc.GetAvailableLanguages(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("dictionary.Service.FindWord: %w", err)
+		return nil, fmt.Errorf("dictionary.Service.AddWords - get languages: %v", err)
 	}
 
-	return wordIDs, nil
-}
+	dictWords := checkWords(inWords, languages)
+	if len(dictWords) == 0 {
+		return []DictWord{}, nil
+	}
 
-func (s *Service) DeleteWord(ctx context.Context, text, langCode string) error {
-	i, err := s.repo.DeleteWordByText(ctx, text, langCode)
+	words, err := s.repo.GetWordsByText(ctx, dictWords)
 	if err != nil {
-		return fmt.Errorf("dictionary.Service.DeleteWord: %w", err)
+		return nil, fmt.Errorf("dictionary.Service.GetWordByText: %v", err)
 	}
-
-	slog.Debug(fmt.Sprintf("deleted %d rows", i))
-
-	return nil
+	return words, nil
 }
 
 func (s *Service) GetRandomWord(ctx context.Context, langCode string) (DictWord, error) {
@@ -151,26 +119,33 @@ func (s *Service) GetRandomWord(ctx context.Context, langCode string) (DictWord,
 	return word, nil
 }
 
-func (s *Service) UpdateWord(ctx context.Context, word DictWord) (DictWord, error) {
-	words, err := s.repo.GetWords(ctx, []uuid.UUID{word.ID})
+func (s *Service) DeleteWordByText(ctx context.Context, word DictWord) error {
+	err := s.repo.DeleteWordByText(ctx, &word)
 	if err != nil {
-		return DictWord{}, fmt.Errorf("dictionary.Service.UpdateWord - get word by id: %w", err)
+		return fmt.Errorf("dictionary.Service.DeleteWordByText: %w", err)
 	}
 
-	if len(words) != 0 {
-		word.ID = uuid.New()
+	return nil
+}
+
+func checkWords(words []DictWord, languages []*entityLanguage.Language) []DictWord {
+	for i := 0; i < len(words); {
+		if !slices.ContainsFunc(languages, func(language *entityLanguage.Language) bool {
+			return words[i].LangCode == language.Code
+		}) {
+			slog.Warn(fmt.Sprintf("dictionary.checkWords - not validate language"))
+			words = slices.Delete(words, i, i+1)
+			continue
+		}
+
+		words[i].Text = strings.TrimSpace(words[i].Text)
+		if words[i].Text == runtime.EmptyString {
+			slog.Warn(fmt.Sprintf("dictionary.checkWords - empty text"))
+			words = slices.Delete(words, i, i+1)
+			continue
+		}
+		i++
 	}
 
-	word.UpdatedAt = time.Now().UTC()
-
-	words, err = s.repo.AddWords(ctx, []DictWord{word})
-	if err != nil {
-		return DictWord{}, fmt.Errorf("dictionary.Service.UpdateWord - add word: %w", err)
-	}
-
-	err = s.repo.UpdateWord(ctx, &word)
-	if err != nil {
-		return DictWord{}, fmt.Errorf("dictionary.Service.UpdateWord: %w", err)
-	}
-	return words[0], nil
+	return words
 }
