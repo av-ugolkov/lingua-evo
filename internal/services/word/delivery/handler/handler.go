@@ -27,17 +27,17 @@ const (
 
 type (
 	VocabWord struct {
-		ID            uuid.UUID `json:"id,omitempty"`
-		Text          string    `json:"text,omitempty"`
-		Pronunciation string    `json:"pronunciation,omitempty"`
+		ID            *uuid.UUID `json:"id,omitempty"`
+		Text          string     `json:"text,omitempty"`
+		Pronunciation string     `json:"pronunciation,omitempty"`
 	}
 
 	VocabWordRq struct {
-		ID         uuid.UUID `json:"id,omitempty"`
-		VocabID    uuid.UUID `json:"vocab_id"`
-		NativeWord VocabWord `json:"native_word"`
-		Translates []string  `json:"translates,omitempty"`
-		Examples   []string  `json:"examples,omitempty"`
+		ID         *uuid.UUID `json:"id,omitempty"`
+		VocabID    uuid.UUID  `json:"vocab_id"`
+		Native     VocabWord  `json:"native"`
+		Translates []string   `json:"translates,omitempty"`
+		Examples   []string   `json:"examples,omitempty"`
 	}
 
 	RemoveVocabWordRq struct {
@@ -46,12 +46,12 @@ type (
 	}
 
 	VocabWordRs struct {
-		ID         uuid.UUID  `json:"id"`
-		NativeWord *VocabWord `json:"native,omitempty"`
+		ID         *uuid.UUID `json:"id,omitempty"`
+		Native     *VocabWord `json:"native,omitempty"`
 		Translates []string   `json:"translates,omitempty"`
 		Examples   []string   `json:"examples,omitempty"`
-		Created    time.Time  `json:"created,omitempty"`
-		Updated    time.Time  `json:"updated,omitempty"`
+		Created    *time.Time `json:"created,omitempty"`
+		Updated    *time.Time `json:"updated,omitempty"`
 	}
 )
 
@@ -111,8 +111,8 @@ func (h *Handler) addWord(ctx context.Context, ex *exchange.Exchanger) {
 		VocabID: data.VocabID,
 		Native: entityDict.DictWord{
 			ID:            uuid.New(),
-			Text:          data.NativeWord.Text,
-			Pronunciation: data.NativeWord.Pronunciation,
+			Text:          data.Native.Text,
+			Pronunciation: data.Native.Pronunciation,
 			CreatedAt:     time.Now().UTC(),
 			UpdatedAt:     time.Now().UTC(),
 		},
@@ -133,12 +133,12 @@ func (h *Handler) addWord(ctx context.Context, ex *exchange.Exchanger) {
 	}
 
 	wordRs := VocabWordRs{
-		ID: vocabWord.ID,
-		NativeWord: &VocabWord{
-			ID: vocabWord.NativeID,
+		ID: &vocabWord.ID,
+		Native: &VocabWord{
+			ID: &vocabWord.NativeID,
 		},
-		Created: vocabWord.CreatedAt,
-		Updated: vocabWord.UpdatedAt,
+		Created: &vocabWord.CreatedAt,
+		Updated: &vocabWord.UpdatedAt,
 	}
 
 	ex.SetContentType(exchange.ContentTypeJSON)
@@ -155,27 +155,35 @@ func (h *Handler) updateWord(ctx context.Context, ex *exchange.Exchanger) {
 
 	translates := make([]entityDict.DictWord, 0, len(data.Translates))
 	for _, tr := range data.Translates {
-		translates = append(translates, entityDict.DictWord{Text: tr})
+		translates = append(translates, entityDict.DictWord{
+			ID:        uuid.New(),
+			Text:      tr,
+			CreatedAt: time.Now().UTC(),
+			UpdatedAt: time.Now().UTC(),
+		})
 	}
 
 	examples := make([]entityExample.Example, 0, len(data.Examples))
 	for _, example := range data.Examples {
 		examples = append(examples, entityExample.Example{
-			ID:   uuid.New(),
-			Text: example,
+			ID:        uuid.New(),
+			Text:      example,
+			CreatedAt: time.Now().UTC(),
 		})
 	}
 
 	vocabWord, err := h.wordSvc.UpdateWord(ctx, entity.VocabWordData{
-		ID:      data.ID,
+		ID:      *data.ID,
 		VocabID: data.VocabID,
 		Native: entityDict.DictWord{
-			ID:            data.NativeWord.ID,
-			Text:          data.NativeWord.Text,
-			Pronunciation: data.NativeWord.Pronunciation,
+			ID:            *data.Native.ID,
+			Text:          data.Native.Text,
+			Pronunciation: data.Native.Pronunciation,
+			UpdatedAt:     time.Now().UTC(),
 		},
 		Translates: translates,
 		Examples:   examples,
+		UpdatedAt:  time.Now().UTC(),
 	})
 	if err != nil {
 		ex.SendError(http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.updateWord: %v", err))
@@ -183,10 +191,12 @@ func (h *Handler) updateWord(ctx context.Context, ex *exchange.Exchanger) {
 	}
 
 	wordRs := &VocabWordRs{
-		ID: vocabWord.ID,
-		NativeWord: &VocabWord{
-			ID: vocabWord.NativeID,
+		ID: &vocabWord.ID,
+		Native: &VocabWord{
+			ID: &vocabWord.NativeID,
 		},
+		Created: &vocabWord.CreatedAt,
+		Updated: &vocabWord.UpdatedAt,
 	}
 
 	ex.SetContentType(exchange.ContentTypeJSON)
@@ -234,18 +244,12 @@ func (h *Handler) getSeveralWords(ctx context.Context, ex *exchange.Exchanger) {
 			translates = append(translates, translate.Text)
 		}
 
-		examples := make([]string, 0, len(vocabWord.Examples))
-		for _, example := range vocabWord.Examples {
-			examples = append(examples, example.Text)
-		}
-
 		wordRs := VocabWordRs{
-			NativeWord: &VocabWord{
+			Native: &VocabWord{
 				Text:          vocabWord.Native.Text,
 				Pronunciation: vocabWord.Native.Pronunciation,
 			},
 			Translates: translates,
-			Examples:   examples,
 		}
 
 		wordsRs = append(wordsRs, wordRs)
@@ -279,9 +283,9 @@ func (h *Handler) getWord(ctx context.Context, ex *exchange.Exchanger) {
 	}
 
 	wordRs := VocabWordRs{
-		ID: vocabWord.ID,
-		NativeWord: &VocabWord{
-			ID:            vocabWord.Native.ID,
+		ID: &vocabWord.ID,
+		Native: &VocabWord{
+			ID:            &vocabWord.Native.ID,
 			Text:          vocabWord.Native.Text,
 			Pronunciation: vocabWord.Native.Pronunciation,
 		},
@@ -319,16 +323,16 @@ func (h *Handler) getWords(ctx context.Context, ex *exchange.Exchanger) {
 		}
 
 		wordRs := VocabWordRs{
-			ID: vocabWord.ID,
-			NativeWord: &VocabWord{
-				ID:            vocabWord.Native.ID,
+			ID: &vocabWord.ID,
+			Native: &VocabWord{
+				ID:            &vocabWord.Native.ID,
 				Text:          vocabWord.Native.Text,
 				Pronunciation: vocabWord.Native.Pronunciation,
 			},
 			Translates: translates,
 			Examples:   examples,
-			Created:    vocabWord.CreatedAt,
-			Updated:    vocabWord.UpdatedAt,
+			Created:    &vocabWord.CreatedAt,
+			Updated:    &vocabWord.UpdatedAt,
 		}
 
 		wordsRs = append(wordsRs, wordRs)
