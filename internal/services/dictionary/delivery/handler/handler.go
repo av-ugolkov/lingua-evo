@@ -20,23 +20,23 @@ import (
 
 type (
 	WordRq struct {
-		ID            uuid.UUID `json:"id,omitempty"`
-		Text          string    `json:"text,omitempty"`
-		Pronunciation string    `json:"pronunciation,omitempty"`
-		LangCode      string    `json:"lang_code,omitempty"`
-		CreatedAt     time.Time `json:"created_at,omitempty"`
-		UpdatedAt     time.Time `json:"updated_at,omitempty"`
+		ID            *uuid.UUID `json:"id,omitempty"`
+		Text          string     `json:"text,omitempty"`
+		Pronunciation string     `json:"pronunciation,omitempty"`
+		LangCode      string     `json:"lang_code,omitempty"`
+		CreatedAt     *time.Time `json:"created_at,omitempty"`
+		UpdatedAt     *time.Time `json:"updated_at,omitempty"`
 	}
 
 	WordRs struct {
-		ID            uuid.UUID `json:"id,omitempty"`
-		Text          string    `json:"text,omitempty"`
-		Pronunciation string    `json:"pronunciation,omitempty"`
-		LangCode      string    `json:"lang_code,omitempty"`
-		Creator       uuid.UUID `json:"creator,omitempty"`
-		Moderator     uuid.UUID `json:"moderator,omitempty"`
-		CreatedAt     time.Time `json:"created_at,omitempty"`
-		UpdatedAt     time.Time `json:"updated_at,omitempty"`
+		ID            *uuid.UUID `json:"id,omitempty"`
+		Text          string     `json:"text,omitempty"`
+		Pronunciation string     `json:"pronunciation,omitempty"`
+		LangCode      string     `json:"lang_code,omitempty"`
+		Creator       *uuid.UUID `json:"creator,omitempty"`
+		Moderator     *uuid.UUID `json:"moderator,omitempty"`
+		CreatedAt     *time.Time `json:"created_at,omitempty"`
+		UpdatedAt     *time.Time `json:"updated_at,omitempty"`
 	}
 )
 
@@ -68,7 +68,7 @@ func (h *Handler) addWord(ctx context.Context, ex *exchange.Exchanger) {
 		return
 	}
 
-	words, err := h.dictSvc.AddWords(ctx, []entity.DictWord{
+	words, err := h.dictSvc.GetOrAddWords(ctx, []entity.DictWord{
 		{
 			ID:            uuid.New(),
 			Text:          data.Text,
@@ -84,11 +84,11 @@ func (h *Handler) addWord(ctx context.Context, ex *exchange.Exchanger) {
 	}
 
 	wordRs := &WordRs{
-		ID:            words[0].ID,
+		ID:            &words[0].ID,
 		Text:          words[0].Text,
 		Pronunciation: words[0].Pronunciation,
-		CreatedAt:     words[0].CreatedAt,
-		UpdatedAt:     words[0].UpdatedAt,
+		CreatedAt:     &words[0].CreatedAt,
+		UpdatedAt:     &words[0].UpdatedAt,
 	}
 
 	ex.SetContentType(exchange.ContentTypeJSON)
@@ -116,14 +116,19 @@ func (h *Handler) getWord(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	wordID, err := h.dictSvc.GetWordByText(ctx, text, langCode)
+	wordIDs, err := h.dictSvc.GetWordsByText(ctx, []entity.DictWord{
+		{
+			Text:     text,
+			LangCode: langCode,
+		},
+	})
 	if err != nil {
 		ex.SendError(http.StatusInternalServerError, fmt.Errorf("dictionary.delivery.Handler.getWord: %v", err))
 		return
 	}
 
 	wordRs := &WordRs{
-		ID: wordID,
+		ID: &wordIDs[0].ID,
 	}
 
 	ex.SetContentType(exchange.ContentTypeJSON)
