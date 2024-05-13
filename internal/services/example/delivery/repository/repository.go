@@ -12,6 +12,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/av-ugolkov/lingua-evo/internal/services/example"
+	entity "github.com/av-ugolkov/lingua-evo/internal/services/example"
 )
 
 type ExampleRepo struct {
@@ -24,14 +25,14 @@ func NewRepo(db *sql.DB) *ExampleRepo {
 	}
 }
 
-func (r *ExampleRepo) AddExamples(ctx context.Context, ids []uuid.UUID, texts []string, langCode string) ([]uuid.UUID, error) {
-	wordTexts := make([]string, 0, len(texts))
-	statements := make([]string, 0, len(texts))
-	params := make([]any, 0, len(texts)+1)
+func (r *ExampleRepo) AddExamples(ctx context.Context, examples []entity.Example, langCode string) ([]uuid.UUID, error) {
+	wordTexts := make([]string, 0, len(examples))
+	statements := make([]string, 0, len(examples))
+	params := make([]any, 0, len(examples)+1)
 	params = append(params, &wordTexts)
 	counter := len(params)
-	for i := 0; i < len(texts); i++ {
-		wordTexts = append(wordTexts, texts[i])
+	for i := 0; i < len(examples); i++ {
+		wordTexts = append(wordTexts, examples[i].Text)
 		statement := "$" + strconv.Itoa(counter+1) +
 			",$" + strconv.Itoa(counter+2) +
 			",$" + strconv.Itoa(counter+3)
@@ -39,7 +40,7 @@ func (r *ExampleRepo) AddExamples(ctx context.Context, ids []uuid.UUID, texts []
 		counter += 3
 		statements = append(statements, "("+statement+")")
 
-		params = append(params, ids[i], texts[i], time.Now().UTC().Format(time.RFC3339))
+		params = append(params, examples[i].ID, examples[i].Text, examples[i].CreatedAt.Format(time.RFC3339))
 	}
 
 	query := fmt.Sprintf(`
@@ -59,7 +60,7 @@ func (r *ExampleRepo) AddExamples(ctx context.Context, ids []uuid.UUID, texts []
 		return nil, fmt.Errorf("example.repository.ExampleRepo.AddExamples - query: %w", err)
 	}
 
-	tagIDs := make([]uuid.UUID, 0, len(texts))
+	tagIDs := make([]uuid.UUID, 0, len(examples))
 	for rows.Next() {
 		var id uuid.UUID
 		err = rows.Scan(&id)
@@ -102,7 +103,7 @@ func (r *ExampleRepo) GetExamples(ctx context.Context, ids []uuid.UUID) ([]examp
 	if err != nil {
 		return nil, fmt.Errorf("example.repository.ExampleRepo.GetExamples: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	examples := make([]example.Example, 0, len(ids))
 	for rows.Next() {

@@ -18,6 +18,6 @@ type DictWord struct {
 	LangCode      string
 	Creator       uuid.UUID
 	Moderator     uuid.UUID
-	UpdateAt      time.Time
+	UpdatedAt     time.Time
 	CreatedAt     time.Time
 }

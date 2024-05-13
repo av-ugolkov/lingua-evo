@@ -3,13 +3,11 @@ package example
 import (
 	"context"
 	"fmt"
-	"strings"
-
 	"github.com/google/uuid"
 )
 
 type repoExample interface {
-	AddExamples(ctx context.Context, ids []uuid.UUID, texts []string, langCode string) ([]uuid.UUID, error)
+	AddExamples(ctx context.Context, examples []Example, langCode string) ([]uuid.UUID, error)
 	GetExampleByValue(ctx context.Context, text string, langCode string) (uuid.UUID, error)
 	GetExampleById(ctx context.Context, id uuid.UUID, langCode string) (string, error)
 	GetExamples(ctx context.Context, exampleIDs []uuid.UUID) ([]Example, error)
@@ -30,17 +28,7 @@ func (s *Service) AddExamples(ctx context.Context, examples []Example, langCode 
 		return []uuid.UUID{}, nil
 	}
 
-	ids := make([]uuid.UUID, 0, len(examples))
-	texts := make([]string, 0, len(examples))
-	for i := 0; i < len(examples); i++ {
-		text := strings.TrimSpace(examples[i].Text)
-		if text == "" {
-			continue
-		}
-		texts = append(texts, text)
-		ids = append(ids, examples[i].ID)
-	}
-	ids, err := s.repo.AddExamples(ctx, ids, texts, langCode)
+	ids, err := s.repo.AddExamples(ctx, examples, langCode)
 	if err != nil {
 		return nil, err
 	}
