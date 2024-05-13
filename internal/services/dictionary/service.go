@@ -65,12 +65,8 @@ func (s *Service) GetOrAddWords(ctx context.Context, inWords []DictWord) ([]Dict
 	}
 
 	words := make([]DictWord, 0, len(getWords)+len(addWords))
-	for _, w := range getWords {
-		words = append(words, w)
-	}
-	for _, w := range addWords {
-		words = append(words, w)
-	}
+	words = append(words, getWords...)
+	words = append(words, addWords...)
 
 	return words, nil
 }
@@ -133,14 +129,14 @@ func checkWords(words []DictWord, languages []*entityLanguage.Language) []DictWo
 		if !slices.ContainsFunc(languages, func(language *entityLanguage.Language) bool {
 			return words[i].LangCode == language.Code
 		}) {
-			slog.Warn(fmt.Sprintf("dictionary.checkWords - not validate language"))
+			slog.Warn("dictionary.checkWords - not validate language")
 			words = slices.Delete(words, i, i+1)
 			continue
 		}
 
 		words[i].Text = strings.TrimSpace(words[i].Text)
 		if words[i].Text == runtime.EmptyString {
-			slog.Warn(fmt.Sprintf("dictionary.checkWords - empty text"))
+			slog.Warn("dictionary.checkWords - empty text")
 			words = slices.Delete(words, i, i+1)
 			continue
 		}
