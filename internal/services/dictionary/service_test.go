@@ -24,13 +24,14 @@ func TestService_AddWord(t *testing.T) {
 			}
 		)
 		repoWordMock := new(mockRepoDictionary)
-		repoWordMock.On("AddWords", ctx, mock.Anything).Return([]uuid.UUID{data[0].ID}, nil)
+		repoWordMock.On("AddWords", ctx, mock.Anything).Return(data, nil)
+		repoWordMock.On("GetWordsByText", ctx, mock.Anything).Return([]DictWord{}, nil)
 		langSvcMock := new(mockLangSvc)
 		langSvcMock.On("GetAvailableLanguages", ctx).Return([]*entityLanguage.Language{{Code: data[0].LangCode}}, nil)
 
 		s := &Service{repo: repoWordMock, langSvc: langSvcMock}
 
-		got, err := s.AddWords(ctx, data)
+		got, err := s.GetOrAddWords(ctx, data)
 		assert.NoError(t, err)
 		assert.NotNil(t, got)
 	})
