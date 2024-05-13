@@ -48,7 +48,7 @@ func (r *TagRepo) FindTag(ctx context.Context, text string) ([]*entity.Tag, erro
 	if err != nil {
 		return nil, fmt.Errorf("example.repository.TagRepo.GetAllTags: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var tags []*entity.Tag
 	for rows.Next() {
@@ -80,7 +80,7 @@ func (r *TagRepo) GetTagsInVocabulary(ctx context.Context, vocabID uuid.UUID) ([
 	if err != nil {
 		return nil, fmt.Errorf("example.repository.TagRepo.GetTags: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	tags := make([]entity.Tag, 0)
 	for rows.Next() {
@@ -102,7 +102,7 @@ func (r *TagRepo) GetAllTags(ctx context.Context) ([]entity.Tag, error) {
 	if err != nil {
 		return nil, fmt.Errorf("example.repository.TagRepo.GetAllTags: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var tags []entity.Tag
 	for rows.Next() {
