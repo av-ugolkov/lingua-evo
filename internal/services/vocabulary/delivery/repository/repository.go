@@ -105,7 +105,7 @@ GROUP BY v.id, n.lang, t.lang;`
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var vocabularies []entity.Vocabulary
 	for rows.Next() {

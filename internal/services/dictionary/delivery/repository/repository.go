@@ -23,14 +23,11 @@ func NewRepo(db *sql.DB) *DictionaryRepo {
 	}
 }
 
-func (r *DictionaryRepo) AddWords(ctx context.Context, words []entity.DictWord) ([]uuid.UUID, error) {
-	wordTexts := make([]string, 0, len(words))
-	statements := make([]string, 0, len(words))
-	params := make([]any, 0, len(words)+1)
-	params = append(params, &wordTexts)
+func (r *DictionaryRepo) AddWords(ctx context.Context, inWords []entity.DictWord) ([]entity.DictWord, error) {
+	statements := make([]string, 0, len(inWords))
+	params := make([]any, 0, len(inWords))
 	counter := len(params)
-	for _, word := range words {
-		wordTexts = append(wordTexts, word.Text)
+	for _, word := range inWords {
 		statement := "$" + strconv.Itoa(counter+1) +
 			",$" + strconv.Itoa(counter+2) +
 			",$" + strconv.Itoa(counter+3) +
@@ -42,53 +39,55 @@ func (r *DictionaryRepo) AddWords(ctx context.Context, words []entity.DictWord) 
 		counter += 7
 		statements = append(statements, "("+statement+")")
 
-		params = append(params, word.ID, word.Text, word.Pronunciation, word.LangCode, word.Creator,
-			time.Now().UTC().Format(time.RFC3339), time.Now().UTC().Format(time.RFC3339))
+		params = append(params, word.ID, word.Text, word.Pronunciation, word.LangCode, word.Creator, word.UpdatedAt.Format(time.RFC3339), word.CreatedAt.Format(time.RFC3339))
 	}
 
-	table := getTable(words[0].LangCode)
-	query := fmt.Sprintf(
-		`WITH d AS (
-    		SELECT id FROM %[1]s WHERE text = ANY($1::text[])),
-		ins AS (
-    		INSERT INTO %[1]s (id, text, pronunciation, lang_code, creator, updated_at, created_at)
-			VALUES %[2]s
-    		ON CONFLICT DO NOTHING RETURNING id)
-		SELECT id 
-		FROM ins 
-		UNION ALL 
-		SELECT id 
-		FROM d;`, table, strings.Join(statements, ", "))
+	table := getTable(inWords[0].LangCode)
+	query := fmt.Sprintf(`INSERT INTO "%s" (id, text, pronunciation, lang_code, creator, updated_at, created_at) VALUES %s ON CONFLICT DO NOTHING RETURNING id, text, pronunciation, lang_code, creator, updated_at, created_at;`, table, strings.Join(statements, ", "))
 	rows, err := r.db.QueryContext(ctx, query, params...)
 	if err != nil {
 		return nil, fmt.Errorf("dictionary.repository.DictionaryRepo.AddWord - query: %w", err)
 	}
 
-	wordIDs := make([]uuid.UUID, 0, len(words))
+	words := make([]entity.DictWord, 0, len(inWords))
 	for rows.Next() {
-		var id uuid.UUID
-		if err := rows.Scan(&id); err != nil {
+		var word entity.DictWord
+		if err := rows.Scan(&word.ID, &word.Text, &word.Pronunciation, &word.LangCode, &word.Creator, &word.UpdatedAt, &word.CreatedAt); err != nil {
 			return nil, fmt.Errorf("dictionary.repository.DictionaryRepo.AddWord - scan: %w", err)
 		}
-		wordIDs = append(wordIDs, id)
+		words = append(words, word)
 	}
 
-	return wordIDs, nil
+	return words, nil
 }
 
-func (r *DictionaryRepo) GetWordIDByText(ctx context.Context, w *entity.DictWord) (uuid.UUID, error) {
-	table := getTable(w.LangCode)
-	query := fmt.Sprintf(`SELECT id FROM "%s" WHERE text=$1 AND lang_code=$2;`, table)
-	var id uuid.UUID
-	err := r.db.QueryRowContext(ctx, query, w.Text, w.LangCode).Scan(&id)
-	if err != nil {
-		return uuid.Nil, fmt.Errorf("dictionary.repository.DictionaryRepo.GetWordByText: %w", err)
+func (r *DictionaryRepo) GetWordsByText(ctx context.Context, inWords []entity.DictWord) ([]entity.DictWord, error) {
+	texts := make([]string, 0, len(inWords))
+	for _, word := range inWords {
+		texts = append(texts, word.Text)
 	}
-	return id, nil
+	table := getTable(inWords[0].LangCode)
+	query := fmt.Sprintf(`SELECT id, text, pronunciation, lang_code, creator, updated_at, created_at FROM "%s" WHERE text = ANY($1::text[]);`, table)
+
+	rows, err := r.db.QueryContext(ctx, query, texts)
+	if err != nil {
+		return nil, fmt.Errorf("dictionary.repository.DictionaryRepo.GetWordByText: %w", err)
+	}
+
+	words := make([]entity.DictWord, 0, len(inWords))
+	for rows.Next() {
+		var word entity.DictWord
+		if err := rows.Scan(&word.ID, &word.Text, &word.Pronunciation, &word.LangCode, &word.Creator, &word.UpdatedAt, &word.CreatedAt); err != nil {
+			return nil, fmt.Errorf("dictionary.repository.DictionaryRepo.AddWord - scan: %w", err)
+		}
+		words = append(words, word)
+	}
+
+	return words, nil
 }
 
 func (r *DictionaryRepo) GetWords(ctx context.Context, ids []uuid.UUID) ([]entity.DictWord, error) {
-	query := `SELECT id, text, pronunciation FROM dictionary WHERE id=ANY($1);`
+	query := `SELECT id, text, pronunciation, created_at, updated_at FROM dictionary WHERE id=ANY($1);`
 	rows, err := r.db.QueryContext(ctx, query, ids)
 	if err != nil {
 		return nil, fmt.Errorf("dictionary.repository.DictionaryRepo.GetWords - query: %w", err)
@@ -100,7 +99,7 @@ func (r *DictionaryRepo) GetWords(ctx context.Context, ids []uuid.UUID) ([]entit
 	words := make([]entity.DictWord, 0, len(ids))
 	for rows.Next() {
 		var word entity.DictWord
-		err = rows.Scan(&word.ID, &word.Text, &word.Pronunciation)
+		err = rows.Scan(&word.ID, &word.Text, &word.Pronunciation, &word.CreatedAt, &word.UpdatedAt)
 		if err != nil {
 			return nil, fmt.Errorf("dictionary.repository.DictionaryRepo.GetWords - scan: %w", err)
 		}
@@ -110,8 +109,8 @@ func (r *DictionaryRepo) GetWords(ctx context.Context, ids []uuid.UUID) ([]entit
 }
 
 func (r *DictionaryRepo) UpdateWord(ctx context.Context, w *entity.DictWord) error {
-	query := `UPDATE dictionary SET text=$1, pronunciation=$2 WHERE id=$3`
-	result, err := r.db.ExecContext(ctx, query, w.Text, w.Pronunciation, w.ID)
+	query := `UPDATE dictionary SET text=$2, pronunciation=$3, updated_at=$4 WHERE id=$1`
+	result, err := r.db.ExecContext(ctx, query, w.ID, w.Text, w.Pronunciation, w.UpdatedAt)
 	if err != nil {
 		return fmt.Errorf("dictionary.repository.DictionaryRepo.EditWord - exec: %w", err)
 	}
@@ -148,30 +147,19 @@ func (r *DictionaryRepo) FindWords(ctx context.Context, w *entity.DictWord) ([]u
 	return ids, nil
 }
 
-func (r *DictionaryRepo) DeleteWordByID(ctx context.Context, id uuid.UUID) (int64, error) {
-	query := `DELETE FROM dictionary WHERE id=$1`
-	result, err := r.db.ExecContext(ctx, query, id)
-	if err != nil {
-		return 0, fmt.Errorf("dictionary.repository.DictionaryRepo.DeleteWordByID - exec: %w", err)
-	}
-	rows, err := result.RowsAffected()
-	if err != nil {
-		return 0, fmt.Errorf("dictionary.repository.DictionaryRepo.DeleteWordByID - rows affected: %w", err)
-	}
-	return rows, nil
-}
-
-func (r *DictionaryRepo) DeleteWordByText(ctx context.Context, text, langCode string) (int64, error) {
+func (r *DictionaryRepo) DeleteWordByText(ctx context.Context, w *entity.DictWord) error {
 	query := `DELETE FROM dictionary WHERE text=$1 AND lang_code=$2`
-	result, err := r.db.ExecContext(ctx, query, text, langCode)
+	result, err := r.db.ExecContext(ctx, query, w.Text, w.LangCode)
 	if err != nil {
-		return 0, fmt.Errorf("dictionary.repository.DictionaryRepo.DeleteWordByText - exec: %w", err)
+		return fmt.Errorf("dictionary.repository.DictionaryRepo.DeleteWordByText - exec: %w", err)
 	}
 	rows, err := result.RowsAffected()
 	if err != nil {
-		return 0, fmt.Errorf("dictionary.repository.DictionaryRepo.DeleteWordByText - rows affected: %w", err)
+		return fmt.Errorf("dictionary.repository.DictionaryRepo.DeleteWordByText - rows affected: %w", err)
+	} else if rows > 1 {
+		return fmt.Errorf("dictionary.repository.DictionaryRepo.DeleteWordByText - more than 1 rows deleted")
 	}
-	return rows, nil
+	return nil
 }
 
 func (r *DictionaryRepo) GetRandomWord(ctx context.Context, langCode string) (entity.DictWord, error) {
