@@ -31,5 +31,7 @@ type (
 		Native     entityDict.DictWord
 		Translates []entityDict.DictWord
 		Examples   []entityExample.Example
+		UpdatedAt  time.Time
+		CreatedAt  time.Time
 	}
 )
