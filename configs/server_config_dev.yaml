@@ -3,8 +3,8 @@ pprof_debug:
     port: 6060
 jwt:
     secret: 
-    expire_access: 600 #10 min
-    expire_refresh: 36000 #10 hours
+    expire_access: 300 #5 min
+    expire_refresh: 3600 #1 hours
 service:
     type: tcp
     port: 5000
