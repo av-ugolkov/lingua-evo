@@ -28,7 +28,7 @@ func (p PprofDebug) Addr() string {
 
 type JWT struct {
 	Secret        string `yaml:"secret" env-required:"true"`
-	ExpireAccess  int    `yaml:"expire_access" env-default:"1800"`
+	ExpireAccess  int    `yaml:"expire_access" env-default:"300"`
 	ExpireRefresh int    `yaml:"expire_refresh" env-default:"2592000"`
 }
 
