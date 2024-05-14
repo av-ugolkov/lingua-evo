@@ -1,0 +1,76 @@
+package log
+
+import (
+	"fmt"
+	"io"
+	"log"
+	"log/slog"
+	"os"
+	"time"
+
+	cfgLog "github.com/av-ugolkov/lingua-evo/internal/config"
+)
+
+type Logger struct {
+	file        *os.File
+	Log         *slog.Logger
+	ServerLoger *log.Logger
+}
+
+func CustomLogger(cfgLog *cfgLog.Logger) *Logger {
+	writers := make([]io.Writer, 0, 2)
+
+	var err error
+	var file *os.File
+	for _, writer := range cfgLog.Output {
+		switch writer {
+		case "file":
+			err = os.Mkdir("logs", 0755)
+			if err != nil {
+				slog.Error(err.Error())
+				return nil
+			}
+			file, err = os.OpenFile(fmt.Sprintf("logs/log_file_%s.log", time.Now().Format("2006_01_02_15_04_05")), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+			if err != nil {
+				slog.Error(err.Error())
+				return nil
+			}
+			writers = append(writers, file)
+		case "console":
+			writers = append(writers, os.Stdout)
+		default:
+			slog.Warn("pgk.log.CustomLogger: unknonw writer")
+		}
+	}
+	multiWriter := io.MultiWriter(writers...)
+
+	logHandler := NewCustomHandler(multiWriter, &slog.HandlerOptions{
+		Level: getLevel(cfgLog.Level),
+	})
+
+	return &Logger{
+		file:        file,
+		Log:         slog.New(logHandler),
+		ServerLoger: slog.NewLogLogger(logHandler, getLevel(cfgLog.Level)),
+	}
+}
+
+func (l *Logger) Close() {
+	l.file.Close()
+}
+
+func getLevel(level string) slog.Level {
+	switch level {
+	case "debug":
+		return slog.LevelDebug
+	case "info":
+		return slog.LevelInfo
+	case "warn":
+		return slog.LevelWarn
+	case "error":
+		return slog.LevelError
+	default:
+		slog.Warn("pgk.log.getLevel: unknonw level")
+		return slog.LevelInfo
+	}
+}

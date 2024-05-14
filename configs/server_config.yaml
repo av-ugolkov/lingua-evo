@@ -1,6 +1,12 @@
 pprof_debug:
     enable: true
     port: 6060
+logger:
+    output:
+        - console
+        - file
+    level: info
+    server_level: error
 jwt:
     secret: 54f3sY%v0kzQ
     expire_access: 300 #5 min

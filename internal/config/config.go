@@ -9,6 +9,7 @@ import (
 
 type Config struct {
 	PprofDebug PprofDebug `yaml:"pprof_debug"`
+	Logger     Logger     `yaml:"logger"`
 	JWT        JWT        `yaml:"jwt"`
 	Service    Service    `yaml:"service"`
 	DbSQL      DbSQL      `yaml:"postgres"`
@@ -24,6 +25,12 @@ type PprofDebug struct {
 
 func (p PprofDebug) Addr() string {
 	return fmt.Sprintf("localhost:%d", p.Port)
+}
+
+type Logger struct {
+	Output      []string `yaml:"output"`
+	Level       string   `yaml:"level"`
+	ServerLevel string   `yaml:"server_level"`
 }
 
 type JWT struct {
