@@ -22,6 +22,7 @@ import (
 	"github.com/av-ugolkov/lingua-evo/internal/db/transactor"
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/kafka"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/analytic"
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/log"
 	authService "github.com/av-ugolkov/lingua-evo/internal/services/auth"
 	authHandler "github.com/av-ugolkov/lingua-evo/internal/services/auth/delivery/handler"
 	authRepository "github.com/av-ugolkov/lingua-evo/internal/services/auth/delivery/repository"
@@ -48,15 +49,21 @@ import (
 )
 
 func ServerStart(cfg *config.Config) {
+	logger := log.CustomLogger(&cfg.Logger)
+	if logger == nil {
+		return
+	}
+	slog.SetDefault(logger.Log)
+
 	if cfg.PprofDebug.Enable {
 		go func() {
-			slog.Error("%v", http.ListenAndServe(cfg.PprofDebug.Addr(), nil))
+			slog.Error(http.ListenAndServe(cfg.PprofDebug.Addr(), nil).Error())
 		}()
 	}
 
 	db, err := pg.NewDB(cfg.DbSQL.GetConnStr())
 	if err != nil {
-		slog.Error(fmt.Errorf("can't create pg pool: %v", err).Error())
+		slog.Error(fmt.Sprintf("can't create pg pool: %v", err))
 		return
 	}
 
@@ -91,6 +98,7 @@ func ServerStart(cfg *config.Config) {
 		Handler:      handler,
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
+		ErrorLog:     logger.ServerLoger,
 	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
@@ -110,8 +118,9 @@ func ServerStart(cfg *config.Config) {
 	}()
 
 	<-ctx.Done()
-	if err := server.Shutdown(context.TODO()); err != nil {
+	if err := server.Shutdown(context.Background()); err != nil {
 		slog.Info(fmt.Sprintf("server shutdown returned an err: %v\n", err))
+		logger.Close()
 	}
 
 	slog.Info("final")
