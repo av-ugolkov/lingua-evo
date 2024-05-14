@@ -16,7 +16,11 @@ service:
     port: 5000
     allowed_origins:
         - 'http://89.223.127.122'
+        - 'https://89.223.127.122'
         - 'http://linguaevo.twc1.net'
+        - 'https://linguaevo.twc1.net'
+        - 'http://www.linguaevo.twc1.net/'
+        - 'https://www.linguaevo.twc1.net/'
 postgres:
     name: pg-lingua-evo
     user: lingua
