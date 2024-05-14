@@ -1,16 +1,26 @@
 pprof_debug:
     enable: true
     port: 6060
+logger:
+    output:
+        - console
+        - file
+    level: info
+    server_level: error
 jwt:
     secret: 54f3sY%v0kzQ
-    expire_access: 600 #10 min
+    expire_access: 300 #5 min
     expire_refresh: 2592000 #30 days
 service:
     type: tcp
     port: 5000
     allowed_origins:
         - 'http://89.223.127.122'
+        - 'https://89.223.127.122'
         - 'http://linguaevo.twc1.net'
+        - 'https://linguaevo.twc1.net'
+        - 'http://www.linguaevo.twc1.net/'
+        - 'https://www.linguaevo.twc1.net/'
 postgres:
     name: pg-lingua-evo
     user: lingua
