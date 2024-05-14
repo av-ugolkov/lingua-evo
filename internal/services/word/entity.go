@@ -2,10 +2,10 @@ package word
 
 import (
 	"errors"
-	entityExample "github.com/av-ugolkov/lingua-evo/internal/services/example"
 	"time"
 
 	entityDict "github.com/av-ugolkov/lingua-evo/internal/services/dictionary"
+	entityExample "github.com/av-ugolkov/lingua-evo/internal/services/example"
 
 	"github.com/google/uuid"
 )
