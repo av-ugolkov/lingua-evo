@@ -12,10 +12,11 @@ LABEL key="Lingua Evo"
 ARG config_dir
 ARG epsw
 
-RUN --mount=type=cache,target=/var/cache/apk apk --update --upgrade add ca-certificates git
+RUN --mount=type=cache,target=/var/cache/apk apk --update --upgrade add ca-certificates git bash
 
 WORKDIR /lingua-evo
 COPY /configs/${config_dir}.yaml ./configs/server_config.yaml
+COPY /cert/* ./../cert/
 COPY --from=builder ./build/cmd/main ./
 
 EXPOSE 5000
