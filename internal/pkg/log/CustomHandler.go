@@ -2,7 +2,6 @@ package log
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"log"
 	"log/slog"
@@ -43,6 +42,6 @@ func (h *CustomHandler) Handle(ctx context.Context, r slog.Record) error {
 	return nil
 }
 
-func setColor(value string, c color) string {
-	return fmt.Sprintf("%s%s\033[0m", c, value)
-}
+// func setColor(value string, c color) string {
+// 	return fmt.Sprintf("%s%s\033[0m", c, value)
+// }
