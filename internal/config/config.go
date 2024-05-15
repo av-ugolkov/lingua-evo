@@ -10,6 +10,7 @@ import (
 type Config struct {
 	PprofDebug PprofDebug `yaml:"pprof_debug"`
 	Logger     Logger     `yaml:"logger"`
+	SSL        SSL        `yaml:"ssl"`
 	JWT        JWT        `yaml:"jwt"`
 	Service    Service    `yaml:"service"`
 	DbSQL      DbSQL      `yaml:"postgres"`
@@ -31,6 +32,21 @@ type Logger struct {
 	Output      []string `yaml:"output"`
 	Level       string   `yaml:"level"`
 	ServerLevel string   `yaml:"server_level"`
+}
+
+type SSL struct {
+	Enable  bool   `yaml:"enable"`
+	Path    string `yaml:"path" env-default:"./../cert"`
+	Public  string `yaml:"public" env-default:"certificate.crt"`
+	Private string `yaml:"private" env-default:"private.key"`
+}
+
+func (s SSL) GetPublic() string {
+	return fmt.Sprintf("%s/%s", s.Path, s.Public)
+}
+
+func (s SSL) GetPrivate() string {
+	return fmt.Sprintf("%s/%s", s.Path, s.Private)
 }
 
 type JWT struct {
