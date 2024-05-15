@@ -15,7 +15,7 @@ service:
     port: 5000
     allowed_origins:
         - "http://localhost:5173"
-        - "http://192.168.0.184:8080"
+        - "https://localhost:5173"
 postgres:
     name: pg-lingua-evo
     user: lingua
