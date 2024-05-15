@@ -1,4 +1,4 @@
-version: '3.5'
+version: "3.5"
 services:
   redis:
     container_name: redis-base
@@ -33,7 +33,14 @@ services:
       dockerfile: Dockerfile
       args:
         config_dir: ${CONFIG:-docker/server_config}
+        cert_path: ${CERT:-home/cert/linguaevo.twc1.net}
         epsw: ${EPSW}
+      additional_contexts:
+        root: /
+    volumes:
+      - type: bind
+        source: /home/lingua-logs
+        target: /lingua-evo/logs
     depends_on:
       - postgres
       - redis

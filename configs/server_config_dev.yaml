@@ -6,6 +6,11 @@ logger:
         - console
     level: debug
     server_level: debug
+ssl:
+    enable: false
+    path: /home/alex/cert/linguaevo.twc1.net
+    public: certificate.crt
+    private: private.key
 jwt:
     secret: 54f3sY%v0kzQ
     expire_access: 300 #5 min
@@ -15,7 +20,7 @@ service:
     port: 5000
     allowed_origins:
         - "http://localhost:5173"
-        - "http://192.168.0.184:8080"
+        - "https://localhost:5173"
 postgres:
     name: pg-lingua-evo
     user: lingua

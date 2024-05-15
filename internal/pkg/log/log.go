@@ -27,8 +27,7 @@ func CustomLogger(cfgLog *cfgLog.Logger) *Logger {
 		case "file":
 			err = os.Mkdir("logs", 0755)
 			if err != nil {
-				slog.Error(err.Error())
-				return nil
+				slog.Warn(err.Error())
 			}
 			file, err = os.OpenFile(fmt.Sprintf("logs/log_file_%s.log", time.Now().Format("2006_01_02_15_04_05")), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 			if err != nil {
