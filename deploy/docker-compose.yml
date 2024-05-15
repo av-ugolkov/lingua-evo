@@ -37,6 +37,10 @@ services:
         epsw: ${EPSW}
       additional_contexts:
         root: /
+    volumes:
+      - type: bind
+        source: /home/lingua-logs
+        target: /lingua-evo/logs
     depends_on:
       - postgres
       - redis
