@@ -106,7 +106,12 @@ func ServerStart(cfg *config.Config) {
 
 	slog.Info("start server")
 	go func() {
-		if err := server.ServeTLS(listener, "./../cert/certificate.crt", "./../cert/private.key"); err != nil {
+		if cfg.SSL.Enable {
+			err = server.ServeTLS(listener, cfg.SSL.GetPublic(), cfg.SSL.GetPrivate())
+		} else {
+			err = server.Serve(listener)
+		}
+		if err != nil {
 			switch {
 			case errors.Is(err, http.ErrServerClosed):
 				slog.Warn("server shutdown")
