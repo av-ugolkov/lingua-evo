@@ -7,6 +7,11 @@ logger:
         - file
     level: info
     server_level: error
+ssl:
+    enable: true
+    path: ./cert
+    public: certificate.crt
+    private: private.key
 jwt:
     secret: 54f3sY%v0kzQ
     expire_access: 300 #5 min
@@ -15,8 +20,6 @@ service:
     type: tcp
     port: 5000
     allowed_origins:
-        - 'http://89.223.127.122'
-        - 'https://89.223.127.122'
         - 'http://linguaevo.twc1.net'
         - 'https://linguaevo.twc1.net'
         - 'http://www.linguaevo.twc1.net/'
