@@ -6,8 +6,13 @@ build:
 run:
 	./cmd/main
 
+.PHONY: run.deploy
+run.deploy:
+	./deploy.sh
+
 .PHONY: run.docker
 run.docker:
+	EPSW='${EPSW}'
 	docker compose -p lingua-evo -f deploy/docker-compose.yml up --build --force-recreate
 
 .PHONY: run.docker.dev
