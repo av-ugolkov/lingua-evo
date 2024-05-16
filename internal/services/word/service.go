@@ -4,25 +4,22 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/google/uuid"
-	"golang.org/x/sync/errgroup"
-	"sync"
 
 	"github.com/av-ugolkov/lingua-evo/internal/db/transactor"
 	entityDict "github.com/av-ugolkov/lingua-evo/internal/services/dictionary"
 	entityExample "github.com/av-ugolkov/lingua-evo/internal/services/example"
 	entityVocab "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary"
-)
 
-const countWorker = 6
+	"github.com/google/uuid"
+)
 
 type (
 	repoWord interface {
-		GetWord(ctx context.Context, wordID uuid.UUID) (VocabWord, error)
+		GetWord(ctx context.Context, wordID uuid.UUID) (VocabWordData, error)
 		AddWord(ctx context.Context, word VocabWord) error
 		DeleteWord(ctx context.Context, word VocabWord) error
-		GetRandomVocabulary(ctx context.Context, vocabID uuid.UUID, limit int) ([]VocabWord, error)
-		GetVocabulary(ctx context.Context, vocabID uuid.UUID) ([]VocabWord, error)
+		GetRandomVocabulary(ctx context.Context, vocabID uuid.UUID, limit int) ([]VocabWordData, error)
+		GetVocabularyWords(ctx context.Context, vocabID uuid.UUID) ([]VocabWordData, error)
 		UpdateWord(ctx context.Context, word VocabWord) error
 	}
 
@@ -197,185 +194,28 @@ func (s *Service) DeleteWord(ctx context.Context, vocabID, wordID uuid.UUID) err
 }
 
 func (s *Service) GetRandomWords(ctx context.Context, vocabID uuid.UUID, limit int) ([]VocabWordData, error) {
-	vocabWords, err := s.repo.GetRandomVocabulary(ctx, vocabID, limit)
+	vocabWordsData, err := s.repo.GetRandomVocabulary(ctx, vocabID, limit)
 	if err != nil {
 		return nil, fmt.Errorf("word.Service.GetWords - get words: %w", err)
 	}
 
-	vocabularyWords := make([]VocabWordData, 0, len(vocabWords))
-
-	var eg errgroup.Group
-	eg.SetLimit(10)
-	for _, vocabWord := range vocabWords {
-		eg.Go(func() error {
-			words, err := s.dictSvc.GetWordsByID(ctx, []uuid.UUID{vocabWord.NativeID})
-			if err != nil {
-				return fmt.Errorf("get words: %w", err)
-			}
-			if len(words) == 0 {
-				return fmt.Errorf("not found word by id [%v]", vocabWord.NativeID)
-			}
-
-			translates, err := s.dictSvc.GetWordsByID(ctx, vocabWord.TranslateIDs)
-			if err != nil {
-				return fmt.Errorf("get translate words: %w", err)
-			}
-
-			vocabularyWords = append(vocabularyWords, VocabWordData{
-				Native:     words[0],
-				Translates: translates,
-			})
-			return nil
-		})
-	}
-
-	if err := eg.Wait(); err != nil {
-		return nil, fmt.Errorf("word.Service.GetWords - get words: %w", err)
-	}
-
-	return vocabularyWords, nil
+	return vocabWordsData, nil
 }
 
 func (s *Service) GetWord(ctx context.Context, wordID uuid.UUID) (*VocabWordData, error) {
-	vocabWord, err := s.repo.GetWord(ctx, wordID)
+	vocabWordData, err := s.repo.GetWord(ctx, wordID)
 	if err != nil {
 		return nil, fmt.Errorf("word.Service.GetWord: %w", err)
 	}
-	var vocabWordData VocabWordData
-	var eg errgroup.Group
-	eg.Go(func() error {
-		words, err := s.dictSvc.GetWordsByID(ctx, []uuid.UUID{vocabWord.NativeID})
-		if err != nil {
-			return fmt.Errorf("get words: %w", err)
-		}
-		if len(words) == 0 {
-			return fmt.Errorf("not found word by id [%v]", wordID)
-		}
-
-		vocabWordData.Native = words[0]
-
-		return nil
-	})
-	eg.Go(func() error {
-		translateWords, err := s.dictSvc.GetWordsByID(ctx, vocabWord.TranslateIDs)
-		if err != nil {
-			return fmt.Errorf("get translate words: %w", err)
-		}
-		vocabWordData.Translates = translateWords
-		return nil
-	})
-	eg.Go(func() error {
-		examples, err := s.exampleSvc.GetExamples(ctx, vocabWord.ExampleIDs)
-		if err != nil {
-			return fmt.Errorf("get examples: %w", err)
-		}
-		vocabWordData.Examples = examples
-		return nil
-	})
-
-	if err := eg.Wait(); err != nil {
-		return nil, fmt.Errorf("word.Service.GetWords - get data: %w", err)
-	}
-
-	vocabWordData.ID = wordID
 
 	return &vocabWordData, nil
 }
 
-type ResultJob struct {
-	value VocabWordData
-	err   error
-}
-
 func (s *Service) GetWords(ctx context.Context, vocabID uuid.UUID) ([]VocabWordData, error) {
-	vocabWords, err := s.repo.GetVocabulary(ctx, vocabID)
+	vocabWordsData, err := s.repo.GetVocabularyWords(ctx, vocabID)
 	if err != nil {
 		return nil, fmt.Errorf("word.Service.GetWords - get words: %w", err)
 	}
 
-	vocabularyWords := make([]VocabWordData, 0, len(vocabWords))
-
-	data := make(chan VocabWord, countWorker)
-	result := make(chan ResultJob, countWorker)
-	stopChan := make(chan struct{}, countWorker)
-	defer close(stopChan)
-
-	var wg sync.WaitGroup
-	wg.Add(countWorker)
-	go func() {
-		wg.Wait()
-		close(result)
-	}()
-
-	for w := 0; w < countWorker; w++ {
-		go s.workerForGetWord(ctx, data, result, stopChan)
-	}
-
-	go func() {
-		defer close(data)
-		for _, vocab := range vocabWords {
-			data <- vocab
-		}
-	}()
-
-loop:
-	for {
-		select {
-		case res, ok := <-result:
-			if !ok {
-				break loop
-			}
-			if res.err != nil {
-				return nil, fmt.Errorf("word.Service.GetWords: %w", err)
-			}
-			vocabularyWords = append(vocabularyWords, res.value)
-		case <-stopChan:
-			wg.Done()
-		}
-	}
-
-	return vocabularyWords, nil
-}
-
-func (s *Service) workerForGetWord(
-	ctx context.Context,
-	inData <-chan VocabWord,
-	result chan<- ResultJob,
-	stopCh chan<- struct{}) {
-	for vocabWord := range inData {
-		words, err := s.dictSvc.GetWordsByID(ctx, []uuid.UUID{vocabWord.NativeID})
-		if err != nil {
-			result <- ResultJob{err: fmt.Errorf("get words: %w", err)}
-			return
-		}
-		if len(words) == 0 {
-			result <- ResultJob{err: fmt.Errorf("not found word by id [%v]", vocabWord.NativeID)}
-			return
-		}
-
-		translates, err := s.dictSvc.GetWordsByID(ctx, vocabWord.TranslateIDs)
-		if err != nil {
-			result <- ResultJob{err: fmt.Errorf("get translate words: %w", err)}
-			return
-		}
-
-		examples, err := s.exampleSvc.GetExamples(ctx, vocabWord.ExampleIDs)
-		if err != nil {
-			result <- ResultJob{err: fmt.Errorf("get examples: %w", err)}
-			return
-		}
-
-		result <- ResultJob{
-			value: VocabWordData{
-				ID:         vocabWord.ID,
-				Native:     words[0],
-				Translates: translates,
-				Examples:   examples,
-				CreatedAt:  vocabWord.CreatedAt,
-				UpdatedAt:  vocabWord.UpdatedAt,
-			},
-		}
-	}
-
-	stopCh <- struct{}{}
+	return vocabWordsData, nil
 }
