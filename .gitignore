@@ -6,5 +6,6 @@ cmd/logs/*
 .DS_Store
 .vs/
 .vscode/
+.env
 # Ignore Rider IDE folder
 .idea/
