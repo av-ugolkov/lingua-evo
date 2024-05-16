@@ -13,7 +13,6 @@ require (
 	github.com/rs/cors v1.10.1
 	github.com/stretchr/testify v1.8.1
 	golang.org/x/crypto v0.17.0
-	golang.org/x/sync v0.6.0
 	golang.org/x/text v0.14.0
 )
 
@@ -33,6 +32,7 @@ require (
 	github.com/rogpeppe/go-internal v1.6.1 // indirect
 	github.com/segmentio/kafka-go v0.4.47
 	github.com/stretchr/objx v0.5.0 // indirect
+	golang.org/x/sync v0.6.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	olympos.io/encoding/edn v0.0.0-20201019073823-d3554ca0b0a3 // indirect
 )
