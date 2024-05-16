@@ -17,7 +17,7 @@ func main() {
 	flag.Parse()
 
 	cfg := config.InitConfig(configPath)
-
 	config.SetEmailPassword(emailPassword)
+
 	app.ServerStart(cfg)
 }
