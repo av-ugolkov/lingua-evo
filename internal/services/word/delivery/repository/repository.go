@@ -28,23 +28,23 @@ func NewRepo(db *sql.DB) *WordRepo {
 
 func (r *WordRepo) GetWord(ctx context.Context, id uuid.UUID) (entity.VocabWordData, error) {
 	const query = `
-	select 
+	SELECT 
 		w.id,
 		w.vocabulary_id, 
 		n.id native_id,
 		n."text", 
 		n.pronunciation, 
 		n.lang_code, 
-		array_agg(distinct t."text") filter (where t."text" is not null) translates, 
-		array_agg(distinct e."text") filter (where e."text" is not null) examples,
+		array_agg(distinct t."text") FILTER (WHERE t."text" IS NOT NULL) translates, 
+		array_agg(distinct e."text") FILTER (WHERE e."text" IS NOT NULL) examples,
 		w.updated_at,
 		w.created_at 
-	from word w
-		left join "dictionary" n on n.id = w.native_id
-		left join "dictionary" t on t.id = any(w.translate_ids)
-		left join "example" e on e.id = any(w.example_ids)
-	where id=$1
-	group by w.id, n.id, n."text", n.pronunciation, n.lang_code;`
+	FROM word w
+		LEFT JOIN "dictionary" n ON n.id = w.native_id
+		LEFT JOIN "dictionary" t ON t.id = ANY(w.translate_ids)
+		LEFT JOIN "example" e ON e.id = ANY(w.example_ids)
+	WHERE id=$1
+	GROUP BY w.id, n.id, n."text", n.pronunciation, n.lang_code;`
 
 	var vocabWordData entity.VocabWordData
 	var translates []string
@@ -149,17 +149,18 @@ func (r *WordRepo) DeleteWord(ctx context.Context, vocabWord entity.VocabWord) e
 
 func (r *WordRepo) GetRandomVocabulary(ctx context.Context, vocabID uuid.UUID, limit int) ([]entity.VocabWordData, error) {
 	query := `
-	select 
+	SELECT 
 		n.id native_id,
 		n."text", 
 		n.pronunciation, 
-		array_agg(distinct t."text") filter (where t."text" is not null) translates
-	from word w
-		left join "dictionary" n on n.id = w.native_id
-		left join "dictionary" t on t.id = any(w.translate_ids)
-	where vocabulary_id=$1
-	group by n.id, n."text", n.pronunciation
-	ORDER BY RANDOM() LIMIT $2;`
+		array_agg(distinct t."text") FILTER (WHERE t."text" IS NOT NULL) translates
+	FROM word w
+		LEFT JOIN "dictionary" n ON n.id = w.native_id
+		LEFT JOIN "dictionary" t ON t.id = ANY(w.translate_ids)
+	WHERE vocabulary_id=$1
+	GROUP BY n.id, n."text", n.pronunciation
+	ORDER BY RANDOM() 
+	LIMIT $2;`
 	rows, err := r.db.QueryContext(ctx, query, vocabID, limit)
 	if err != nil {
 		return nil, fmt.Errorf("word.repository.WordRepo.GetRandomVocabulary: %w", err)
@@ -222,30 +223,37 @@ func (r *WordRepo) GetVocabulary(ctx context.Context, vocabID uuid.UUID) ([]enti
 
 func (r *WordRepo) GetVocabularyWords(ctx context.Context, vocabID uuid.UUID) ([]entity.VocabWordData, error) {
 	var countRows int
-	err := r.db.QueryRowContext(ctx, `select count(*) from word where vocabulary_id=$1`, vocabID).Scan(&countRows)
+	err := r.db.QueryRowContext(ctx, `SELECT count(*) FROM word WHERE vocabulary_id=$1`, vocabID).Scan(&countRows)
 	if err != nil {
 		return nil, fmt.Errorf("word.repository.WordRepo.GetVocabularyWords - count: %w", err)
 	}
 
-	const query = `
-	select 
+	var langNative, langTranslate string
+	err = r.db.QueryRowContext(ctx, `SELECT native_lang, translate_lang FROM vocabulary WHERE id=$1`, vocabID).Scan(&langNative, &langTranslate)
+	if err != nil {
+		return nil, fmt.Errorf("word.repository.WordRepo.GetVocabularyWords - get langs: %w", err)
+	}
+
+	query := fmt.Sprintf(`
+	SELECT 
 		w.id, 
 		n.id native_id,
 		n."text", 
 		n.pronunciation, 
 		n.lang_code, 
-		array_agg(distinct t."text") filter (where t."text" is not null) translates, 
-		array_agg(distinct e."text") filter (where e."text" is not null) examples,
+		array_agg(distinct t."text") FILTER (WHERE t."text" IS NOT NULL) translates, 
+		array_agg(distinct e."text") FILTER (WHERE e."text" IS NOT NULL) examples,
 		w.updated_at,
 		w.created_at 
-	from word w
-		left join "dictionary" n on n.id = w.native_id
-		left join "dictionary" t on t.id = any(w.translate_ids)
-		left join "example" e on e.id = any(w.example_ids)
-	where vocabulary_id=$1
-	group by w.id, n.id, n."text", n.pronunciation, n.lang_code;`
+	FROM word w
+		LEFT JOIN "dictionary_%[1]s" n ON n.id = w.native_id
+		LEFT JOIN "dictionary_%[2]s" t ON t.id = ANY(w.translate_ids)
+		LEFT JOIN "example_%[1]s" e ON e.id = ANY(w.example_ids)
+	WHERE vocabulary_id=$1
+	GROUP BY w.id, n.id, n."text", n.pronunciation, n.lang_code
+	LIMIT $2;`, langNative, langTranslate)
 
-	rows, err := r.db.QueryContext(ctx, query, vocabID)
+	rows, err := r.db.QueryContext(ctx, query, vocabID, countRows)
 	if err != nil {
 		return nil, fmt.Errorf("word.repository.WordRepo.GetVocabularyWords: %w", err)
 	}
