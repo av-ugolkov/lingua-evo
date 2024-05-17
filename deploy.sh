@@ -1,6 +1,25 @@
 #!/bin/bash
 
 clear
+
+if test -d /home/lingua-logs; then
+    echo "Directory [ lingua-logs ] exists."
+else
+    mkdir /home/lingua-logs
+fi
+
+if test -d /home/lingua-dumps; then
+    echo "Directory [ lingua-dumps ] exists."
+else
+    mkdir /home/lingua-dumps
+fi
+
+echo "Do you want to create a backup for database? [y/n]"
+read ans
+if [ "$ans" = "y" ]; then
+    ./backup.sh
+fi
+
 BRANCH="$(git rev-parse --abbrev-ref HEAD)"
 echo "Do you want to deploy [ $BRANCH ]? [y/n]"
 read ans
