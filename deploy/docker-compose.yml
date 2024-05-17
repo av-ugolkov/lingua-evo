@@ -22,8 +22,8 @@ services:
     volumes:
       - /var/lib/postgresql/lingua-evo/data:/var/lib/postgresql/data
       - type: bind
-        source: /home/lingua-dump
-        target: /home/dump
+        source: /home/lingua-dumps
+        target: /home/dumps
     expose:
       - "5432"
     networks:
