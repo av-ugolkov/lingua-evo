@@ -6,9 +6,13 @@ build:
 run:
 	./cmd/main
 
-.PHONY: run.deploy
-run.deploy:
+.PHONY: deploy
+deploy:
 	./deploy.sh
+
+.PHONY: backup
+backup:
+	./backup.sh
 
 .PHONY: run.docker
 run.docker:
