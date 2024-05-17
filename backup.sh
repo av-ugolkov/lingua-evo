@@ -1,7 +1,5 @@
 #!/bin/bash
 
-clear
-
 docker exec -ti postgres-base /bin/bash -c "
     if test -d /home/dumps; then
         echo \"Directory [ dumps ] exists.\"
