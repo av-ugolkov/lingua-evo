@@ -21,6 +21,9 @@ services:
       - POSTGRES_USER=lingua
     volumes:
       - /var/lib/postgresql/lingua-evo/data:/var/lib/postgresql/data
+      - type: bind
+        source: /home/lingua-dump
+        target: /home/dump
     expose:
       - "5432"
     networks:
