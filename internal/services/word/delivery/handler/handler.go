@@ -195,7 +195,6 @@ func (h *Handler) updateWord(ctx context.Context, ex *exchange.Exchanger) {
 		Native: &VocabWord{
 			ID: &vocabWord.NativeID,
 		},
-		Created: &vocabWord.CreatedAt,
 		Updated: &vocabWord.UpdatedAt,
 	}
 
