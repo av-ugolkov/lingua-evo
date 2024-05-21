@@ -9,6 +9,7 @@ import (
 	entityDict "github.com/av-ugolkov/lingua-evo/internal/services/dictionary"
 	entityExample "github.com/av-ugolkov/lingua-evo/internal/services/example"
 	entityVocab "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary"
+	"github.com/av-ugolkov/lingua-evo/runtime"
 
 	"github.com/google/uuid"
 )
@@ -99,11 +100,12 @@ func (s *Service) AddWord(ctx context.Context, vocabWordData VocabWordData) (Voc
 		}
 
 		err = s.repo.AddWord(ctx, VocabWord{
-			ID:           vocabWordData.ID,
-			VocabID:      vocabWordData.VocabID,
-			NativeID:     nativeWordID,
-			TranslateIDs: translateWordIDs,
-			ExampleIDs:   exampleIDs,
+			ID:            vocabWordData.ID,
+			VocabID:       vocabWordData.VocabID,
+			NativeID:      nativeWordID,
+			Pronunciation: vocabWordData.Native.Pronunciation,
+			TranslateIDs:  translateWordIDs,
+			ExampleIDs:    exampleIDs,
 		})
 		if err != nil {
 			switch {
@@ -164,12 +166,13 @@ func (s *Service) UpdateWord(ctx context.Context, vocabWordData VocabWordData) (
 	}
 
 	vocabWord := VocabWord{
-		ID:           vocabWordData.ID,
-		VocabID:      vocabWordData.VocabID,
-		NativeID:     nativeWordID,
-		TranslateIDs: translateWordIDs,
-		ExampleIDs:   exampleIDs,
-		UpdatedAt:    vocabWordData.UpdatedAt,
+		ID:            vocabWordData.ID,
+		VocabID:       vocabWordData.VocabID,
+		NativeID:      nativeWordID,
+		Pronunciation: vocabWordData.Native.Pronunciation,
+		TranslateIDs:  translateWordIDs,
+		ExampleIDs:    exampleIDs,
+		UpdatedAt:     vocabWordData.UpdatedAt,
 	}
 
 	err = s.repo.UpdateWord(ctx, vocabWord)
@@ -218,4 +221,20 @@ func (s *Service) GetWords(ctx context.Context, vocabID uuid.UUID) ([]VocabWordD
 	}
 
 	return vocabWordsData, nil
+}
+
+func (s *Service) GetPronunciation(ctx context.Context, vocabID uuid.UUID, text string) (string, error) {
+	vocab, err := s.vocabSvc.GetVocabularyByID(ctx, vocabID)
+	if err != nil {
+		return runtime.EmptyString, fmt.Errorf("word.Service.GetPronunciation - get vocabulary: %w", err)
+	}
+	words, err := s.dictSvc.GetWordsByText(ctx, []entityDict.DictWord{{Text: text, LangCode: vocab.NativeLang}})
+	if err != nil {
+		return runtime.EmptyString, fmt.Errorf("word.Service.GetPronunciation - get word: %w", err)
+	}
+	word := words[0]
+	if word.Pronunciation == runtime.EmptyString {
+		return runtime.EmptyString, fmt.Errorf("word.Service.GetPronunciation: %w", ErrWordPronunciation)
+	}
+	return word.Pronunciation, nil
 }
