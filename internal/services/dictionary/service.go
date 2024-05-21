@@ -92,7 +92,7 @@ func (s *Service) GetWordsByText(ctx context.Context, inWords []DictWord) ([]Dic
 
 	dictWords := checkWords(inWords, languages)
 	if len(dictWords) == 0 {
-		return []DictWord{}, nil
+		return nil, fmt.Errorf("dictionary.Service.AddWords - no words")
 	}
 
 	words, err := s.repo.GetWordsByText(ctx, dictWords)
