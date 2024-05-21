@@ -23,6 +23,7 @@ const (
 	ParamVocabID = "vocab_id"
 	ParamID      = "id"
 	ParamLimit   = "limit"
+	ParamText    = "text"
 )
 
 type (
@@ -77,6 +78,7 @@ func (h *Handler) register(r *mux.Router) {
 	r.HandleFunc(delivery.VocabularyWordUpdate, middleware.Auth(h.updateWord)).Methods(http.MethodPost)
 	r.HandleFunc(delivery.VocabularySeveralWords, middleware.Auth(h.getSeveralWords)).Methods(http.MethodGet)
 	r.HandleFunc(delivery.VocabularyWords, middleware.Auth(h.getWords)).Methods(http.MethodGet)
+	r.HandleFunc(delivery.GetPronunciation, middleware.Auth(h.getPronunciation)).Methods(http.MethodGet)
 }
 
 func (h *Handler) addWord(ctx context.Context, ex *exchange.Exchanger) {
@@ -339,4 +341,31 @@ func (h *Handler) getWords(ctx context.Context, ex *exchange.Exchanger) {
 
 	ex.SetContentType(exchange.ContentTypeJSON)
 	ex.SendData(http.StatusOK, wordsRs)
+}
+
+func (h *Handler) getPronunciation(ctx context.Context, ex *exchange.Exchanger) {
+	text, err := ex.QueryParamString(ParamText)
+	if err != nil {
+		ex.SendError(http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getPronunciation - get word id: %w", err))
+		return
+	}
+
+	vocabID, err := ex.QueryParamUUID(ParamVocabID)
+	if err != nil {
+		ex.SendError(http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getPronunciation - get word id: %w", err))
+		return
+	}
+
+	pronunciation, err := h.wordSvc.GetPronunciation(ctx, vocabID, text)
+	if err != nil {
+		ex.SendError(http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getPronunciation: %w", err))
+		return
+	}
+
+	ex.SetContentType(exchange.ContentTypeJSON)
+	ex.SendData(http.StatusOK, VocabWordRs{
+		Native: &VocabWord{
+			Pronunciation: pronunciation,
+		},
+	})
 }
