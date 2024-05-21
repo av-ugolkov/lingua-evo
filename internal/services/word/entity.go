@@ -11,18 +11,20 @@ import (
 )
 
 var (
-	ErrDuplicate = errors.New("duplicate key value violates unique constraint")
+	ErrDuplicate         = errors.New("duplicate key value violates unique constraint")
+	ErrWordPronunciation = errors.New("word pronunciation is empty")
 )
 
 type (
 	VocabWord struct {
-		ID           uuid.UUID
-		VocabID      uuid.UUID
-		NativeID     uuid.UUID
-		TranslateIDs []uuid.UUID
-		ExampleIDs   []uuid.UUID
-		UpdatedAt    time.Time
-		CreatedAt    time.Time
+		ID            uuid.UUID
+		VocabID       uuid.UUID
+		NativeID      uuid.UUID
+		Pronunciation string
+		TranslateIDs  []uuid.UUID
+		ExampleIDs    []uuid.UUID
+		UpdatedAt     time.Time
+		CreatedAt     time.Time
 	}
 
 	VocabWordData struct {
