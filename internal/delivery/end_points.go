@@ -18,10 +18,11 @@ const (
 	Vocabulary   = "/account/vocabulary"   //get post, put, delete
 	Vocabularies = "/account/vocabularies" //get
 
-	VocabularyWord         = "/vocabulary/word"         //get post delete
-	VocabularyWordUpdate   = "/vocabulary/word/update"  //post
-	VocabularySeveralWords = "/vocabulary/word/several" //get
-	VocabularyWords        = "/vocabulary/word/all"     //get
+	VocabularyWord         = "/vocabulary/word"               //get post delete
+	VocabularyWordUpdate   = "/vocabulary/word/update"        //post
+	VocabularySeveralWords = "/vocabulary/word/several"       //get
+	VocabularyWords        = "/vocabulary/word/all"           //get
+	GetPronunciation       = "/vocabulary/word/pronunciation" //get
 
 	VocabularyTags = "/vocabulary/tag" //get
 )
