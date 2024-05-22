@@ -2,13 +2,14 @@ package handler
 
 import (
 	"fmt"
-	"github.com/av-ugolkov/lingua-evo/internal/delivery"
 	"net/http"
 
-	"github.com/gorilla/mux"
-
-	"github.com/av-ugolkov/lingua-evo/internal/pkg/http/exchange"
+	"github.com/av-ugolkov/lingua-evo/internal/delivery"
+	ginExt "github.com/av-ugolkov/lingua-evo/internal/pkg/http/gin_extension"
 	"github.com/av-ugolkov/lingua-evo/internal/services/language"
+	"github.com/av-ugolkov/lingua-evo/runtime"
+
+	"github.com/gin-gonic/gin"
 )
 
 type (
@@ -22,7 +23,7 @@ type (
 	}
 )
 
-func Create(r *mux.Router, langSvc *language.Service) {
+func Create(r *gin.Engine, langSvc *language.Service) {
 	h := newHandler(langSvc)
 	h.register(r)
 }
@@ -33,29 +34,30 @@ func newHandler(langSvc *language.Service) *Handler {
 	}
 }
 
-func (h *Handler) register(r *mux.Router) {
-	r.HandleFunc(delivery.CurrentLanguage, h.getCurrentLanguage).Methods(http.MethodGet)
-	r.HandleFunc(delivery.AvailableLanguages, h.getAvailableLanguages).Methods(http.MethodGet)
+func (h *Handler) register(r *gin.Engine) {
+	r.GET(delivery.CurrentLanguage, h.getCurrentLanguage)
+	r.GET(delivery.AvailableLanguages, h.getAvailableLanguages)
 }
 
-func (h *Handler) getCurrentLanguage(w http.ResponseWriter, r *http.Request) {
-	ex := exchange.NewExchanger(w, r)
-
+func (h *Handler) getCurrentLanguage(c *gin.Context) {
+	langCode, err := c.Cookie(ginExt.Language)
+	if err != nil {
+		langCode = runtime.GetLanguage("en")
+	}
 	languageRs := &LanguageRs{
-		Code: ex.GetCookieLanguageOrDefault(),
+		Code: langCode,
 	}
 
-	ex.SetContentType(exchange.ContentTypeJSON)
-	ex.SetCookieLanguage(languageRs.Code)
-	ex.SendData(http.StatusOK, languageRs)
+	c.SetCookie(ginExt.Language, languageRs.Code, 0, "/", "", false, true)
+	c.JSON(http.StatusOK, languageRs)
 }
 
-func (h *Handler) getAvailableLanguages(w http.ResponseWriter, r *http.Request) {
-	ex := exchange.NewExchanger(w, r)
-
-	languages, err := h.langSvc.GetAvailableLanguages(r.Context())
+func (h *Handler) getAvailableLanguages(c *gin.Context) {
+	ctx := c.Request.Context()
+	languages, err := h.langSvc.GetAvailableLanguages(ctx)
 	if err != nil {
-		ex.SendError(http.StatusInternalServerError, fmt.Errorf("lingua.language.delivery.Handler.getAvailableLanguages: %v", err))
+		ginExt.SendError(c, http.StatusInternalServerError,
+			fmt.Errorf("lingua.language.delivery.Handler.getAvailableLanguages: %v", err))
 		return
 	}
 
@@ -67,6 +69,5 @@ func (h *Handler) getAvailableLanguages(w http.ResponseWriter, r *http.Request) 
 		})
 	}
 
-	ex.SetContentType(exchange.ContentTypeJSON)
-	ex.SendData(http.StatusOK, languagesRs)
+	c.JSON(http.StatusOK, languagesRs)
 }
