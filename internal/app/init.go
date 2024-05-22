@@ -13,8 +13,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/gorilla/mux"
-	"github.com/rs/cors"
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
 
 	"github.com/av-ugolkov/lingua-evo/internal/config"
 	pg "github.com/av-ugolkov/lingua-evo/internal/db/postgres"
@@ -74,7 +74,14 @@ func ServerStart(cfg *config.Config) {
 
 	redisDB := redis.New(cfg)
 
-	router := mux.NewRouter()
+	gin.SetMode(gin.ReleaseMode)
+	router := gin.Default()
+	router.Use(cors.New(cors.Config{
+		AllowOrigins:     cfg.Service.AllowedOrigins,
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"},
+		AllowCredentials: true,
+		AllowHeaders:     []string{"Authorization", "Content-Type", "Fingerprint"},
+	}))
 	initServer(cfg, router, db, redisDB)
 
 	address := fmt.Sprintf(":%s", cfg.Service.Port)
@@ -85,17 +92,8 @@ func ServerStart(cfg *config.Config) {
 		return
 	}
 	slog.Info(fmt.Sprintf("web address: %s", listener.Addr()))
-
-	c := cors.New(cors.Options{
-		AllowedOrigins:   cfg.Service.AllowedOrigins,
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"},
-		AllowCredentials: true,
-		AllowedHeaders:   []string{"Authorization", "Content-Type", "Fingerprint"},
-	})
-	handler := c.Handler(router)
-
 	server := &http.Server{
-		Handler:      handler,
+		Handler:      router,
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 		ErrorLog:     logger.ServerLoger,
@@ -131,7 +129,7 @@ func ServerStart(cfg *config.Config) {
 	slog.Info("final")
 }
 
-func initServer(cfg *config.Config, r *mux.Router, db *sql.DB, redis *redis.Redis) {
+func initServer(cfg *config.Config, r *gin.Engine, db *sql.DB, redis *redis.Redis) {
 	tr := transactor.NewTransactor(db)
 	slog.Info("create services")
 	userRepo := userRepository.NewRepo(db)

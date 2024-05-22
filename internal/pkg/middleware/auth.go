@@ -1,37 +1,35 @@
 package middleware
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 
 	"github.com/av-ugolkov/lingua-evo/internal/config"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/analytic"
-	"github.com/av-ugolkov/lingua-evo/internal/pkg/http/exchange"
+	ginExt "github.com/av-ugolkov/lingua-evo/internal/pkg/http/gin_extension"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/token"
 	"github.com/av-ugolkov/lingua-evo/runtime"
+
+	"github.com/gin-gonic/gin"
 )
 
-type ExchangerFunc func(ctx context.Context, ex *exchange.Exchanger)
-
-func Auth(next ExchangerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		ex := exchange.NewExchanger(w, r)
-		var bearerToken string
-		var err error
-		if bearerToken, err = ex.GetHeaderAuthorization(exchange.AuthTypeBearer); err != nil {
-			ex.SendError(http.StatusUnauthorized, fmt.Errorf("middleware.Auth: %w", err))
+func Auth(next gin.HandlerFunc) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		bearerToken, err := ginExt.GetHeaderAuthorization(c, ginExt.AuthTypeBearer)
+		if err != nil {
+			ginExt.SendError(c, http.StatusUnauthorized,
+				fmt.Errorf("middleware.Auth: bearer token not found"))
 			return
 		}
 		claims, err := token.ValidateJWT(bearerToken, config.GetConfig().JWT.Secret)
 		if err != nil {
-			ex.SendError(http.StatusUnauthorized, err)
+			ginExt.SendError(c, http.StatusUnauthorized, fmt.Errorf("middleware.Auth: %w", err))
 			return
 		}
-		ctx := runtime.SetUserIDInContext(r.Context(), claims.UserID)
+		c.Request = c.Request.WithContext(runtime.SetUserIDInContext(c.Request.Context(), claims.UserID))
 
-		analytics.SendToKafka(claims.UserID, r.URL.Path)
+		analytics.SendToKafka(claims.UserID, c.Request.URL.Path)
 
-		next(ctx, ex)
+		next(c)
 	}
 }
