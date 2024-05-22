@@ -74,6 +74,7 @@ func ServerStart(cfg *config.Config) {
 
 	redisDB := redis.New(cfg)
 
+	gin.SetMode(gin.ReleaseMode)
 	router := gin.Default()
 	router.Use(cors.New(cors.Config{
 		AllowOrigins:     cfg.Service.AllowedOrigins,
@@ -91,7 +92,6 @@ func ServerStart(cfg *config.Config) {
 		return
 	}
 	slog.Info(fmt.Sprintf("web address: %s", listener.Addr()))
-
 	server := &http.Server{
 		Handler:      router,
 		WriteTimeout: 15 * time.Second,
