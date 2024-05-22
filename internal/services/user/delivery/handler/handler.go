@@ -1,20 +1,19 @@
 package handler
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 
 	"github.com/av-ugolkov/lingua-evo/internal/delivery"
-	"github.com/av-ugolkov/lingua-evo/internal/pkg/http/exchange"
+	ginExtension "github.com/av-ugolkov/lingua-evo/internal/pkg/http/gin_extension"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/middleware"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/utils"
 	"github.com/av-ugolkov/lingua-evo/internal/services/user"
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/user"
 	"github.com/av-ugolkov/lingua-evo/runtime"
 
+	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/gorilla/mux"
 )
 
 type (
@@ -45,7 +44,7 @@ type Handler struct {
 	userSvc *user.Service
 }
 
-func Create(r *mux.Router, userSvc *user.Service) {
+func Create(r *gin.Engine, userSvc *user.Service) {
 	h := newHandler(userSvc)
 	h.register(r)
 }
@@ -56,36 +55,42 @@ func newHandler(userSvc *user.Service) *Handler {
 	}
 }
 
-func (h *Handler) register(r *mux.Router) {
-	r.HandleFunc(delivery.SignUp, h.signUp).Methods(http.MethodPost)
-	r.HandleFunc(delivery.UserByID, middleware.Auth(h.getUserByID)).Methods(http.MethodGet)
+func (h *Handler) register(r *gin.Engine) {
+	r.POST(delivery.SignUp, h.signUp)
+	r.GET(delivery.UserByID, middleware.Auth(h.getUserByID))
 }
 
-func (h *Handler) signUp(w http.ResponseWriter, r *http.Request) {
-	ex := exchange.NewExchanger(w, r)
+func (h *Handler) signUp(c *gin.Context) {
 	var data CreateUserRq
-	err := ex.CheckBody(&data)
+	err := c.Bind(&data)
 	if err != nil {
-		ex.SendError(http.StatusBadRequest, fmt.Errorf("user.delivery.Handler.createAccount - check body: %v", err))
+		ginExtension.SendError(c, http.StatusBadRequest,
+			fmt.Errorf("user.delivery.Handler.createAccount - check body: %v", err))
 		return
 	}
 
 	if !utils.IsUsernameValid(data.Username) {
-		ex.SendError(http.StatusBadRequest, fmt.Errorf("user.delivery.Handler.createAccount - invalid user name"))
+		ginExtension.SendError(c, http.StatusBadRequest,
+			fmt.Errorf("user.delivery.Handler.createAccount - invalid user name"),
+		)
 		return
 	}
 
 	if !utils.IsPasswordValid(data.Password) {
-		ex.SendError(http.StatusBadRequest, fmt.Errorf("user.delivery.Handler.createAccount - invalid password"))
+		ginExtension.SendError(c, http.StatusBadRequest,
+			fmt.Errorf("user.delivery.Handler.createAccount - invalid password"),
+		)
 		return
 	}
 
 	if !utils.IsEmailValid(data.Email) {
-		ex.SendError(http.StatusBadRequest, fmt.Errorf("user.delivery.Handler.createAccount - invalid email"))
+		ginExtension.SendError(c, http.StatusBadRequest,
+			fmt.Errorf("user.delivery.Handler.createAccount - invalid email"),
+		)
 		return
 	}
 
-	uid, err := h.userSvc.SignUp(ex.Context(), entity.UserData{
+	uid, err := h.userSvc.SignUp(c.Request.Context(), entity.UserData{
 		ID:       uuid.New(),
 		Name:     data.Username,
 		Password: data.Password,
@@ -94,27 +99,32 @@ func (h *Handler) signUp(w http.ResponseWriter, r *http.Request) {
 		Code:     data.Code,
 	})
 	if err != nil {
-		ex.SendError(http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.createAccount - create user: %v", err))
+		ginExtension.SendError(c, http.StatusInternalServerError,
+			fmt.Errorf("user.delivery.Handler.createAccount - create user: %v", err),
+		)
 		return
 	}
 
 	createUserRs := &CreateUserRs{
 		UserID: uid,
 	}
-
-	ex.SetContentType(exchange.ContentTypeJSON)
-	ex.SendData(http.StatusCreated, createUserRs)
+	c.JSON(http.StatusCreated, createUserRs)
 }
 
-func (h *Handler) getUserByID(ctx context.Context, ex *exchange.Exchanger) {
+func (h *Handler) getUserByID(c *gin.Context) {
+	ctx := c.Request.Context()
 	userID, err := runtime.UserIDFromContext(ctx)
 	if err != nil {
-		ex.SendError(http.StatusUnauthorized, fmt.Errorf("user.delivery.Handler.getUserByID - unauthorized: %v", err))
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": fmt.Errorf("user.delivery.Handler.getUserByID - unauthorized: %v", err),
+		})
 		return
 	}
 	userData, err := h.userSvc.GetUserByID(ctx, userID)
 	if err != nil {
-		ex.SendError(http.StatusInternalServerError, fmt.Errorf("user.delivery.Handler.getUserByID: %v", err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": fmt.Errorf("user.delivery.Handler.getUserByID: %v", err),
+		})
 		return
 	}
 
@@ -125,6 +135,5 @@ func (h *Handler) getUserByID(ctx context.Context, ex *exchange.Exchanger) {
 		Role:  userData.Role,
 	}
 
-	ex.SetContentType(exchange.ContentTypeJSON)
-	ex.SendData(http.StatusOK, userRs)
+	c.JSON(http.StatusOK, userRs)
 }
