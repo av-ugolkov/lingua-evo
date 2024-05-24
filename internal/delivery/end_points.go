@@ -9,8 +9,11 @@ const (
 	SignOut  = "/auth/sign_out"  //get
 	SendCode = "/auth/send_code" //post
 
-	SignUp   = "/user/sign_up" //post
-	UserByID = "/user/id"      //get
+	SignUp           = "/user/sign_up"       //post
+	UserByID         = "/user/id"            //get
+	UserEditPassword = "/user/edit/password" //post
+	UserEditEmail    = "/user/edit/email"    //post
+	UserEditName     = "/user/edit/name"     //post
 
 	DictionaryWord = "/dictionary/word"        //get post
 	GetRandomWord  = "/dictionary/word/random" //get
