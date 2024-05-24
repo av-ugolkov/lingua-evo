@@ -6,15 +6,19 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/av-ugolkov/lingua-evo/internal/pkg/utils"
-	"github.com/google/uuid"
 	"time"
+
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/utils"
+
+	"github.com/google/uuid"
 )
 
 type (
 	userRepo interface {
 		AddUser(ctx context.Context, u *User) (uuid.UUID, error)
-		EditUser(ctx context.Context, u *User) error
+		EditPassword(ctx context.Context, u *User) error
+		EditEmail(ctx context.Context, u *User) error
+		EditUsername(ctx context.Context, u *User) error
 		GetUserByID(ctx context.Context, uid uuid.UUID) (*User, error)
 		GetUserByName(ctx context.Context, name string) (*User, error)
 		GetUserByEmail(ctx context.Context, email string) (*User, error)
@@ -22,21 +26,21 @@ type (
 		RemoveUser(ctx context.Context, u *User) error
 	}
 
-	redis interface {
+	sessionRepo interface {
 		Get(ctx context.Context, key string) (string, error)
 		GetAccountCode(ctx context.Context, email string) (int, error)
 	}
 
 	Service struct {
-		repo  userRepo
-		redis redis
+		repo        userRepo
+		sessionRepo sessionRepo
 	}
 )
 
-func NewService(repo userRepo, redis redis) *Service {
+func NewService(repo userRepo, sessionRepo sessionRepo) *Service {
 	return &Service{
-		repo:  repo,
-		redis: redis,
+		repo:        repo,
+		sessionRepo: sessionRepo,
 	}
 }
 
@@ -45,7 +49,7 @@ func (s *Service) SignUp(ctx context.Context, userData UserData) (uuid.UUID, err
 		return uuid.Nil, fmt.Errorf("auth.Service.SignUp - validateEmail: %v", err)
 	}
 
-	code, err := s.redis.GetAccountCode(ctx, userData.Email)
+	code, err := s.sessionRepo.GetAccountCode(ctx, userData.Email)
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("auth.Service.SignUp - GetAccountCode: %v", err)
 	}
@@ -85,7 +89,81 @@ func (s *Service) SignUp(ctx context.Context, userData UserData) (uuid.UUID, err
 	return uid, nil
 }
 
-func (s *Service) EditUser(ctx context.Context, user *User) error {
+func (s *Service) EditPassword(ctx context.Context, user UserPasword) error {
+	if err := validatePassword(user.Password); err != nil {
+		return fmt.Errorf("auth.Service.EditPassword - validatePassword: %v", err)
+	}
+
+	u, err := s.repo.GetUserByID(ctx, user.ID)
+	if err != nil {
+		return fmt.Errorf("auth.Service.EditPassword - GetUserByID: %v", err)
+	}
+	code, err := s.sessionRepo.GetAccountCode(ctx, u.Email)
+	if err != nil {
+		return fmt.Errorf("auth.Service.EditPassword - GetAccountCode: %v", err)
+	}
+
+	if code != user.Code {
+		return fmt.Errorf("auth.Service.EditPassword: code mismatch")
+	}
+
+	u.PasswordHash, err = utils.HashPassword(u.PasswordHash)
+	if err != nil {
+		return fmt.Errorf("auth.Service.EditPassword - HashPassword: %v", err)
+	}
+
+	err = s.repo.EditPassword(ctx, u)
+	if err != nil {
+		return fmt.Errorf("auth.Service.EditPassword - EditPassword: %v", err)
+	}
+	return nil
+}
+
+func (s *Service) EditEmail(ctx context.Context, editUser EditUserData) error {
+	if err := s.validateEmail(ctx, editUser.Email); err != nil {
+		return fmt.Errorf("auth.Service.EditEmail - validatePassword: %v", err)
+	}
+
+	u, err := s.repo.GetUserByID(ctx, editUser.ID)
+	if err != nil {
+		return fmt.Errorf("auth.Service.EditEmail - GetUserByID: %v", err)
+	}
+
+	if err := utils.CheckPasswordHash(editUser.Password, u.PasswordHash); err != nil {
+		return fmt.Errorf("auth.Service.EditEmail - incorrect password: %v", err)
+	}
+
+	if u.Email == editUser.Email {
+		return fmt.Errorf("auth.Service.EditEmail: new email is the same as old email")
+	}
+	u.Email = editUser.Email
+
+	err = s.repo.EditEmail(ctx, u)
+	if err != nil {
+		return fmt.Errorf("auth.Service.EditPassword - EditPassword: %v", err)
+	}
+	return nil
+}
+
+func (s *Service) EditUsername(ctx context.Context, editUser EditUserData) error {
+	u, err := s.repo.GetUserByID(ctx, editUser.ID)
+	if err != nil {
+		return fmt.Errorf("auth.Service.EditEmail - GetUserByID: %v", err)
+	}
+
+	if err := utils.CheckPasswordHash(editUser.Password, u.PasswordHash); err != nil {
+		return fmt.Errorf("auth.Service.EditEmail - incorrect password: %v", err)
+	}
+
+	if u.Name == editUser.Username {
+		return fmt.Errorf("auth.Service.EditEmail: new username is the same as old username")
+	}
+	u.Name = editUser.Username
+
+	err = s.repo.EditEmail(ctx, u)
+	if err != nil {
+		return fmt.Errorf("auth.Service.EditPassword - EditPassword: %v", err)
+	}
 	return nil
 }
 
@@ -119,7 +197,7 @@ func (s *Service) GetUserByEmail(ctx context.Context, email string) (*User, erro
 }
 
 func (s *Service) GetUserByRefreshToken(ctx context.Context, token uuid.UUID) (*User, error) {
-	sessionJson, err := s.redis.Get(ctx, token.String())
+	sessionJson, err := s.sessionRepo.Get(ctx, token.String())
 	if err != nil {
 		return nil, fmt.Errorf("user.Service.GetUserByRefreshToken: %w", err)
 	}

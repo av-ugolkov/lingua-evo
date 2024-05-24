@@ -34,6 +34,20 @@ type (
 		Code     int
 	}
 
+	UserPasword struct {
+		ID          uuid.UUID
+		OldPassword string
+		Password    string
+		Code        int
+	}
+
+	EditUserData struct {
+		ID       uuid.UUID
+		Username string
+		Email    string
+		Password string
+	}
+
 	Session struct {
 		UserID      uuid.UUID `json:"user_id"`
 		Fingerprint string    `json:"fingerprint"`
