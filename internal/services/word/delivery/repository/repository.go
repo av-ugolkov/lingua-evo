@@ -310,3 +310,15 @@ func (r *WordRepo) UpdateWord(ctx context.Context, vocabWord entity.VocabWord) e
 	}
 	return nil
 }
+
+func (r *WordRepo) GetCountWords(ctx context.Context, userID uuid.UUID) (int, error) {
+	const query = `SELECT count(id) FROM word WHERE vocabulary_id=ANY(SELECT id FROM vocabulary WHERE user_id=$1);`
+
+	var count int
+	err := r.db.QueryRowContext(ctx, query, userID).Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("word.repository.WordRepo.GetCountWords: %w", err)
+	}
+
+	return count, nil
+}

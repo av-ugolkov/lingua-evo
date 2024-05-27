@@ -68,6 +68,8 @@ where v.id=$1;`
 	if err != nil {
 		return nil, fmt.Errorf("vocabulary.delivery.repository.VocabRepo.GetByName: %w", err)
 	}
+	defer func() { _ = rows.Close() }()
+
 	tags := make([]string, 0)
 	for rows.Next() {
 		var tag string
