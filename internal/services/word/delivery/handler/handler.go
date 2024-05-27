@@ -13,6 +13,7 @@ import (
 	entityExample "github.com/av-ugolkov/lingua-evo/internal/services/example"
 	"github.com/av-ugolkov/lingua-evo/internal/services/word"
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/word"
+	"github.com/av-ugolkov/lingua-evo/runtime"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -82,8 +83,16 @@ func (h *Handler) register(r *gin.Engine) {
 
 func (h *Handler) addWord(c *gin.Context) {
 	ctx := c.Request.Context()
+
+	userID, err := runtime.UserIDFromContext(ctx)
+	if err != nil {
+		ginExt.SendError(c, http.StatusUnauthorized,
+			fmt.Errorf("word.delivery.Handler.addWord - check body: %v", err))
+		return
+	}
+
 	var data VocabWordRq
-	err := c.Bind(&data)
+	err = c.Bind(&data)
 	if err != nil {
 		ginExt.SendError(c, http.StatusInternalServerError,
 			fmt.Errorf("word.delivery.Handler.addWord - check body: %v", err))
@@ -109,7 +118,7 @@ func (h *Handler) addWord(c *gin.Context) {
 		})
 	}
 
-	vocabWord, err := h.wordSvc.AddWord(ctx, entity.VocabWordData{
+	vocabWord, err := h.wordSvc.AddWord(ctx, userID, entity.VocabWordData{
 		ID:      uuid.New(),
 		VocabID: data.VocabID,
 		Native: entityDict.DictWord{

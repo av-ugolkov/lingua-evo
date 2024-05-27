@@ -20,6 +20,8 @@ type (
 		GetUserByEmail(ctx context.Context, email string) (*User, error)
 		GetUserByToken(ctx context.Context, token uuid.UUID) (*User, error)
 		RemoveUser(ctx context.Context, u *User) error
+		GetUserData(ctx context.Context, uid uuid.UUID) (*Data, error)
+		GetUserSubscriptions(ctx context.Context, uid uuid.UUID) ([]Subscriptions, error)
 	}
 
 	redis interface {
@@ -136,6 +138,25 @@ func (s *Service) GetUserByRefreshToken(ctx context.Context, token uuid.UUID) (*
 
 func (s *Service) RemoveUser(ctx context.Context, user *User) error {
 	return nil
+}
+
+func (s *Service) UserCountWord(ctx context.Context, userID uuid.UUID) (int, error) {
+	data, err := s.repo.GetUserData(ctx, userID)
+	if err != nil {
+		return 0, fmt.Errorf("user.Service.UserCountWord - get user data: %w", err)
+	}
+
+	subscriptions, err := s.repo.GetUserSubscriptions(ctx, userID)
+	if err != nil {
+		return 0, fmt.Errorf("user.Service.UserCountWord - get user subscriptions: %w", err)
+	}
+
+	maxWords := data.MaxCountWords
+	for _, sub := range subscriptions {
+		maxWords += sub.CountWord
+	}
+
+	return maxWords, nil
 }
 
 func (s *Service) validateEmail(ctx context.Context, email string) error {

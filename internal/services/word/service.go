@@ -22,6 +22,11 @@ type (
 		GetRandomVocabulary(ctx context.Context, vocabID uuid.UUID, limit int) ([]VocabWordData, error)
 		GetVocabularyWords(ctx context.Context, vocabID uuid.UUID) ([]VocabWordData, error)
 		UpdateWord(ctx context.Context, word VocabWord) error
+		GetCountWords(ctx context.Context, userID uuid.UUID) (int, error)
+	}
+
+	userSvc interface {
+		UserCountWord(ctx context.Context, userID uuid.UUID) (int, error)
 	}
 
 	vocabSvc interface {
@@ -43,6 +48,7 @@ type (
 type Service struct {
 	tr         *transactor.Transactor
 	repo       repoWord
+	userSvc    userSvc
 	vocabSvc   vocabSvc
 	dictSvc    dictSvc
 	exampleSvc exampleSvc
@@ -51,6 +57,7 @@ type Service struct {
 func NewService(
 	tr *transactor.Transactor,
 	repo repoWord,
+	userSvc userSvc,
 	vocabSvc vocabSvc,
 	dictSvc dictSvc,
 	exampleSvc exampleSvc,
@@ -58,13 +65,27 @@ func NewService(
 	return &Service{
 		tr:         tr,
 		repo:       repo,
+		userSvc:    userSvc,
 		vocabSvc:   vocabSvc,
 		dictSvc:    dictSvc,
 		exampleSvc: exampleSvc,
 	}
 }
 
-func (s *Service) AddWord(ctx context.Context, vocabWordData VocabWordData) (VocabWord, error) {
+func (s *Service) AddWord(ctx context.Context, userID uuid.UUID, vocabWordData VocabWordData) (VocabWord, error) {
+	userCountWord, err := s.userSvc.UserCountWord(ctx, userID)
+	if err != nil {
+		return VocabWord{}, fmt.Errorf("word.Service.AddWord - get count words: %w", err)
+	}
+	count, err := s.repo.GetCountWords(ctx, userID)
+	if err != nil {
+		return VocabWord{}, fmt.Errorf("word.Service.AddWord - get count words: %w", err)
+	}
+
+	if count >= userCountWord {
+		return VocabWord{}, fmt.Errorf("word.Service.AddWord: %w", ErrUserWordLimit)
+	}
+
 	vocab, err := s.vocabSvc.GetVocabularyByID(ctx, vocabWordData.VocabID)
 	if err != nil {
 		return VocabWord{}, fmt.Errorf("word.Service.AddWord - get dictionary: %w", err)
