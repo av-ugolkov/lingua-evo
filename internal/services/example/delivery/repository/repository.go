@@ -59,6 +59,7 @@ func (r *ExampleRepo) AddExamples(ctx context.Context, examples []entity.Example
 	if err != nil {
 		return nil, fmt.Errorf("example.repository.ExampleRepo.AddExamples - query: %w", err)
 	}
+	defer func() { _ = rows.Close() }()
 
 	tagIDs := make([]uuid.UUID, 0, len(examples))
 	for rows.Next() {

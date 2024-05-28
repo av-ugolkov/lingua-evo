@@ -145,7 +145,7 @@ func initServer(cfg *config.Config, r *gin.Engine, db *sql.DB, redis *redis.Redi
 	vocabRepo := vocabRepository.NewRepo(db)
 	vocabSvc := vocabService.NewService(tr, vocabRepo, langSvc, tagSvc)
 	wordRepo := wordRepository.NewRepo(db)
-	wordSvc := wordService.NewService(tr, wordRepo, vocabSvc, dictSvc, exampleSvc)
+	wordSvc := wordService.NewService(tr, wordRepo, userSvc, vocabSvc, dictSvc, exampleSvc)
 	authRepo := authRepository.NewRepo(redis)
 	authSvc := authService.NewService(cfg.Email, authRepo, userSvc)
 

@@ -48,6 +48,7 @@ func (r *DictionaryRepo) AddWords(ctx context.Context, inWords []entity.DictWord
 	if err != nil {
 		return nil, fmt.Errorf("dictionary.repository.DictionaryRepo.AddWord - query: %w", err)
 	}
+	defer func() { _ = rows.Close() }()
 
 	words := make([]entity.DictWord, 0, len(inWords))
 	for rows.Next() {
@@ -73,6 +74,7 @@ func (r *DictionaryRepo) GetWordsByText(ctx context.Context, inWords []entity.Di
 	if err != nil {
 		return nil, fmt.Errorf("dictionary.repository.DictionaryRepo.GetWordByText: %w", err)
 	}
+	defer func() { _ = rows.Close() }()
 
 	words := make([]entity.DictWord, 0, len(inWords))
 	for rows.Next() {

@@ -38,6 +38,21 @@ type (
 		UserID      uuid.UUID `json:"user_id"`
 		Fingerprint string    `json:"fingerprint"`
 	}
+
+	Data struct {
+		UserID        uuid.UUID
+		MaxCountWords int
+		Newsletters   bool
+	}
+
+	Subscriptions struct {
+		ID             uuid.UUID
+		UserID         uuid.UUID
+		SubscriptionID int
+		CountWord      int
+		StartedAt      time.Time
+		EndedAt        time.Time
+	}
 )
 
 // TODO вынести в конфиги

@@ -88,3 +88,40 @@ func (r *UserRepo) GetUserByToken(ctx context.Context, token uuid.UUID) (*entity
 func (r *UserRepo) RemoveUser(ctx context.Context, u *entity.User) error {
 	return nil
 }
+
+func (r *UserRepo) GetUserData(ctx context.Context, userID uuid.UUID) (*entity.Data, error) {
+	const query = `SELECT max_count_words, newsletter FROM user_data WHERE user_id = $1`
+
+	var data entity.Data
+	err := r.db.QueryRowContext(ctx, query, userID).Scan(&data.MaxCountWords, &data.Newsletters)
+	if err != nil {
+		return nil, fmt.Errorf("user.repository.UserRepo.GetUserData: %w", err)
+	}
+
+	return &data, nil
+}
+
+func (r *UserRepo) GetUserSubscriptions(ctx context.Context, userID uuid.UUID) ([]entity.Subscriptions, error) {
+	const query = `
+	SELECT us.id, user_id, subscription_id, s.add_words count_word, us.started_at, us.ended_at 
+	FROM user_subscription us
+	LEFT JOIN subscriptions s ON s.id = us.subscription_id
+	WHERE user_id = $1;`
+
+	rows, err := r.db.QueryContext(ctx, query, userID)
+	if err != nil {
+		return nil, fmt.Errorf("user.repository.UserRepo.GetUserSubscriptions: %w", err)
+	}
+	defer func() { _ = rows.Close() }()
+
+	var subscriptions []entity.Subscriptions
+	for rows.Next() {
+		var sub entity.Subscriptions
+		if err := rows.Scan(&sub.ID, &sub.UserID, &sub.SubscriptionID, &sub.CountWord, &sub.StartedAt, &sub.EndedAt); err != nil {
+			return nil, fmt.Errorf("user.repository.UserRepo.GetUserSubscriptions - scan: %w", err)
+		}
+		subscriptions = append(subscriptions, sub)
+	}
+
+	return subscriptions, nil
+}
