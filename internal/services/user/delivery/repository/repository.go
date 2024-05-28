@@ -90,7 +90,7 @@ func (r *UserRepo) RemoveUser(ctx context.Context, u *entity.User) error {
 }
 
 func (r *UserRepo) GetUserData(ctx context.Context, userID uuid.UUID) (*entity.Data, error) {
-	const query = `SELECT max_count_words, newsletters FROM user_data WHERE user_id = $1`
+	const query = `SELECT max_count_words, newsletter FROM user_data WHERE user_id = $1`
 
 	var data entity.Data
 	err := r.db.QueryRowContext(ctx, query, userID).Scan(&data.MaxCountWords, &data.Newsletters)
