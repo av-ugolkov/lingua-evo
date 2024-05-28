@@ -31,7 +31,42 @@ func (r *UserRepo) AddUser(ctx context.Context, u *entity.User) (uuid.UUID, erro
 	return uid, nil
 }
 
-func (r *UserRepo) EditUser(ctx context.Context, u *entity.User) error {
+func (r *UserRepo) EditPassword(ctx context.Context, u *entity.User) error {
+	const query = `UPDATE users SET password_hash = $1 WHERE id = $2`
+	result, err := r.db.ExecContext(ctx, query, u.PasswordHash, u.ID)
+	if err != nil {
+		return fmt.Errorf("user.repository.UserRepo.EditPassword: %w", err)
+	}
+
+	if rowsAffected, _ := result.RowsAffected(); rowsAffected != 1 {
+		return fmt.Errorf("user.repository.UserRepo.EditPassword: not updated any row")
+	}
+	return nil
+}
+
+func (r *UserRepo) EditEmail(ctx context.Context, u *entity.User) error {
+	const query = `UPDATE users SET email = $1 WHERE id = $2`
+	result, err := r.db.ExecContext(ctx, query, u.Email, u.ID)
+	if err != nil {
+		return fmt.Errorf("user.repository.UserRepo.EditPassword: %w", err)
+	}
+
+	if rowsAffected, _ := result.RowsAffected(); rowsAffected != 1 {
+		return fmt.Errorf("user.repository.UserRepo.EditPassword: not updated any row")
+	}
+	return nil
+}
+
+func (r *UserRepo) EditUsername(ctx context.Context, u *entity.User) error {
+	const query = `UPDATE users SET name = $1 WHERE id = $2`
+	result, err := r.db.ExecContext(ctx, query, u.Name, u.ID)
+	if err != nil {
+		return fmt.Errorf("user.repository.UserRepo.EditPassword: %w", err)
+	}
+
+	if rowsAffected, _ := result.RowsAffected(); rowsAffected != 1 {
+		return fmt.Errorf("user.repository.UserRepo.EditPassword: not updated any row")
+	}
 	return nil
 }
 

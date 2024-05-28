@@ -38,6 +38,23 @@ type (
 		Email string       `json:"email"`
 		Role  runtime.Role `json:"role"`
 	}
+
+	UserEditPasswordRq struct {
+		OldPassword string `json:"old_password"`
+		Password    string `json:"password"`
+		EmailCode   int    `json:"email_code"`
+	}
+
+	UserEditEmailRq struct {
+		OldEmail string `json:"old_email"`
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+
+	UserEditUsernameRq struct {
+		Username string `json:"username"`
+		Password string `json:"password"`
+	}
 )
 
 type Handler struct {
@@ -58,6 +75,9 @@ func newHandler(userSvc *user.Service) *Handler {
 func (h *Handler) register(r *gin.Engine) {
 	r.POST(delivery.SignUp, h.signUp)
 	r.GET(delivery.UserByID, middleware.Auth(h.getUserByID))
+	r.POST(delivery.UserEditPassword, middleware.Auth(h.editPassword))
+	r.POST(delivery.UserEditEmail, middleware.Auth(h.editEmail))
+	r.POST(delivery.UserEditName, middleware.Auth(h.editName))
 }
 
 func (h *Handler) signUp(c *gin.Context) {
@@ -136,4 +156,101 @@ func (h *Handler) getUserByID(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, userRs)
+}
+
+func (h *Handler) editPassword(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	uid, err := runtime.UserIDFromContext(ctx)
+	if err != nil {
+		ginExtension.SendError(c, http.StatusBadRequest,
+			fmt.Errorf("user.delivery.Handler.editPassword: not found user id"))
+		return
+	}
+	var data UserEditPasswordRq
+	err = c.Bind(&data)
+	if err != nil {
+		ginExtension.SendError(c, http.StatusBadRequest,
+			fmt.Errorf("user.delivery.Handler.editPassword - check body: %v", err))
+		return
+	}
+
+	err = h.userSvc.EditPassword(ctx, entity.UserPasword{
+		ID:          uid,
+		OldPassword: data.OldPassword,
+		Password:    data.Password,
+		Code:        data.EmailCode,
+	})
+	if err != nil {
+		ginExtension.SendError(c, http.StatusInternalServerError,
+			fmt.Errorf("user.delivery.Handler.editPassword: %v", err),
+		)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{})
+}
+
+func (h *Handler) editEmail(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	uid, err := runtime.UserIDFromContext(ctx)
+	if err != nil {
+		ginExtension.SendError(c, http.StatusBadRequest,
+			fmt.Errorf("user.delivery.Handler.editPassword: not found user id"))
+		return
+	}
+	var data UserEditEmailRq
+	err = c.Bind(&data)
+	if err != nil {
+		ginExtension.SendError(c, http.StatusBadRequest,
+			fmt.Errorf("user.delivery.Handler.editPassword - check body: %v", err))
+		return
+	}
+
+	err = h.userSvc.EditEmail(ctx, entity.EditUserData{
+		ID:       uid,
+		Email:    data.Email,
+		Password: data.Password,
+	})
+	if err != nil {
+		ginExtension.SendError(c, http.StatusInternalServerError,
+			fmt.Errorf("user.delivery.Handler.editPassword: %v", err),
+		)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{})
+}
+
+func (h *Handler) editName(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	uid, err := runtime.UserIDFromContext(ctx)
+	if err != nil {
+		ginExtension.SendError(c, http.StatusBadRequest,
+			fmt.Errorf("user.delivery.Handler.editPassword: not found user id"))
+		return
+	}
+	var data UserEditUsernameRq
+	err = c.Bind(&data)
+	if err != nil {
+		ginExtension.SendError(c, http.StatusBadRequest,
+			fmt.Errorf("user.delivery.Handler.editPassword - check body: %v", err))
+		return
+	}
+
+	err = h.userSvc.EditUsername(ctx, entity.EditUserData{
+		ID:       uid,
+		Username: data.Username,
+		Password: data.Password,
+	})
+	if err != nil {
+		ginExtension.SendError(c, http.StatusInternalServerError,
+			fmt.Errorf("user.delivery.Handler.editPassword: %v", err),
+		)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{})
 }
