@@ -9,7 +9,6 @@ import (
 
 var (
 	ErrVocabularyNotFound = errors.New("vocabulary not found")
-	ErrCountVocabulary    = errors.New("too much dictionaries for user")
 )
 
 type (

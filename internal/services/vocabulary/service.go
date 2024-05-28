@@ -56,10 +56,6 @@ func (s *Service) AddVocabulary(ctx context.Context, vocabulary Vocabulary) (Voc
 		}
 	}
 
-	if len(vocabularies) >= 5 {
-		return Vocabulary{}, fmt.Errorf("vocabulary.Service.AddVocabulary - %w %v", ErrCountVocabulary, vocabulary.UserID)
-	}
-
 	err = s.tr.CreateTransaction(ctx, func(ctx context.Context) error {
 		tagIDs, err := s.tagSvc.AddTags(ctx, vocabulary.Tags)
 		if err != nil {
