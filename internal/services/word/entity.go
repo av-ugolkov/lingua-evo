@@ -13,6 +13,7 @@ import (
 var (
 	ErrDuplicate         = errors.New("duplicate key value violates unique constraint")
 	ErrWordPronunciation = errors.New("word pronunciation is empty")
+	ErrUserWordLimit     = errors.New("user word limit reached")
 )
 
 type (
