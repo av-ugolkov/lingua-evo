@@ -41,6 +41,7 @@ func (h *Handler) register(r *gin.Engine) {
 	r.POST(delivery.VocabularyAccess, middleware.Auth(h.changeAccess))
 	r.POST(delivery.VocabularyAccessForUser, middleware.Auth(h.addAccessForUser))
 	r.DELETE(delivery.VocabularyAccessForUser, middleware.Auth(h.removeAccessForUser))
+	r.PATCH(delivery.VocabularyAccessForUser, middleware.Auth(h.updateAccessForUser))
 }
 
 func (h *Handler) changeAccess(c *gin.Context) {
@@ -79,7 +80,7 @@ func (h *Handler) addAccessForUser(c *gin.Context) {
 		return
 	}
 
-	err = h.vocabAccessSvc.ChangeAccess(ctx, vocabAccess.Access{
+	err = h.vocabAccessSvc.AddAccessForUser(ctx, vocabAccess.Access{
 		VocabID:    vocabAccessRq.VocabID,
 		UserID:     vocabAccessRq.UserID,
 		AccessEdit: vocabAccessRq.AccessEdit,
@@ -104,13 +105,38 @@ func (h *Handler) removeAccessForUser(c *gin.Context) {
 		return
 	}
 
-	err = h.vocabAccessSvc.ChangeAccess(ctx, vocabAccess.Access{
+	err = h.vocabAccessSvc.RemoveAccessForUser(ctx, vocabAccess.Access{
 		VocabID: vocabAccessRq.VocabID,
 		UserID:  vocabAccessRq.UserID,
 	})
 	if err != nil {
 		ginExt.SendError(c, http.StatusInternalServerError,
 			fmt.Errorf("vocabulary.delivery.Handler.removeAccessForUser: %v", err))
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{})
+}
+
+func (h *Handler) updateAccessForUser(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	var vocabAccessRq VocabularyAccessRq
+	err := c.Bind(&vocabAccessRq)
+	if err != nil {
+		ginExt.SendError(c, http.StatusBadRequest,
+			fmt.Errorf("vocabulary.delivery.Handler.updateAccessForUser - check body: %v", err))
+		return
+	}
+
+	err = h.vocabAccessSvc.UpdateAccessForUser(ctx, vocabAccess.Access{
+		VocabID:    vocabAccessRq.VocabID,
+		UserID:     vocabAccessRq.UserID,
+		AccessEdit: vocabAccessRq.AccessEdit,
+	})
+	if err != nil {
+		ginExt.SendError(c, http.StatusInternalServerError,
+			fmt.Errorf("vocabulary.delivery.Handler.updateAccessForUser: %v", err))
 		return
 	}
 

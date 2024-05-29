@@ -2,8 +2,10 @@ package vocabulary_access
 
 import "github.com/google/uuid"
 
+type AccessType int
+
 const (
-	Private = iota
+	Private AccessType = iota
 	SomeOne
 	Subscritebers
 	Public

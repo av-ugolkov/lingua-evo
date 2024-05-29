@@ -58,3 +58,17 @@ func (s *Service) RemoveAccessForUser(ctx context.Context, access Access) error 
 	}
 	return nil
 }
+
+func (s *Service) UpdateAccessForUser(ctx context.Context, access Access) error {
+	err := s.RemoveAccessForUser(ctx, access)
+	if err != nil {
+		return fmt.Errorf("vocabulary_access.Service.UpdateAccessForUser - remove: %w", err)
+	}
+
+	err = s.AddAccessForUser(ctx, access)
+	if err != nil {
+		return fmt.Errorf("vocabulary_access.Service.UpdateAccessForUser - add: %w", err)
+	}
+
+	return nil
+}
