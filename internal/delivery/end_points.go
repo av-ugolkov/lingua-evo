@@ -18,8 +18,8 @@ const (
 	Vocabulary   = "/account/vocabulary"   //get post, put, delete
 	Vocabularies = "/account/vocabularies" //get
 
-	VocabularyAccess        = "/vocabulary/access" //post
-	VocabularyAccessForUser = "/vocabulary/access" //post delete
+	VocabularyAccess        = "/vocabulary/access"      //post
+	VocabularyAccessForUser = "/vocabulary/access/user" //post delete
 
 	VocabularyWord         = "/vocabulary/word"               //get post delete
 	VocabularyWordUpdate   = "/vocabulary/word/update"        //post

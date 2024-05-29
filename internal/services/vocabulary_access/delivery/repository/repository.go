@@ -19,7 +19,7 @@ func NewRepo(db *sql.DB) *VocabAccessRepo {
 }
 
 func (r *VocabAccessRepo) ChangeAccess(ctx context.Context, vocabID uuid.UUID, access int, accessEdit bool) error {
-	const query = `UPDATE vocabulary SET access=$2, access_edit=$3 WHERE id=$!;`
+	const query = `UPDATE vocabulary SET access=$2, access_edit=$3 WHERE id=$1;`
 	result, err := r.db.ExecContext(ctx, query, vocabID, access, accessEdit)
 	if err != nil {
 		return fmt.Errorf("vocabulary_access.repository.VocabAccessRepo.ChangeAccess: %w", err)
