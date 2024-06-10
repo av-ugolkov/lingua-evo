@@ -3,12 +3,14 @@ package user
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/av-ugolkov/lingua-evo/internal/pkg/utils"
-	"github.com/google/uuid"
 	"time"
+
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/utils"
+
+	"github.com/google/uuid"
+	jsoniter "github.com/json-iterator/go"
 )
 
 type (
@@ -128,7 +130,7 @@ func (s *Service) GetUserByRefreshToken(ctx context.Context, token uuid.UUID) (*
 
 	var session Session
 
-	err = json.Unmarshal([]byte(sessionJson), &session)
+	err = jsoniter.Unmarshal([]byte(sessionJson), &session)
 	if err != nil {
 		return nil, fmt.Errorf("user.Service.GetUserByRefreshToken: %w", err)
 	}

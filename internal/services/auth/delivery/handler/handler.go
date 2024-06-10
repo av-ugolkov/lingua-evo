@@ -78,6 +78,7 @@ func (h *Handler) signIn(c *gin.Context) {
 			fmt.Errorf("auth.delivery.Handler.signin: fingerprint not found"))
 		return
 	}
+	data.Fingerprint = fingerprint
 
 	refreshTokenID := uuid.New()
 	tokens, err := h.authSvc.SignIn(ctx, data.User, data.Password, data.Fingerprint, refreshTokenID)
