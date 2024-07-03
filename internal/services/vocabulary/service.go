@@ -12,6 +12,7 @@ type (
 	repoVocab interface {
 		Add(ctx context.Context, dict Vocabulary, tagIDs []uuid.UUID) error
 		Delete(ctx context.Context, dict Vocabulary) error
+		Get(ctx context.Context, vocabID uuid.UUID) (Vocabulary, error)
 		GetByName(ctx context.Context, uid uuid.UUID, name string) (Vocabulary, error)
 		GetTagsVocabulary(ctx context.Context, vocabularyID uuid.UUID) ([]string, error)
 		GetByID(ctx context.Context, dictID uuid.UUID) (Vocabulary, error)
@@ -99,8 +100,8 @@ func (s *Service) DeleteVocabulary(ctx context.Context, userID uuid.UUID, name s
 	return nil
 }
 
-func (s *Service) GetVocabulary(ctx context.Context, userID uuid.UUID, name string) (Vocabulary, error) {
-	vocab, err := s.repoVocab.GetByName(ctx, userID, name)
+func (s *Service) GetVocabulary(ctx context.Context, vocabID uuid.UUID) (Vocabulary, error) {
+	vocab, err := s.repoVocab.Get(ctx, vocabID)
 	if err != nil {
 		return Vocabulary{}, fmt.Errorf("vocabulary.Service.GetVocabulary: %w", err)
 	}

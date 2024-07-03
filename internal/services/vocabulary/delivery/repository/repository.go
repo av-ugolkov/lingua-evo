@@ -47,6 +47,19 @@ func (r *VocabRepo) Delete(ctx context.Context, vocab entity.Vocabulary) error {
 	return nil
 }
 
+func (r *VocabRepo) Get(ctx context.Context, vocabID uuid.UUID) (entity.Vocabulary, error) {
+	query := `SELECT id, user_id, name, n.lang as native_lang, t.lang as translate_lang FROM vocabulary v
+left join "language" n on n.code=v.native_lang 
+left join "language" t on t.code=v.translate_lang 
+WHERE id=$1;`
+	var vocab entity.Vocabulary
+	err := r.db.QueryRowContext(ctx, query, vocabID).Scan(&vocab.ID, &vocab.UserID, &vocab.Name, &vocab.NativeLang, &vocab.TranslateLang)
+	if err != nil {
+		return vocab, fmt.Errorf("vocabulary.delivery.repository.VocabRepo.Get: %w", err)
+	}
+	return vocab, nil
+}
+
 func (r *VocabRepo) GetByName(ctx context.Context, userID uuid.UUID, name string) (entity.Vocabulary, error) {
 	query := `SELECT id, user_id, name, n.lang as native_lang, t.lang as translate_lang FROM vocabulary v
 left join "language" n on n.code =v.native_lang 

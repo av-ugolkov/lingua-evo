@@ -18,6 +18,7 @@ import (
 
 const (
 	paramsVocabName = "name"
+	paramsVocabID   = "id"
 )
 
 type (
@@ -148,21 +149,15 @@ func (h *Handler) deleteVocabulary(c *gin.Context) {
 
 func (h *Handler) getVocabulary(c *gin.Context) {
 	ctx := c.Request.Context()
-	userID, err := runtime.UserIDFromContext(ctx)
-	if err != nil {
-		ginExt.SendError(c, http.StatusUnauthorized,
-			fmt.Errorf("vocabulary.delivery.Handler.getVocabulary - unauthorized: %v", err))
-		return
-	}
 
-	name, err := ginExt.GetQuery(c, paramsVocabName)
+	vocabID, err := ginExt.GetQueryUUID(c, paramsVocabID)
 	if err != nil {
 		ginExt.SendError(c, http.StatusInternalServerError,
 			fmt.Errorf("vocabulary.delivery.Handler.getVocabulary - get query [name]: %v", err))
 		return
 	}
 
-	vocab, err := h.vocabularySvc.GetVocabulary(ctx, userID, name)
+	vocab, err := h.vocabularySvc.GetVocabulary(ctx, vocabID)
 	if err != nil {
 		ginExt.SendError(c, http.StatusInternalServerError,
 			fmt.Errorf("vocabulary.delivery.Handler.getVocabulary: %v", err))
