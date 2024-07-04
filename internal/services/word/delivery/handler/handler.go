@@ -76,7 +76,7 @@ func (h *Handler) register(r *gin.Engine) {
 	r.POST(delivery.VocabularyWord, middleware.Auth(h.addWord))
 	r.DELETE(delivery.VocabularyWord, middleware.Auth(h.deleteWord))
 	r.POST(delivery.VocabularyWordUpdate, middleware.Auth(h.updateWord))
-	r.GET(delivery.VocabularySeveralWords, middleware.Auth(h.getSeveralWords))
+	r.GET(delivery.VocabularyRandomWords, middleware.Auth(h.getRandomWords))
 	r.GET(delivery.VocabularyWords, middleware.Auth(h.getWords))
 	r.GET(delivery.GetPronunciation, middleware.Auth(h.getPronunciation))
 }
@@ -236,7 +236,7 @@ func (h *Handler) deleteWord(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{})
 }
 
-func (h *Handler) getSeveralWords(c *gin.Context) {
+func (h *Handler) getRandomWords(c *gin.Context) {
 	ctx := c.Request.Context()
 	vocabID, err := ginExt.GetQueryUUID(c, ParamVocabID)
 	if err != nil {
