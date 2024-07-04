@@ -223,6 +223,13 @@ func (h *Handler) getVocabularies(c *gin.Context) {
 
 func (h *Handler) renameVocabulary(c *gin.Context) {
 	ctx := c.Request.Context()
+
+	id, err := ginExt.GetQueryUUID(c, paramsVocabID)
+	if err != nil {
+		ginExt.SendError(c, http.StatusInternalServerError,
+			fmt.Errorf("vocabulary.delivery.Handler.renameVocabulary - get query [id]: %v", err))
+		return
+	}
 	name, err := ginExt.GetQuery(c, paramsVocabName)
 	if err != nil {
 		ginExt.SendError(c, http.StatusInternalServerError,
@@ -230,15 +237,7 @@ func (h *Handler) renameVocabulary(c *gin.Context) {
 		return
 	}
 
-	var vocab VocabularyIDRs
-	err = c.Bind(&vocab)
-	if err != nil {
-		ginExt.SendError(c, http.StatusInternalServerError,
-			fmt.Errorf("vocabulary.delivery.Handler.renameVocabulary - get body: %v", err))
-		return
-	}
-
-	err = h.vocabularySvc.RenameVocabulary(ctx, vocab.ID, name)
+	err = h.vocabularySvc.RenameVocabulary(ctx, id, name)
 	if err != nil {
 		ginExt.SendError(c, http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.renameVocabulary: %v", err))
 		return

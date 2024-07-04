@@ -21,11 +21,11 @@ const (
 	VocabularyAccess        = "/vocabulary/access"      //post
 	VocabularyAccessForUser = "/vocabulary/access/user" //post delete
 
-	VocabularyWord         = "/vocabulary/word"               //get post delete
-	VocabularyWordUpdate   = "/vocabulary/word/update"        //post
-	VocabularySeveralWords = "/vocabulary/word/several"       //get
-	VocabularyWords        = "/vocabulary/word/all"           //get
-	GetPronunciation       = "/vocabulary/word/pronunciation" //get
+	VocabularyWord        = "/vocabulary/word"               //get post delete
+	VocabularyWordUpdate  = "/vocabulary/word/update"        //post
+	VocabularyRandomWords = "/vocabulary/word/random"        //get
+	VocabularyWords       = "/vocabulary/word/all"           //get
+	GetPronunciation      = "/vocabulary/word/pronunciation" //get
 
 	VocabularyTags = "/vocabulary/tag" //get
 )
