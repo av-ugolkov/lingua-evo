@@ -43,7 +43,7 @@ func (r *WordRepo) GetWord(ctx context.Context, id uuid.UUID) (entity.VocabWordD
 		LEFT JOIN "dictionary" n ON n.id = w.native_id
 		LEFT JOIN "dictionary" t ON t.id = ANY(w.translate_ids)
 		LEFT JOIN "example" e ON e.id = ANY(w.example_ids)
-	WHERE id=$1
+	WHERE w.id=$1
 	GROUP BY w.id, n.id, n."text", w.pronunciation, n.lang_code;`
 
 	var vocabWordData entity.VocabWordData
@@ -51,6 +51,7 @@ func (r *WordRepo) GetWord(ctx context.Context, id uuid.UUID) (entity.VocabWordD
 	var examples []string
 	err := r.db.QueryRowContext(ctx, query, id).Scan(
 		&vocabWordData.ID,
+		&vocabWordData.VocabID,
 		&vocabWordData.Native.ID,
 		&vocabWordData.Native.Text,
 		&vocabWordData.Native.Pronunciation,
@@ -60,7 +61,7 @@ func (r *WordRepo) GetWord(ctx context.Context, id uuid.UUID) (entity.VocabWordD
 		&vocabWordData.UpdatedAt,
 		&vocabWordData.CreatedAt)
 	if err != nil {
-		return entity.VocabWordData{}, fmt.Errorf("word.repository.WordRepo.GetVocabularyWords: %w", err)
+		return entity.VocabWordData{}, fmt.Errorf("word.repository.WordRepo.GetWord: %w", err)
 	}
 
 	for _, tr := range translates {
