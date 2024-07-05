@@ -3,8 +3,11 @@ package vocabulary
 import (
 	"context"
 	"fmt"
+
 	"github.com/av-ugolkov/lingua-evo/internal/db/transactor"
+	entityAccess "github.com/av-ugolkov/lingua-evo/internal/services/access"
 	entityTag "github.com/av-ugolkov/lingua-evo/internal/services/tag"
+
 	"github.com/google/uuid"
 )
 
@@ -18,6 +21,10 @@ type (
 		GetByID(ctx context.Context, dictID uuid.UUID) (Vocabulary, error)
 		GetVocabularies(ctx context.Context, userID uuid.UUID) ([]Vocabulary, error)
 		Rename(ctx context.Context, id uuid.UUID, newName string) error
+	}
+
+	repoAccess interface {
+		GetAccesses(ctx context.Context) ([]entityAccess.Access, error)
 	}
 
 	tagSvc interface {
