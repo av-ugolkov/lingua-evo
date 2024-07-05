@@ -23,9 +23,11 @@ const (
 
 	VocabularyWord        = "/vocabulary/word"               //get post delete
 	VocabularyWordUpdate  = "/vocabulary/word/update"        //post
-	VocabularyRandomWords = "/vocabulary/word/random"        //get
-	VocabularyWords       = "/vocabulary/word/all"           //get
-	GetPronunciation      = "/vocabulary/word/pronunciation" //get
+	VocabularyRandomWords = "/vocabulary/words/random"       //get
+	VocabularyWords       = "/vocabulary/words"              //get
+	WordPronunciation     = "/vocabulary/word/pronunciation" //get
 
 	VocabularyTags = "/vocabulary/tag" //get
+
+	Accesses = "/accesses" //get
 )

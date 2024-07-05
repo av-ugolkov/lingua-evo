@@ -1,17 +1,16 @@
 -- +goose Up
 CREATE TABLE IF NOT EXISTS
-    "access" ("id" BIGINT PRIMARY KEY, "type" VARCHAR(255) NOT NULL UNIQUE);
+    "access" ("id" BIGINT PRIMARY KEY, "type" VARCHAR(255) NOT NULL UNIQUE, "name" VARCHAR(255) NOT NULL UNIQUE);
 
 INSERT INTO
-    "access" ("id", "type")
+    "access" ("id", "type", "name")
 VALUES
-    (0, 'private'),
-    (1, 'some_one'),
-    (2, 'subscribers'),
-    (3, 'public');
+    (0, 'private', 'Private'),
+    (1, 'subscribers', 'Subscribers'),
+    (2, 'public', 'Public');
 
 ALTER TABLE IF EXISTS "vocabulary"
-ADD COLUMN IF NOT EXISTS "access" BIGINT NOT NULL DEFAULT 2;
+ADD COLUMN IF NOT EXISTS "access" BIGINT NOT NULL DEFAULT 2 CONSTRAINT "vocabulary_access_fkey" REFERENCES "access" ("id") ON DELETE CASCADE;
 
 ALTER TABLE IF EXISTS "vocabulary"
 ADD COLUMN IF NOT EXISTS "access_edit" BOOLEAN NOT NULL DEFAULT FALSE;
