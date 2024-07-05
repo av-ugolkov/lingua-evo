@@ -38,9 +38,16 @@ type (
 		ID            uuid.UUID `json:"id"`
 		UserID        uuid.UUID `json:"user_id"`
 		Name          string    `json:"name"`
+		AccessID      int       `json:"access_id"`
 		NativeLang    string    `json:"native_lang"`
 		TranslateLang string    `json:"translate_lang"`
 		Tags          []string  `json:"tags"`
+	}
+
+	VocabularyEditRq struct {
+		ID     uuid.UUID `json:"id"`
+		Name   string    `json:"name"`
+		Access int       `json:"access_id"`
 	}
 )
 
@@ -63,7 +70,7 @@ func (h *Handler) register(r *gin.Engine) {
 	r.POST(delivery.Vocabulary, middleware.Auth(h.addVocabulary))
 	r.DELETE(delivery.Vocabulary, middleware.Auth(h.deleteVocabulary))
 	r.GET(delivery.Vocabulary, middleware.Auth(h.getVocabulary))
-	r.PUT(delivery.Vocabulary, middleware.Auth(h.renameVocabulary))
+	r.PUT(delivery.Vocabulary, middleware.Auth(h.editVocabulary))
 	r.GET(delivery.Vocabularies, middleware.Auth(h.getVocabularies))
 }
 
@@ -79,7 +86,7 @@ func (h *Handler) addVocabulary(c *gin.Context) {
 	var data VocabularyRq
 	err = c.Bind(&data)
 	if err != nil {
-		ginExt.SendError(c, http.StatusUnauthorized,
+		ginExt.SendError(c, http.StatusBadRequest,
 			fmt.Errorf("vocabulary.delivery.Handler.addVocabulary - check body: %v", err))
 		return
 	}
@@ -215,6 +222,7 @@ func (h *Handler) getVocabularies(c *gin.Context) {
 			ID:            vocab.ID,
 			UserID:        vocab.UserID,
 			Name:          vocab.Name,
+			AccessID:      vocab.Access,
 			NativeLang:    vocab.NativeLang,
 			TranslateLang: vocab.TranslateLang,
 			Tags:          tags,
@@ -224,25 +232,24 @@ func (h *Handler) getVocabularies(c *gin.Context) {
 	c.JSON(http.StatusOK, vocabulariesRs)
 }
 
-func (h *Handler) renameVocabulary(c *gin.Context) {
+func (h *Handler) editVocabulary(c *gin.Context) {
 	ctx := c.Request.Context()
 
-	id, err := ginExt.GetQueryUUID(c, paramsVocabID)
+	var data VocabularyEditRq
+	err := c.Bind(&data)
 	if err != nil {
-		ginExt.SendError(c, http.StatusInternalServerError,
-			fmt.Errorf("vocabulary.delivery.Handler.renameVocabulary - get query [id]: %v", err))
-		return
-	}
-	name, err := ginExt.GetQuery(c, paramsVocabName)
-	if err != nil {
-		ginExt.SendError(c, http.StatusInternalServerError,
-			fmt.Errorf("vocabulary.delivery.Handler.renameVocabulary - get query [name]: %v", err))
+		ginExt.SendError(c, http.StatusBadRequest,
+			fmt.Errorf("vocabulary.delivery.Handler.editVocabulary - check body: %v", err))
 		return
 	}
 
-	err = h.vocabularySvc.RenameVocabulary(ctx, id, name)
+	err = h.vocabularySvc.EditVocabulary(ctx, vocabulary.Vocabulary{
+		ID:     data.ID,
+		Name:   data.Name,
+		Access: data.Access,
+	})
 	if err != nil {
-		ginExt.SendError(c, http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.renameVocabulary: %v", err))
+		ginExt.SendError(c, http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.editVocabulary: %v", err))
 		return
 	}
 
