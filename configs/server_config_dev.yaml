@@ -14,7 +14,7 @@ ssl:
 jwt:
     secret: 
     expire_access: 300 #5 min
-    expire_refresh: 3600 #1 hours
+    expire_refresh: 2592000 #30 days
 service:
     type: tcp
     port: 5000
