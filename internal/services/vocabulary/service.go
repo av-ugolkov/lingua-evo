@@ -13,14 +13,14 @@ import (
 
 type (
 	repoVocab interface {
-		Add(ctx context.Context, dict Vocabulary, tagIDs []uuid.UUID) error
-		Delete(ctx context.Context, dict Vocabulary) error
+		Add(ctx context.Context, vocab Vocabulary, tagIDs []uuid.UUID) error
+		Delete(ctx context.Context, vocab Vocabulary) error
 		Get(ctx context.Context, vocabID uuid.UUID) (Vocabulary, error)
 		GetByName(ctx context.Context, uid uuid.UUID, name string) (Vocabulary, error)
-		GetTagsVocabulary(ctx context.Context, vocabularyID uuid.UUID) ([]string, error)
-		GetByID(ctx context.Context, dictID uuid.UUID) (Vocabulary, error)
+		GetTagsVocabulary(ctx context.Context, vocabID uuid.UUID) ([]string, error)
+		GetByID(ctx context.Context, vocabID uuid.UUID) (Vocabulary, error)
 		GetVocabularies(ctx context.Context, userID uuid.UUID) ([]Vocabulary, error)
-		Rename(ctx context.Context, id uuid.UUID, newName string) error
+		Edit(ctx context.Context, vocab Vocabulary) error
 	}
 
 	repoAccess interface {
@@ -141,10 +141,10 @@ func (s *Service) GetVocabularies(ctx context.Context, userID uuid.UUID) ([]Voca
 	return vocabularies, nil
 }
 
-func (s *Service) RenameVocabulary(ctx context.Context, id uuid.UUID, newName string) error {
-	err := s.repoVocab.Rename(ctx, id, newName)
+func (s *Service) EditVocabulary(ctx context.Context, vocab Vocabulary) error {
+	err := s.repoVocab.Edit(ctx, vocab)
 	if err != nil {
-		return fmt.Errorf("vocabulary.Service.RenameVocabulary: %w", err)
+		return fmt.Errorf("vocabulary.Service.EditVocabulary: %w", err)
 	}
 	return nil
 }

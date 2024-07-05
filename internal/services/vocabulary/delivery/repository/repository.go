@@ -110,7 +110,7 @@ func (r *VocabRepo) GetByID(ctx context.Context, vocabID uuid.UUID) (entity.Voca
 }
 
 func (r *VocabRepo) GetVocabularies(ctx context.Context, userID uuid.UUID) ([]entity.Vocabulary, error) {
-	query := `SELECT v.id, v.user_id, name, n.lang as native_lang, t.lang as translate_lang, array_agg(tg."text") as tags FROM vocabulary v
+	query := `SELECT v.id, v.user_id, name, n.lang as native_lang, t.lang as translate_lang, array_agg(tg."text") as tags, v.access FROM vocabulary v
 LEFT JOIN "language" n ON n.code = v.native_lang
 LEFT JOIN "language" t ON t.code = v.translate_lang 
 LEFT JOIN "tag" tg ON tg.id = any(v.tags)
@@ -133,6 +133,7 @@ GROUP BY v.id, n.lang, t.lang;`
 			&vocab.NativeLang,
 			&vocab.TranslateLang,
 			pq.Array(&sqlTags),
+			&vocab.Access,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("vocabulary.delivery.repository.VocabRepo.GetVocabularies - scan: %w", err)
@@ -162,14 +163,14 @@ func (r *VocabRepo) GetCountVocabularies(ctx context.Context, userID uuid.UUID) 
 	return countVocabularies, nil
 }
 
-func (r *VocabRepo) Rename(ctx context.Context, id uuid.UUID, newName string) error {
-	query := `UPDATE vocabulary SET name=$1 WHERE id=$2;`
-	result, err := r.db.ExecContext(ctx, query, newName, id)
+func (r *VocabRepo) Edit(ctx context.Context, vocab entity.Vocabulary) error {
+	query := `UPDATE vocabulary SET name=$2, access=$3 WHERE id=$1;`
+	result, err := r.db.ExecContext(ctx, query, vocab.ID, vocab.Name, vocab.Access)
 	if err != nil {
-		return fmt.Errorf("vocabulary.delivery.repository.VocabRepo.Rename: %w", err)
+		return fmt.Errorf("vocabulary.delivery.repository.VocabRepo.Edit: %w", err)
 	}
 	if rowsAffected, _ := result.RowsAffected(); rowsAffected == 0 {
-		return fmt.Errorf("vocabulary.delivery.repository.VocabRepo.Rename: %w", entity.ErrVocabularyNotFound)
+		return fmt.Errorf("vocabulary.delivery.repository.VocabRepo.Edit: %w", entity.ErrVocabularyNotFound)
 	}
 	return nil
 }
