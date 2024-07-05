@@ -24,9 +24,9 @@ func NewRepo(db *sql.DB) *VocabRepo {
 }
 
 func (r *VocabRepo) Add(ctx context.Context, vocab entity.Vocabulary, tagIDs []uuid.UUID) error {
-	query := `INSERT INTO vocabulary (id, user_id, name, native_lang, translate_lang, tags, updated_at, created_at) VALUES($1, $2, $3, $4, $5, $6, $7, $7)`
+	query := `INSERT INTO vocabulary (id, user_id, name, native_lang, translate_lang, tags, updated_at, created_at, access, access_edit) VALUES($1, $2, $3, $4, $5, $6, $7, $7, $8, $9)`
 
-	_, err := r.db.ExecContext(ctx, query, vocab.ID, vocab.UserID, vocab.Name, vocab.NativeLang, vocab.TranslateLang, pq.Array(tagIDs), time.Now().UTC())
+	_, err := r.db.ExecContext(ctx, query, vocab.ID, vocab.UserID, vocab.Name, vocab.NativeLang, vocab.TranslateLang, pq.Array(tagIDs), time.Now().UTC(), vocab.Access, false)
 	if err != nil {
 		return fmt.Errorf("vocabulary.delivery.repository.VocabRepo.Add: %w", err)
 	}
