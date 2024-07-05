@@ -78,7 +78,7 @@ func (h *Handler) register(r *gin.Engine) {
 	r.POST(delivery.VocabularyWordUpdate, middleware.Auth(h.updateWord))
 	r.GET(delivery.VocabularyRandomWords, middleware.Auth(h.getRandomWords))
 	r.GET(delivery.VocabularyWords, middleware.Auth(h.getWords))
-	r.GET(delivery.GetPronunciation, middleware.Auth(h.getPronunciation))
+	r.GET(delivery.WordPronunciation, middleware.Auth(h.getPronunciation))
 }
 
 func (h *Handler) addWord(c *gin.Context) {

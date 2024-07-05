@@ -24,6 +24,7 @@ const (
 type (
 	VocabularyRq struct {
 		Name          string   `json:"name"`
+		Access        int      `json:"access_id"`
 		NativeLang    string   `json:"native_lang"`
 		TranslateLang string   `json:"translate_lang"`
 		Tags          []string `json:"tags"`
@@ -95,6 +96,7 @@ func (h *Handler) addVocabulary(c *gin.Context) {
 		ID:            uuid.New(),
 		UserID:        userID,
 		Name:          data.Name,
+		Access:        data.Access,
 		NativeLang:    data.NativeLang,
 		TranslateLang: data.TranslateLang,
 		Tags:          tags,
@@ -102,6 +104,7 @@ func (h *Handler) addVocabulary(c *gin.Context) {
 	if err != nil {
 		ginExt.SendError(c, http.StatusInternalServerError,
 			fmt.Errorf("vocabulary.delivery.Handler.addVocabulary: %v", err))
+		return
 	}
 
 	vocabRs := VocabularyRs{

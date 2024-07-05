@@ -23,6 +23,9 @@ import (
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/kafka"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/analytic"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/log"
+	accessService "github.com/av-ugolkov/lingua-evo/internal/services/access"
+	accessHandler "github.com/av-ugolkov/lingua-evo/internal/services/access/delivery/handler"
+	accessRepository "github.com/av-ugolkov/lingua-evo/internal/services/access/delivery/repository"
 	authService "github.com/av-ugolkov/lingua-evo/internal/services/auth"
 	authHandler "github.com/av-ugolkov/lingua-evo/internal/services/auth/delivery/handler"
 	authRepository "github.com/av-ugolkov/lingua-evo/internal/services/auth/delivery/repository"
@@ -148,6 +151,8 @@ func initServer(cfg *config.Config, r *gin.Engine, db *sql.DB, redis *redis.Redi
 	wordSvc := wordService.NewService(tr, wordRepo, userSvc, vocabSvc, dictSvc, exampleSvc)
 	authRepo := authRepository.NewRepo(redis)
 	authSvc := authService.NewService(cfg.Email, authRepo, userSvc)
+	accessRepo := accessRepository.NewRepo(db)
+	accessSvc := accessService.NewService(accessRepo)
 
 	slog.Info("create handlers")
 	userHandler.Create(r, userSvc)
@@ -157,6 +162,7 @@ func initServer(cfg *config.Config, r *gin.Engine, db *sql.DB, redis *redis.Redi
 	vocabHandler.Create(r, vocabSvc)
 	tagHandler.Create(r, tagSvc)
 	authHandler.Create(r, authSvc)
+	accessHandler.Create(r, accessSvc)
 
 	slog.Info("end init services")
 }
