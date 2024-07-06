@@ -20,8 +20,8 @@ type Config struct {
 }
 
 type PprofDebug struct {
-	Enable bool `yaml:"enable"`
-	Port   int  `yaml:"port"`
+	Enable bool     `yaml:"enable"`
+	Port   [4]uint8 `yaml:"port"`
 }
 
 func (p PprofDebug) Addr() string {
@@ -57,20 +57,26 @@ type JWT struct {
 
 type Service struct {
 	Type           string   `yaml:"type" env-default:"tcp"`
-	Port           string   `yaml:"port" env-default:"8080"`
+	Port           uint16   `yaml:"port" env-default:"8080"`
 	AllowedOrigins []string `yaml:"allowed_origins" env-default:"http://localhost:5173"`
 }
 
 type DbSQL struct {
-	Name     string `yaml:"name"`
-	User     string `yaml:"user"`
-	Password string `yaml:"password"`
-	Host     string `yaml:"host"`
-	Port     string `yaml:"port"`
+	Name              string `yaml:"name"`
+	User              string `yaml:"user"`
+	Password          string `yaml:"password"`
+	Host              string `yaml:"host"`
+	Port              uint16 `yaml:"port"`
+	MaxConns          uint16 `yaml:"max_conns"`
+	MinConns          uint16 `yaml:"min_conns"`
+	MaxConnLifetime   uint32 `yaml:"max_conn_life_time"`
+	MaxConnIdleTime   uint32 `yaml:"max_conn_idle_time"`
+	HealthCheckPeriod uint32 `yaml:"health_check_period"`
+	ConnectTimeout    uint32 `yaml:"connect_timeout"`
 }
 
 func (db *DbSQL) GetConnStr() string {
-	return fmt.Sprintf("postgresql://%s:%s@%s:%s/%s", db.User, db.Password, db.Host, db.Port, db.Name)
+	return fmt.Sprintf("postgresql://%s:%s@%s:%d/%s", db.User, db.Password, db.Host, db.Port, db.Name)
 }
 
 type DbRedis struct {
@@ -78,7 +84,7 @@ type DbRedis struct {
 	Password string `yaml:"password"`
 	Host     string `yaml:"host"`
 	Port     string `yaml:"port"`
-	DB       int    `yaml:"db"`
+	DB       uint16 `yaml:"db"`
 }
 
 type Email struct {
@@ -89,7 +95,7 @@ type Email struct {
 type Kafka struct {
 	Enable bool     `yaml:"enable"`
 	Host   string   `yaml:"host"`
-	Port   int      `yaml:"port"`
+	Port   uint16   `yaml:"port"`
 	Topics []string `yaml:"topics"`
 }
 

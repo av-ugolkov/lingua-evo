@@ -2,25 +2,26 @@ package repository
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/access"
+
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type AccessRepo struct {
-	db *sql.DB
+	pgxPool *pgxpool.Pool
 }
 
-func NewRepo(db *sql.DB) *AccessRepo {
+func NewRepo(pgxPool *pgxpool.Pool) *AccessRepo {
 	return &AccessRepo{
-		db: db,
+		pgxPool: pgxPool,
 	}
 }
 
 func (r *AccessRepo) GetAccesses(ctx context.Context) ([]entity.Access, error) {
 	query := `SELECT id, type, name FROM access`
-	rows, err := r.db.QueryContext(ctx, query)
+	rows, err := r.pgxPool.Query(ctx, query)
 	if err != nil {
 		return nil, fmt.Errorf("access.delivery.repository.AccessRepo.GetAccesses: %w", err)
 	}
