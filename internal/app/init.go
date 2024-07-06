@@ -2,7 +2,6 @@ package app
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -15,6 +14,7 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/av-ugolkov/lingua-evo/internal/config"
 	pg "github.com/av-ugolkov/lingua-evo/internal/db/postgres"
@@ -64,7 +64,7 @@ func ServerStart(cfg *config.Config) {
 		}()
 	}
 
-	db, err := pg.NewDB(cfg.DbSQL.GetConnStr())
+	pgxPool, err := pg.NewDB(cfg.DbSQL)
 	if err != nil {
 		slog.Error(fmt.Sprintf("can't create pg pool: %v", err))
 		return
@@ -85,9 +85,9 @@ func ServerStart(cfg *config.Config) {
 		AllowCredentials: true,
 		AllowHeaders:     []string{"Authorization", "Content-Type", "Fingerprint"},
 	}))
-	initServer(cfg, router, db, redisDB)
+	initServer(cfg, router, pgxPool, redisDB)
 
-	address := fmt.Sprintf(":%s", cfg.Service.Port)
+	address := fmt.Sprintf(":%d", cfg.Service.Port)
 
 	listener, err := net.Listen(cfg.Service.Type, address)
 	if err != nil {
@@ -132,26 +132,26 @@ func ServerStart(cfg *config.Config) {
 	slog.Info("final")
 }
 
-func initServer(cfg *config.Config, r *gin.Engine, db *sql.DB, redis *redis.Redis) {
-	tr := transactor.NewTransactor(db)
+func initServer(cfg *config.Config, r *gin.Engine, pgxPool *pgxpool.Pool, redis *redis.Redis) {
+	tr := transactor.NewTransactor(pgxPool)
 	slog.Info("create services")
-	userRepo := userRepository.NewRepo(db)
+	userRepo := userRepository.NewRepo(pgxPool)
 	userSvc := userService.NewService(userRepo, redis)
-	langRepo := langRepository.NewRepo(db)
+	langRepo := langRepository.NewRepo(pgxPool)
 	langSvc := langService.NewService(langRepo)
-	dictRepo := dictRepository.NewRepo(db)
+	dictRepo := dictRepository.NewRepo(pgxPool)
 	dictSvc := dictService.NewService(dictRepo, langSvc)
-	exampleRepo := exampleRepository.NewRepo(db)
+	exampleRepo := exampleRepository.NewRepo(pgxPool)
 	exampleSvc := exampleService.NewService(exampleRepo)
-	tagRepo := tagRepository.NewRepo(db)
+	tagRepo := tagRepository.NewRepo(pgxPool)
 	tagSvc := tagService.NewService(tagRepo)
-	vocabRepo := vocabRepository.NewRepo(db)
+	vocabRepo := vocabRepository.NewRepo(pgxPool)
 	vocabSvc := vocabService.NewService(tr, vocabRepo, langSvc, tagSvc)
-	wordRepo := wordRepository.NewRepo(db)
+	wordRepo := wordRepository.NewRepo(pgxPool)
 	wordSvc := wordService.NewService(tr, wordRepo, userSvc, vocabSvc, dictSvc, exampleSvc)
 	authRepo := authRepository.NewRepo(redis)
 	authSvc := authService.NewService(cfg.Email, authRepo, userSvc)
-	accessRepo := accessRepository.NewRepo(db)
+	accessRepo := accessRepository.NewRepo(pgxPool)
 	accessSvc := accessService.NewService(accessRepo)
 
 	slog.Info("create handlers")
