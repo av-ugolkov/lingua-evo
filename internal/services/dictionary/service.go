@@ -25,7 +25,7 @@ type (
 
 	langSvc interface {
 		CheckLanguage(ctx context.Context, langCode string) error
-		GetAvailableLanguages(ctx context.Context) ([]*entityLanguage.Language, error)
+		GetAvailableLanguages(ctx context.Context) ([]entityLanguage.Language, error)
 	}
 )
 
@@ -124,9 +124,9 @@ func (s *Service) DeleteWordByText(ctx context.Context, word DictWord) error {
 	return nil
 }
 
-func checkWords(words []DictWord, languages []*entityLanguage.Language) []DictWord {
+func checkWords(words []DictWord, languages []entityLanguage.Language) []DictWord {
 	for i := 0; i < len(words); {
-		if !slices.ContainsFunc(languages, func(language *entityLanguage.Language) bool {
+		if !slices.ContainsFunc(languages, func(language entityLanguage.Language) bool {
 			return words[i].LangCode == language.Code
 		}) {
 			slog.Warn("dictionary.checkWords - not validate language")

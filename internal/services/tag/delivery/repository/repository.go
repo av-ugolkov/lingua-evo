@@ -42,7 +42,7 @@ func (r *TagRepo) AddTag(ctx context.Context, id uuid.UUID, text string) (uuid.U
 	return tid, nil
 }
 
-func (r *TagRepo) FindTag(ctx context.Context, text string) ([]*entity.Tag, error) {
+func (r *TagRepo) FindTag(ctx context.Context, text string) ([]entity.Tag, error) {
 	query := `SELECT id, text FROM tag WHERE text LIKE '$1%'`
 	rows, err := r.pgxPool.Query(ctx, query, text)
 	if err != nil {
@@ -50,7 +50,7 @@ func (r *TagRepo) FindTag(ctx context.Context, text string) ([]*entity.Tag, erro
 	}
 	defer rows.Close()
 
-	var tags []*entity.Tag
+	var tags []entity.Tag
 	for rows.Next() {
 		var tag entity.Tag
 		err = rows.Scan(&tag.ID, &tag.Text)
@@ -58,7 +58,7 @@ func (r *TagRepo) FindTag(ctx context.Context, text string) ([]*entity.Tag, erro
 			return nil, fmt.Errorf("example.repository.TagRepo.GetAllTags - scan: %w", err)
 		}
 
-		tags = append(tags, &tag)
+		tags = append(tags, tag)
 	}
 
 	return tags, nil
