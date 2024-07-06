@@ -6,7 +6,6 @@ import (
 
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/language"
 
-	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -39,14 +38,16 @@ func (r *LangRepo) GetAvailableLanguages(ctx context.Context) ([]entity.Language
 	}
 	defer rows.Close()
 
-	langs, err := pgx.CollectRows(rows, pgx.RowToStructByNameLax[Language])
-	if err != nil {
-		return nil, fmt.Errorf("language.repository.LangRepo.GetAvailableLanguages - collect: %v", err)
-	}
+	languages := make([]entity.Language, 0)
+	for rows.Next() {
+		var lang entity.Language
 
-	languages := make([]entity.Language, 0, len(langs))
-	for _, lang := range langs {
-		languages = append(languages, entity.Language{Code: lang.Code, Lang: lang.Lang})
+		err := rows.Scan(&lang.Code, &lang.Lang)
+		if err != nil {
+			return nil, fmt.Errorf("language.repository.LangRepo.GetAvailableLanguages: %v", err)
+		}
+
+		languages = append(languages, lang)
 	}
 
 	return languages, nil

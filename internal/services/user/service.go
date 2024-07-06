@@ -10,6 +10,7 @@ import (
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/utils"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	jsoniter "github.com/json-iterator/go"
 )
 
@@ -95,9 +96,9 @@ func (s *Service) EditUser(ctx context.Context, user *User) error {
 
 func (s *Service) GetUser(ctx context.Context, login string) (*User, error) {
 	user, err := s.repo.GetUserByName(ctx, login)
-	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 		return nil, fmt.Errorf("user.Service.GetUser - by name: %w", err)
-	} else if errors.Is(err, sql.ErrNoRows) {
+	} else if errors.Is(err, pgx.ErrNoRows) {
 		user, err = s.repo.GetUserByEmail(ctx, login)
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("user.Service.GetUser - by email: %w", err)
