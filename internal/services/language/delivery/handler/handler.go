@@ -7,21 +7,15 @@ import (
 	"github.com/av-ugolkov/lingua-evo/internal/delivery"
 	ginExt "github.com/av-ugolkov/lingua-evo/internal/pkg/http/gin_extension"
 	"github.com/av-ugolkov/lingua-evo/internal/services/language"
+	"github.com/av-ugolkov/lingua-evo/internal/services/language/dto"
 	"github.com/av-ugolkov/lingua-evo/runtime"
 
 	"github.com/gin-gonic/gin"
 )
 
-type (
-	LanguageRs struct {
-		Language string `json:"language,omitempty"`
-		Code     string `json:"code"`
-	}
-
-	Handler struct {
-		langSvc *language.Service
-	}
-)
+type Handler struct {
+	langSvc *language.Service
+}
 
 func Create(r *gin.Engine, langSvc *language.Service) {
 	h := newHandler(langSvc)
@@ -44,7 +38,7 @@ func (h *Handler) getCurrentLanguage(c *gin.Context) {
 	if err != nil {
 		langCode = runtime.GetLanguage("en")
 	}
-	languageRs := &LanguageRs{
+	languageRs := &dto.LanguageRs{
 		Code: langCode,
 	}
 
@@ -61,9 +55,9 @@ func (h *Handler) getAvailableLanguages(c *gin.Context) {
 		return
 	}
 
-	languagesRs := make([]LanguageRs, 0, len(languages))
+	languagesRs := make([]dto.LanguageRs, 0, len(languages))
 	for _, lang := range languages {
-		languagesRs = append(languagesRs, LanguageRs{
+		languagesRs = append(languagesRs, dto.LanguageRs{
 			Language: lang.Lang,
 			Code:     lang.Code,
 		})
