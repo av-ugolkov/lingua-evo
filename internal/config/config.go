@@ -20,8 +20,8 @@ type Config struct {
 }
 
 type PprofDebug struct {
-	Enable bool     `yaml:"enable"`
-	Port   [4]uint8 `yaml:"port"`
+	Enable bool   `yaml:"enable"`
+	Port   uint16 `yaml:"port"`
 }
 
 func (p PprofDebug) Addr() string {
