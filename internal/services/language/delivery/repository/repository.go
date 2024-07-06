@@ -25,13 +25,13 @@ func (r *LangRepo) GetLanguage(ctx context.Context, langCode string) (string, er
 	var language string
 	err := r.pgxPool.QueryRow(ctx, query, langCode).Scan(&language)
 	if err != nil {
-		return "", fmt.Errorf("language.repository.LangRepo.GetLanguage - scan: %v", err)
+		return "", fmt.Errorf("language.repository.LangRepo.GetLanguage: %v", err)
 	}
 
 	return language, nil
 }
 
-func (r *LangRepo) GetAvailableLanguages(ctx context.Context) ([]*entity.Language, error) {
+func (r *LangRepo) GetAvailableLanguages(ctx context.Context) ([]entity.Language, error) {
 	query := `SELECT code, lang FROM language ORDER BY lang`
 	rows, err := r.pgxPool.Query(ctx, query)
 	if err != nil {
@@ -39,26 +39,14 @@ func (r *LangRepo) GetAvailableLanguages(ctx context.Context) ([]*entity.Languag
 	}
 	defer rows.Close()
 
-	languages, err := scanRowsLanguage(rows)
+	langs, err := pgx.CollectRows(rows, pgx.RowToStructByNameLax[Language])
 	if err != nil {
-		return nil, fmt.Errorf("language.repository.LangRepo.GetAvailableLanguages - scan: %v", err)
+		return nil, fmt.Errorf("language.repository.LangRepo.GetAvailableLanguages - collect: %v", err)
 	}
-	return languages, nil
-}
 
-func scanRowsLanguage(rows pgx.Rows) ([]*entity.Language, error) {
-	var languages []*entity.Language
-	for rows.Next() {
-		var language entity.Language
-		err := rows.Scan(
-			&language.Code,
-			&language.Lang,
-		)
-		if err != nil {
-			return nil, fmt.Errorf("language.repository.scanRowsLanguage: %v", err)
-		}
-
-		languages = append(languages, &language)
+	languages := make([]entity.Language, 0, len(langs))
+	for _, lang := range langs {
+		languages = append(languages, entity.Language{Code: lang.Code, Lang: lang.Lang})
 	}
 
 	return languages, nil
