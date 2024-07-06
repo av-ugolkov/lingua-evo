@@ -2,6 +2,7 @@
 logs/*
 cmd/main
 cmd/logs/*
+tools/*
 
 .DS_Store
 .vs/

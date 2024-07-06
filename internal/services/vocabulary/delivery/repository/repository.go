@@ -11,7 +11,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/lib/pq"
 )
 
 type VocabRepo struct {
@@ -27,7 +26,7 @@ func NewRepo(pgxPool *pgxpool.Pool) *VocabRepo {
 func (r *VocabRepo) Add(ctx context.Context, vocab entity.Vocabulary, tagIDs []uuid.UUID) error {
 	query := `INSERT INTO vocabulary (id, user_id, name, native_lang, translate_lang, tags, updated_at, created_at, access, access_edit) VALUES($1, $2, $3, $4, $5, $6, $7, $7, $8, $9)`
 
-	_, err := r.pgxPool.Exec(ctx, query, vocab.ID, vocab.UserID, vocab.Name, vocab.NativeLang, vocab.TranslateLang, pq.Array(tagIDs), time.Now().UTC(), vocab.Access, false)
+	_, err := r.pgxPool.Exec(ctx, query, vocab.ID, vocab.UserID, vocab.Name, vocab.NativeLang, vocab.TranslateLang, tagIDs, time.Now().UTC(), vocab.Access, false)
 	if err != nil {
 		return fmt.Errorf("vocabulary.delivery.repository.VocabRepo.Add: %w", err)
 	}
@@ -133,7 +132,7 @@ GROUP BY v.id, n.lang, t.lang;`
 			&vocab.Name,
 			&vocab.NativeLang,
 			&vocab.TranslateLang,
-			pq.Array(&sqlTags),
+			&sqlTags,
 			&vocab.Access,
 		)
 		if err != nil {
