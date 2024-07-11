@@ -109,13 +109,25 @@ func (r *VocabRepo) GetByID(ctx context.Context, vocabID uuid.UUID) (entity.Voca
 	return vocab, nil
 }
 
-func (r *VocabRepo) GetVocabularies(ctx context.Context, userID uuid.UUID) ([]entity.Vocabulary, error) {
-	query := `SELECT v.id, v.user_id, name, n.lang as native_lang, t.lang as translate_lang, array_agg(tg."text") as tags, v.access FROM vocabulary v
-LEFT JOIN "language" n ON n.code = v.native_lang
-LEFT JOIN "language" t ON t.code = v.translate_lang 
-LEFT JOIN "tag" tg ON tg.id = any(v.tags)
-WHERE user_id=$1
-GROUP BY v.id, n.lang, t.lang;`
+func (r *VocabRepo) GetVocabulariesByUser(ctx context.Context, userID uuid.UUID) ([]entity.Vocabulary, error) {
+	query := `
+	SELECT 
+		v.id,
+		v.user_id,
+		v.name,
+		n.lang as native_lang,
+		t.lang as translate_lang,
+		v.description,
+		array_agg(tg."text") as tags,
+		v.access,
+		v.updated_at,
+		v.created_at
+	FROM vocabulary v
+	LEFT JOIN "language" n ON n.code = v.native_lang
+	LEFT JOIN "language" t ON t.code = v.translate_lang 
+	LEFT JOIN "tag" tg ON tg.id = any(v.tags)
+	WHERE user_id=$1
+	GROUP BY v.id, n.lang, t.lang;`
 	rows, err := r.pgxPool.Query(ctx, query, userID)
 	if err != nil {
 		return nil, err
@@ -132,8 +144,11 @@ GROUP BY v.id, n.lang, t.lang;`
 			&vocab.Name,
 			&vocab.NativeLang,
 			&vocab.TranslateLang,
+			&vocab.Description,
 			&sqlTags,
 			&vocab.Access,
+			&vocab.UpdatedAt,
+			&vocab.CreatedAt,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("vocabulary.delivery.repository.VocabRepo.GetVocabularies - scan: %w", err)
@@ -173,4 +188,61 @@ func (r *VocabRepo) Edit(ctx context.Context, vocab entity.Vocabulary) error {
 		return fmt.Errorf("vocabulary.delivery.repository.VocabRepo.Edit: %w", entity.ErrVocabularyNotFound)
 	}
 	return nil
+}
+
+func (r *VocabRepo) GetVocabulariesByAccess(ctx context.Context, accessIDs []int) ([]entity.Vocabulary, error) {
+	query := `
+	SELECT 
+		v.id,
+		v.user_id,
+		v.name,
+		n.lang as native_lang,
+		t.lang as translate_lang,
+		v.description,
+		array_agg(tg."text") as tags,
+		v.access,
+		v.updated_at,
+		v.created_at
+	FROM vocabulary v
+	LEFT JOIN "language" n ON n.code = v.native_lang
+	LEFT JOIN "language" t ON t.code = v.translate_lang 
+	LEFT JOIN "tag" tg ON tg.id = any(v.tags)
+	WHERE v.access = ANY($1)
+	GROUP BY v.id, n.lang, t.lang;`
+	rows, err := r.pgxPool.Query(ctx, query, accessIDs)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var vocabularies []entity.Vocabulary
+	for rows.Next() {
+		var vocab entity.Vocabulary
+		var sqlTags []sql.NullString
+		err := rows.Scan(
+			&vocab.ID,
+			&vocab.UserID,
+			&vocab.Name,
+			&vocab.NativeLang,
+			&vocab.TranslateLang,
+			&vocab.Description,
+			&sqlTags,
+			&vocab.Access,
+			&vocab.UpdatedAt,
+			&vocab.CreatedAt,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("vocabulary.delivery.repository.VocabRepo.GetVocabularies - scan: %w", err)
+		}
+
+		for _, t := range sqlTags {
+			if t.Valid {
+				vocab.Tags = append(vocab.Tags, entityTag.Tag{Text: t.String})
+			}
+		}
+		fmt.Println(vocab)
+		vocabularies = append(vocabularies, vocab)
+	}
+
+	return vocabularies, nil
 }

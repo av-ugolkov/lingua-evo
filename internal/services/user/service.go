@@ -2,7 +2,6 @@ package user
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"time"
@@ -100,11 +99,11 @@ func (s *Service) GetUser(ctx context.Context, login string) (*User, error) {
 		return nil, fmt.Errorf("user.Service.GetUser - by name: %w", err)
 	} else if errors.Is(err, pgx.ErrNoRows) {
 		user, err = s.repo.GetUserByEmail(ctx, login)
-		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 			return nil, fmt.Errorf("user.Service.GetUser - by email: %w", err)
 		}
 	}
-	if errors.Is(err, sql.ErrNoRows) {
+	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, fmt.Errorf("user.Service.GetUser - by [%s]: %w", login, ErrNotFoundUser)
 	}
 
@@ -168,13 +167,13 @@ func (s *Service) validateEmail(ctx context.Context, email string) error {
 	}
 
 	userData, err := s.GetUserByEmail(ctx, email)
-	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 		return err
-	} else if errors.Is(err, sql.ErrNoRows) {
+	} else if errors.Is(err, pgx.ErrNoRows) {
 		return nil
-	} else if userData.ID == uuid.Nil && err == nil {
+	} else if userData != nil && userData.ID == uuid.Nil && err == nil {
 		return ErrItIsAdmin
-	} else if userData.ID != uuid.Nil {
+	} else if userData != nil && userData.ID != uuid.Nil {
 		return ErrEmailBusy
 	}
 
@@ -187,9 +186,9 @@ func (s *Service) validateUsername(ctx context.Context, username string) error {
 	}
 
 	userData, err := s.GetUserByName(ctx, username)
-	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 		return err
-	} else if errors.Is(err, sql.ErrNoRows) {
+	} else if errors.Is(err, pgx.ErrNoRows) {
 		return nil
 	} else if userData.ID == uuid.Nil && err == nil {
 		return ErrItIsAdmin
