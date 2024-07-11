@@ -2,7 +2,6 @@ package auth
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"math/rand"
@@ -14,6 +13,7 @@ import (
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/utils"
 	entityUser "github.com/av-ugolkov/lingua-evo/internal/services/user"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 )
 
 var (
@@ -213,13 +213,13 @@ func (s *Service) validateEmail(ctx context.Context, email string) error {
 	}
 
 	userData, err := s.userSvc.GetUserByEmail(ctx, email)
-	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 		return err
-	} else if errors.Is(err, sql.ErrNoRows) {
+	} else if errors.Is(err, pgx.ErrNoRows) {
 		return nil
-	} else if userData.ID == uuid.Nil && err == nil {
+	} else if userData != nil && userData.ID == uuid.Nil && err == nil {
 		return ErrItIsAdmin
-	} else if userData.ID != uuid.Nil {
+	} else if userData != nil && userData.ID != uuid.Nil {
 		return ErrEmailBusy
 	}
 

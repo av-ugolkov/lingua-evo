@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"time"
@@ -12,6 +11,7 @@ import (
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/word"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -146,7 +146,7 @@ func (r *WordRepo) DeleteWord(ctx context.Context, vocabWord entity.VocabWord) e
 	}
 
 	if rows := result.RowsAffected(); rows == 0 {
-		return fmt.Errorf("word.repository.WordRepo.DeleteWord - rows affected: %w", sql.ErrNoRows)
+		return fmt.Errorf("word.repository.WordRepo.DeleteWord - rows affected: %w", pgx.ErrNoRows)
 	}
 
 	return nil
@@ -306,7 +306,7 @@ func (r *WordRepo) UpdateWord(ctx context.Context, vocabWord entity.VocabWord) e
 	}
 
 	if rows := result.RowsAffected(); rows == 0 {
-		return fmt.Errorf("word.repository.WordRepo.UpdateWord - rows affected: %w", sql.ErrNoRows)
+		return fmt.Errorf("word.repository.WordRepo.UpdateWord - rows affected: %w", pgx.ErrNoRows)
 	}
 
 	return nil
