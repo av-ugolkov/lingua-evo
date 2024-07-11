@@ -1,6 +1,6 @@
 -- +goose Up
 CREATE TABLE IF NOT EXISTS
-    "access" ("id" BIGINT PRIMARY KEY, "type" VARCHAR(255) NOT NULL UNIQUE, "name" VARCHAR(255) NOT NULL UNIQUE);
+    "access" ("id" BIGINT PRIMARY KEY, "type" VARCHAR(25) NOT NULL UNIQUE, "name" VARCHAR(25) NOT NULL UNIQUE);
 
 INSERT INTO
     "access" ("id", "type", "name")
@@ -23,6 +23,9 @@ CREATE TABLE IF NOT EXISTS
     );
 
 CREATE UNIQUE INDEX IF NOT EXISTS "idx_unique_vocabulary_users_access__vocab_id_subscriber_id" ON "vocabulary_users_access" ("vocab_id", "subscriber_id");
+
+ALTER TABLE IF EXISTS "vocabulary"
+ADD COLUMN IF NOT EXISTS "description" VARCHAR(255) NOT NULL DEFAULT '';
 
 -- +goose Down
 DROP TABLE IF EXISTS "access";

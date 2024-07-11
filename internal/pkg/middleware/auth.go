@@ -33,3 +33,23 @@ func Auth(next gin.HandlerFunc) gin.HandlerFunc {
 		next(c)
 	}
 }
+
+func OptionalAuth(next gin.HandlerFunc) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		bearerToken, err := ginExt.GetHeaderAuthorization(c, ginExt.AuthTypeBearer)
+		if err != nil {
+			next(c)
+			return
+		}
+		claims, err := token.ValidateJWT(bearerToken, config.GetConfig().JWT.Secret)
+		if err != nil {
+			next(c)
+			return
+		}
+		c.Request = c.Request.WithContext(runtime.SetUserIDInContext(c.Request.Context(), claims.UserID))
+
+		analytics.SendToKafka(claims.UserID, c.Request.URL.Path)
+
+		next(c)
+	}
+}

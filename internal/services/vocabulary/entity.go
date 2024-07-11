@@ -2,6 +2,7 @@ package vocabulary
 
 import (
 	"errors"
+	"time"
 
 	entityTag "github.com/av-ugolkov/lingua-evo/internal/services/tag"
 
@@ -20,6 +21,9 @@ type (
 		Access        int
 		NativeLang    string
 		TranslateLang string
+		Description   string
 		Tags          []entityTag.Tag
+		CreatedAt     time.Time
+		UpdatedAt     time.Time
 	}
 )

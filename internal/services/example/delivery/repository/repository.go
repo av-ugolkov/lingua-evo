@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"strconv"
@@ -10,6 +9,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/av-ugolkov/lingua-evo/internal/services/example"
@@ -79,9 +79,9 @@ func (r *ExampleRepo) GetExampleByValue(ctx context.Context, text, langCode stri
 	var id uuid.UUID
 	query := fmt.Sprintf(`SELECT id FROM example_%s WHERE text=$1`, langCode)
 	err := r.pgxPool.QueryRow(ctx, query, text).Scan(&id)
-	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 		return uuid.Nil, fmt.Errorf("example.repository.ExampleRepo.GetExample: %w", err)
-	} else if errors.Is(err, sql.ErrNoRows) {
+	} else if errors.Is(err, pgx.ErrNoRows) {
 		return uuid.Nil, nil
 	}
 
