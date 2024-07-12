@@ -16,12 +16,14 @@ import (
 )
 
 const (
-	paramsVocabName = "name"
-	paramsVocabID   = "id"
-	paramsPage      = "page"
-	paramsPerPage   = "per_page"
-	paramsSearch    = "search"
-	paramsOrder     = "order"
+	paramsVocabName     = "name"
+	paramsVocabID       = "id"
+	paramsPage          = "page"
+	paramsPerPage       = "per_page"
+	paramsSearch        = "search"
+	paramsOrder         = "order"
+	paramsNativeLang    = "native_lang"
+	paramsTranslateLang = "translate_lang"
 )
 
 type (
@@ -40,6 +42,20 @@ type (
 	VocabularyRs struct {
 		ID            uuid.UUID `json:"id"`
 		UserID        uuid.UUID `json:"user_id"`
+		Name          string    `json:"name"`
+		AccessID      int       `json:"access_id"`
+		NativeLang    string    `json:"native_lang"`
+		TranslateLang string    `json:"translate_lang"`
+		Description   string    `json:"description"`
+		Tags          []string  `json:"tags"`
+		CreatedAt     time.Time `json:"created_at"`
+		UpdatedAt     time.Time `json:"updated_at"`
+	}
+
+	VocabularyWithUserRs struct {
+		ID            uuid.UUID `json:"id"`
+		UserID        uuid.UUID `json:"user_id"`
+		UserName      string    `json:"user_name"`
 		Name          string    `json:"name"`
 		AccessID      int       `json:"access_id"`
 		NativeLang    string    `json:"native_lang"`
@@ -113,22 +129,37 @@ func (h *Handler) getVocabularies(c *gin.Context) {
 		return
 	}
 
-	vocabularies, totalCount, err := h.vocabularySvc.GetVocabularies(ctx, userID, page, itemsPerPage, typeOrder, search)
+	nativeLang, err := ginExt.GetQuery(c, paramsNativeLang)
+	if err != nil {
+		ginExt.SendError(c, http.StatusInternalServerError,
+			fmt.Errorf("vocabulary.delivery.Handler.getVocabularies - get query [native_language]: %v", err))
+		return
+	}
+
+	translateLang, err := ginExt.GetQuery(c, paramsTranslateLang)
+	if err != nil {
+		ginExt.SendError(c, http.StatusInternalServerError,
+			fmt.Errorf("vocabulary.delivery.Handler.getVocabularies - get query [translate_language]: %v", err))
+		return
+	}
+
+	vocabularies, totalCount, err := h.vocabularySvc.GetVocabularies(ctx, userID, page, itemsPerPage, typeOrder, search, nativeLang, translateLang)
 	if err != nil {
 		ginExt.SendError(c, http.StatusInternalServerError,
 			fmt.Errorf("vocabulary.delivery.Handler.getVocabularies: %v", err))
 	}
 
-	vocabulariesRs := make([]VocabularyRs, 0, len(vocabularies))
+	vocabulariesRs := make([]VocabularyWithUserRs, 0, len(vocabularies))
 	for _, vocab := range vocabularies {
 		tags := make([]string, 0, len(vocab.Tags))
 		for _, tag := range vocab.Tags {
 			tags = append(tags, tag.Text)
 		}
 
-		vocabulariesRs = append(vocabulariesRs, VocabularyRs{
+		vocabulariesRs = append(vocabulariesRs, VocabularyWithUserRs{
 			ID:            vocab.ID,
 			UserID:        vocab.UserID,
+			UserName:      vocab.UserName,
 			Name:          vocab.Name,
 			AccessID:      vocab.Access,
 			NativeLang:    vocab.NativeLang,
@@ -141,8 +172,8 @@ func (h *Handler) getVocabularies(c *gin.Context) {
 	}
 
 	var rs struct {
-		Vocabularies []VocabularyRs `json:"vocabularies"`
-		TotalCount   int            `json:"total_count"`
+		Vocabularies []VocabularyWithUserRs `json:"vocabularies"`
+		TotalCount   int                    `json:"total_count"`
 	}
 	rs.Vocabularies = vocabulariesRs
 	rs.TotalCount = totalCount
