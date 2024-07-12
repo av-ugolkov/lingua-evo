@@ -82,7 +82,12 @@ func GetHeaderAuthorization(c *gin.Context, typeAuth string) (string, error) {
 		return runtime.EmptyString, fmt.Errorf("gin_extension.GetHeaderAuthorization - invalid type auth [%s]: %s", typeAuth, token)
 	}
 
-	return token[len(string(typeAuth))+1:], nil
+	tokenData := strings.Split(token, " ")
+	if len(tokenData) != 2 {
+		return runtime.EmptyString, fmt.Errorf("gin_extension.GetHeaderAuthorization - invalid token: %s", token)
+	}
+
+	return tokenData[1], nil
 }
 
 func SendError(c *gin.Context, httpStatus int, err error) {
