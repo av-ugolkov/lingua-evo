@@ -26,4 +26,9 @@ type (
 		CreatedAt     time.Time
 		UpdatedAt     time.Time
 	}
+
+	VocabularyWithUser struct {
+		Vocabulary
+		UserName string
+	}
 )
