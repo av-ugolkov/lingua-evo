@@ -75,7 +75,7 @@ func (h *Handler) userDeleteVocabulary(c *gin.Context) {
 		return
 	}
 
-	name, err := ginExt.GetQuery(c, paramVocabName)
+	name, err := ginExt.GetQuery(c, paramsVocabName)
 	if err != nil {
 		ginExt.SendError(c, http.StatusInternalServerError,
 			fmt.Errorf("vocabulary.delivery.Handler.deleteVocabulary - get query [name]: %v", err))
@@ -100,7 +100,7 @@ func (h *Handler) userDeleteVocabulary(c *gin.Context) {
 func (h *Handler) userGetVocabulary(c *gin.Context) {
 	ctx := c.Request.Context()
 
-	vocabID, err := ginExt.GetQueryUUID(c, paramVocabID)
+	vocabID, err := ginExt.GetQueryUUID(c, paramsVocabID)
 	if err != nil {
 		ginExt.SendError(c, http.StatusInternalServerError,
 			fmt.Errorf("vocabulary.delivery.Handler.getVocabulary - get query [name]: %v", err))

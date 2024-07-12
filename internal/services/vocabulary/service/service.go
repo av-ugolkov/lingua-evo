@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"fmt"
-	"slices"
 
 	"github.com/av-ugolkov/lingua-evo/internal/db/transactor"
 	entityAccess "github.com/av-ugolkov/lingua-evo/internal/services/access"
@@ -23,13 +22,14 @@ type (
 	repoVocab interface {
 		Add(ctx context.Context, vocab entity.Vocabulary, tagIDs []uuid.UUID) error
 		Delete(ctx context.Context, vocab entity.Vocabulary) error
-		Get(ctx context.Context, vocabID uuid.UUID) (entity.Vocabulary, error)
+		Get(ctx context.Context, vid uuid.UUID) (entity.Vocabulary, error)
 		GetByName(ctx context.Context, uid uuid.UUID, name string) (entity.Vocabulary, error)
-		GetTagsVocabulary(ctx context.Context, vocabID uuid.UUID) ([]string, error)
-		GetByID(ctx context.Context, vocabID uuid.UUID) (entity.Vocabulary, error)
-		GetVocabulariesByUser(ctx context.Context, userID uuid.UUID) ([]entity.Vocabulary, error)
+		GetTagsVocabulary(ctx context.Context, vid uuid.UUID) ([]string, error)
+		GetByID(ctx context.Context, vid uuid.UUID) (entity.Vocabulary, error)
+		GetVocabulariesByUser(ctx context.Context, uid uuid.UUID) ([]entity.Vocabulary, error)
 		Edit(ctx context.Context, vocab entity.Vocabulary) error
-		GetVocabulariesByAccess(ctx context.Context, access []int) ([]entity.Vocabulary, error)
+		GetVocabulariesByAccess(ctx context.Context, uid uuid.UUID, access []int, page, itemsPerPage, typeOrder int, search string) ([]entity.Vocabulary, error)
+		GetVocabulariesCountByAccess(ctx context.Context, uid uuid.UUID, access []int, search string) (int, error)
 	}
 
 	repoAccess interface {
@@ -61,26 +61,20 @@ func NewService(tr *transactor.Transactor, repoVocab repoVocab, langSvc langSvc,
 	}
 }
 
-func (s *Service) GetVocabularies(ctx context.Context, userID uuid.UUID) ([]entity.Vocabulary, error) {
-	vocabularies, err := s.repoVocab.GetVocabulariesByAccess(ctx, []int{AccessSubscribers, AccessPublic})
+func (s *Service) GetVocabularies(ctx context.Context, uid uuid.UUID, page, itemsPerPage, typeOrder int, search string) ([]entity.Vocabulary, int, error) {
+	countItems, err := s.repoVocab.GetVocabulariesCountByAccess(ctx, uid, []int{AccessSubscribers, AccessPublic}, search)
 	if err != nil {
-		return nil, fmt.Errorf("vocabulary.Service.GetVocabularies: %w", err)
+		return nil, 0, fmt.Errorf("vocabulary.Service.GetVocabularies: %w", err)
 	}
 
-	if userID != uuid.Nil {
-		userVocabs, err := s.repoVocab.GetVocabulariesByUser(ctx, userID)
-		if err != nil {
-			return nil, fmt.Errorf("vocabulary.Service.GetVocabularies: %w", err)
-		}
-
-		for _, vocab := range userVocabs {
-			if !slices.ContainsFunc(vocabularies, func(v entity.Vocabulary) bool {
-				return vocab.ID == v.ID
-			}) {
-				vocabularies = append(vocabularies, vocab)
-			}
-		}
+	if countItems == 0 {
+		return []entity.Vocabulary{}, 0, nil
 	}
 
-	return vocabularies, nil
+	vocabularies, err := s.repoVocab.GetVocabulariesByAccess(ctx, uid, []int{AccessSubscribers, AccessPublic}, page, itemsPerPage, typeOrder, search)
+	if err != nil {
+		return nil, 0, fmt.Errorf("vocabulary.Service.GetVocabularies: %w", err)
+	}
+
+	return vocabularies, countItems, nil
 }
