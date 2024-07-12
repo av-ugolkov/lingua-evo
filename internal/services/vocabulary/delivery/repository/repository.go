@@ -191,12 +191,12 @@ func (r *VocabRepo) Edit(ctx context.Context, vocab entity.Vocabulary) error {
 	return nil
 }
 
-func (r *VocabRepo) GetVocabulariesCountByAccess(ctx context.Context, uid uuid.UUID, accessIDs []int, search string) (int, error) {
-	query := `
+func (r *VocabRepo) GetVocabulariesCountByAccess(ctx context.Context, uid uuid.UUID, accessIDs []int, search, nativeLang, translateLang string) (int, error) {
+	query := fmt.Sprintf(`
 	SELECT count(v.id)
 	FROM vocabulary v
 	WHERE (v.user_id=$1 OR v.access = ANY($2)) 
-		AND (POSITION($3 in v."name")>0 OR POSITION($3 in v."description")>0);`
+		AND (POSITION($3 in v."name")>0 OR POSITION($3 in v."description")>0) %s %s;`, getEqualLanguage("native_lang", nativeLang), getEqualLanguage("translate_lang", translateLang))
 
 	var countLine int
 	err := r.pgxPool.QueryRow(ctx, query, uid, accessIDs, search).Scan(&countLine)
@@ -207,11 +207,12 @@ func (r *VocabRepo) GetVocabulariesCountByAccess(ctx context.Context, uid uuid.U
 	return countLine, nil
 }
 
-func (r *VocabRepo) GetVocabulariesByAccess(ctx context.Context, uid uuid.UUID, accessIDs []int, page, itemsPerPage, typeOrder int, search string) ([]entity.Vocabulary, error) {
+func (r *VocabRepo) GetVocabulariesByAccess(ctx context.Context, uid uuid.UUID, accessIDs []int, page, itemsPerPage, typeOrder int, search, nativeLang, translateLang string) ([]entity.VocabularyWithUser, error) {
 	query := fmt.Sprintf(`
 	SELECT 
 		v.id,
 		v.user_id,
+		u."name" "user_name",
 		v.name,
 		n.lang as native_lang,
 		t.lang as translate_lang,
@@ -224,25 +225,27 @@ func (r *VocabRepo) GetVocabulariesByAccess(ctx context.Context, uid uuid.UUID, 
 	LEFT JOIN "language" n ON n.code = v.native_lang
 	LEFT JOIN "language" t ON t.code = v.translate_lang 
 	LEFT JOIN "tag" tg ON tg.id = any(v.tags)
+	LEFT JOIN users u ON u.id = v.user_id 
 	WHERE (v.user_id=$1 OR v.access = ANY($2))
-		AND (POSITION($3 in v."name")>0 OR POSITION($3 in v."description")>0)
-	GROUP BY v.id, n.lang, t.lang
+		AND (POSITION($3 in v."name")>0 OR POSITION($3 in v."description")>0) %s %s
+	GROUP BY v.id, u."name", n.lang, t.lang
 	%s
 	LIMIT $4
-	OFFSET $5;`, getSorted(typeOrder))
+	OFFSET $5;`, getEqualLanguage("v.native_lang", nativeLang), getEqualLanguage("v.translate_lang", translateLang), getSorted(typeOrder))
 	rows, err := r.pgxPool.Query(ctx, query, uid, accessIDs, search, itemsPerPage, (page-1)*itemsPerPage)
 	if err != nil {
 		return nil, fmt.Errorf("vocabulary.delivery.repository.VocabRepo.GetVocabulariesByAccess: %w", err)
 	}
 	defer rows.Close()
 
-	var vocabularies []entity.Vocabulary
+	var vocabularies []entity.VocabularyWithUser
 	for rows.Next() {
-		var vocab entity.Vocabulary
+		var vocab entity.VocabularyWithUser
 		var sqlTags []sql.NullString
 		err := rows.Scan(
 			&vocab.ID,
 			&vocab.UserID,
+			&vocab.UserName,
 			&vocab.Name,
 			&vocab.NativeLang,
 			&vocab.TranslateLang,
@@ -283,5 +286,14 @@ func getSorted(typeSorted int) string {
 		return "ORDER BY v.name DESC"
 	default:
 		return ""
+	}
+}
+
+func getEqualLanguage(field, lang string) string {
+	switch lang {
+	case "any":
+		return ""
+	default:
+		return fmt.Sprintf("AND %s='%s'", field, lang)
 	}
 }
