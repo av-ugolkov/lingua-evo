@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	sorted "github.com/av-ugolkov/lingua-evo/internal/pkg/utils"
 	entityTag "github.com/av-ugolkov/lingua-evo/internal/services/tag"
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary"
 
@@ -190,8 +191,24 @@ func (r *VocabRepo) Edit(ctx context.Context, vocab entity.Vocabulary) error {
 	return nil
 }
 
-func (r *VocabRepo) GetVocabulariesByAccess(ctx context.Context, accessIDs []int) ([]entity.Vocabulary, error) {
+func (r *VocabRepo) GetVocabulariesCountByAccess(ctx context.Context, uid uuid.UUID, accessIDs []int, search string) (int, error) {
 	query := `
+	SELECT count(v.id)
+	FROM vocabulary v
+	WHERE (v.user_id=$1 OR v.access = ANY($2)) 
+		AND (POSITION($3 in v."name")>0 OR POSITION($3 in v."description")>0);`
+
+	var countLine int
+	err := r.pgxPool.QueryRow(ctx, query, uid, accessIDs, search).Scan(&countLine)
+	if err != nil {
+		return 0, fmt.Errorf("vocabulary.delivery.repository.VocabRepo.GetVocabulariesCountByAccess: %w", err)
+	}
+
+	return countLine, nil
+}
+
+func (r *VocabRepo) GetVocabulariesByAccess(ctx context.Context, uid uuid.UUID, accessIDs []int, page, itemsPerPage, typeOrder int, search string) ([]entity.Vocabulary, error) {
+	query := fmt.Sprintf(`
 	SELECT 
 		v.id,
 		v.user_id,
@@ -207,11 +224,15 @@ func (r *VocabRepo) GetVocabulariesByAccess(ctx context.Context, accessIDs []int
 	LEFT JOIN "language" n ON n.code = v.native_lang
 	LEFT JOIN "language" t ON t.code = v.translate_lang 
 	LEFT JOIN "tag" tg ON tg.id = any(v.tags)
-	WHERE v.access = ANY($1)
-	GROUP BY v.id, n.lang, t.lang;`
-	rows, err := r.pgxPool.Query(ctx, query, accessIDs)
+	WHERE (v.user_id=$1 OR v.access = ANY($2))
+		AND (POSITION($3 in v."name")>0 OR POSITION($3 in v."description")>0)
+	GROUP BY v.id, n.lang, t.lang
+	%s
+	LIMIT $4
+	OFFSET $5;`, getSorted(typeOrder))
+	rows, err := r.pgxPool.Query(ctx, query, uid, accessIDs, search, itemsPerPage, (page-1)*itemsPerPage)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("vocabulary.delivery.repository.VocabRepo.GetVocabulariesByAccess: %w", err)
 	}
 	defer rows.Close()
 
@@ -232,7 +253,7 @@ func (r *VocabRepo) GetVocabulariesByAccess(ctx context.Context, accessIDs []int
 			&vocab.CreatedAt,
 		)
 		if err != nil {
-			return nil, fmt.Errorf("vocabulary.delivery.repository.VocabRepo.GetVocabularies - scan: %w", err)
+			return nil, fmt.Errorf("vocabulary.delivery.repository.VocabRepo.GetVocabulariesByAccess - scan: %w", err)
 		}
 
 		for _, t := range sqlTags {
@@ -240,9 +261,27 @@ func (r *VocabRepo) GetVocabulariesByAccess(ctx context.Context, accessIDs []int
 				vocab.Tags = append(vocab.Tags, entityTag.Tag{Text: t.String})
 			}
 		}
-		fmt.Println(vocab)
 		vocabularies = append(vocabularies, vocab)
 	}
 
 	return vocabularies, nil
+}
+
+func getSorted(typeSorted int) string {
+	switch sorted.TypeSorted(typeSorted) {
+	case sorted.Newest:
+		return "ORDER BY v.created_at DESC"
+	case sorted.Oldest:
+		return "ORDER BY v.created_at ASC"
+	case sorted.UpdateAsc:
+		return "ORDER BY v.updated_at ASC"
+	case sorted.UpdateDesc:
+		return "ORDER BY v.updated_at DESC"
+	case sorted.AtoZ:
+		return "ORDER BY v.name ASC"
+	case sorted.ZtoA:
+		return "ORDER BY v.name DESC"
+	default:
+		return ""
+	}
 }

@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"fmt"
+	"log/slog"
 	"net/http"
 
 	"github.com/av-ugolkov/lingua-evo/internal/config"
@@ -38,6 +39,7 @@ func OptionalAuth(next gin.HandlerFunc) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		bearerToken, err := ginExt.GetHeaderAuthorization(c, ginExt.AuthTypeBearer)
 		if err != nil {
+			slog.Warn(fmt.Sprintf("middleware.OptionalAuth: %v", err))
 			next(c)
 			return
 		}

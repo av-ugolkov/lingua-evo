@@ -16,8 +16,12 @@ import (
 )
 
 const (
-	paramVocabName = "name"
-	paramVocabID   = "id"
+	paramsVocabName = "name"
+	paramsVocabID   = "id"
+	paramsPage      = "page"
+	paramsPerPage   = "per_page"
+	paramsSearch    = "search"
+	paramsOrder     = "order"
 )
 
 type (
@@ -81,7 +85,35 @@ func (h *Handler) getVocabularies(c *gin.Context) {
 	ctx := c.Request.Context()
 	userID, _ := runtime.UserIDFromContext(ctx)
 
-	vocabularies, err := h.vocabularySvc.GetVocabularies(ctx, userID)
+	page, err := ginExt.GetQueryInt(c, paramsPage)
+	if err != nil {
+		ginExt.SendError(c, http.StatusInternalServerError,
+			fmt.Errorf("vocabulary.delivery.Handler.getVocabularies - get query [page]: %v", err))
+		return
+	}
+
+	itemsPerPage, err := ginExt.GetQueryInt(c, paramsPerPage)
+	if err != nil {
+		ginExt.SendError(c, http.StatusInternalServerError,
+			fmt.Errorf("vocabulary.delivery.Handler.getVocabularies - get query [per_page]: %v", err))
+		return
+	}
+
+	typeOrder, err := ginExt.GetQueryInt(c, paramsOrder)
+	if err != nil {
+		ginExt.SendError(c, http.StatusInternalServerError,
+			fmt.Errorf("vocabulary.delivery.Handler.getVocabularies - get query [order]: %v", err))
+		return
+	}
+
+	search, err := ginExt.GetQuery(c, paramsSearch)
+	if err != nil {
+		ginExt.SendError(c, http.StatusInternalServerError,
+			fmt.Errorf("vocabulary.delivery.Handler.getVocabularies - get query [search]: %v", err))
+		return
+	}
+
+	vocabularies, totalCount, err := h.vocabularySvc.GetVocabularies(ctx, userID, page, itemsPerPage, typeOrder, search)
 	if err != nil {
 		ginExt.SendError(c, http.StatusInternalServerError,
 			fmt.Errorf("vocabulary.delivery.Handler.getVocabularies: %v", err))
@@ -108,5 +140,12 @@ func (h *Handler) getVocabularies(c *gin.Context) {
 		})
 	}
 
-	c.JSON(http.StatusOK, vocabulariesRs)
+	var rs struct {
+		Vocabularies []VocabularyRs `json:"vocabularies"`
+		TotalCount   int            `json:"total_count"`
+	}
+	rs.Vocabularies = vocabulariesRs
+	rs.TotalCount = totalCount
+
+	c.JSON(http.StatusOK, rs)
 }
