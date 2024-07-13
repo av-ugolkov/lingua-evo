@@ -215,13 +215,15 @@ func (r *VocabRepo) GetVocabulariesByAccess(ctx context.Context, uid uuid.UUID, 
 		v.native_lang,
 		v.translate_lang,
 		v.description,
+		count(w.id) as "words_count",
 		array_agg(tg."text") as tags,
 		v.access,
 		v.updated_at,
 		v.created_at
 	FROM vocabulary v
 	LEFT JOIN "tag" tg ON tg.id = any(v.tags)
-	LEFT JOIN users u ON u.id = v.user_id 
+	LEFT JOIN users u ON u.id = v.user_id
+	LEFT JOIN word w ON w.vocabulary_id = v.id 
 	WHERE (v.user_id=$1 OR v.access = ANY($2))
 		AND (POSITION($3 in v."name")>0 OR POSITION($3 in v."description")>0) %s %s
 	GROUP BY v.id, u."name"
@@ -246,6 +248,7 @@ func (r *VocabRepo) GetVocabulariesByAccess(ctx context.Context, uid uuid.UUID, 
 			&vocab.NativeLang,
 			&vocab.TranslateLang,
 			&vocab.Description,
+			&vocab.WordsCount,
 			&sqlTags,
 			&vocab.Access,
 			&vocab.UpdatedAt,
