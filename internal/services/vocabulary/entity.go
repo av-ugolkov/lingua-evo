@@ -29,6 +29,7 @@ type (
 
 	VocabularyWithUser struct {
 		Vocabulary
-		UserName string
+		UserName   string
+		WordsCount uint
 	}
 )

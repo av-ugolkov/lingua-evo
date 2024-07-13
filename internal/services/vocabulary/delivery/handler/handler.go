@@ -61,6 +61,7 @@ type (
 		NativeLang    string    `json:"native_lang"`
 		TranslateLang string    `json:"translate_lang"`
 		Description   string    `json:"description"`
+		WordsCount    uint      `json:"words_count"`
 		Tags          []string  `json:"tags"`
 		CreatedAt     time.Time `json:"created_at"`
 		UpdatedAt     time.Time `json:"updated_at"`
@@ -165,6 +166,7 @@ func (h *Handler) getVocabularies(c *gin.Context) {
 			NativeLang:    vocab.NativeLang,
 			TranslateLang: vocab.TranslateLang,
 			Description:   vocab.Description,
+			WordsCount:    vocab.WordsCount,
 			Tags:          tags,
 			CreatedAt:     vocab.CreatedAt,
 			UpdatedAt:     vocab.UpdatedAt,
