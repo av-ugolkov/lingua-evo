@@ -49,10 +49,10 @@ func (r *VocabRepo) Delete(ctx context.Context, vocab entity.Vocabulary) error {
 }
 
 func (r *VocabRepo) Get(ctx context.Context, vocabID uuid.UUID) (entity.Vocabulary, error) {
-	query := `SELECT id, user_id, name, n.lang as native_lang, t.lang as translate_lang FROM vocabulary v
-left join "language" n on n.code=v.native_lang 
-left join "language" t on t.code=v.translate_lang 
-WHERE id=$1;`
+	query := `
+	SELECT id, user_id, name, native_lang, translate_lang 
+	FROM vocabulary v
+	WHERE id=$1;`
 	var vocab entity.Vocabulary
 	err := r.pgxPool.QueryRow(ctx, query, vocabID).Scan(&vocab.ID, &vocab.UserID, &vocab.Name, &vocab.NativeLang, &vocab.TranslateLang)
 	if err != nil {
@@ -62,10 +62,10 @@ WHERE id=$1;`
 }
 
 func (r *VocabRepo) GetByName(ctx context.Context, userID uuid.UUID, name string) (entity.Vocabulary, error) {
-	query := `SELECT id, user_id, name, n.lang as native_lang, t.lang as translate_lang FROM vocabulary v
-left join "language" n on n.code =v.native_lang 
-left join "language" t on t.code =v.translate_lang 
-WHERE user_id=$1 AND name=$2;`
+	query := `
+	SELECT id, user_id, name, native_lang, translate_lang 
+	FROM vocabulary v
+	WHERE user_id=$1 AND name=$2;`
 	var vocab entity.Vocabulary
 	err := r.pgxPool.QueryRow(ctx, query, userID, name).Scan(&vocab.ID, &vocab.UserID, &vocab.Name, &vocab.NativeLang, &vocab.TranslateLang)
 	if err != nil {
@@ -116,19 +116,17 @@ func (r *VocabRepo) GetVocabulariesByUser(ctx context.Context, userID uuid.UUID)
 		v.id,
 		v.user_id,
 		v.name,
-		n.lang as native_lang,
-		t.lang as translate_lang,
+		v.native_lang,
+		v.translate_lang,
 		v.description,
 		array_agg(tg."text") as tags,
 		v.access,
 		v.updated_at,
 		v.created_at
 	FROM vocabulary v
-	LEFT JOIN "language" n ON n.code = v.native_lang
-	LEFT JOIN "language" t ON t.code = v.translate_lang 
 	LEFT JOIN "tag" tg ON tg.id = any(v.tags)
 	WHERE user_id=$1
-	GROUP BY v.id, n.lang, t.lang;`
+	GROUP BY v.id;`
 	rows, err := r.pgxPool.Query(ctx, query, userID)
 	if err != nil {
 		return nil, err
@@ -214,21 +212,19 @@ func (r *VocabRepo) GetVocabulariesByAccess(ctx context.Context, uid uuid.UUID, 
 		v.user_id,
 		u."name" "user_name",
 		v.name,
-		n.lang as native_lang,
-		t.lang as translate_lang,
+		v.native_lang,
+		v.translate_lang,
 		v.description,
 		array_agg(tg."text") as tags,
 		v.access,
 		v.updated_at,
 		v.created_at
 	FROM vocabulary v
-	LEFT JOIN "language" n ON n.code = v.native_lang
-	LEFT JOIN "language" t ON t.code = v.translate_lang 
 	LEFT JOIN "tag" tg ON tg.id = any(v.tags)
 	LEFT JOIN users u ON u.id = v.user_id 
 	WHERE (v.user_id=$1 OR v.access = ANY($2))
 		AND (POSITION($3 in v."name")>0 OR POSITION($3 in v."description")>0) %s %s
-	GROUP BY v.id, u."name", n.lang, t.lang
+	GROUP BY v.id, u."name"
 	%s
 	LIMIT $4
 	OFFSET $5;`, getEqualLanguage("v.native_lang", nativeLang), getEqualLanguage("v.translate_lang", translateLang), getSorted(typeOrder))
