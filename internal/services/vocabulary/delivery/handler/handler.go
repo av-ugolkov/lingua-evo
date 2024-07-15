@@ -32,6 +32,7 @@ type (
 		Access        int      `json:"access_id"`
 		NativeLang    string   `json:"native_lang"`
 		TranslateLang string   `json:"translate_lang"`
+		Description   string   `json:"description"`
 		Tags          []string `json:"tags"`
 	}
 

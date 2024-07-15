@@ -46,6 +46,7 @@ func (h *Handler) userAddVocabulary(c *gin.Context) {
 		Access:        data.Access,
 		NativeLang:    data.NativeLang,
 		TranslateLang: data.TranslateLang,
+		Description:   data.Description,
 		Tags:          tags,
 	})
 	if err != nil {
@@ -55,12 +56,7 @@ func (h *Handler) userAddVocabulary(c *gin.Context) {
 	}
 
 	vocabRs := VocabularyRs{
-		ID:            vocab.ID,
-		UserID:        vocab.UserID,
-		Name:          vocab.Name,
-		NativeLang:    vocab.NativeLang,
-		TranslateLang: vocab.TranslateLang,
-		//Tags:          vocab.Tags,
+		ID: vocab.ID,
 	}
 
 	c.JSON(http.StatusOK, vocabRs)
