@@ -40,15 +40,6 @@ func (s *Service) UserAddVocabulary(ctx context.Context, vocabulary entity.Vocab
 		return entity.Vocabulary{}, fmt.Errorf("vocabulary.Service.UserAddVocabulary: %w", err)
 	}
 
-	vocabulary.NativeLang, err = s.langSvc.GetLangByCode(ctx, vocabulary.NativeLang)
-	if err != nil {
-		return entity.Vocabulary{}, fmt.Errorf("vocabulary.Service.UserAddVocabulary - get native lang: %w", err)
-	}
-	vocabulary.TranslateLang, err = s.langSvc.GetLangByCode(ctx, vocabulary.TranslateLang)
-	if err != nil {
-		return entity.Vocabulary{}, fmt.Errorf("vocabulary.Service.UserAddVocabulary - get translate lang: %w", err)
-	}
-
 	return vocabulary, nil
 }
 
