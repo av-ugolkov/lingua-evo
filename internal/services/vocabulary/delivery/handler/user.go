@@ -93,45 +93,6 @@ func (h *Handler) userDeleteVocabulary(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{})
 }
 
-func (h *Handler) userGetVocabulary(c *gin.Context) {
-	ctx := c.Request.Context()
-
-	vocabID, err := ginExt.GetQueryUUID(c, paramsVocabID)
-	if err != nil {
-		ginExt.SendError(c, http.StatusInternalServerError,
-			fmt.Errorf("vocabulary.delivery.Handler.getVocabulary - get query [name]: %v", err))
-		return
-	}
-
-	vocab, err := h.vocabularySvc.UserGetVocabulary(ctx, vocabID)
-	if err != nil {
-		ginExt.SendError(c, http.StatusInternalServerError,
-			fmt.Errorf("vocabulary.delivery.Handler.getVocabulary: %v", err))
-		return
-	}
-	if vocab.ID == uuid.Nil {
-		ginExt.SendError(c, http.StatusNotFound,
-			fmt.Errorf("vocabulary.delivery.Handler.getVocabulary - vocabulary not found: %v", err))
-		return
-	}
-
-	tags := make([]string, 0, len(vocab.Tags))
-	for _, tag := range vocab.Tags {
-		tags = append(tags, tag.Text)
-	}
-
-	vocabRs := VocabularyRs{
-		ID:            vocab.ID,
-		UserID:        vocab.UserID,
-		Name:          vocab.Name,
-		NativeLang:    vocab.NativeLang,
-		TranslateLang: vocab.TranslateLang,
-		Tags:          tags,
-	}
-
-	c.JSON(http.StatusOK, vocabRs)
-}
-
 func (h *Handler) userGetVocabularies(c *gin.Context) {
 	ctx := c.Request.Context()
 	userID, err := runtime.UserIDFromContext(ctx)
