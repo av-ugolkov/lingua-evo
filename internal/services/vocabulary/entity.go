@@ -11,6 +11,7 @@ import (
 
 var (
 	ErrVocabularyNotFound = errors.New("vocabulary not found")
+	ErrAccessDenied       = errors.New("access denied")
 )
 
 type (

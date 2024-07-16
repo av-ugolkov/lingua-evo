@@ -159,8 +159,15 @@ func (h *Handler) addWord(c *gin.Context) {
 
 func (h *Handler) updateWord(c *gin.Context) {
 	ctx := c.Request.Context()
+
+	userID, err := runtime.UserIDFromContext(ctx)
+	if err != nil {
+		ginExt.SendError(c, http.StatusUnauthorized, fmt.Errorf("word.delivery.Handler.updateWord - unauthorized: %v", err))
+		return
+	}
+
 	var data VocabWordRq
-	err := c.Bind(&data)
+	err = c.Bind(&data)
 	if err != nil {
 		ginExt.SendError(c, http.StatusInternalServerError,
 			fmt.Errorf("word.delivery.Handler.updateWord - check body: %v", err))
@@ -186,7 +193,7 @@ func (h *Handler) updateWord(c *gin.Context) {
 		})
 	}
 
-	vocabWord, err := h.wordSvc.UpdateWord(ctx, entity.VocabWordData{
+	vocabWord, err := h.wordSvc.UpdateWord(ctx, userID, entity.VocabWordData{
 		ID:      *data.ID,
 		VocabID: data.VocabID,
 		Native: entityDict.DictWord{
@@ -367,6 +374,14 @@ func (h *Handler) getWords(c *gin.Context) {
 
 func (h *Handler) getPronunciation(c *gin.Context) {
 	ctx := c.Request.Context()
+
+	userID, err := runtime.UserIDFromContext(ctx)
+	if err != nil {
+		ginExt.SendError(c, http.StatusUnauthorized,
+			fmt.Errorf("word.delivery.Handler.getPronunciation - unauthorized: %w", err))
+		return
+	}
+
 	text, err := ginExt.GetQuery(c, ParamText)
 	if err != nil {
 		ginExt.SendError(c, http.StatusInternalServerError,
@@ -381,7 +396,7 @@ func (h *Handler) getPronunciation(c *gin.Context) {
 		return
 	}
 
-	pronunciation, err := h.wordSvc.GetPronunciation(ctx, vocabID, text)
+	pronunciation, err := h.wordSvc.GetPronunciation(ctx, userID, vocabID, text)
 	if err != nil {
 		ginExt.SendError(c, http.StatusInternalServerError,
 			fmt.Errorf("word.delivery.Handler.getPronunciation: %w", err))
