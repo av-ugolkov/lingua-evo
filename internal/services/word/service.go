@@ -30,7 +30,7 @@ type (
 	}
 
 	vocabSvc interface {
-		UserGetVocabularyByID(ctx context.Context, vocabID uuid.UUID) (entityVocab.Vocabulary, error)
+		GetVocabulary(ctx context.Context, userID, vocabID uuid.UUID) (entityVocab.Vocabulary, error)
 	}
 
 	exampleSvc interface {
@@ -86,7 +86,7 @@ func (s *Service) AddWord(ctx context.Context, userID uuid.UUID, vocabWordData V
 		return VocabWord{}, fmt.Errorf("word.Service.AddWord: %w", ErrUserWordLimit)
 	}
 
-	vocab, err := s.vocabSvc.UserGetVocabularyByID(ctx, vocabWordData.VocabID)
+	vocab, err := s.vocabSvc.GetVocabulary(ctx, userID, vocabWordData.VocabID)
 	if err != nil {
 		return VocabWord{}, fmt.Errorf("word.Service.AddWord - get dictionary: %w", err)
 	}
@@ -153,8 +153,8 @@ func (s *Service) AddWord(ctx context.Context, userID uuid.UUID, vocabWordData V
 	return vocabularyWord, nil
 }
 
-func (s *Service) UpdateWord(ctx context.Context, vocabWordData VocabWordData) (VocabWord, error) {
-	vocab, err := s.vocabSvc.UserGetVocabularyByID(ctx, vocabWordData.VocabID)
+func (s *Service) UpdateWord(ctx context.Context, userID uuid.UUID, vocabWordData VocabWordData) (VocabWord, error) {
+	vocab, err := s.vocabSvc.GetVocabulary(ctx, userID, vocabWordData.VocabID)
 	if err != nil {
 		return VocabWord{}, fmt.Errorf("word.Service.UpdateWord - get dictionary: %w", err)
 	}
@@ -244,8 +244,8 @@ func (s *Service) GetWords(ctx context.Context, vocabID uuid.UUID) ([]VocabWordD
 	return vocabWordsData, nil
 }
 
-func (s *Service) GetPronunciation(ctx context.Context, vocabID uuid.UUID, text string) (string, error) {
-	vocab, err := s.vocabSvc.UserGetVocabularyByID(ctx, vocabID)
+func (s *Service) GetPronunciation(ctx context.Context, userID, vocabID uuid.UUID, text string) (string, error) {
+	vocab, err := s.vocabSvc.GetVocabulary(ctx, userID, vocabID)
 	if err != nil {
 		return runtime.EmptyString, fmt.Errorf("word.Service.GetPronunciation - get vocabulary: %w", err)
 	}

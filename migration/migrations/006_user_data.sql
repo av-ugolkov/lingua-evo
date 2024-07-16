@@ -38,7 +38,7 @@ FROM
     "users";
 
 CREATE TABLE IF NOT EXISTS
-    "user_subscribers" (
+    "subscribers" (
         "user_id" UUID PRIMARY KEY REFERENCES "users" ("id") ON DELETE CASCADE,
         "subscribers_id" UUID NOT NULL REFERENCES "users" ("id") ON DELETE CASCADE
     );

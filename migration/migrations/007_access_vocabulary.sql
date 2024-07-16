@@ -12,9 +12,6 @@ VALUES
 ALTER TABLE IF EXISTS "vocabulary"
 ADD COLUMN IF NOT EXISTS "access" BIGINT NOT NULL DEFAULT 2 CONSTRAINT "vocabulary_access_fkey" REFERENCES "access" ("id") ON DELETE CASCADE;
 
-ALTER TABLE IF EXISTS "vocabulary"
-ADD COLUMN IF NOT EXISTS "access_edit" BOOLEAN NOT NULL DEFAULT FALSE;
-
 CREATE TABLE IF NOT EXISTS
     "vocabulary_users_access" (
         "vocab_id" UUID REFERENCES "vocabulary" ("id") ON DELETE CASCADE,

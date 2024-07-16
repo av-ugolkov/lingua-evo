@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	entityTag "github.com/av-ugolkov/lingua-evo/internal/services/tag"
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary"
 
 	"github.com/google/uuid"
@@ -54,31 +53,6 @@ func (s *Service) UserDeleteVocabulary(ctx context.Context, userID uuid.UUID, na
 		return fmt.Errorf("vocabulary.Service.UserDeleteVocabulary: %w", err)
 	}
 	return nil
-}
-
-func (s *Service) UserGetVocabulary(ctx context.Context, vocabID uuid.UUID) (entity.Vocabulary, error) {
-	vocab, err := s.repoVocab.Get(ctx, vocabID)
-	if err != nil {
-		return entity.Vocabulary{}, fmt.Errorf("vocabulary.Service.UserGetVocabulary: %w", err)
-	}
-
-	tags, err := s.repoVocab.GetTagsVocabulary(ctx, vocab.ID)
-	if err != nil {
-		return entity.Vocabulary{}, fmt.Errorf("vocabulary.Service.UserGetVocabulary: %w", err)
-	}
-	for _, tag := range tags {
-		vocab.Tags = append(vocab.Tags, entityTag.Tag{Text: tag})
-	}
-	return vocab, nil
-}
-
-func (s *Service) UserGetVocabularyByID(ctx context.Context, vocabID uuid.UUID) (entity.Vocabulary, error) {
-	vocab, err := s.repoVocab.GetByID(ctx, vocabID)
-	if err != nil {
-		return entity.Vocabulary{}, fmt.Errorf("vocabulary.Service.UserGetVocabularyByID: %w", err)
-	}
-
-	return vocab, nil
 }
 
 func (s *Service) UserGetVocabularies(ctx context.Context, userID uuid.UUID) ([]entity.Vocabulary, error) {

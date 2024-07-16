@@ -30,12 +30,12 @@ type (
 		Get(ctx context.Context, key string) (string, error)
 		GetAccountCode(ctx context.Context, email string) (int, error)
 	}
-
-	Service struct {
-		repo  userRepo
-		redis redis
-	}
 )
+
+type Service struct {
+	repo  userRepo
+	redis redis
+}
 
 func NewService(repo userRepo, redis redis) *Service {
 	return &Service{

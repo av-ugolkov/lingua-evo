@@ -15,10 +15,11 @@ const (
 	DictionaryWord = "/dictionary/word"        //get post
 	GetRandomWord  = "/dictionary/word/random" //get
 
-	UserVocabulary   = "/account/vocabulary"   //get post, put, delete
+	UserVocabulary   = "/account/vocabulary"   //post, put, delete
 	UserVocabularies = "/account/vocabularies" //get
-	Vocabularies     = "/vocabularies"
 
+	Vocabularies            = "/vocabularies"           //get
+	Vocabulary              = "/vocabulary"             //get
 	VocabularyAccess        = "/vocabulary/access"      //post
 	VocabularyAccessForUser = "/vocabulary/access/user" //post delete
 
