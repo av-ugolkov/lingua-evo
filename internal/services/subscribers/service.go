@@ -10,6 +10,7 @@ import (
 type (
 	repoSubscribers interface {
 		Get(ctx context.Context, uid uuid.UUID) ([]uuid.UUID, error)
+		GetRespondents(ctx context.Context, uid uuid.UUID) ([]uuid.UUID, error)
 		Check(ctx context.Context, uid, subID uuid.UUID) (bool, error)
 	}
 )
@@ -26,6 +27,15 @@ func NewService(repoSubscribers repoSubscribers) *Service {
 
 func (s *Service) Get(ctx context.Context, uid uuid.UUID) ([]uuid.UUID, error) {
 	subscribers, err := s.repoSubscribers.Get(ctx, uid)
+	if err != nil {
+		return nil, fmt.Errorf("subscribers.Service.GetSubscribers: %w", err)
+	}
+
+	return subscribers, nil
+}
+
+func (s *Service) GetRespondents(ctx context.Context, uid uuid.UUID) ([]uuid.UUID, error) {
+	subscribers, err := s.repoSubscribers.GetRespondents(ctx, uid)
 	if err != nil {
 		return nil, fmt.Errorf("subscribers.Service.GetSubscribers: %w", err)
 	}

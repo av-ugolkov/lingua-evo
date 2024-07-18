@@ -8,7 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
-	ginExt "github.com/av-ugolkov/lingua-evo/internal/pkg/http/gin_extension"
+	ginExt "github.com/av-ugolkov/lingua-evo/internal/delivery/handler/gin"
 	entityTag "github.com/av-ugolkov/lingua-evo/internal/services/tag"
 	"github.com/av-ugolkov/lingua-evo/internal/services/vocabulary"
 	"github.com/av-ugolkov/lingua-evo/runtime"

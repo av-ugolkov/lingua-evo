@@ -1,4 +1,4 @@
-package gin_extension
+package gin
 
 import (
 	"errors"
@@ -12,6 +12,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
+	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
 	"github.com/av-ugolkov/lingua-evo/runtime"
 )
 
@@ -92,8 +93,12 @@ func GetHeaderAuthorization(c *gin.Context, typeAuth string) (string, error) {
 
 func SendError(c *gin.Context, httpStatus int, err error) {
 	slog.Error(err.Error())
-	c.JSON(httpStatus, gin.H{
-		"error": err.Error()})
+	switch e := err.(type) {
+	case handler.Error:
+		c.JSON(e.GetCode(), e.JSON())
+	default:
+		c.JSON(httpStatus, err.Error())
+	}
 }
 
 func GetCookieLanguageOrDefault(c *gin.Context) string {

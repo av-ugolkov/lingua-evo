@@ -1,11 +1,10 @@
 package handler
 
 import (
-	"fmt"
 	"net/http"
 
-	"github.com/av-ugolkov/lingua-evo/internal/delivery"
-	ginExt "github.com/av-ugolkov/lingua-evo/internal/pkg/http/gin_extension"
+	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
+	ginExt "github.com/av-ugolkov/lingua-evo/internal/delivery/handler/gin"
 	"github.com/av-ugolkov/lingua-evo/internal/services/access"
 
 	"github.com/gin-gonic/gin"
@@ -39,7 +38,7 @@ func newHandler(accessSvc *access.Service) *Handler {
 }
 
 func (h *Handler) register(r *gin.Engine) {
-	r.GET(delivery.Accesses, h.getAccesses)
+	r.GET(handler.Accesses, h.getAccesses)
 }
 
 func (h *Handler) getAccesses(c *gin.Context) {
@@ -47,8 +46,7 @@ func (h *Handler) getAccesses(c *gin.Context) {
 
 	accesses, err := h.accessSvc.GetAccesses(ctx)
 	if err != nil {
-		ginExt.SendError(c, http.StatusInternalServerError,
-			fmt.Errorf("access.delivery.handler.getAccesses: %w", err))
+		ginExt.SendError(c, http.StatusInternalServerError, err)
 		return
 	}
 
