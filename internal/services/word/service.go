@@ -21,18 +21,23 @@ type (
 		GetWord(ctx context.Context, wordID uuid.UUID) (VocabWordData, error)
 		AddWord(ctx context.Context, word VocabWord) error
 		DeleteWord(ctx context.Context, word VocabWord) error
-		GetRandomVocabulary(ctx context.Context, vocabID uuid.UUID, limit int) ([]VocabWordData, error)
-		GetVocabularyWords(ctx context.Context, vocabID uuid.UUID) ([]VocabWordData, error)
+		GetRandomVocabulary(ctx context.Context, vid uuid.UUID, limit int) ([]VocabWordData, error)
+		GetVocabularyWords(ctx context.Context, vid uuid.UUID) ([]VocabWordData, error)
 		UpdateWord(ctx context.Context, word VocabWord) error
-		GetCountWords(ctx context.Context, userID uuid.UUID) (int, error)
+		GetCountWords(ctx context.Context, uid uuid.UUID) (int, error)
 	}
 
 	userSvc interface {
-		UserCountWord(ctx context.Context, userID uuid.UUID) (int, error)
+		UserCountWord(ctx context.Context, uid uuid.UUID) (int, error)
 	}
 
 	vocabSvc interface {
-		GetVocabulary(ctx context.Context, userID, vocabID uuid.UUID) (entityVocab.Vocabulary, error)
+		GetVocabulary(ctx context.Context, uid, vid uuid.UUID) (entityVocab.Vocabulary, error)
+		CheckAccess(ctx context.Context, uid, vid uuid.UUID) error
+	}
+
+	vocabAccessSvc interface {
+		VocabularyEditable(ctx context.Context, uid, vid uuid.UUID) (bool, error)
 	}
 
 	exampleSvc interface {
@@ -48,12 +53,13 @@ type (
 )
 
 type Service struct {
-	tr         *transactor.Transactor
-	repo       repoWord
-	userSvc    userSvc
-	vocabSvc   vocabSvc
-	dictSvc    dictSvc
-	exampleSvc exampleSvc
+	tr             *transactor.Transactor
+	repo           repoWord
+	userSvc        userSvc
+	vocabSvc       vocabSvc
+	vocabAccessSvc vocabAccessSvc
+	dictSvc        dictSvc
+	exampleSvc     exampleSvc
 }
 
 func NewService(
@@ -61,16 +67,18 @@ func NewService(
 	repo repoWord,
 	userSvc userSvc,
 	vocabSvc vocabSvc,
+	vocabAccessSvc vocabAccessSvc,
 	dictSvc dictSvc,
 	exampleSvc exampleSvc,
 ) *Service {
 	return &Service{
-		tr:         tr,
-		repo:       repo,
-		userSvc:    userSvc,
-		vocabSvc:   vocabSvc,
-		dictSvc:    dictSvc,
-		exampleSvc: exampleSvc,
+		tr:             tr,
+		repo:           repo,
+		userSvc:        userSvc,
+		vocabSvc:       vocabSvc,
+		vocabAccessSvc: vocabAccessSvc,
+		dictSvc:        dictSvc,
+		exampleSvc:     exampleSvc,
 	}
 }
 
@@ -241,13 +249,23 @@ func (s *Service) GetWord(ctx context.Context, wordID uuid.UUID) (*VocabWordData
 	return &vocabWordData, nil
 }
 
-func (s *Service) GetWords(ctx context.Context, vocabID uuid.UUID) ([]VocabWordData, error) {
-	vocabWordsData, err := s.repo.GetVocabularyWords(ctx, vocabID)
+func (s *Service) GetWords(ctx context.Context, uid, vid uuid.UUID) ([]VocabWordData, bool, error) {
+	err := s.vocabSvc.CheckAccess(ctx, uid, vid)
 	if err != nil {
-		return nil, fmt.Errorf("word.Service.GetWords - get words: %w", err)
+		return nil, false, fmt.Errorf("word.Service.GetWords - check access: %w", err)
 	}
 
-	return vocabWordsData, nil
+	editable, err := s.vocabAccessSvc.VocabularyEditable(ctx, uid, vid)
+	if err != nil {
+		return nil, false, fmt.Errorf("word.Service.GetWords - check access: %w", err)
+	}
+
+	vocabWordsData, err := s.repo.GetVocabularyWords(ctx, vid)
+	if err != nil {
+		return nil, false, fmt.Errorf("word.Service.GetWords - get words: %w", err)
+	}
+
+	return vocabWordsData, editable, nil
 }
 
 func (s *Service) GetPronunciation(ctx context.Context, userID, vocabID uuid.UUID, text string) (string, error) {

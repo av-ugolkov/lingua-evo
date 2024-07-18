@@ -46,7 +46,7 @@ type (
 	}
 
 	vocabAccessSvc interface {
-		GetVocabularyAccess(ctx context.Context, uid, vid uuid.UUID) (bool, error)
+		VocabularyEditable(ctx context.Context, uid, vid uuid.UUID) (bool, error)
 	}
 )
 
@@ -92,7 +92,7 @@ func (s *Service) GetVocabularies(ctx context.Context, uid uuid.UUID, page, item
 }
 
 func (s *Service) GetVocabulary(ctx context.Context, uid, vocabID uuid.UUID) (entity.Vocabulary, error) {
-	err := s.checkAccess(ctx, uid, vocabID)
+	err := s.CheckAccess(ctx, uid, vocabID)
 	if err != nil {
 		return entity.Vocabulary{}, fmt.Errorf("vocabulary.Service.GetVocabulary - %w: %w", entity.ErrAccessDenied, err)
 	}
@@ -112,7 +112,7 @@ func (s *Service) GetVocabulary(ctx context.Context, uid, vocabID uuid.UUID) (en
 	return vocab, nil
 }
 
-func (s *Service) checkAccess(ctx context.Context, userID, vocabID uuid.UUID) error {
+func (s *Service) CheckAccess(ctx context.Context, userID, vocabID uuid.UUID) error {
 	accessID, err := s.repoVocab.GetAccess(ctx, vocabID)
 	if err != nil {
 		return fmt.Errorf("vocabulary.Service.checkAccess - get access type: %w", err)
@@ -141,10 +141,31 @@ func (s *Service) checkAccess(ctx context.Context, userID, vocabID uuid.UUID) er
 		return nil
 	}
 
-	_, err = s.vocabAccessSvc.GetVocabularyAccess(ctx, userID, vocabID)
+	_, err = s.vocabAccessSvc.VocabularyEditable(ctx, userID, vocabID)
 	if err != nil {
 		return fmt.Errorf("vocabulary.Service.checkAccess - get vocabulary access: %w", err)
 	}
 
 	return nil
+}
+
+func (s *Service) CanEdit(ctx context.Context, uid, vid uuid.UUID) (bool, error) {
+	vocab, err := s.GetVocabulary(ctx, uid, vid)
+	if err != nil {
+		return false, fmt.Errorf("vocabulary.Service.CanEdit - get vocabulary: %w", err)
+	}
+
+	if vocab.UserID == uid {
+		return true, nil
+	}
+
+	accessID, err := s.repoVocab.GetAccess(ctx, vid)
+	if err != nil {
+		return false, fmt.Errorf("vocabulary.Service.CanEdit - get access type: %w", err)
+	}
+	if accessID == AccessPublic {
+		return false, nil
+	}
+
+	return true, nil
 }
