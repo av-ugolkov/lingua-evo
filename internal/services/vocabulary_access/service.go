@@ -8,37 +8,42 @@ import (
 )
 
 type (
-	repoVocab interface {
+	repoVocabAccess interface {
 		ChangeAccess(ctx context.Context, vocabID uuid.UUID, access int, accessEdit bool) error
 		AddAccessForUser(ctx context.Context, vocabID, userID uuid.UUID, isEditor bool) error
 		RemoveAccessForUser(ctx context.Context, vocabID, userID uuid.UUID) error
+		GetAccess(ctx context.Context, vocabID, userID uuid.UUID) (bool, error)
 	}
 )
 
 type Service struct {
-	repoVocab repoVocab
+	repoVocabAccess repoVocabAccess
 }
 
-func NewService(repoVocab repoVocab) *Service {
+func NewService(repoVocabAccess repoVocabAccess) *Service {
 	return &Service{
-		repoVocab: repoVocab,
+		repoVocabAccess: repoVocabAccess,
 	}
 }
 
 func (s *Service) ChangeAccess(ctx context.Context, access Access) error {
-	err := s.repoVocab.ChangeAccess(ctx, access.VocabID, access.ID, access.AccessEdit)
+	err := s.repoVocabAccess.ChangeAccess(ctx, access.VocabID, access.ID, access.AccessEdit)
 	if err != nil {
 		return fmt.Errorf("vocabulary_access.Service.ChangeAccess: %w", err)
 	}
 	return nil
 }
 
-func (s *Service) GetVocabularyAccess(ctx context.Context, uid, vid uuid.UUID) (bool, error) {
-	return false, nil
+func (s *Service) VocabularyEditable(ctx context.Context, uid, vid uuid.UUID) (bool, error) {
+	editable, err := s.repoVocabAccess.GetAccess(ctx, vid, uid)
+	if err != nil {
+		return false, fmt.Errorf("vocabulary_access.Service.GetVocabularyAccess: %w", err)
+	}
+	return editable, nil
 }
 
 func (s *Service) AddAccessForUser(ctx context.Context, access Access) error {
-	err := s.repoVocab.AddAccessForUser(ctx, access.VocabID, access.UserID, access.AccessEdit)
+	err := s.repoVocabAccess.AddAccessForUser(ctx, access.VocabID, access.UserID, access.AccessEdit)
 	if err != nil {
 		return fmt.Errorf("vocabulary_access.Service.AddAccessForUser: %w", err)
 	}
@@ -46,7 +51,7 @@ func (s *Service) AddAccessForUser(ctx context.Context, access Access) error {
 }
 
 func (s *Service) RemoveAccessForUser(ctx context.Context, access Access) error {
-	err := s.repoVocab.RemoveAccessForUser(ctx, access.VocabID, access.UserID)
+	err := s.repoVocabAccess.RemoveAccessForUser(ctx, access.VocabID, access.UserID)
 	if err != nil {
 		return fmt.Errorf("vocabulary_access.Service.RemoveAccessForUser: %w", err)
 	}
