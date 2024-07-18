@@ -3,6 +3,9 @@ package access
 import (
 	"context"
 	"fmt"
+	"net/http"
+
+	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
 )
 
 type (
@@ -24,7 +27,8 @@ func NewService(repo repoAccess) *Service {
 func (s *Service) GetAccesses(ctx context.Context) ([]Access, error) {
 	accesses, err := s.repo.GetAccesses(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("access.Service.GetAccesses: %w", err)
+		return nil, handler.NewError(fmt.Errorf("access.Service.GetAccesses: %v", err), http.StatusInternalServerError,
+			handler.ErrInternal)
 	}
 
 	return accesses, nil

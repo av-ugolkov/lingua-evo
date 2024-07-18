@@ -38,6 +38,7 @@ import (
 	languageHandler "github.com/av-ugolkov/lingua-evo/internal/services/language/delivery/handler"
 	langRepository "github.com/av-ugolkov/lingua-evo/internal/services/language/delivery/repository"
 	subscribersService "github.com/av-ugolkov/lingua-evo/internal/services/subscribers"
+	subscribersHandler "github.com/av-ugolkov/lingua-evo/internal/services/subscribers/delivery/handler"
 	subscribersRepository "github.com/av-ugolkov/lingua-evo/internal/services/subscribers/delivery/repository"
 	tagService "github.com/av-ugolkov/lingua-evo/internal/services/tag"
 	tagHandler "github.com/av-ugolkov/lingua-evo/internal/services/tag/delivery/handler"
@@ -156,7 +157,7 @@ func initServer(cfg *config.Config, r *gin.Engine, pgxPool *pgxpool.Pool, redis 
 	vocabularyAccessRepo := vocabAccessRepository.NewRepo(pgxPool)
 	vocabularyAccessSvc := vocabAccessService.NewService(vocabularyAccessRepo)
 	vocabRepo := vocabRepository.NewRepo(pgxPool)
-	vocabSvc := vocabService.NewService(tr, vocabRepo, langSvc, tagSvc, subscribersSvc, vocabularyAccessSvc)
+	vocabSvc := vocabService.NewService(tr, vocabRepo, tagSvc, subscribersSvc, vocabularyAccessSvc)
 	wordRepo := wordRepository.NewRepo(pgxPool)
 	wordSvc := wordService.NewService(tr, wordRepo, userSvc, vocabSvc, dictSvc, exampleSvc)
 	authRepo := authRepository.NewRepo(redis)
@@ -171,6 +172,7 @@ func initServer(cfg *config.Config, r *gin.Engine, pgxPool *pgxpool.Pool, redis 
 	tagHandler.Create(r, tagSvc)
 	authHandler.Create(r, authSvc)
 	accessHandler.Create(r, accessSvc)
+	subscribersHandler.Create(r, subscribersSvc)
 
 	slog.Info("end init services")
 }

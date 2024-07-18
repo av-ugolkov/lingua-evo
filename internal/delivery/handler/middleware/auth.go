@@ -6,8 +6,9 @@ import (
 	"net/http"
 
 	"github.com/av-ugolkov/lingua-evo/internal/config"
+	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
+	ginExt "github.com/av-ugolkov/lingua-evo/internal/delivery/handler/gin"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/analytic"
-	ginExt "github.com/av-ugolkov/lingua-evo/internal/pkg/http/gin_extension"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/token"
 	"github.com/av-ugolkov/lingua-evo/runtime"
 
@@ -19,12 +20,13 @@ func Auth(next gin.HandlerFunc) gin.HandlerFunc {
 		bearerToken, err := ginExt.GetHeaderAuthorization(c, ginExt.AuthTypeBearer)
 		if err != nil {
 			ginExt.SendError(c, http.StatusUnauthorized,
-				fmt.Errorf("middleware.Auth: bearer token not found"))
+				handler.NewError(fmt.Errorf("middleware.Auth: bearer token not found"), http.StatusUnauthorized, handler.ErrUnauthorized))
 			return
 		}
 		claims, err := token.ValidateJWT(bearerToken, config.GetConfig().JWT.Secret)
 		if err != nil {
-			ginExt.SendError(c, http.StatusUnauthorized, fmt.Errorf("middleware.Auth: %w", err))
+			ginExt.SendError(c, http.StatusUnauthorized,
+				handler.NewError(fmt.Errorf("middleware.Auth: %v", err), http.StatusUnauthorized, handler.ErrUnauthorized))
 			return
 		}
 		c.Request = c.Request.WithContext(runtime.SetUserIDInContext(c.Request.Context(), claims.UserID))

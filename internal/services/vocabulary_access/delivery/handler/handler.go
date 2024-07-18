@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/av-ugolkov/lingua-evo/internal/delivery"
-	ginExt "github.com/av-ugolkov/lingua-evo/internal/pkg/http/gin_extension"
-	"github.com/av-ugolkov/lingua-evo/internal/pkg/middleware"
+	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
+	ginExt "github.com/av-ugolkov/lingua-evo/internal/delivery/handler/gin"
+	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler/middleware"
 	vocabAccess "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary_access"
 
 	"github.com/gin-gonic/gin"
@@ -38,10 +38,10 @@ func newHandler(vocabAccessSvc *vocabAccess.Service) *Handler {
 }
 
 func (h *Handler) register(r *gin.Engine) {
-	r.POST(delivery.VocabularyAccess, middleware.Auth(h.changeAccess))
-	r.POST(delivery.VocabularyAccessForUser, middleware.Auth(h.addAccessForUser))
-	r.DELETE(delivery.VocabularyAccessForUser, middleware.Auth(h.removeAccessForUser))
-	r.PATCH(delivery.VocabularyAccessForUser, middleware.Auth(h.updateAccessForUser))
+	r.POST(handler.VocabularyAccess, middleware.Auth(h.changeAccess))
+	r.POST(handler.VocabularyAccessForUser, middleware.Auth(h.addAccessForUser))
+	r.DELETE(handler.VocabularyAccessForUser, middleware.Auth(h.removeAccessForUser))
+	r.PATCH(handler.VocabularyAccessForUser, middleware.Auth(h.updateAccessForUser))
 }
 
 func (h *Handler) changeAccess(c *gin.Context) {

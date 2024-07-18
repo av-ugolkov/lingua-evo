@@ -38,6 +38,26 @@ func (r *SubscribersRepo) Get(ctx context.Context, uid uuid.UUID) ([]uuid.UUID, 
 	return ids, nil
 }
 
+func (r *SubscribersRepo) GetRespondents(ctx context.Context, uid uuid.UUID) ([]uuid.UUID, error) {
+	query := `SELECT user_id FROM subscribers WHERE subscribers_id=$1;`
+	rows, err := r.pgxPool.Query(ctx, query, uid)
+	if err != nil {
+		return nil, fmt.Errorf("subscribers.delivery.repository.SubscribersRepo.GetRespondents: %w", err)
+	}
+	defer rows.Close()
+
+	var ids []uuid.UUID
+	for rows.Next() {
+		var id uuid.UUID
+		err := rows.Scan(&id)
+		if err != nil {
+			return nil, fmt.Errorf("subscribers.delivery.repository.SubscribersRepo.GetRespondents: %w", err)
+		}
+		ids = append(ids, id)
+	}
+	return ids, nil
+}
+
 func (r *SubscribersRepo) Check(ctx context.Context, uid, subID uuid.UUID) (bool, error) {
 	query := `SELECT count(user_id) FROM subscribers WHERE user_id=$1 AND subscribers_id=$2;`
 

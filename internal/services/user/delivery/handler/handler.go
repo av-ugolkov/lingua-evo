@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/av-ugolkov/lingua-evo/internal/delivery"
-	ginExtension "github.com/av-ugolkov/lingua-evo/internal/pkg/http/gin_extension"
-	"github.com/av-ugolkov/lingua-evo/internal/pkg/middleware"
+	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
+	ginExtension "github.com/av-ugolkov/lingua-evo/internal/delivery/handler/gin"
+	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler/middleware"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/utils"
 	"github.com/av-ugolkov/lingua-evo/internal/services/user"
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/user"
@@ -56,8 +56,8 @@ func newHandler(userSvc *user.Service) *Handler {
 }
 
 func (h *Handler) register(r *gin.Engine) {
-	r.POST(delivery.SignUp, h.signUp)
-	r.GET(delivery.UserByID, middleware.Auth(h.getUserByID))
+	r.POST(handler.SignUp, h.signUp)
+	r.GET(handler.UserByID, middleware.Auth(h.getUserByID))
 }
 
 func (h *Handler) signUp(c *gin.Context) {

@@ -8,9 +8,9 @@ import (
 	"time"
 
 	"github.com/av-ugolkov/lingua-evo/internal/config"
-	"github.com/av-ugolkov/lingua-evo/internal/delivery"
-	ginExt "github.com/av-ugolkov/lingua-evo/internal/pkg/http/gin_extension"
-	"github.com/av-ugolkov/lingua-evo/internal/pkg/middleware"
+	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
+	ginExt "github.com/av-ugolkov/lingua-evo/internal/delivery/handler/gin"
+	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler/middleware"
 	"github.com/av-ugolkov/lingua-evo/internal/services/auth"
 	"github.com/av-ugolkov/lingua-evo/runtime"
 
@@ -50,10 +50,10 @@ func newHandler(authSvc *auth.Service) *Handler {
 }
 
 func (h *Handler) register(r *gin.Engine) {
-	r.POST(delivery.SignIn, h.signIn)
-	r.GET(delivery.Refresh, h.refresh)
-	r.GET(delivery.SignOut, middleware.Auth(h.signOut))
-	r.POST(delivery.SendCode, h.sendCode)
+	r.POST(handler.SignIn, h.signIn)
+	r.GET(handler.Refresh, h.refresh)
+	r.GET(handler.SignOut, middleware.Auth(h.signOut))
+	r.POST(handler.SendCode, h.sendCode)
 }
 
 func (h *Handler) signIn(c *gin.Context) {

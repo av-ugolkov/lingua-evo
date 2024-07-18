@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/av-ugolkov/lingua-evo/internal/delivery"
-	ginExt "github.com/av-ugolkov/lingua-evo/internal/pkg/http/gin_extension"
-	"github.com/av-ugolkov/lingua-evo/internal/pkg/middleware"
+	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
+	ginExt "github.com/av-ugolkov/lingua-evo/internal/delivery/handler/gin"
+	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler/middleware"
 	tagSvc "github.com/av-ugolkov/lingua-evo/internal/services/tag"
 
 	"github.com/gin-gonic/gin"
@@ -40,7 +40,7 @@ func newHandler(tagSvc *tagSvc.Service) *Handler {
 }
 
 func (h *Handler) register(r *gin.Engine) {
-	r.GET(delivery.VocabularyTags, middleware.Auth(h.getTags))
+	r.GET(handler.VocabularyTags, middleware.Auth(h.getTags))
 }
 
 func (h *Handler) getTags(c *gin.Context) {
