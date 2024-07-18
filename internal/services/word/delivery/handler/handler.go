@@ -77,7 +77,7 @@ func (h *Handler) register(r *gin.Engine) {
 	r.DELETE(handler.VocabularyWord, middleware.Auth(h.deleteWord))
 	r.POST(handler.VocabularyWordUpdate, middleware.Auth(h.updateWord))
 	r.GET(handler.VocabularyRandomWords, middleware.Auth(h.getRandomWords))
-	r.GET(handler.VocabularyWords, middleware.Auth(h.getWords))
+	r.GET(handler.VocabularyWords, middleware.OptionalAuth(h.getWords))
 	r.GET(handler.WordPronunciation, middleware.Auth(h.getPronunciation))
 }
 
@@ -327,6 +327,9 @@ func (h *Handler) getWord(c *gin.Context) {
 
 func (h *Handler) getWords(c *gin.Context) {
 	ctx := c.Request.Context()
+
+	userID, _ := runtime.UserIDFromContext(ctx)
+
 	vocabID, err := ginExt.GetQueryUUID(c, ParamVocabID)
 	if err != nil {
 		ginExt.SendError(c, http.StatusInternalServerError,
@@ -334,7 +337,7 @@ func (h *Handler) getWords(c *gin.Context) {
 		return
 	}
 
-	vocabWords, err := h.wordSvc.GetWords(ctx, vocabID)
+	vocabWords, editable, err := h.wordSvc.GetWords(ctx, userID, vocabID)
 	if err != nil {
 		ginExt.SendError(c, http.StatusInternalServerError,
 			fmt.Errorf("word.delivery.Handler.getWords: %w", err))
@@ -369,7 +372,15 @@ func (h *Handler) getWords(c *gin.Context) {
 		wordsRs = append(wordsRs, wordRs)
 	}
 
-	c.JSON(http.StatusOK, wordsRs)
+	type Response struct {
+		Words    []VocabWordRs `json:"words"`
+		Editable bool          `json:"editable"`
+	}
+
+	c.JSON(http.StatusOK, Response{
+		Words:    wordsRs,
+		Editable: editable,
+	})
 }
 
 func (h *Handler) getPronunciation(c *gin.Context) {

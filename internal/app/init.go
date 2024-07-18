@@ -159,7 +159,7 @@ func initServer(cfg *config.Config, r *gin.Engine, pgxPool *pgxpool.Pool, redis 
 	vocabRepo := vocabRepository.NewRepo(pgxPool)
 	vocabSvc := vocabService.NewService(tr, vocabRepo, tagSvc, subscribersSvc, vocabularyAccessSvc)
 	wordRepo := wordRepository.NewRepo(pgxPool)
-	wordSvc := wordService.NewService(tr, wordRepo, userSvc, vocabSvc, dictSvc, exampleSvc)
+	wordSvc := wordService.NewService(tr, wordRepo, userSvc, vocabSvc, vocabularyAccessSvc, dictSvc, exampleSvc)
 	authRepo := authRepository.NewRepo(redis)
 	authSvc := authService.NewService(cfg.Email, authRepo, userSvc)
 
