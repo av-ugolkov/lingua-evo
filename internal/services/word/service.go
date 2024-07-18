@@ -4,8 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 
 	"github.com/av-ugolkov/lingua-evo/internal/db/transactor"
+	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
 	entityDict "github.com/av-ugolkov/lingua-evo/internal/services/dictionary"
 	entityExample "github.com/av-ugolkov/lingua-evo/internal/services/example"
 	entityVocab "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary"
@@ -75,20 +77,24 @@ func NewService(
 func (s *Service) AddWord(ctx context.Context, userID uuid.UUID, vocabWordData VocabWordData) (VocabWord, error) {
 	userCountWord, err := s.userSvc.UserCountWord(ctx, userID)
 	if err != nil {
-		return VocabWord{}, fmt.Errorf("word.Service.AddWord - get count words: %w", err)
+		return VocabWord{}, handler.NewError(fmt.Errorf("word.Service.AddWord - get count words: %w", err),
+			http.StatusInternalServerError, handler.ErrInternal)
 	}
 	count, err := s.repo.GetCountWords(ctx, userID)
 	if err != nil {
-		return VocabWord{}, fmt.Errorf("word.Service.AddWord - get count words: %w", err)
+		return VocabWord{}, handler.NewError(fmt.Errorf("word.Service.AddWord - get count words: %v", err),
+			http.StatusInternalServerError, handler.ErrInternal)
 	}
 
 	if count >= userCountWord {
-		return VocabWord{}, fmt.Errorf("word.Service.AddWord: %w", ErrUserWordLimit)
+		return VocabWord{}, handler.NewError(fmt.Errorf("word.Service.AddWord: %v", ErrUserWordLimit),
+			http.StatusInternalServerError, "You reached word limit")
 	}
 
 	vocab, err := s.vocabSvc.GetVocabulary(ctx, userID, vocabWordData.VocabID)
 	if err != nil {
-		return VocabWord{}, fmt.Errorf("word.Service.AddWord - get dictionary: %w", err)
+		return VocabWord{}, handler.NewError(fmt.Errorf("word.Service.AddWord - get dictionary: %v", err),
+			http.StatusInternalServerError, handler.ErrInternal)
 	}
 
 	vocabWordData.Native.LangCode = vocab.NativeLang

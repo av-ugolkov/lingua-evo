@@ -1,11 +1,10 @@
 package handler
 
 import (
-	"fmt"
 	"net/http"
 
-	"github.com/av-ugolkov/lingua-evo/internal/delivery"
-	ginExt "github.com/av-ugolkov/lingua-evo/internal/pkg/http/gin_extension"
+	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
+	ginExt "github.com/av-ugolkov/lingua-evo/internal/delivery/handler/gin"
 	"github.com/av-ugolkov/lingua-evo/internal/services/language"
 	"github.com/av-ugolkov/lingua-evo/runtime"
 
@@ -35,8 +34,8 @@ func newHandler(langSvc *language.Service) *Handler {
 }
 
 func (h *Handler) register(r *gin.Engine) {
-	r.GET(delivery.CurrentLanguage, h.getCurrentLanguage)
-	r.GET(delivery.AvailableLanguages, h.getAvailableLanguages)
+	r.GET(handler.CurrentLanguage, h.getCurrentLanguage)
+	r.GET(handler.AvailableLanguages, h.getAvailableLanguages)
 }
 
 func (h *Handler) getCurrentLanguage(c *gin.Context) {
@@ -56,8 +55,7 @@ func (h *Handler) getAvailableLanguages(c *gin.Context) {
 	ctx := c.Request.Context()
 	languages, err := h.langSvc.GetAvailableLanguages(ctx)
 	if err != nil {
-		ginExt.SendError(c, http.StatusInternalServerError,
-			fmt.Errorf("lingua.language.delivery.Handler.getAvailableLanguages: %v", err))
+		ginExt.SendError(c, http.StatusInternalServerError, err)
 		return
 	}
 
