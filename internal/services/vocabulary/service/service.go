@@ -41,10 +41,6 @@ type (
 		AddTags(ctx context.Context, tags []entityTag.Tag) ([]uuid.UUID, error)
 	}
 
-	langSvc interface {
-		GetLangByCode(ctx context.Context, code string) (string, error)
-	}
-
 	subscribersSvc interface {
 		Check(ctx context.Context, uid, subID uuid.UUID) (bool, error)
 	}
@@ -57,7 +53,6 @@ type (
 type Service struct {
 	tr             *transactor.Transactor
 	repoVocab      repoVocab
-	langSvc        langSvc
 	tagSvc         tagSvc
 	subscribersSvc subscribersSvc
 	vocabAccessSvc vocabAccessSvc
@@ -66,14 +61,12 @@ type Service struct {
 func NewService(
 	tr *transactor.Transactor,
 	repoVocab repoVocab,
-	langSvc langSvc,
 	tagSvc tagSvc,
 	subscribersSvc subscribersSvc,
 	vocabAccessSvc vocabAccessSvc) *Service {
 	return &Service{
 		tr:             tr,
 		repoVocab:      repoVocab,
-		langSvc:        langSvc,
 		tagSvc:         tagSvc,
 		subscribersSvc: subscribersSvc,
 		vocabAccessSvc: vocabAccessSvc,
@@ -123,6 +116,9 @@ func (s *Service) checkAccess(ctx context.Context, userID, vocabID uuid.UUID) er
 	accessID, err := s.repoVocab.GetAccess(ctx, vocabID)
 	if err != nil {
 		return fmt.Errorf("vocabulary.Service.checkAccess - get access type: %w", err)
+	}
+	if userID == uuid.Nil && accessID != AccessPublic {
+		return fmt.Errorf("vocabulary.Service.checkAccess - %w", entity.ErrAccessDenied)
 	}
 	if accessID == AccessPublic {
 		return nil

@@ -6,9 +6,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/av-ugolkov/lingua-evo/internal/delivery"
-	ginExt "github.com/av-ugolkov/lingua-evo/internal/pkg/http/gin_extension"
-	"github.com/av-ugolkov/lingua-evo/internal/pkg/middleware"
+	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
+	ginExt "github.com/av-ugolkov/lingua-evo/internal/delivery/handler/gin"
+	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler/middleware"
 	entityDict "github.com/av-ugolkov/lingua-evo/internal/services/dictionary"
 	entityExample "github.com/av-ugolkov/lingua-evo/internal/services/example"
 	"github.com/av-ugolkov/lingua-evo/internal/services/word"
@@ -72,13 +72,13 @@ func newHandler(wordSvc *word.Service) *Handler {
 }
 
 func (h *Handler) register(r *gin.Engine) {
-	r.GET(delivery.VocabularyWord, middleware.Auth(h.getWord))
-	r.POST(delivery.VocabularyWord, middleware.Auth(h.addWord))
-	r.DELETE(delivery.VocabularyWord, middleware.Auth(h.deleteWord))
-	r.POST(delivery.VocabularyWordUpdate, middleware.Auth(h.updateWord))
-	r.GET(delivery.VocabularyRandomWords, middleware.Auth(h.getRandomWords))
-	r.GET(delivery.VocabularyWords, middleware.Auth(h.getWords))
-	r.GET(delivery.WordPronunciation, middleware.Auth(h.getPronunciation))
+	r.GET(handler.VocabularyWord, middleware.Auth(h.getWord))
+	r.POST(handler.VocabularyWord, middleware.Auth(h.addWord))
+	r.DELETE(handler.VocabularyWord, middleware.Auth(h.deleteWord))
+	r.POST(handler.VocabularyWordUpdate, middleware.Auth(h.updateWord))
+	r.GET(handler.VocabularyRandomWords, middleware.Auth(h.getRandomWords))
+	r.GET(handler.VocabularyWords, middleware.Auth(h.getWords))
+	r.GET(handler.WordPronunciation, middleware.Auth(h.getPronunciation))
 }
 
 func (h *Handler) addWord(c *gin.Context) {
@@ -398,8 +398,7 @@ func (h *Handler) getPronunciation(c *gin.Context) {
 
 	pronunciation, err := h.wordSvc.GetPronunciation(ctx, userID, vocabID, text)
 	if err != nil {
-		ginExt.SendError(c, http.StatusInternalServerError,
-			fmt.Errorf("word.delivery.Handler.getPronunciation: %w", err))
+		ginExt.SendError(c, http.StatusInternalServerError, err)
 		return
 	}
 

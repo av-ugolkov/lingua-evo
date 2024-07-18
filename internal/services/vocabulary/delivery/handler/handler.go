@@ -8,9 +8,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
-	"github.com/av-ugolkov/lingua-evo/internal/delivery"
-	ginExt "github.com/av-ugolkov/lingua-evo/internal/pkg/http/gin_extension"
-	"github.com/av-ugolkov/lingua-evo/internal/pkg/middleware"
+	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
+	ginExt "github.com/av-ugolkov/lingua-evo/internal/delivery/handler/gin"
+	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler/middleware"
 	vocabulary "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary/service"
 	"github.com/av-ugolkov/lingua-evo/runtime"
 )
@@ -91,12 +91,12 @@ func newHandler(vocabularySvc *vocabulary.Service) *Handler {
 }
 
 func (h *Handler) register(r *gin.Engine) {
-	r.POST(delivery.UserVocabulary, middleware.Auth(h.userAddVocabulary))
-	r.DELETE(delivery.UserVocabulary, middleware.Auth(h.userDeleteVocabulary))
-	r.GET(delivery.Vocabulary, middleware.Auth(h.getVocabulary))
-	r.PUT(delivery.UserVocabulary, middleware.Auth(h.userEditVocabulary))
-	r.GET(delivery.UserVocabularies, middleware.Auth(h.userGetVocabularies))
-	r.GET(delivery.Vocabularies, middleware.OptionalAuth(h.getVocabularies))
+	r.POST(handler.UserVocabulary, middleware.Auth(h.userAddVocabulary))
+	r.DELETE(handler.UserVocabulary, middleware.Auth(h.userDeleteVocabulary))
+	r.GET(handler.Vocabulary, middleware.OptionalAuth(h.getVocabulary))
+	r.PUT(handler.UserVocabulary, middleware.Auth(h.userEditVocabulary))
+	r.GET(handler.UserVocabularies, middleware.Auth(h.userGetVocabularies))
+	r.GET(handler.Vocabularies, middleware.OptionalAuth(h.getVocabularies))
 }
 
 func (h *Handler) getVocabularies(c *gin.Context) {
@@ -187,12 +187,7 @@ func (h *Handler) getVocabularies(c *gin.Context) {
 func (h *Handler) getVocabulary(c *gin.Context) {
 	ctx := c.Request.Context()
 
-	userID, err := runtime.UserIDFromContext(ctx)
-	if err != nil {
-		ginExt.SendError(c, http.StatusUnauthorized,
-			fmt.Errorf("vocabulary.delivery.Handler.getVocabulary - unauthorized: %v", err))
-		return
-	}
+	userID, _ := runtime.UserIDFromContext(ctx)
 
 	vocabID, err := ginExt.GetQueryUUID(c, paramsVocabID)
 	if err != nil {

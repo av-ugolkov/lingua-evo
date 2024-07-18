@@ -1,4 +1,4 @@
-package gin_extension
+package gin
 
 const (
 	Language     = "language"
