@@ -3,8 +3,10 @@ package service
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	"github.com/av-ugolkov/lingua-evo/internal/db/transactor"
+	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
 	entityAccess "github.com/av-ugolkov/lingua-evo/internal/services/access"
 	entityTag "github.com/av-ugolkov/lingua-evo/internal/services/tag"
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary"
@@ -94,7 +96,8 @@ func (s *Service) GetVocabularies(ctx context.Context, uid uuid.UUID, page, item
 func (s *Service) GetVocabulary(ctx context.Context, uid, vocabID uuid.UUID) (entity.Vocabulary, error) {
 	err := s.CheckAccess(ctx, uid, vocabID)
 	if err != nil {
-		return entity.Vocabulary{}, fmt.Errorf("vocabulary.Service.GetVocabulary - %w: %w", entity.ErrAccessDenied, err)
+		return entity.Vocabulary{}, handler.NewError(fmt.Errorf("vocabulary.Service.GetVocabulary - %w: %w", entity.ErrAccessDenied, err),
+			http.StatusForbidden, handler.ErrForbidden)
 	}
 
 	vocab, err := s.repoVocab.Get(ctx, vocabID)
