@@ -24,7 +24,7 @@ func NewRepo(pgxPool *pgxpool.Pool) *VocabRepo {
 	}
 }
 
-func (r *VocabRepo) Add(ctx context.Context, vocab entity.Vocabulary, tagIDs []uuid.UUID) error {
+func (r *VocabRepo) AddVocab(ctx context.Context, vocab entity.Vocabulary, tagIDs []uuid.UUID) (uuid.UUID, error) {
 	query := `
 	INSERT INTO vocabulary (
 		id, 
@@ -36,19 +36,19 @@ func (r *VocabRepo) Add(ctx context.Context, vocab entity.Vocabulary, tagIDs []u
 		tags, 
 		updated_at, 
 		created_at, 
-		access, 
-		access_edit) 
-	VALUES($1, $2, $3, $4, $5, $6, $7, $8, $8, $9, $10);`
+		access) 
+	VALUES($1, $2, $3, $4, $5, $6, $7, $8, $8, $9);`
 
-	_, err := r.pgxPool.Exec(ctx, query, vocab.ID, vocab.UserID, vocab.Name, vocab.NativeLang, vocab.TranslateLang, vocab.Description, tagIDs, time.Now().UTC(), vocab.Access, false)
+	vid := uuid.New()
+	_, err := r.pgxPool.Exec(ctx, query, vid, vocab.UserID, vocab.Name, vocab.NativeLang, vocab.TranslateLang, vocab.Description, tagIDs, time.Now().UTC(), vocab.Access)
 	if err != nil {
-		return fmt.Errorf("vocabulary.delivery.repository.VocabRepo.Add: %w", err)
+		return uuid.Nil, fmt.Errorf("vocabulary.delivery.repository.VocabRepo.Add: %w", err)
 	}
 
-	return nil
+	return vid, nil
 }
 
-func (r *VocabRepo) Delete(ctx context.Context, vocab entity.Vocabulary) error {
+func (r *VocabRepo) DeleteVocab(ctx context.Context, vocab entity.Vocabulary) error {
 	query := `DELETE FROM vocabulary WHERE user_id=$1 AND name=$2;`
 	result, err := r.pgxPool.Exec(ctx, query, vocab.UserID, vocab.Name)
 	if err != nil {
@@ -61,25 +61,43 @@ func (r *VocabRepo) Delete(ctx context.Context, vocab entity.Vocabulary) error {
 	return nil
 }
 
-func (r *VocabRepo) Get(ctx context.Context, vocabID uuid.UUID) (entity.Vocabulary, error) {
+func (r *VocabRepo) GetVocab(ctx context.Context, vid uuid.UUID) (entity.Vocabulary, error) {
 	query := `
-	SELECT id, user_id, name, native_lang, translate_lang, description, access, created_at, updated_at
+	SELECT 
+		id, 
+		user_id, 
+		name, 
+		native_lang, 
+		translate_lang, 
+		description, 
+		tags, 
+		access, 
+		created_at, 
+		updated_at
 	FROM vocabulary v
 	WHERE id=$1;`
 	var vocab entity.Vocabulary
-	err := r.pgxPool.QueryRow(ctx, query, vocabID).Scan(
+	var tags []uuid.UUID
+	err := r.pgxPool.QueryRow(ctx, query, vid).Scan(
 		&vocab.ID,
 		&vocab.UserID,
 		&vocab.Name,
 		&vocab.NativeLang,
 		&vocab.TranslateLang,
 		&vocab.Description,
+		&tags,
 		&vocab.Access,
 		&vocab.CreatedAt,
 		&vocab.UpdatedAt)
 	if err != nil {
 		return vocab, fmt.Errorf("vocabulary.delivery.repository.VocabRepo.Get: %w", err)
 	}
+
+	vocab.Tags = make([]entityTag.Tag, 0, len(tags))
+	for _, tagID := range tags {
+		vocab.Tags = append(vocab.Tags, entityTag.Tag{ID: tagID})
+	}
+
 	return vocab, nil
 }
 
@@ -201,7 +219,7 @@ func (r *VocabRepo) GetCountVocabularies(ctx context.Context, userID uuid.UUID) 
 	return countVocabularies, nil
 }
 
-func (r *VocabRepo) Edit(ctx context.Context, vocab entity.Vocabulary) error {
+func (r *VocabRepo) EditVocab(ctx context.Context, vocab entity.Vocabulary) error {
 	query := `UPDATE vocabulary SET name=$2, access=$3 WHERE id=$1;`
 	result, err := r.pgxPool.Exec(ctx, query, vocab.ID, vocab.Name, vocab.Access)
 	if err != nil {
@@ -300,6 +318,26 @@ func (r *VocabRepo) GetAccess(ctx context.Context, vid uuid.UUID) (uint8, error)
 		return 0, fmt.Errorf("vocabulary.delivery.repository.VocabRepo.GetAccess: %w", err)
 	}
 	return accessID, nil
+}
+
+func (r *VocabRepo) CopyVocab(ctx context.Context, uid, vid uuid.UUID) (uuid.UUID, error) {
+	vocab, err := r.GetVocab(ctx, vid)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("vocabulary.delivery.repository.VocabRepo.Copy - get vocab: %w", err)
+	}
+
+	tags := make([]uuid.UUID, 0, len(vocab.Tags))
+	for _, t := range vocab.Tags {
+		tags = append(tags, t.ID)
+	}
+
+	vocab.UserID = uid
+	vid, err = r.AddVocab(ctx, vocab, tags)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("vocabulary.delivery.repository.VocabRepo.Copy - add vocab: %w", err)
+	}
+
+	return vid, nil
 }
 
 func getSorted(typeSorted int) string {

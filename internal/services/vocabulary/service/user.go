@@ -27,7 +27,7 @@ func (s *Service) UserAddVocabulary(ctx context.Context, vocabulary entity.Vocab
 			return fmt.Errorf("add tags: %w", err)
 		}
 
-		err = s.repoVocab.Add(ctx, vocabulary, tagIDs)
+		vocabulary.ID, err = s.repoVocab.AddVocab(ctx, vocabulary, tagIDs)
 		if err != nil {
 			return fmt.Errorf("add vocabulary: %w", err)
 		}
@@ -48,7 +48,7 @@ func (s *Service) UserDeleteVocabulary(ctx context.Context, userID uuid.UUID, na
 		Name:   name,
 	}
 
-	err := s.repoVocab.Delete(ctx, dict)
+	err := s.repoVocab.DeleteVocab(ctx, dict)
 	if err != nil {
 		return fmt.Errorf("vocabulary.Service.UserDeleteVocabulary: %w", err)
 	}
@@ -65,7 +65,7 @@ func (s *Service) UserGetVocabularies(ctx context.Context, userID uuid.UUID) ([]
 }
 
 func (s *Service) UserEditVocabulary(ctx context.Context, vocab entity.Vocabulary) error {
-	err := s.repoVocab.Edit(ctx, vocab)
+	err := s.repoVocab.EditVocab(ctx, vocab)
 	if err != nil {
 		return fmt.Errorf("vocabulary.Service.UserEditVocabulary: %w", err)
 	}
