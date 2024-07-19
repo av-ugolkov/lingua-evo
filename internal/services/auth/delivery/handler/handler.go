@@ -106,6 +106,10 @@ func (h *Handler) refresh(c *gin.Context) {
 		ginExt.SendError(c, http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.refresh - get cookie: %v", err))
 		return
 	}
+	if refreshToken == runtime.EmptyString {
+		ginExt.SendError(c, http.StatusBadRequest, fmt.Errorf("auth.delivery.Handler.refresh - refresh token not found"))
+		return
+	}
 
 	refreshID, err := uuid.Parse(refreshToken)
 	if err != nil {
