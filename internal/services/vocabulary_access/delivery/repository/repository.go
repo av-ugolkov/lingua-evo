@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -67,12 +66,7 @@ func (r *VocabAccessRepo) GetAccess(ctx context.Context, vocabID, userID uuid.UU
 	var isEditor bool
 	err := r.pgxPool.QueryRow(ctx, query, vocabID, userID).Scan(&isEditor)
 	if err != nil {
-		switch err {
-		case pgx.ErrNoRows:
-			return false, nil
-		default:
-			return false, fmt.Errorf("vocabulary_access.repository.VocabAccessRepo.GetAccess: %w", err)
-		}
+		return false, fmt.Errorf("vocabulary_access.repository.VocabAccessRepo.GetAccess: %w", err)
 	}
 
 	return isEditor, nil

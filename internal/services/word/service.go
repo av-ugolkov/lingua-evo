@@ -12,6 +12,7 @@ import (
 	entityExample "github.com/av-ugolkov/lingua-evo/internal/services/example"
 	entityVocab "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary"
 	"github.com/av-ugolkov/lingua-evo/runtime"
+	"github.com/jackc/pgx/v5"
 
 	"github.com/google/uuid"
 )
@@ -257,7 +258,10 @@ func (s *Service) GetWords(ctx context.Context, uid, vid uuid.UUID) ([]VocabWord
 
 	editable, err := s.vocabAccessSvc.VocabularyEditable(ctx, uid, vid)
 	if err != nil {
-		return nil, false, fmt.Errorf("word.Service.GetWords - check access: %w", err)
+		switch {
+		case !errors.Is(err, pgx.ErrNoRows):
+			return nil, false, fmt.Errorf("word.Service.GetWords - check access: %w", err)
+		}
 	}
 
 	vocabWordsData, err := s.repo.GetVocabularyWords(ctx, vid)
