@@ -255,11 +255,19 @@ func (s *Service) GetWords(ctx context.Context, uid, vid uuid.UUID) ([]VocabWord
 		return nil, false, fmt.Errorf("word.Service.GetWords - check access: %w", err)
 	}
 
-	editable, err := s.vocabAccessSvc.VocabularyEditable(ctx, uid, vid)
+	vocab, err := s.vocabSvc.GetVocabulary(ctx, uid, vid)
 	if err != nil {
-		switch {
-		case !errors.Is(err, pgx.ErrNoRows):
-			return nil, false, fmt.Errorf("word.Service.GetWords - check access: %w", err)
+		return nil, false, fmt.Errorf("word.Service.GetWords - get vocabulary: %w", err)
+	}
+
+	editable := vocab.UserID == uid
+	if vocab.UserID != uid {
+		editable, err = s.vocabAccessSvc.VocabularyEditable(ctx, uid, vid)
+		if err != nil {
+			switch {
+			case !errors.Is(err, pgx.ErrNoRows):
+				return nil, false, fmt.Errorf("word.Service.GetWords - check access: %w", err)
+			}
 		}
 	}
 
