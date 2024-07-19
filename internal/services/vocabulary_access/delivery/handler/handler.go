@@ -38,35 +38,9 @@ func newHandler(vocabAccessSvc *vocabAccess.Service) *Handler {
 }
 
 func (h *Handler) register(r *gin.Engine) {
-	r.POST(handler.VocabularyAccess, middleware.Auth(h.changeAccess))
 	r.POST(handler.VocabularyAccessForUser, middleware.Auth(h.addAccessForUser))
 	r.DELETE(handler.VocabularyAccessForUser, middleware.Auth(h.removeAccessForUser))
 	r.PATCH(handler.VocabularyAccessForUser, middleware.Auth(h.updateAccessForUser))
-}
-
-func (h *Handler) changeAccess(c *gin.Context) {
-	ctx := c.Request.Context()
-
-	var vocabAccessRq VocabularyAccessRq
-	err := c.Bind(&vocabAccessRq)
-	if err != nil {
-		ginExt.SendError(c, http.StatusBadRequest,
-			fmt.Errorf("vocabulary.delivery.Handler.addVocabulary - check body: %v", err))
-		return
-	}
-
-	err = h.vocabAccessSvc.ChangeAccess(ctx, vocabAccess.Access{
-		VocabID:    vocabAccessRq.VocabID,
-		ID:         vocabAccessRq.ID,
-		AccessEdit: vocabAccessRq.AccessEdit,
-	})
-	if err != nil {
-		ginExt.SendError(c, http.StatusInternalServerError,
-			fmt.Errorf("vocabulary.delivery.Handler.addVocabulary: %v", err))
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{})
 }
 
 func (h *Handler) addAccessForUser(c *gin.Context) {

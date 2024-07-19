@@ -9,7 +9,6 @@ import (
 
 type (
 	repoVocabAccess interface {
-		ChangeAccess(ctx context.Context, vocabID uuid.UUID, access int, accessEdit bool) error
 		AddAccessForUser(ctx context.Context, vocabID, userID uuid.UUID, isEditor bool) error
 		RemoveAccessForUser(ctx context.Context, vocabID, userID uuid.UUID) error
 		GetAccess(ctx context.Context, vocabID, userID uuid.UUID) (bool, error)
@@ -24,14 +23,6 @@ func NewService(repoVocabAccess repoVocabAccess) *Service {
 	return &Service{
 		repoVocabAccess: repoVocabAccess,
 	}
-}
-
-func (s *Service) ChangeAccess(ctx context.Context, access Access) error {
-	err := s.repoVocabAccess.ChangeAccess(ctx, access.VocabID, access.ID, access.AccessEdit)
-	if err != nil {
-		return fmt.Errorf("vocabulary_access.Service.ChangeAccess: %w", err)
-	}
-	return nil
 }
 
 func (s *Service) VocabularyEditable(ctx context.Context, uid, vid uuid.UUID) (bool, error) {

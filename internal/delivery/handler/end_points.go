@@ -20,7 +20,7 @@ const (
 
 	Vocabularies            = "/v0/vocabularies"           //get
 	Vocabulary              = "/v0/vocabulary"             //get
-	VocabularyAccess        = "/v0/vocabulary/access"      //post
+	VocabularyCopy          = "/v0/vocabulary/copy"        //get
 	VocabularyAccessForUser = "/v0/vocabulary/access/user" //post delete
 
 	VocabularyWord        = "/v0/vocabulary/word"               //get post delete

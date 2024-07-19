@@ -119,7 +119,6 @@ func (h *Handler) addWord(c *gin.Context) {
 	}
 
 	vocabWord, err := h.wordSvc.AddWord(ctx, userID, entity.VocabWordData{
-		ID:      uuid.New(),
 		VocabID: data.VocabID,
 		Native: entityDict.DictWord{
 			ID:            uuid.New(),

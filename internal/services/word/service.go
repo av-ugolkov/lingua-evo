@@ -136,7 +136,6 @@ func (s *Service) AddWord(ctx context.Context, userID uuid.UUID, vocabWordData V
 		}
 
 		err = s.repo.AddWord(ctx, VocabWord{
-			ID:            vocabWordData.ID,
 			VocabID:       vocabWordData.VocabID,
 			NativeID:      nativeWordID,
 			Pronunciation: vocabWordData.Native.Pronunciation,
@@ -286,4 +285,36 @@ func (s *Service) GetPronunciation(ctx context.Context, userID, vocabID uuid.UUI
 		return runtime.EmptyString, fmt.Errorf("word.Service.GetPronunciation: %w", ErrWordPronunciation)
 	}
 	return word.Pronunciation, nil
+}
+
+func (s *Service) CopyWords(ctx context.Context, vid, copyVid uuid.UUID) error {
+	vocabWordsData, err := s.repo.GetVocabularyWords(ctx, vid)
+	if err != nil {
+		return fmt.Errorf("word.Service.GetWords - get words: %w", err)
+	}
+
+	for _, word := range vocabWordsData {
+		trIDs := make([]uuid.UUID, 0, len(word.Translates))
+		for _, tr := range word.Translates {
+			trIDs = append(trIDs, tr.ID)
+		}
+
+		exIDs := make([]uuid.UUID, 0, len(word.Examples))
+		for _, ex := range word.Examples {
+			exIDs = append(exIDs, ex.ID)
+		}
+
+		err = s.repo.AddWord(ctx, VocabWord{
+			VocabID:       copyVid,
+			NativeID:      word.Native.ID,
+			Pronunciation: word.Native.Pronunciation,
+			TranslateIDs:  trIDs,
+			ExampleIDs:    exIDs,
+		})
+		if err != nil {
+			return fmt.Errorf("word.Service.AddWord - add word: %w", err)
+		}
+	}
+
+	return nil
 }

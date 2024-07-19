@@ -22,17 +22,18 @@ const (
 
 type (
 	repoVocab interface {
-		Add(ctx context.Context, vocab entity.Vocabulary, tagIDs []uuid.UUID) error
-		Delete(ctx context.Context, vocab entity.Vocabulary) error
-		Get(ctx context.Context, vid uuid.UUID) (entity.Vocabulary, error)
+		AddVocab(ctx context.Context, vocab entity.Vocabulary, tagIDs []uuid.UUID) (uuid.UUID, error)
+		DeleteVocab(ctx context.Context, vocab entity.Vocabulary) error
+		GetVocab(ctx context.Context, vid uuid.UUID) (entity.Vocabulary, error)
 		GetByName(ctx context.Context, uid uuid.UUID, name string) (entity.Vocabulary, error)
 		GetTagsVocabulary(ctx context.Context, vid uuid.UUID) ([]string, error)
 		GetVocabulariesByUser(ctx context.Context, uid uuid.UUID) ([]entity.Vocabulary, error)
-		Edit(ctx context.Context, vocab entity.Vocabulary) error
+		EditVocab(ctx context.Context, vocab entity.Vocabulary) error
 		GetVocabulariesByAccess(ctx context.Context, uid uuid.UUID, access []uint8, page, itemsPerPage, typeOrder int, search, nativeLang, translateLang string) ([]entity.VocabularyWithUser, error)
 		GetVocabulariesCountByAccess(ctx context.Context, uid uuid.UUID, access []uint8, search, nativeLang, translateLang string) (int, error)
 		GetAccess(ctx context.Context, vid uuid.UUID) (uint8, error)
 		GetCreatorVocab(ctx context.Context, vid uuid.UUID) (uuid.UUID, error)
+		CopyVocab(ctx context.Context, uid, vid uuid.UUID) (uuid.UUID, error)
 	}
 
 	repoAccess interface {
@@ -65,7 +66,8 @@ func NewService(
 	repoVocab repoVocab,
 	tagSvc tagSvc,
 	subscribersSvc subscribersSvc,
-	vocabAccessSvc vocabAccessSvc) *Service {
+	vocabAccessSvc vocabAccessSvc,
+) *Service {
 	return &Service{
 		tr:             tr,
 		repoVocab:      repoVocab,
@@ -93,14 +95,14 @@ func (s *Service) GetVocabularies(ctx context.Context, uid uuid.UUID, page, item
 	return vocabularies, countItems, nil
 }
 
-func (s *Service) GetVocabulary(ctx context.Context, uid, vocabID uuid.UUID) (entity.Vocabulary, error) {
-	err := s.CheckAccess(ctx, uid, vocabID)
+func (s *Service) GetVocabulary(ctx context.Context, uid, vid uuid.UUID) (entity.Vocabulary, error) {
+	err := s.CheckAccess(ctx, uid, vid)
 	if err != nil {
 		return entity.Vocabulary{}, handler.NewError(fmt.Errorf("vocabulary.Service.GetVocabulary - %w: %w", entity.ErrAccessDenied, err),
 			http.StatusForbidden, handler.ErrForbidden)
 	}
 
-	vocab, err := s.repoVocab.Get(ctx, vocabID)
+	vocab, err := s.repoVocab.GetVocab(ctx, vid)
 	if err != nil {
 		return entity.Vocabulary{}, fmt.Errorf("vocabulary.Service.GetVocabulary: %w", err)
 	}
@@ -171,4 +173,13 @@ func (s *Service) CanEdit(ctx context.Context, uid, vid uuid.UUID) (bool, error)
 	}
 
 	return true, nil
+}
+
+func (s *Service) CopyVocab(ctx context.Context, uid, vid uuid.UUID) (uuid.UUID, error) {
+	copyVid, err := s.repoVocab.CopyVocab(ctx, uid, vid)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("vocabulary.Service.Copy - copy vocabulary: %w", err)
+	}
+
+	return copyVid, nil
 }

@@ -11,28 +11,28 @@ const (
 
 type Error interface {
 	Error() string
-	Map() map[string]any
-	GetCode() int
+	Code() int
+	Msg() string
 }
 
 type ApiError struct {
-	Err  error  `json:"-"`
-	Code int    `json:"code"`
-	Msg  string `json:"msg"`
+	Err  error
+	code int
+	msg  string
 }
 
 func NewError(err error, code int, msg string) Error {
-	return &ApiError{Err: err, Code: code, Msg: msg}
+	return &ApiError{Err: err, code: code, msg: msg}
 }
 
 func (e *ApiError) Error() string {
 	return e.Err.Error()
 }
 
-func (e *ApiError) Map() map[string]any {
-	return map[string]any{"code": e.Code, "msg": e.Msg}
+func (e *ApiError) Code() int {
+	return e.code
 }
 
-func (e *ApiError) GetCode() int {
-	return e.Code
+func (e *ApiError) Msg() string {
+	return e.msg
 }

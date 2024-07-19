@@ -18,20 +18,6 @@ func NewRepo(pgxPool *pgxpool.Pool) *VocabAccessRepo {
 	}
 }
 
-func (r *VocabAccessRepo) ChangeAccess(ctx context.Context, vocabID uuid.UUID, access int, accessEdit bool) error {
-	const query = `UPDATE vocabulary SET access=$2, access_edit=$3 WHERE id=$1;`
-	result, err := r.pgxPool.Exec(ctx, query, vocabID, access, accessEdit)
-	if err != nil {
-		return fmt.Errorf("vocabulary_access.repository.VocabAccessRepo.ChangeAccess: %w", err)
-	}
-
-	if rows := result.RowsAffected(); rows != 1 {
-		return fmt.Errorf("vocabulary_access.repository.VocabAccessRepo.ChangeAccess: change 0 or more than 1 rows")
-	}
-
-	return nil
-}
-
 func (r *VocabAccessRepo) AddAccessForUser(ctx context.Context, vocabID, userID uuid.UUID, isEditor bool) error {
 	const query = `INSERT INTO vocabulary_users_access (vocab_id, subscriber_id, editor) VALUES ($1, $2, $3);`
 	result, err := r.pgxPool.Exec(ctx, query, vocabID, userID, isEditor)

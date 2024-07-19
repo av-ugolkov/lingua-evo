@@ -40,7 +40,6 @@ func (h *Handler) userAddVocabulary(c *gin.Context) {
 	}
 
 	vocab, err := h.vocabularySvc.UserAddVocabulary(ctx, vocabulary.Vocabulary{
-		ID:            uuid.New(),
 		UserID:        userID,
 		Name:          data.Name,
 		Access:        data.Access,

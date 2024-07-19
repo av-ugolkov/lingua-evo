@@ -96,7 +96,7 @@ func SendError(c *gin.Context, httpStatus int, err error) {
 	slog.Error(err.Error())
 	switch e := err.(type) {
 	case handler.Error:
-		c.JSON(e.GetCode(), e.Map())
+		c.JSON(e.Code(), e.Msg())
 	default:
 		c.JSON(httpStatus, err.Error())
 	}
