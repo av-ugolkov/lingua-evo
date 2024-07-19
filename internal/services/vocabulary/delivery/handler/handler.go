@@ -198,8 +198,7 @@ func (h *Handler) getVocabulary(c *gin.Context) {
 
 	vocab, err := h.vocabularySvc.GetVocabulary(ctx, userID, vocabID)
 	if err != nil {
-		ginExt.SendError(c, http.StatusInternalServerError,
-			fmt.Errorf("vocabulary.delivery.Handler.getVocabulary: %v", err))
+		ginExt.SendError(c, http.StatusInternalServerError, err)
 		return
 	}
 	if vocab.ID == uuid.Nil {

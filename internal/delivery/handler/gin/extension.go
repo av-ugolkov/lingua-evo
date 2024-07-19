@@ -17,7 +17,8 @@ import (
 )
 
 const (
-	cookiePathAuth = "/auth"
+	//TODO need to be refactored
+	cookiePathAuth = "/v0/auth"
 )
 
 var (
@@ -95,7 +96,7 @@ func SendError(c *gin.Context, httpStatus int, err error) {
 	slog.Error(err.Error())
 	switch e := err.(type) {
 	case handler.Error:
-		c.JSON(e.GetCode(), e.JSON())
+		c.JSON(e.GetCode(), e.Map())
 	default:
 		c.JSON(httpStatus, err.Error())
 	}
