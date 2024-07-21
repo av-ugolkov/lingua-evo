@@ -1,12 +1,13 @@
 package auth
 
 import (
-	"encoding/json"
 	"errors"
-	"github.com/av-ugolkov/lingua-evo/runtime"
 	"time"
 
+	"github.com/av-ugolkov/lingua-evo/runtime"
+
 	"github.com/google/uuid"
+	jsoniter "github.com/json-iterator/go"
 )
 
 type (
@@ -44,5 +45,5 @@ var (
 )
 
 func (s *Session) MarshalBinary() ([]byte, error) {
-	return json.Marshal(s)
+	return jsoniter.Marshal(s)
 }
