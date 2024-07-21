@@ -14,7 +14,7 @@ ssl:
 jwt:
     secret: 54f3sY%v0kzQ
     expire_access: 300 #5 min
-    expire_refresh: 3600 #1 hours
+    expire_refresh: 2592000 #30 days
 service:
     type: tcp
     port: 5000
@@ -27,6 +27,12 @@ postgres:
     password: pb6v0CdeN3FmKt4anX1j3
     host: localhost
     port: 6432
+    max_conns: 4
+    min_conns: 0
+    max_conn_lifetime: 3600
+    max_conn_idle_time: 1800
+    health_check_period: 60
+    connect_timeout: 5
 redis:
     name: redis-lingua-evo
     host: localhost

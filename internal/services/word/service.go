@@ -4,12 +4,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 
 	"github.com/av-ugolkov/lingua-evo/internal/db/transactor"
+	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
 	entityDict "github.com/av-ugolkov/lingua-evo/internal/services/dictionary"
 	entityExample "github.com/av-ugolkov/lingua-evo/internal/services/example"
 	entityVocab "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary"
 	"github.com/av-ugolkov/lingua-evo/runtime"
+	"github.com/jackc/pgx/v5"
 
 	"github.com/google/uuid"
 )
@@ -19,18 +22,23 @@ type (
 		GetWord(ctx context.Context, wordID uuid.UUID) (VocabWordData, error)
 		AddWord(ctx context.Context, word VocabWord) error
 		DeleteWord(ctx context.Context, word VocabWord) error
-		GetRandomVocabulary(ctx context.Context, vocabID uuid.UUID, limit int) ([]VocabWordData, error)
-		GetVocabularyWords(ctx context.Context, vocabID uuid.UUID) ([]VocabWordData, error)
+		GetRandomVocabulary(ctx context.Context, vid uuid.UUID, limit int) ([]VocabWordData, error)
+		GetVocabularyWords(ctx context.Context, vid uuid.UUID) ([]VocabWordData, error)
 		UpdateWord(ctx context.Context, word VocabWord) error
-		GetCountWords(ctx context.Context, userID uuid.UUID) (int, error)
+		GetCountWords(ctx context.Context, uid uuid.UUID) (int, error)
 	}
 
 	userSvc interface {
-		UserCountWord(ctx context.Context, userID uuid.UUID) (int, error)
+		UserCountWord(ctx context.Context, uid uuid.UUID) (int, error)
 	}
 
 	vocabSvc interface {
-		GetVocabularyByID(ctx context.Context, vocabID uuid.UUID) (entityVocab.Vocabulary, error)
+		GetVocabulary(ctx context.Context, uid, vid uuid.UUID) (entityVocab.Vocabulary, error)
+		CheckAccess(ctx context.Context, uid, vid uuid.UUID) error
+	}
+
+	vocabAccessSvc interface {
+		VocabularyEditable(ctx context.Context, uid, vid uuid.UUID) (bool, error)
 	}
 
 	exampleSvc interface {
@@ -46,12 +54,13 @@ type (
 )
 
 type Service struct {
-	tr         *transactor.Transactor
-	repo       repoWord
-	userSvc    userSvc
-	vocabSvc   vocabSvc
-	dictSvc    dictSvc
-	exampleSvc exampleSvc
+	tr             *transactor.Transactor
+	repo           repoWord
+	userSvc        userSvc
+	vocabSvc       vocabSvc
+	vocabAccessSvc vocabAccessSvc
+	dictSvc        dictSvc
+	exampleSvc     exampleSvc
 }
 
 func NewService(
@@ -59,36 +68,42 @@ func NewService(
 	repo repoWord,
 	userSvc userSvc,
 	vocabSvc vocabSvc,
+	vocabAccessSvc vocabAccessSvc,
 	dictSvc dictSvc,
 	exampleSvc exampleSvc,
 ) *Service {
 	return &Service{
-		tr:         tr,
-		repo:       repo,
-		userSvc:    userSvc,
-		vocabSvc:   vocabSvc,
-		dictSvc:    dictSvc,
-		exampleSvc: exampleSvc,
+		tr:             tr,
+		repo:           repo,
+		userSvc:        userSvc,
+		vocabSvc:       vocabSvc,
+		vocabAccessSvc: vocabAccessSvc,
+		dictSvc:        dictSvc,
+		exampleSvc:     exampleSvc,
 	}
 }
 
 func (s *Service) AddWord(ctx context.Context, userID uuid.UUID, vocabWordData VocabWordData) (VocabWord, error) {
 	userCountWord, err := s.userSvc.UserCountWord(ctx, userID)
 	if err != nil {
-		return VocabWord{}, fmt.Errorf("word.Service.AddWord - get count words: %w", err)
+		return VocabWord{}, handler.NewError(fmt.Errorf("word.Service.AddWord - get count words: %w", err),
+			http.StatusInternalServerError, handler.ErrInternal)
 	}
 	count, err := s.repo.GetCountWords(ctx, userID)
 	if err != nil {
-		return VocabWord{}, fmt.Errorf("word.Service.AddWord - get count words: %w", err)
+		return VocabWord{}, handler.NewError(fmt.Errorf("word.Service.AddWord - get count words: %v", err),
+			http.StatusInternalServerError, handler.ErrInternal)
 	}
 
 	if count >= userCountWord {
-		return VocabWord{}, fmt.Errorf("word.Service.AddWord: %w", ErrUserWordLimit)
+		return VocabWord{}, handler.NewError(fmt.Errorf("word.Service.AddWord: %v", ErrUserWordLimit),
+			http.StatusInternalServerError, "You reached word limit")
 	}
 
-	vocab, err := s.vocabSvc.GetVocabularyByID(ctx, vocabWordData.VocabID)
+	vocab, err := s.vocabSvc.GetVocabulary(ctx, userID, vocabWordData.VocabID)
 	if err != nil {
-		return VocabWord{}, fmt.Errorf("word.Service.AddWord - get dictionary: %w", err)
+		return VocabWord{}, handler.NewError(fmt.Errorf("word.Service.AddWord - get dictionary: %v", err),
+			http.StatusInternalServerError, handler.ErrInternal)
 	}
 
 	vocabWordData.Native.LangCode = vocab.NativeLang
@@ -121,7 +136,6 @@ func (s *Service) AddWord(ctx context.Context, userID uuid.UUID, vocabWordData V
 		}
 
 		err = s.repo.AddWord(ctx, VocabWord{
-			ID:            vocabWordData.ID,
 			VocabID:       vocabWordData.VocabID,
 			NativeID:      nativeWordID,
 			Pronunciation: vocabWordData.Native.Pronunciation,
@@ -153,8 +167,8 @@ func (s *Service) AddWord(ctx context.Context, userID uuid.UUID, vocabWordData V
 	return vocabularyWord, nil
 }
 
-func (s *Service) UpdateWord(ctx context.Context, vocabWordData VocabWordData) (VocabWord, error) {
-	vocab, err := s.vocabSvc.GetVocabularyByID(ctx, vocabWordData.VocabID)
+func (s *Service) UpdateWord(ctx context.Context, userID uuid.UUID, vocabWordData VocabWordData) (VocabWord, error) {
+	vocab, err := s.vocabSvc.GetVocabulary(ctx, userID, vocabWordData.VocabID)
 	if err != nil {
 		return VocabWord{}, fmt.Errorf("word.Service.UpdateWord - get dictionary: %w", err)
 	}
@@ -235,17 +249,38 @@ func (s *Service) GetWord(ctx context.Context, wordID uuid.UUID) (*VocabWordData
 	return &vocabWordData, nil
 }
 
-func (s *Service) GetWords(ctx context.Context, vocabID uuid.UUID) ([]VocabWordData, error) {
-	vocabWordsData, err := s.repo.GetVocabularyWords(ctx, vocabID)
+func (s *Service) GetWords(ctx context.Context, uid, vid uuid.UUID) ([]VocabWordData, bool, error) {
+	err := s.vocabSvc.CheckAccess(ctx, uid, vid)
 	if err != nil {
-		return nil, fmt.Errorf("word.Service.GetWords - get words: %w", err)
+		return nil, false, fmt.Errorf("word.Service.GetWords - check access: %w", err)
 	}
 
-	return vocabWordsData, nil
+	vocab, err := s.vocabSvc.GetVocabulary(ctx, uid, vid)
+	if err != nil {
+		return nil, false, fmt.Errorf("word.Service.GetWords - get vocabulary: %w", err)
+	}
+
+	editable := vocab.UserID == uid
+	if vocab.UserID != uid {
+		editable, err = s.vocabAccessSvc.VocabularyEditable(ctx, uid, vid)
+		if err != nil {
+			switch {
+			case !errors.Is(err, pgx.ErrNoRows):
+				return nil, false, fmt.Errorf("word.Service.GetWords - check access: %w", err)
+			}
+		}
+	}
+
+	vocabWordsData, err := s.repo.GetVocabularyWords(ctx, vid)
+	if err != nil {
+		return nil, false, fmt.Errorf("word.Service.GetWords - get words: %w", err)
+	}
+
+	return vocabWordsData, editable, nil
 }
 
-func (s *Service) GetPronunciation(ctx context.Context, vocabID uuid.UUID, text string) (string, error) {
-	vocab, err := s.vocabSvc.GetVocabularyByID(ctx, vocabID)
+func (s *Service) GetPronunciation(ctx context.Context, userID, vocabID uuid.UUID, text string) (string, error) {
+	vocab, err := s.vocabSvc.GetVocabulary(ctx, userID, vocabID)
 	if err != nil {
 		return runtime.EmptyString, fmt.Errorf("word.Service.GetPronunciation - get vocabulary: %w", err)
 	}
@@ -258,4 +293,36 @@ func (s *Service) GetPronunciation(ctx context.Context, vocabID uuid.UUID, text 
 		return runtime.EmptyString, fmt.Errorf("word.Service.GetPronunciation: %w", ErrWordPronunciation)
 	}
 	return word.Pronunciation, nil
+}
+
+func (s *Service) CopyWords(ctx context.Context, vid, copyVid uuid.UUID) error {
+	vocabWordsData, err := s.repo.GetVocabularyWords(ctx, vid)
+	if err != nil {
+		return fmt.Errorf("word.Service.GetWords - get words: %w", err)
+	}
+
+	for _, word := range vocabWordsData {
+		trIDs := make([]uuid.UUID, 0, len(word.Translates))
+		for _, tr := range word.Translates {
+			trIDs = append(trIDs, tr.ID)
+		}
+
+		exIDs := make([]uuid.UUID, 0, len(word.Examples))
+		for _, ex := range word.Examples {
+			exIDs = append(exIDs, ex.ID)
+		}
+
+		err = s.repo.AddWord(ctx, VocabWord{
+			VocabID:       copyVid,
+			NativeID:      word.Native.ID,
+			Pronunciation: word.Native.Pronunciation,
+			TranslateIDs:  trIDs,
+			ExampleIDs:    exIDs,
+		})
+		if err != nil {
+			return fmt.Errorf("word.Service.AddWord - add word: %w", err)
+		}
+	}
+
+	return nil
 }
