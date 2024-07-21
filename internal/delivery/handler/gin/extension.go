@@ -18,7 +18,7 @@ import (
 
 const (
 	//TODO need to be refactored
-	cookiePathAuth = "/v0/auth"
+	cookiePathAuth = "/auth"
 )
 
 var (
