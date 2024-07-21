@@ -103,7 +103,7 @@ func (h *Handler) refresh(c *gin.Context) {
 	ctx := c.Request.Context()
 	refreshToken, err := c.Cookie(ginExt.RefreshToken)
 	if err != nil {
-		ginExt.SendError(c, http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.refresh - get cookie: %v", err))
+		ginExt.SendError(c, http.StatusBadRequest, fmt.Errorf("auth.delivery.Handler.refresh - get cookie: %v", err))
 		return
 	}
 	if refreshToken == runtime.EmptyString {
@@ -113,13 +113,13 @@ func (h *Handler) refresh(c *gin.Context) {
 
 	refreshID, err := uuid.Parse(refreshToken)
 	if err != nil {
-		ginExt.SendError(c, http.StatusInternalServerError,
+		ginExt.SendError(c, http.StatusBadRequest,
 			fmt.Errorf("auth.delivery.Handler.refresh - parse: %v", err))
 		return
 	}
 	var fingerprint string
 	if fingerprint = c.GetHeader(ginExt.Fingerprint); fingerprint == runtime.EmptyString {
-		ginExt.SendError(c, http.StatusInternalServerError,
+		ginExt.SendError(c, http.StatusBadRequest,
 			fmt.Errorf("auth.delivery.Handler.refresh - get fingerprint: %v", err))
 		return
 	}
