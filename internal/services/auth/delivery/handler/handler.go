@@ -8,9 +8,9 @@ import (
 	"time"
 
 	"github.com/av-ugolkov/lingua-evo/internal/config"
-	"github.com/av-ugolkov/lingua-evo/internal/delivery"
-	ginExt "github.com/av-ugolkov/lingua-evo/internal/pkg/http/gin_extension"
-	"github.com/av-ugolkov/lingua-evo/internal/pkg/middleware"
+	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
+	ginExt "github.com/av-ugolkov/lingua-evo/internal/delivery/handler/gin"
+	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler/middleware"
 	"github.com/av-ugolkov/lingua-evo/internal/services/auth"
 	"github.com/av-ugolkov/lingua-evo/runtime"
 
@@ -50,10 +50,10 @@ func newHandler(authSvc *auth.Service) *Handler {
 }
 
 func (h *Handler) register(r *gin.Engine) {
-	r.POST(delivery.SignIn, h.signIn)
-	r.GET(delivery.Refresh, h.refresh)
-	r.GET(delivery.SignOut, middleware.Auth(h.signOut))
-	r.POST(delivery.SendCode, h.sendCode)
+	r.POST(handler.SignIn, h.signIn)
+	r.GET(handler.Refresh, h.refresh)
+	r.GET(handler.SignOut, middleware.Auth(h.signOut))
+	r.POST(handler.SendCode, h.sendCode)
 }
 
 func (h *Handler) signIn(c *gin.Context) {
@@ -78,6 +78,7 @@ func (h *Handler) signIn(c *gin.Context) {
 			fmt.Errorf("auth.delivery.Handler.signin: fingerprint not found"))
 		return
 	}
+	data.Fingerprint = fingerprint
 
 	refreshTokenID := uuid.New()
 	tokens, err := h.authSvc.SignIn(ctx, data.User, data.Password, data.Fingerprint, refreshTokenID)
@@ -102,19 +103,23 @@ func (h *Handler) refresh(c *gin.Context) {
 	ctx := c.Request.Context()
 	refreshToken, err := c.Cookie(ginExt.RefreshToken)
 	if err != nil {
-		ginExt.SendError(c, http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.refresh - get cookie: %v", err))
+		ginExt.SendError(c, http.StatusBadRequest, fmt.Errorf("auth.delivery.Handler.refresh - get cookie: %v", err))
+		return
+	}
+	if refreshToken == runtime.EmptyString {
+		ginExt.SendError(c, http.StatusBadRequest, fmt.Errorf("auth.delivery.Handler.refresh - refresh token not found"))
 		return
 	}
 
 	refreshID, err := uuid.Parse(refreshToken)
 	if err != nil {
-		ginExt.SendError(c, http.StatusInternalServerError,
+		ginExt.SendError(c, http.StatusBadRequest,
 			fmt.Errorf("auth.delivery.Handler.refresh - parse: %v", err))
 		return
 	}
 	var fingerprint string
 	if fingerprint = c.GetHeader(ginExt.Fingerprint); fingerprint == runtime.EmptyString {
-		ginExt.SendError(c, http.StatusInternalServerError,
+		ginExt.SendError(c, http.StatusBadRequest,
 			fmt.Errorf("auth.delivery.Handler.refresh - get fingerprint: %v", err))
 		return
 	}

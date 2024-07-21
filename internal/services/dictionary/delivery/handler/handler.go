@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/av-ugolkov/lingua-evo/internal/delivery"
-	ginExtension "github.com/av-ugolkov/lingua-evo/internal/pkg/http/gin_extension"
-	"github.com/av-ugolkov/lingua-evo/internal/pkg/middleware"
+	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
+	ginExt "github.com/av-ugolkov/lingua-evo/internal/delivery/handler/gin"
+	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler/middleware"
 	dictionarySvc "github.com/av-ugolkov/lingua-evo/internal/services/dictionary"
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/dictionary"
 	"github.com/av-ugolkov/lingua-evo/runtime"
@@ -59,9 +59,9 @@ func newHandler(dictSvc *dictionarySvc.Service) *Handler {
 }
 
 func (h *Handler) register(r *gin.Engine) {
-	r.POST(delivery.DictionaryWord, middleware.Auth(h.addWord))
-	r.GET(delivery.DictionaryWord, h.getWord)
-	r.GET(delivery.GetRandomWord, h.getRandomWord)
+	r.POST(handler.DictionaryWord, middleware.Auth(h.addWord))
+	r.GET(handler.DictionaryWord, h.getWord)
+	r.GET(handler.GetRandomWord, h.getRandomWord)
 }
 
 func (h *Handler) addWord(c *gin.Context) {
@@ -69,7 +69,7 @@ func (h *Handler) addWord(c *gin.Context) {
 	var data WordRq
 
 	if err := c.Bind(&data); err != nil {
-		ginExtension.SendError(c, http.StatusBadRequest,
+		ginExt.SendError(c, http.StatusBadRequest,
 			fmt.Errorf("dictionary.delivery.Handler.addWord - check body: %v", err))
 		return
 	}
@@ -85,7 +85,7 @@ func (h *Handler) addWord(c *gin.Context) {
 		},
 	})
 	if err != nil {
-		ginExtension.SendError(c, http.StatusInternalServerError,
+		ginExt.SendError(c, http.StatusInternalServerError,
 			fmt.Errorf("dictionary.delivery.Handler.addWord: %v", err))
 		return
 	}
@@ -106,20 +106,20 @@ func (h *Handler) getWord(c *gin.Context) {
 
 	text, ok := c.GetQuery(QueryParamText)
 	if !ok {
-		ginExtension.SendError(c, http.StatusBadRequest,
+		ginExt.SendError(c, http.StatusBadRequest,
 			fmt.Errorf("dictionary.delivery.Handler.getWord - not found query param [text]"))
 		return
 	}
 
 	langCode, ok := c.GetQuery(QueryParamLangCode)
 	if !ok {
-		ginExtension.SendError(c, http.StatusBadRequest,
+		ginExt.SendError(c, http.StatusBadRequest,
 			fmt.Errorf("dictionary.delivery.Handler.getWord - not found query param [lang_code]"))
 		return
 	}
 
 	if langCode == runtime.EmptyString {
-		ginExtension.SendError(c, http.StatusBadRequest,
+		ginExt.SendError(c, http.StatusBadRequest,
 			fmt.Errorf("dictionary.delivery.Handler.getWord - empty lang code"))
 		return
 	}
@@ -131,7 +131,7 @@ func (h *Handler) getWord(c *gin.Context) {
 		},
 	})
 	if err != nil {
-		ginExtension.SendError(c, http.StatusInternalServerError,
+		ginExt.SendError(c, http.StatusInternalServerError,
 			fmt.Errorf("dictionary.delivery.Handler.getWord: %v", err))
 		return
 	}
@@ -148,14 +148,14 @@ func (h *Handler) getRandomWord(c *gin.Context) {
 
 	langCode, ok := c.GetQuery(QueryParamLangCode)
 	if !ok {
-		ginExtension.SendError(c, http.StatusBadRequest,
+		ginExt.SendError(c, http.StatusBadRequest,
 			fmt.Errorf("dictionary.delivery.Handler.getRandomWord - not found query param [lang_code]"))
 		return
 	}
 
 	word, err := h.dictSvc.GetRandomWord(ctx, langCode)
 	if err != nil {
-		ginExtension.SendError(c, http.StatusInternalServerError,
+		ginExt.SendError(c, http.StatusInternalServerError,
 			fmt.Errorf("dictionary.delivery.Handler.getRandomWord: %v", err))
 		return
 	}

@@ -2,13 +2,15 @@ package user
 
 import (
 	"context"
-	"database/sql"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/av-ugolkov/lingua-evo/internal/pkg/utils"
-	"github.com/google/uuid"
 	"time"
+
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/utils"
+
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
+	jsoniter "github.com/json-iterator/go"
 )
 
 type (
@@ -28,12 +30,12 @@ type (
 		Get(ctx context.Context, key string) (string, error)
 		GetAccountCode(ctx context.Context, email string) (int, error)
 	}
-
-	Service struct {
-		repo  userRepo
-		redis redis
-	}
 )
+
+type Service struct {
+	repo  userRepo
+	redis redis
+}
 
 func NewService(repo userRepo, redis redis) *Service {
 	return &Service{
@@ -93,15 +95,15 @@ func (s *Service) EditUser(ctx context.Context, user *User) error {
 
 func (s *Service) GetUser(ctx context.Context, login string) (*User, error) {
 	user, err := s.repo.GetUserByName(ctx, login)
-	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 		return nil, fmt.Errorf("user.Service.GetUser - by name: %w", err)
-	} else if errors.Is(err, sql.ErrNoRows) {
+	} else if errors.Is(err, pgx.ErrNoRows) {
 		user, err = s.repo.GetUserByEmail(ctx, login)
-		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 			return nil, fmt.Errorf("user.Service.GetUser - by email: %w", err)
 		}
 	}
-	if errors.Is(err, sql.ErrNoRows) {
+	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, fmt.Errorf("user.Service.GetUser - by [%s]: %w", login, ErrNotFoundUser)
 	}
 
@@ -128,7 +130,7 @@ func (s *Service) GetUserByRefreshToken(ctx context.Context, token uuid.UUID) (*
 
 	var session Session
 
-	err = json.Unmarshal([]byte(sessionJson), &session)
+	err = jsoniter.Unmarshal([]byte(sessionJson), &session)
 	if err != nil {
 		return nil, fmt.Errorf("user.Service.GetUserByRefreshToken: %w", err)
 	}
@@ -165,13 +167,13 @@ func (s *Service) validateEmail(ctx context.Context, email string) error {
 	}
 
 	userData, err := s.GetUserByEmail(ctx, email)
-	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 		return err
-	} else if errors.Is(err, sql.ErrNoRows) {
+	} else if errors.Is(err, pgx.ErrNoRows) {
 		return nil
-	} else if userData.ID == uuid.Nil && err == nil {
+	} else if userData != nil && userData.ID == uuid.Nil && err == nil {
 		return ErrItIsAdmin
-	} else if userData.ID != uuid.Nil {
+	} else if userData != nil && userData.ID != uuid.Nil {
 		return ErrEmailBusy
 	}
 
@@ -184,9 +186,9 @@ func (s *Service) validateUsername(ctx context.Context, username string) error {
 	}
 
 	userData, err := s.GetUserByName(ctx, username)
-	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 		return err
-	} else if errors.Is(err, sql.ErrNoRows) {
+	} else if errors.Is(err, pgx.ErrNoRows) {
 		return nil
 	} else if userData.ID == uuid.Nil && err == nil {
 		return ErrItIsAdmin

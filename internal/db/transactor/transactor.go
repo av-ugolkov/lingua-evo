@@ -2,24 +2,26 @@ package transactor
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
+
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type Transactor struct {
-	db *sql.DB
+	pgxPool *pgxpool.Pool
 }
 
 type txKey struct{}
 
-func NewTransactor(db *sql.DB) *Transactor {
+func NewTransactor(pgxPool *pgxpool.Pool) *Transactor {
 	return &Transactor{
-		db: db,
+		pgxPool: pgxPool,
 	}
 }
 
 func (t *Transactor) CreateTransaction(ctx context.Context, fn func(ctx context.Context) error) error {
-	tx, err := t.db.BeginTx(ctx, &sql.TxOptions{})
+	tx, err := t.pgxPool.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
 		return fmt.Errorf("db.Transactor.CreateTransaction: cannot begin transaction: %w", err)
 	}
@@ -27,15 +29,15 @@ func (t *Transactor) CreateTransaction(ctx context.Context, fn func(ctx context.
 	defer func() {
 		switch p := recover(); {
 		case p != nil:
-			if rbErr := tx.Rollback(); rbErr != nil {
+			if rbErr := tx.Rollback(ctx); rbErr != nil {
 				err = fmt.Errorf("db.Transactor.WithTransaction: tx execute with panic:: transaction panic: %v, rollback err: %v", p, rbErr)
 			}
 		case err != nil:
-			if rbErr := tx.Rollback(); rbErr != nil {
+			if rbErr := tx.Rollback(ctx); rbErr != nil {
 				err = fmt.Errorf("db.Transactor.WithTransaction: transaction err: %v, rollback err: %v", err, rbErr)
 			}
 		default:
-			if err = tx.Commit(); err != nil {
+			if err = tx.Commit(ctx); err != nil {
 				err = fmt.Errorf("db.Transactor.WithTransaction: cannot commit transaction: %v", err)
 			}
 		}
@@ -44,6 +46,6 @@ func (t *Transactor) CreateTransaction(ctx context.Context, fn func(ctx context.
 	return fn(injectTx(ctx, tx))
 }
 
-func injectTx(ctx context.Context, tx *sql.Tx) context.Context {
+func injectTx(ctx context.Context, tx pgx.Tx) context.Context {
 	return context.WithValue(ctx, txKey{}, tx)
 }

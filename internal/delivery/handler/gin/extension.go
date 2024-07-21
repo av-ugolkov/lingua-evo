@@ -1,4 +1,4 @@
-package gin_extension
+package gin
 
 import (
 	"errors"
@@ -12,10 +12,12 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
+	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
 	"github.com/av-ugolkov/lingua-evo/runtime"
 )
 
 const (
+	//TODO need to be refactored
 	cookiePathAuth = "/auth"
 )
 
@@ -82,13 +84,22 @@ func GetHeaderAuthorization(c *gin.Context, typeAuth string) (string, error) {
 		return runtime.EmptyString, fmt.Errorf("gin_extension.GetHeaderAuthorization - invalid type auth [%s]: %s", typeAuth, token)
 	}
 
-	return token[len(string(typeAuth))+1:], nil
+	tokenData := strings.Split(token, " ")
+	if len(tokenData) != 2 {
+		return runtime.EmptyString, fmt.Errorf("gin_extension.GetHeaderAuthorization - invalid token: %s", token)
+	}
+
+	return tokenData[1], nil
 }
 
 func SendError(c *gin.Context, httpStatus int, err error) {
 	slog.Error(err.Error())
-	c.JSON(httpStatus, gin.H{
-		"error": err.Error()})
+	switch e := err.(type) {
+	case handler.Error:
+		c.JSON(e.Code(), e.Msg())
+	default:
+		c.JSON(httpStatus, err.Error())
+	}
 }
 
 func GetCookieLanguageOrDefault(c *gin.Context) string {

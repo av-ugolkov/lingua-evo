@@ -2,7 +2,6 @@ package analytics
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log/slog"
 	"time"
@@ -10,6 +9,7 @@ import (
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/kafka"
 
 	"github.com/google/uuid"
+	"github.com/json-iterator/go"
 )
 
 var (
@@ -31,7 +31,7 @@ func SendToKafka(uid uuid.UUID, action string) {
 		return
 	}
 	go func() {
-		b, err := json.Marshal(Action{
+		b, err := jsoniter.Marshal(Action{
 			UserID:    uid,
 			Action:    action,
 			CreatedAt: time.Now().UTC(),

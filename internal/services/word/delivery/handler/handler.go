@@ -6,9 +6,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/av-ugolkov/lingua-evo/internal/delivery"
-	ginExt "github.com/av-ugolkov/lingua-evo/internal/pkg/http/gin_extension"
-	"github.com/av-ugolkov/lingua-evo/internal/pkg/middleware"
+	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
+	ginExt "github.com/av-ugolkov/lingua-evo/internal/delivery/handler/gin"
+	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler/middleware"
 	entityDict "github.com/av-ugolkov/lingua-evo/internal/services/dictionary"
 	entityExample "github.com/av-ugolkov/lingua-evo/internal/services/example"
 	"github.com/av-ugolkov/lingua-evo/internal/services/word"
@@ -72,13 +72,13 @@ func newHandler(wordSvc *word.Service) *Handler {
 }
 
 func (h *Handler) register(r *gin.Engine) {
-	r.GET(delivery.VocabularyWord, middleware.Auth(h.getWord))
-	r.POST(delivery.VocabularyWord, middleware.Auth(h.addWord))
-	r.DELETE(delivery.VocabularyWord, middleware.Auth(h.deleteWord))
-	r.POST(delivery.VocabularyWordUpdate, middleware.Auth(h.updateWord))
-	r.GET(delivery.VocabularySeveralWords, middleware.Auth(h.getSeveralWords))
-	r.GET(delivery.VocabularyWords, middleware.Auth(h.getWords))
-	r.GET(delivery.GetPronunciation, middleware.Auth(h.getPronunciation))
+	r.GET(handler.VocabularyWord, middleware.Auth(h.getWord))
+	r.POST(handler.VocabularyWord, middleware.Auth(h.addWord))
+	r.DELETE(handler.VocabularyWord, middleware.Auth(h.deleteWord))
+	r.POST(handler.VocabularyWordUpdate, middleware.Auth(h.updateWord))
+	r.GET(handler.VocabularyRandomWords, middleware.Auth(h.getRandomWords))
+	r.GET(handler.VocabularyWords, middleware.OptionalAuth(h.getWords))
+	r.GET(handler.WordPronunciation, middleware.Auth(h.getPronunciation))
 }
 
 func (h *Handler) addWord(c *gin.Context) {
@@ -119,7 +119,6 @@ func (h *Handler) addWord(c *gin.Context) {
 	}
 
 	vocabWord, err := h.wordSvc.AddWord(ctx, userID, entity.VocabWordData{
-		ID:      uuid.New(),
 		VocabID: data.VocabID,
 		Native: entityDict.DictWord{
 			ID:            uuid.New(),
@@ -159,8 +158,15 @@ func (h *Handler) addWord(c *gin.Context) {
 
 func (h *Handler) updateWord(c *gin.Context) {
 	ctx := c.Request.Context()
+
+	userID, err := runtime.UserIDFromContext(ctx)
+	if err != nil {
+		ginExt.SendError(c, http.StatusUnauthorized, fmt.Errorf("word.delivery.Handler.updateWord - unauthorized: %v", err))
+		return
+	}
+
 	var data VocabWordRq
-	err := c.Bind(&data)
+	err = c.Bind(&data)
 	if err != nil {
 		ginExt.SendError(c, http.StatusInternalServerError,
 			fmt.Errorf("word.delivery.Handler.updateWord - check body: %v", err))
@@ -186,7 +192,7 @@ func (h *Handler) updateWord(c *gin.Context) {
 		})
 	}
 
-	vocabWord, err := h.wordSvc.UpdateWord(ctx, entity.VocabWordData{
+	vocabWord, err := h.wordSvc.UpdateWord(ctx, userID, entity.VocabWordData{
 		ID:      *data.ID,
 		VocabID: data.VocabID,
 		Native: entityDict.DictWord{
@@ -236,7 +242,7 @@ func (h *Handler) deleteWord(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{})
 }
 
-func (h *Handler) getSeveralWords(c *gin.Context) {
+func (h *Handler) getRandomWords(c *gin.Context) {
 	ctx := c.Request.Context()
 	vocabID, err := ginExt.GetQueryUUID(c, ParamVocabID)
 	if err != nil {
@@ -320,6 +326,9 @@ func (h *Handler) getWord(c *gin.Context) {
 
 func (h *Handler) getWords(c *gin.Context) {
 	ctx := c.Request.Context()
+
+	userID, _ := runtime.UserIDFromContext(ctx)
+
 	vocabID, err := ginExt.GetQueryUUID(c, ParamVocabID)
 	if err != nil {
 		ginExt.SendError(c, http.StatusInternalServerError,
@@ -327,7 +336,7 @@ func (h *Handler) getWords(c *gin.Context) {
 		return
 	}
 
-	vocabWords, err := h.wordSvc.GetWords(ctx, vocabID)
+	vocabWords, editable, err := h.wordSvc.GetWords(ctx, userID, vocabID)
 	if err != nil {
 		ginExt.SendError(c, http.StatusInternalServerError,
 			fmt.Errorf("word.delivery.Handler.getWords: %w", err))
@@ -362,11 +371,27 @@ func (h *Handler) getWords(c *gin.Context) {
 		wordsRs = append(wordsRs, wordRs)
 	}
 
-	c.JSON(http.StatusOK, wordsRs)
+	type Response struct {
+		Words    []VocabWordRs `json:"words"`
+		Editable bool          `json:"editable"`
+	}
+
+	c.JSON(http.StatusOK, Response{
+		Words:    wordsRs,
+		Editable: editable,
+	})
 }
 
 func (h *Handler) getPronunciation(c *gin.Context) {
 	ctx := c.Request.Context()
+
+	userID, err := runtime.UserIDFromContext(ctx)
+	if err != nil {
+		ginExt.SendError(c, http.StatusUnauthorized,
+			fmt.Errorf("word.delivery.Handler.getPronunciation - unauthorized: %w", err))
+		return
+	}
+
 	text, err := ginExt.GetQuery(c, ParamText)
 	if err != nil {
 		ginExt.SendError(c, http.StatusInternalServerError,
@@ -381,10 +406,9 @@ func (h *Handler) getPronunciation(c *gin.Context) {
 		return
 	}
 
-	pronunciation, err := h.wordSvc.GetPronunciation(ctx, vocabID, text)
+	pronunciation, err := h.wordSvc.GetPronunciation(ctx, userID, vocabID, text)
 	if err != nil {
-		ginExt.SendError(c, http.StatusInternalServerError,
-			fmt.Errorf("word.delivery.Handler.getPronunciation: %w", err))
+		ginExt.SendError(c, http.StatusInternalServerError, err)
 		return
 	}
 

@@ -2,7 +2,6 @@ package app
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -15,6 +14,7 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/av-ugolkov/lingua-evo/internal/config"
 	pg "github.com/av-ugolkov/lingua-evo/internal/db/postgres"
@@ -23,6 +23,9 @@ import (
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/kafka"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/analytic"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/log"
+	accessService "github.com/av-ugolkov/lingua-evo/internal/services/access"
+	accessHandler "github.com/av-ugolkov/lingua-evo/internal/services/access/delivery/handler"
+	accessRepository "github.com/av-ugolkov/lingua-evo/internal/services/access/delivery/repository"
 	authService "github.com/av-ugolkov/lingua-evo/internal/services/auth"
 	authHandler "github.com/av-ugolkov/lingua-evo/internal/services/auth/delivery/handler"
 	authRepository "github.com/av-ugolkov/lingua-evo/internal/services/auth/delivery/repository"
@@ -34,15 +37,22 @@ import (
 	langService "github.com/av-ugolkov/lingua-evo/internal/services/language"
 	languageHandler "github.com/av-ugolkov/lingua-evo/internal/services/language/delivery/handler"
 	langRepository "github.com/av-ugolkov/lingua-evo/internal/services/language/delivery/repository"
+	subscribersService "github.com/av-ugolkov/lingua-evo/internal/services/subscribers"
+	subscribersHandler "github.com/av-ugolkov/lingua-evo/internal/services/subscribers/delivery/handler"
+	subscribersRepository "github.com/av-ugolkov/lingua-evo/internal/services/subscribers/delivery/repository"
 	tagService "github.com/av-ugolkov/lingua-evo/internal/services/tag"
 	tagHandler "github.com/av-ugolkov/lingua-evo/internal/services/tag/delivery/handler"
 	tagRepository "github.com/av-ugolkov/lingua-evo/internal/services/tag/delivery/repository"
 	userService "github.com/av-ugolkov/lingua-evo/internal/services/user"
 	userHandler "github.com/av-ugolkov/lingua-evo/internal/services/user/delivery/handler"
 	userRepository "github.com/av-ugolkov/lingua-evo/internal/services/user/delivery/repository"
-	vocabService "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary"
 	vocabHandler "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary/delivery/handler"
 	vocabRepository "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary/delivery/repository"
+	vocabService "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary/service"
+	vocabAccessService "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary_access"
+	vocabAccessRepository "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary_access/delivery/repository"
+	vocabWordsService "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary_words"
+	vocabWordsHandler "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary_words/delivery/handler"
 	wordService "github.com/av-ugolkov/lingua-evo/internal/services/word"
 	wordHandler "github.com/av-ugolkov/lingua-evo/internal/services/word/delivery/handler"
 	wordRepository "github.com/av-ugolkov/lingua-evo/internal/services/word/delivery/repository"
@@ -61,7 +71,7 @@ func ServerStart(cfg *config.Config) {
 		}()
 	}
 
-	db, err := pg.NewDB(cfg.DbSQL.GetConnStr())
+	pgxPool, err := pg.NewDB(cfg.DbSQL)
 	if err != nil {
 		slog.Error(fmt.Sprintf("can't create pg pool: %v", err))
 		return
@@ -82,9 +92,9 @@ func ServerStart(cfg *config.Config) {
 		AllowCredentials: true,
 		AllowHeaders:     []string{"Authorization", "Content-Type", "Fingerprint"},
 	}))
-	initServer(cfg, router, db, redisDB)
+	initServer(cfg, router, pgxPool, redisDB)
 
-	address := fmt.Sprintf(":%s", cfg.Service.Port)
+	address := fmt.Sprintf(":%d", cfg.Service.Port)
 
 	listener, err := net.Listen(cfg.Service.Type, address)
 	if err != nil {
@@ -129,23 +139,30 @@ func ServerStart(cfg *config.Config) {
 	slog.Info("final")
 }
 
-func initServer(cfg *config.Config, r *gin.Engine, db *sql.DB, redis *redis.Redis) {
-	tr := transactor.NewTransactor(db)
+func initServer(cfg *config.Config, r *gin.Engine, pgxPool *pgxpool.Pool, redis *redis.Redis) {
+	tr := transactor.NewTransactor(pgxPool)
 	slog.Info("create services")
-	userRepo := userRepository.NewRepo(db)
+	accessRepo := accessRepository.NewRepo(pgxPool)
+	accessSvc := accessService.NewService(accessRepo)
+	userRepo := userRepository.NewRepo(pgxPool)
 	userSvc := userService.NewService(userRepo, redis)
-	langRepo := langRepository.NewRepo(db)
+	langRepo := langRepository.NewRepo(pgxPool)
 	langSvc := langService.NewService(langRepo)
-	dictRepo := dictRepository.NewRepo(db)
+	dictRepo := dictRepository.NewRepo(pgxPool)
 	dictSvc := dictService.NewService(dictRepo, langSvc)
-	exampleRepo := exampleRepository.NewRepo(db)
+	exampleRepo := exampleRepository.NewRepo(pgxPool)
 	exampleSvc := exampleService.NewService(exampleRepo)
-	tagRepo := tagRepository.NewRepo(db)
+	subscribersRepo := subscribersRepository.NewRepo(pgxPool)
+	subscribersSvc := subscribersService.NewService(subscribersRepo)
+	tagRepo := tagRepository.NewRepo(pgxPool)
 	tagSvc := tagService.NewService(tagRepo)
-	vocabRepo := vocabRepository.NewRepo(db)
-	vocabSvc := vocabService.NewService(tr, vocabRepo, langSvc, tagSvc)
-	wordRepo := wordRepository.NewRepo(db)
-	wordSvc := wordService.NewService(tr, wordRepo, userSvc, vocabSvc, dictSvc, exampleSvc)
+	vocabularyAccessRepo := vocabAccessRepository.NewRepo(pgxPool)
+	vocabularyAccessSvc := vocabAccessService.NewService(vocabularyAccessRepo)
+	vocabRepo := vocabRepository.NewRepo(pgxPool)
+	vocabSvc := vocabService.NewService(tr, vocabRepo, tagSvc, subscribersSvc, vocabularyAccessSvc)
+	wordRepo := wordRepository.NewRepo(pgxPool)
+	wordSvc := wordService.NewService(tr, wordRepo, userSvc, vocabSvc, vocabularyAccessSvc, dictSvc, exampleSvc)
+	vocabWordsSvc := vocabWordsService.NewService(vocabSvc, wordSvc)
 	authRepo := authRepository.NewRepo(redis)
 	authSvc := authService.NewService(cfg.Email, authRepo, userSvc)
 
@@ -157,6 +174,9 @@ func initServer(cfg *config.Config, r *gin.Engine, db *sql.DB, redis *redis.Redi
 	vocabHandler.Create(r, vocabSvc)
 	tagHandler.Create(r, tagSvc)
 	authHandler.Create(r, authSvc)
+	accessHandler.Create(r, accessSvc)
+	subscribersHandler.Create(r, subscribersSvc)
+	vocabWordsHandler.Create(r, vocabWordsSvc)
 
 	slog.Info("end init services")
 }
