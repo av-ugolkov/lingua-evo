@@ -52,7 +52,7 @@ func newHandler(authSvc *auth.Service) *Handler {
 func (h *Handler) register(r *gin.Engine) {
 	r.POST(handler.SignIn, h.signIn)
 	r.GET(handler.Refresh, h.refresh)
-	r.GET(handler.SignOut, middleware.Auth(h.signOut))
+	r.POST(handler.SignOut, middleware.Auth(h.signOut))
 	r.POST(handler.SendCode, h.sendCode)
 }
 
@@ -146,25 +146,25 @@ func (h *Handler) signOut(c *gin.Context) {
 	ctx := c.Request.Context()
 	refreshToken, err := c.Cookie(ginExt.RefreshToken)
 	if err != nil {
-		ginExt.SendError(c, http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.logout - get cookie: %v", err))
+		ginExt.SendError(c, http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.signOut - get cookie: %v", err))
 		return
 	}
 
 	refreshID, err := uuid.Parse(refreshToken)
 	if err != nil {
-		ginExt.SendError(c, http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.logout - parse: %v", err))
+		ginExt.SendError(c, http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.signOut - parse: %v", err))
 		return
 	}
 
 	var fingerprint string
 	if fingerprint = c.GetHeader(ginExt.Fingerprint); fingerprint == runtime.EmptyString {
-		ginExt.SendError(c, http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.logout - get fingerprint: %v", err))
+		ginExt.SendError(c, http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.signOut - get fingerprint: %v", err))
 		return
 	}
 
 	err = h.authSvc.SignOut(ctx, refreshID, fingerprint)
 	if err != nil {
-		ginExt.SendError(c, http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.logout - logout: %v", err))
+		ginExt.SendError(c, http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.signOut - SignOut: %v", err))
 		return
 	}
 

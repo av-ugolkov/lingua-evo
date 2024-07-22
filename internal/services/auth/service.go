@@ -146,16 +146,16 @@ func (s *Service) RefreshSessionToken(ctx context.Context, newTokenID, oldTokenI
 func (s *Service) SignOut(ctx context.Context, refreshToken uuid.UUID, fingerprint string) error {
 	oldRefreshSession, err := s.repo.GetSession(ctx, refreshToken)
 	if err != nil {
-		return fmt.Errorf("auth.Service.Logout - GetSession: %v", err)
+		return fmt.Errorf("auth.Service.SignOut - GetSession: %v", err)
 	}
 
 	if oldRefreshSession.Fingerprint != fingerprint {
-		return fmt.Errorf("auth.Service.Logout: %w", errNotEqualFingerprints)
+		return fmt.Errorf("auth.Service.SignOut: %w", errNotEqualFingerprints)
 	}
 
 	err = s.repo.DeleteSession(ctx, refreshToken)
 	if err != nil {
-		return fmt.Errorf("auth.Service.Logout - DeleteSession: %v", err)
+		return fmt.Errorf("auth.Service.SignOut - DeleteSession: %v", err)
 	}
 
 	return nil
