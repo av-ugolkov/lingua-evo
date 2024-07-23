@@ -7,7 +7,6 @@ import (
 
 	"github.com/av-ugolkov/lingua-evo/internal/db/transactor"
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
-	entityAccess "github.com/av-ugolkov/lingua-evo/internal/services/access"
 	entityTag "github.com/av-ugolkov/lingua-evo/internal/services/tag"
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary"
 
@@ -34,10 +33,6 @@ type (
 		GetAccess(ctx context.Context, vid uuid.UUID) (uint8, error)
 		GetCreatorVocab(ctx context.Context, vid uuid.UUID) (uuid.UUID, error)
 		CopyVocab(ctx context.Context, uid, vid uuid.UUID) (uuid.UUID, error)
-	}
-
-	repoAccess interface {
-		GetAccesses(ctx context.Context) ([]entityAccess.Access, error)
 	}
 
 	tagSvc interface {
