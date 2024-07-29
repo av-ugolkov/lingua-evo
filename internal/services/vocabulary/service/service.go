@@ -28,7 +28,7 @@ type (
 		GetTagsVocabulary(ctx context.Context, vid uuid.UUID) ([]string, error)
 		GetVocabulariesByUser(ctx context.Context, uid uuid.UUID) ([]entity.Vocabulary, error)
 		EditVocab(ctx context.Context, vocab entity.Vocabulary) error
-		GetVocabulariesByAccess(ctx context.Context, uid uuid.UUID, access []uint8, page, itemsPerPage, typeOrder int, search, nativeLang, translateLang string) ([]entity.VocabularyWithUser, error)
+		GetVocabulariesByAccess(ctx context.Context, uid uuid.UUID, access []uint8, page, itemsPerPage, typeSort, order int, search, nativeLang, translateLang string) ([]entity.VocabularyWithUser, error)
 		GetVocabulariesCountByAccess(ctx context.Context, uid uuid.UUID, access []uint8, search, nativeLang, translateLang string) (int, error)
 		GetAccess(ctx context.Context, vid uuid.UUID) (uint8, error)
 		GetCreatorVocab(ctx context.Context, vid uuid.UUID) (uuid.UUID, error)
@@ -72,7 +72,7 @@ func NewService(
 	}
 }
 
-func (s *Service) GetVocabularies(ctx context.Context, uid uuid.UUID, page, itemsPerPage, typeOrder int, search, nativeLang, translateLang string) ([]entity.VocabularyWithUser, int, error) {
+func (s *Service) GetVocabularies(ctx context.Context, uid uuid.UUID, page, itemsPerPage, typeSort, order int, search, nativeLang, translateLang string) ([]entity.VocabularyWithUser, int, error) {
 	countItems, err := s.repoVocab.GetVocabulariesCountByAccess(ctx, uid, []uint8{AccessSubscribers, AccessPublic}, search, nativeLang, translateLang)
 	if err != nil {
 		return nil, 0, fmt.Errorf("vocabulary.Service.GetVocabularies: %w", err)
@@ -82,7 +82,7 @@ func (s *Service) GetVocabularies(ctx context.Context, uid uuid.UUID, page, item
 		return []entity.VocabularyWithUser{}, 0, nil
 	}
 
-	vocabularies, err := s.repoVocab.GetVocabulariesByAccess(ctx, uid, []uint8{AccessSubscribers, AccessPublic}, page, itemsPerPage, typeOrder, search, nativeLang, translateLang)
+	vocabularies, err := s.repoVocab.GetVocabulariesByAccess(ctx, uid, []uint8{AccessSubscribers, AccessPublic}, page, itemsPerPage, typeSort, order, search, nativeLang, translateLang)
 	if err != nil {
 		return nil, 0, fmt.Errorf("vocabulary.Service.GetVocabularies: %w", err)
 	}

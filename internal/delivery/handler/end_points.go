@@ -11,6 +11,7 @@ const (
 
 	SignUp   = "/user/sign_up" //post
 	UserByID = "/user/id"      //get
+	Users    = "/users"        //get
 
 	DictionaryWord = "/dictionary/word"        //get post
 	GetRandomWord  = "/dictionary/word/random" //get

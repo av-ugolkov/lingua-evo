@@ -21,6 +21,7 @@ const (
 	paramsPage          string = "page"
 	paramsPerPage       string = "per_page"
 	paramsSearch        string = "search"
+	paramsSort          string = "sort"
 	paramsOrder         string = "order"
 	paramsNativeLang    string = "native_lang"
 	paramsTranslateLang string = "translate_lang"
@@ -117,7 +118,14 @@ func (h *Handler) getVocabularies(c *gin.Context) {
 		return
 	}
 
-	typeOrder, err := ginExt.GetQueryInt(c, paramsOrder)
+	typeSort, err := ginExt.GetQueryInt(c, paramsSort)
+	if err != nil {
+		ginExt.SendError(c, http.StatusInternalServerError,
+			fmt.Errorf("vocabulary.delivery.Handler.getVocabularies - get query [order]: %v", err))
+		return
+	}
+
+	order, err := ginExt.GetQueryInt(c, paramsOrder)
 	if err != nil {
 		ginExt.SendError(c, http.StatusInternalServerError,
 			fmt.Errorf("vocabulary.delivery.Handler.getVocabularies - get query [order]: %v", err))
@@ -145,7 +153,7 @@ func (h *Handler) getVocabularies(c *gin.Context) {
 		return
 	}
 
-	vocabularies, totalCount, err := h.vocabularySvc.GetVocabularies(ctx, userID, page, itemsPerPage, typeOrder, search, nativeLang, translateLang)
+	vocabularies, totalCount, err := h.vocabularySvc.GetVocabularies(ctx, userID, page, itemsPerPage, typeSort, order, search, nativeLang, translateLang)
 	if err != nil {
 		ginExt.SendError(c, http.StatusInternalServerError,
 			fmt.Errorf("vocabulary.delivery.Handler.getVocabularies: %v", err))
