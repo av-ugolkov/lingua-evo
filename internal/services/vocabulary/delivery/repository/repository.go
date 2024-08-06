@@ -340,6 +340,31 @@ func (r *VocabRepo) CopyVocab(ctx context.Context, uid, vid uuid.UUID) (uuid.UUI
 	return vid, nil
 }
 
+func (r *VocabRepo) GetWithCountWords(ctx context.Context, uid uuid.UUID, access []uint8) ([]entity.VocabularyWithUser, error) {
+	query := `
+		SELECT v.id, name, native_lang, translate_lang, access, count(w.id) FROM vocabulary v
+		LEFT JOIN word w ON w.vocabulary_id = v.id
+		WHERE v.user_id = $1 AND "access" = any($2)
+		GROUP BY v.id;`
+
+	rows, err := r.pgxPool.Query(ctx, query, uid, access)
+	if err != nil {
+		return nil, fmt.Errorf("vocabulary.delivery.repository.VocabRepo.GetWithCountWords: %w", err)
+	}
+
+	vocabs := make([]entity.VocabularyWithUser, 0, 10)
+	var vocab entity.VocabularyWithUser
+	for rows.Next() {
+		err := rows.Scan(&vocab.ID, &vocab.Name, &vocab.NativeLang, &vocab.TranslateLang, &vocab.Access, &vocab.WordsCount)
+		if err != nil {
+			return nil, fmt.Errorf("vocabulary.delivery.repository.VocabRepo.GetWithCountWords - scan: %w", err)
+		}
+		vocabs = append(vocabs, vocab)
+	}
+
+	return vocabs, nil
+}
+
 func getSorted(typeSorted int, order sorted.TypeOrder) string {
 	switch sorted.TypeSorted(typeSorted) {
 	case sorted.Created:

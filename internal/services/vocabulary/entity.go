@@ -9,6 +9,14 @@ import (
 	"github.com/google/uuid"
 )
 
+type AccessVocab uint8
+
+const (
+	AccessPrivate     AccessVocab = 0
+	AccessSubscribers AccessVocab = 1
+	AccessPublic      AccessVocab = 2
+)
+
 var (
 	ErrVocabularyNotFound = errors.New("vocabulary not found")
 	ErrAccessDenied       = errors.New("access denied")
@@ -19,7 +27,7 @@ type (
 		ID            uuid.UUID
 		UserID        uuid.UUID
 		Name          string
-		Access        int
+		Access        uint8
 		NativeLang    string
 		TranslateLang string
 		Description   string
