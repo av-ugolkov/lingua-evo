@@ -126,3 +126,30 @@ func (r *UserRepo) GetUserSubscriptions(ctx context.Context, userID uuid.UUID) (
 
 	return subscriptions, nil
 }
+func (r *UserRepo) GetUsers(ctx context.Context) ([]entity.UserData, error) {
+	const query = `
+	SELECT u.id, u.name, role, u.last_visit_at words
+	FROM users u;`
+
+	rows, err := r.pgxPool.Query(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("user.repository.UserRepo.GetUsers: %w", err)
+	}
+	defer rows.Close()
+
+	users := make([]entity.UserData, 0)
+	var user entity.UserData
+	for rows.Next() {
+		if err := rows.Scan(
+			&user.ID,
+			&user.Name,
+			&user.Role,
+			&user.LastVisited,
+		); err != nil {
+			return nil, fmt.Errorf("user.repository.UserRepo.GetUsers - scan: %w", err)
+		}
+		users = append(users, user)
+	}
+
+	return users, nil
+}

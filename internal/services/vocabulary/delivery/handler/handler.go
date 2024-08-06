@@ -11,6 +11,7 @@ import (
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
 	ginExt "github.com/av-ugolkov/lingua-evo/internal/delivery/handler/gin"
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler/middleware"
+	entity "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary"
 	vocabulary "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary/service"
 	"github.com/av-ugolkov/lingua-evo/runtime"
 )
@@ -25,12 +26,13 @@ const (
 	paramsOrder         string = "order"
 	paramsNativeLang    string = "native_lang"
 	paramsTranslateLang string = "translate_lang"
+	paramsUserID        string = "user_id"
 )
 
 type (
 	VocabularyRq struct {
 		Name          string   `json:"name"`
-		Access        int      `json:"access_id"`
+		Access        uint8    `json:"access_id"`
 		NativeLang    string   `json:"native_lang"`
 		TranslateLang string   `json:"translate_lang"`
 		Description   string   `json:"description"`
@@ -45,7 +47,7 @@ type (
 		ID            uuid.UUID `json:"id"`
 		UserID        uuid.UUID `json:"user_id"`
 		Name          string    `json:"name"`
-		AccessID      int       `json:"access_id"`
+		AccessID      uint8     `json:"access_id"`
 		NativeLang    string    `json:"native_lang"`
 		TranslateLang string    `json:"translate_lang"`
 		Description   string    `json:"description"`
@@ -59,7 +61,7 @@ type (
 		UserID        uuid.UUID `json:"user_id"`
 		UserName      string    `json:"user_name"`
 		Name          string    `json:"name"`
-		AccessID      int       `json:"access_id"`
+		AccessID      uint8     `json:"access_id"`
 		NativeLang    string    `json:"native_lang"`
 		TranslateLang string    `json:"translate_lang"`
 		Description   string    `json:"description"`
@@ -72,7 +74,7 @@ type (
 	VocabularyEditRq struct {
 		ID     uuid.UUID `json:"id"`
 		Name   string    `json:"name"`
-		Access int       `json:"access_id"`
+		Access uint8     `json:"access_id"`
 	}
 )
 
@@ -98,6 +100,7 @@ func (h *Handler) register(r *gin.Engine) {
 	r.PUT(handler.UserVocabulary, middleware.Auth(h.userEditVocabulary))
 	r.GET(handler.UserVocabularies, middleware.Auth(h.userGetVocabularies))
 	r.GET(handler.Vocabularies, middleware.OptionalAuth(h.getVocabularies))
+	r.GET(handler.VocabulariesByUser, middleware.OptionalAuth(h.getVocabulariesByUser))
 }
 
 func (h *Handler) getVocabularies(c *gin.Context) {
@@ -234,4 +237,46 @@ func (h *Handler) getVocabulary(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, vocabRs)
+}
+
+func (h *Handler) getVocabulariesByUser(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	uid, err := ginExt.GetQueryUUID(c, paramsUserID)
+	if err != nil {
+		ginExt.SendError(c, http.StatusInternalServerError,
+			fmt.Errorf("vocabulary.delivery.Handler.getVocabulariesByUser - get query [user_id]: %v", err))
+		return
+	}
+
+	vocabs, err := h.vocabularySvc.GetVocabulariesByUser(ctx, uid, []entity.AccessVocab{entity.AccessPublic, entity.AccessSubscribers})
+	if err != nil {
+		ginExt.SendError(c, http.StatusInternalServerError,
+			fmt.Errorf("vocabulary.delivery.Handler.getVocabulariesByUser: %v", err))
+		return
+	}
+
+	vocabulariesRs := make([]VocabularyWithUserRs, 0, len(vocabs))
+	for _, vocab := range vocabs {
+		tags := make([]string, 0, len(vocab.Tags))
+		for _, tag := range vocab.Tags {
+			tags = append(tags, tag.Text)
+		}
+
+		vocabulariesRs = append(vocabulariesRs, VocabularyWithUserRs{
+			ID:            vocab.ID,
+			UserID:        vocab.UserID,
+			Name:          vocab.Name,
+			AccessID:      vocab.Access,
+			NativeLang:    vocab.NativeLang,
+			TranslateLang: vocab.TranslateLang,
+			Description:   vocab.Description,
+			WordsCount:    vocab.WordsCount,
+			Tags:          tags,
+			CreatedAt:     vocab.CreatedAt,
+			UpdatedAt:     vocab.UpdatedAt,
+		})
+	}
+
+	c.JSON(http.StatusOK, vocabulariesRs)
 }

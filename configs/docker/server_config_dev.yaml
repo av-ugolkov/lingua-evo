@@ -16,7 +16,6 @@ jwt:
     expire_access: 300 #5 min
     expire_refresh: 3600 #1 hours
 service:
-    type: tcp
     port: 5000
     allowed_origins:
         - "http://localhost:5173"

@@ -3,6 +3,7 @@ package handler
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
 	ginExtension "github.com/av-ugolkov/lingua-evo/internal/delivery/handler/gin"
@@ -33,10 +34,11 @@ type (
 	}
 
 	UserRs struct {
-		ID    uuid.UUID    `json:"id"`
-		Name  string       `json:"name"`
-		Email string       `json:"email"`
-		Role  runtime.Role `json:"role"`
+		ID          uuid.UUID    `json:"id"`
+		Name        string       `json:"name"`
+		Email       string       `json:"email,omitempty"`
+		Role        runtime.Role `json:"role"`
+		LastVisited time.Time    `json:"last_visited,omitempty"`
 	}
 )
 
@@ -58,6 +60,7 @@ func newHandler(userSvc *user.Service) *Handler {
 func (h *Handler) register(r *gin.Engine) {
 	r.POST(handler.SignUp, h.signUp)
 	r.GET(handler.UserByID, middleware.Auth(h.getUserByID))
+	r.GET(handler.Users, h.getUsers)
 }
 
 func (h *Handler) signUp(c *gin.Context) {
@@ -90,7 +93,7 @@ func (h *Handler) signUp(c *gin.Context) {
 		return
 	}
 
-	uid, err := h.userSvc.SignUp(c.Request.Context(), entity.UserData{
+	uid, err := h.userSvc.SignUp(c.Request.Context(), entity.UserCreate{
 		ID:       uuid.New(),
 		Name:     data.Username,
 		Password: data.Password,
@@ -136,4 +139,27 @@ func (h *Handler) getUserByID(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, userRs)
+}
+
+func (h *Handler) getUsers(c *gin.Context) {
+	ctx := c.Request.Context()
+	users, err := h.userSvc.GetUsers(ctx)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": fmt.Errorf("user.delivery.Handler.getUsers: %v", err),
+		})
+		return
+	}
+
+	usersRs := make([]UserRs, 0, len(users))
+	for _, u := range users {
+		usersRs = append(usersRs, UserRs{
+			ID:          u.ID,
+			Name:        u.Name,
+			Role:        u.Role,
+			LastVisited: u.LastVisited,
+		})
+	}
+
+	c.JSON(http.StatusOK, usersRs)
 }
