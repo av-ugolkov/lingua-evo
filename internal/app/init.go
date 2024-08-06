@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"net"
 	"net/http"
 	_ "net/http/pprof"
 	"os/signal"
@@ -96,13 +95,8 @@ func ServerStart(cfg *config.Config) {
 
 	address := fmt.Sprintf(":%d", cfg.Service.Port)
 
-	listener, err := net.Listen(cfg.Service.Type, address)
-	if err != nil {
-		slog.Error(err.Error())
-		return
-	}
-	slog.Info(fmt.Sprintf("web address: %s", listener.Addr()))
-	server := &http.Server{
+	server := http.Server{
+		Addr:         address,
 		Handler:      router,
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
@@ -115,10 +109,11 @@ func ServerStart(cfg *config.Config) {
 	slog.Info("start server")
 	go func() {
 		if cfg.SSL.Enable {
-			err = server.ServeTLS(listener, cfg.SSL.GetPublic(), cfg.SSL.GetPrivate())
+			err = server.ListenAndServeTLS(cfg.SSL.GetPublic(), cfg.SSL.GetPrivate())
 		} else {
-			err = server.Serve(listener)
+			err = server.ListenAndServe()
 		}
+		server.ListenAndServe()
 		if err != nil {
 			switch {
 			case errors.Is(err, http.ErrServerClosed):
@@ -131,12 +126,20 @@ func ServerStart(cfg *config.Config) {
 	}()
 
 	<-ctx.Done()
-	if err := server.Shutdown(context.Background()); err != nil {
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	if err := server.Shutdown(ctx); err != nil {
 		slog.Info(fmt.Sprintf("server shutdown returned an err: %v\n", err))
-		logger.Close()
 	}
 
+	pgxPool.Close()
+	redisDB.Close()
+
 	slog.Info("final")
+
+	logger.Close()
 }
 
 func initServer(cfg *config.Config, r *gin.Engine, pgxPool *pgxpool.Pool, redis *redis.Redis) {

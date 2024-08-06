@@ -24,6 +24,7 @@ type (
 		RemoveUser(ctx context.Context, u *User) error
 		GetUserData(ctx context.Context, uid uuid.UUID) (*Data, error)
 		GetUserSubscriptions(ctx context.Context, uid uuid.UUID) ([]Subscriptions, error)
+		GetUsers(ctx context.Context) ([]UserData, error)
 	}
 
 	redis interface {
@@ -44,39 +45,39 @@ func NewService(repo userRepo, redis redis) *Service {
 	}
 }
 
-func (s *Service) SignUp(ctx context.Context, userData UserData) (uuid.UUID, error) {
-	if err := s.validateEmail(ctx, userData.Email); err != nil {
+func (s *Service) SignUp(ctx context.Context, userCreate UserCreate) (uuid.UUID, error) {
+	if err := s.validateEmail(ctx, userCreate.Email); err != nil {
 		return uuid.Nil, fmt.Errorf("auth.Service.SignUp - validateEmail: %v", err)
 	}
 
-	code, err := s.redis.GetAccountCode(ctx, userData.Email)
+	code, err := s.redis.GetAccountCode(ctx, userCreate.Email)
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("auth.Service.SignUp - GetAccountCode: %v", err)
 	}
 
-	if code != userData.Code {
+	if code != userCreate.Code {
 		return uuid.Nil, fmt.Errorf("auth.Service.SignUp: code mismatch")
 	}
 
-	if err := s.validateUsername(ctx, userData.Name); err != nil {
+	if err := s.validateUsername(ctx, userCreate.Name); err != nil {
 		return uuid.Nil, fmt.Errorf("auth.Service.SignUp - validateUsername: %v", err)
 	}
 
-	if err := validatePassword(userData.Password); err != nil {
+	if err := validatePassword(userCreate.Password); err != nil {
 		return uuid.Nil, fmt.Errorf("auth.Service.SignUp - validatePassword: %v", err)
 	}
 
-	hashPassword, err := utils.HashPassword(userData.Password)
+	hashPassword, err := utils.HashPassword(userCreate.Password)
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("auth.Service.SignUp - hashPassword: %v", err)
 	}
 
 	user := &User{
-		ID:           userData.ID,
-		Name:         userData.Name,
+		ID:           userCreate.ID,
+		Name:         userCreate.Name,
 		PasswordHash: hashPassword,
-		Email:        userData.Email,
-		Role:         userData.Role,
+		Email:        userCreate.Email,
+		Role:         userCreate.Role,
 		CreatedAt:    time.Now().UTC(),
 		LastVisitAt:  time.Now().UTC(),
 	}
@@ -159,6 +160,14 @@ func (s *Service) UserCountWord(ctx context.Context, userID uuid.UUID) (int, err
 	}
 
 	return maxWords, nil
+}
+
+func (s *Service) GetUsers(ctx context.Context) ([]UserData, error) {
+	users, err := s.repo.GetUsers(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("user.Service.GetUsers: %w", err)
+	}
+	return users, nil
 }
 
 func (s *Service) validateEmail(ctx context.Context, email string) error {
