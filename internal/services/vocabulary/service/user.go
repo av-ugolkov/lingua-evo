@@ -55,8 +55,8 @@ func (s *Service) UserDeleteVocabulary(ctx context.Context, userID uuid.UUID, na
 	return nil
 }
 
-func (s *Service) UserGetVocabularies(ctx context.Context, userID uuid.UUID) ([]entity.Vocabulary, error) {
-	vocabularies, err := s.repoVocab.GetVocabulariesByUser(ctx, userID)
+func (s *Service) UserGetVocabularies(ctx context.Context, uid uuid.UUID) ([]entity.Vocabulary, error) {
+	vocabularies, err := s.repoVocab.GetVocabulariesByUser(ctx, uid)
 	if err != nil {
 		return nil, fmt.Errorf("vocabulary.Service.UserGetVocabularies: %w", err)
 	}
