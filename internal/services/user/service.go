@@ -24,7 +24,7 @@ type (
 		RemoveUser(ctx context.Context, u *User) error
 		GetUserData(ctx context.Context, uid uuid.UUID) (*Data, error)
 		GetUserSubscriptions(ctx context.Context, uid uuid.UUID) ([]Subscriptions, error)
-		GetUsers(ctx context.Context) ([]UserData, error)
+		GetUsers(ctx context.Context, page, perPage, sort, order int, search string) ([]UserData, int, error)
 	}
 
 	redis interface {
@@ -162,12 +162,13 @@ func (s *Service) UserCountWord(ctx context.Context, userID uuid.UUID) (int, err
 	return maxWords, nil
 }
 
-func (s *Service) GetUsers(ctx context.Context) ([]UserData, error) {
-	users, err := s.repo.GetUsers(ctx)
+func (s *Service) GetUsers(ctx context.Context, page, perPage, sort, order int, search string) ([]UserData, int, error) {
+	users, countUsers, err := s.repo.GetUsers(ctx, page, perPage, sort, order, search)
 	if err != nil {
-		return nil, fmt.Errorf("user.Service.GetUsers: %w", err)
+		return nil, 0, fmt.Errorf("user.Service.GetUsers: %w", err)
 	}
-	return users, nil
+
+	return users, countUsers, nil
 }
 
 func (s *Service) validateEmail(ctx context.Context, email string) error {

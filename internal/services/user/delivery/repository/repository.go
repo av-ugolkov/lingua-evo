@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	sorted "github.com/av-ugolkov/lingua-evo/internal/pkg/utils"
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/user"
 
 	"github.com/google/uuid"
@@ -126,14 +127,25 @@ func (r *UserRepo) GetUserSubscriptions(ctx context.Context, userID uuid.UUID) (
 
 	return subscriptions, nil
 }
-func (r *UserRepo) GetUsers(ctx context.Context) ([]entity.UserData, error) {
-	const query = `
-	SELECT u.id, u.name, role, u.last_visit_at words
-	FROM users u;`
-
-	rows, err := r.pgxPool.Query(ctx, query)
+func (r *UserRepo) GetUsers(ctx context.Context, page, perPage, sort, order int, search string) ([]entity.UserData, int, error) {
+	const queryCountUsers = `SELECT COUNT(id) FROM users`
+	var countUser int
+	err := r.pgxPool.QueryRow(ctx, queryCountUsers).Scan(&countUser)
 	if err != nil {
-		return nil, fmt.Errorf("user.repository.UserRepo.GetUsers: %w", err)
+		return nil, 0, fmt.Errorf("user.repository.UserRepo.GetUsers: %w", err)
+	}
+
+	query := fmt.Sprintf(`
+	SELECT u.id, u.name, role, u.last_visit_at
+	FROM users u
+	WHERE POSITION($1 in u."name")>0
+	%s
+	LIMIT $2
+	OFFSET $3;`, getSorted(sort, sorted.TypeOrder(order)))
+
+	rows, err := r.pgxPool.Query(ctx, query, search, perPage, (page-1)*perPage)
+	if err != nil {
+		return nil, 0, fmt.Errorf("user.repository.UserRepo.GetUsers: %w", err)
 	}
 	defer rows.Close()
 
@@ -146,10 +158,21 @@ func (r *UserRepo) GetUsers(ctx context.Context) ([]entity.UserData, error) {
 			&user.Role,
 			&user.LastVisited,
 		); err != nil {
-			return nil, fmt.Errorf("user.repository.UserRepo.GetUsers - scan: %w", err)
+			return nil, 0, fmt.Errorf("user.repository.UserRepo.GetUsers - scan: %w", err)
 		}
 		users = append(users, user)
 	}
 
-	return users, nil
+	return users, countUser, nil
+}
+
+func getSorted(typeSorted int, order sorted.TypeOrder) string {
+	switch sorted.TypeSorted(typeSorted) {
+	case sorted.Visit:
+		return fmt.Sprintf("ORDER BY u.last_visit_at %s", order)
+	case sorted.ABC:
+		return fmt.Sprintf("ORDER BY u.name %s", order)
+	default:
+		return ""
+	}
 }

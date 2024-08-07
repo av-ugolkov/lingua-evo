@@ -19,8 +19,6 @@ const (
 
 func (t TypeOrder) String() string {
 	switch t {
-	case ASC:
-		return "ASC"
 	case DESC:
 		return "DESC"
 	default:
