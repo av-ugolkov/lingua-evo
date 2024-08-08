@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"fmt"
+	"time"
 
 	sorted "github.com/av-ugolkov/lingua-evo/internal/pkg/utils"
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/user"
@@ -164,6 +165,17 @@ func (r *UserRepo) GetUsers(ctx context.Context, page, perPage, sort, order int,
 	}
 
 	return users, countUser, nil
+}
+
+func (r *UserRepo) UpdateLastVisited(ctx context.Context, uid uuid.UUID) error {
+	const query = `UPDATE users SET last_visit_at = $2 WHERE id = $1`
+
+	_, err := r.pgxPool.Exec(ctx, query, uid, time.Now().UTC())
+	if err != nil {
+		return fmt.Errorf("user.repository.UserRepo.UpdateLastVisited: %w", err)
+	}
+
+	return nil
 }
 
 func getSorted(typeSorted int, order sorted.TypeOrder) string {
