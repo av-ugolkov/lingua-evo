@@ -25,6 +25,7 @@ type (
 		GetUserData(ctx context.Context, uid uuid.UUID) (*Data, error)
 		GetUserSubscriptions(ctx context.Context, uid uuid.UUID) ([]Subscriptions, error)
 		GetUsers(ctx context.Context, page, perPage, sort, order int, search string) ([]UserData, int, error)
+		UpdateLastVisited(ctx context.Context, uid uuid.UUID) error
 	}
 
 	redis interface {
@@ -112,7 +113,12 @@ func (s *Service) GetUser(ctx context.Context, login string) (*User, error) {
 }
 
 func (s *Service) GetUserByID(ctx context.Context, uid uuid.UUID) (*User, error) {
-	return s.repo.GetUserByID(ctx, uid)
+	user, err := s.repo.GetUserByID(ctx, uid)
+	if err != nil {
+		return nil, fmt.Errorf("user.Service.GetUserByID: %w", err)
+	}
+
+	return user, nil
 }
 
 func (s *Service) GetUserByName(ctx context.Context, name string) (*User, error) {
@@ -169,6 +175,15 @@ func (s *Service) GetUsers(ctx context.Context, page, perPage, sort, order int, 
 	}
 
 	return users, countUsers, nil
+}
+
+func (s *Service) UpdateLastVisited(ctx context.Context, uid uuid.UUID) error {
+	err := s.repo.UpdateLastVisited(ctx, uid)
+	if err != nil {
+		return fmt.Errorf("user.Service.UpdateLastVisited: %w", err)
+	}
+
+	return nil
 }
 
 func (s *Service) validateEmail(ctx context.Context, email string) error {

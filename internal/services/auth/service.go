@@ -31,9 +31,8 @@ type (
 
 	userSvc interface {
 		GetUser(ctx context.Context, login string) (*entityUser.User, error)
-		GetUserByID(ctx context.Context, uid uuid.UUID) (*entityUser.User, error)
 		GetUserByEmail(ctx context.Context, email string) (*entityUser.User, error)
-		GetUserByName(ctx context.Context, name string) (*entityUser.User, error)
+		UpdateLastVisited(ctx context.Context, uid uuid.UUID) error
 	}
 )
 
@@ -58,6 +57,11 @@ func (s *Service) SignIn(ctx context.Context, user, password, fingerprint string
 	}
 	if err := utils.CheckPasswordHash(password, u.PasswordHash); err != nil {
 		return nil, fmt.Errorf("auth.Service.SignIn - incorrect password: %v", err)
+	}
+
+	err = s.userSvc.UpdateLastVisited(ctx, u.ID)
+	if err != nil {
+		return nil, fmt.Errorf("auth.Service.SignIn - update last visited: %v", err)
 	}
 
 	additionalTime := config.GetConfig().JWT.ExpireAccess
@@ -119,18 +123,19 @@ func (s *Service) RefreshSessionToken(ctx context.Context, newTokenID, oldTokenI
 		return nil, fmt.Errorf("auth.Service.RefreshSessionToken - delete session: %v", err)
 	}
 
+	err = s.userSvc.UpdateLastVisited(ctx, oldRefreshSession.UserID)
+	if err != nil {
+		return nil, fmt.Errorf("auth.Service.RefreshSessionToken - update last visited: %v", err)
+	}
+
 	additionalTime := config.GetConfig().JWT.ExpireAccess
 	duration := time.Duration(additionalTime) * time.Second
 	claims := &Claims{
 		ID:        newTokenID,
 		ExpiresAt: time.Now().UTC().Add(duration),
 	}
-	u, err := s.userSvc.GetUserByID(ctx, oldRefreshSession.UserID)
-	if err != nil {
-		return nil, fmt.Errorf("auth.Service.CreateSession - get user by ID: %v", err)
-	}
 
-	accessToken, err := token.NewJWTToken(u.ID, claims.ID, claims.ExpiresAt)
+	accessToken, err := token.NewJWTToken(oldRefreshSession.UserID, claims.ID, claims.ExpiresAt)
 	if err != nil {
 		return nil, fmt.Errorf("auth.Service.CreateSession - create access token: %v", err)
 	}
