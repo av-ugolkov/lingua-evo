@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net/http"
 	_ "net/http/pprof"
+	"os"
 	"os/signal"
 	"syscall"
 	"time"
@@ -15,6 +16,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	"github.com/av-ugolkov/lingua-evo/internal/closer"
 	"github.com/av-ugolkov/lingua-evo/internal/config"
 	pg "github.com/av-ugolkov/lingua-evo/internal/db/postgres"
 	"github.com/av-ugolkov/lingua-evo/internal/db/redis"
@@ -58,15 +60,24 @@ import (
 )
 
 func ServerStart(cfg *config.Config) {
+	closer := closer.NewCloser()
+
 	logger := log.CustomLogger(&cfg.Logger)
 	if logger == nil {
 		return
 	}
 	slog.SetDefault(logger.Log)
-
+	closer.Add(func(ctx context.Context) error {
+		logger.Close()
+		return nil
+	})
+	var pprofSrv *http.Server
 	if cfg.PprofDebug.Enable {
 		go func() {
-			slog.Error(http.ListenAndServe(cfg.PprofDebug.Addr(), nil).Error())
+			pprofSrv = &http.Server{
+				Addr: cfg.PprofDebug.Addr(),
+			}
+			slog.Error(pprofSrv.ListenAndServe().Error())
 		}()
 	}
 
@@ -75,6 +86,10 @@ func ServerStart(cfg *config.Config) {
 		slog.Error(fmt.Sprintf("can't create pg pool: %v", err))
 		return
 	}
+	closer.Add(func(ctx context.Context) error {
+		pgxPool.Close()
+		return nil
+	})
 
 	if cfg.Kafka.Enable {
 		kafkaUserAction := kafka.NewWriter(cfg.Kafka.Addr(), cfg.Kafka.Topics[0])
@@ -82,6 +97,13 @@ func ServerStart(cfg *config.Config) {
 	}
 
 	redisDB := redis.New(cfg)
+	closer.Add(func(ctx context.Context) error {
+		err := redisDB.Close()
+		if err != nil {
+			return err
+		}
+		return nil
+	})
 
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.Default()
@@ -103,7 +125,7 @@ func ServerStart(cfg *config.Config) {
 		ErrorLog:     logger.ServerLoger,
 	}
 
-	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
 	slog.Info("start server")
@@ -113,13 +135,13 @@ func ServerStart(cfg *config.Config) {
 		} else {
 			err = server.ListenAndServe()
 		}
-		server.ListenAndServe()
+
 		if err != nil {
 			switch {
 			case errors.Is(err, http.ErrServerClosed):
 				slog.Warn("server shutdown")
 			default:
-				slog.Error(err.Error())
+				slog.Error(fmt.Sprintf("server returned an err: %v\n", err.Error()))
 				return
 			}
 		}
@@ -130,16 +152,21 @@ func ServerStart(cfg *config.Config) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
+	if pprofSrv != nil {
+		if err := pprofSrv.Shutdown(ctx); err != nil {
+			slog.Error(fmt.Sprintf("server pprof shutdown returned an err: %v\n", err))
+		}
+	}
 	if err := server.Shutdown(ctx); err != nil {
-		slog.Info(fmt.Sprintf("server shutdown returned an err: %v\n", err))
+		slog.Error(fmt.Sprintf("server shutdown returned an err: %v\n", err))
 	}
 
-	pgxPool.Close()
-	redisDB.Close()
+	err = closer.Close(ctx)
+	if err != nil {
+		slog.Error(fmt.Sprintf("closer: %v\n", err.Error()))
+	}
 
 	slog.Info("final")
-
-	logger.Close()
 }
 
 func initServer(cfg *config.Config, r *gin.Engine, pgxPool *pgxpool.Pool, redis *redis.Redis) {
