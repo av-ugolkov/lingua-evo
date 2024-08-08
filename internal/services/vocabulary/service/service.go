@@ -27,7 +27,8 @@ type (
 		GetAccess(ctx context.Context, vid uuid.UUID) (uint8, error)
 		GetCreatorVocab(ctx context.Context, vid uuid.UUID) (uuid.UUID, error)
 		CopyVocab(ctx context.Context, uid, vid uuid.UUID) (uuid.UUID, error)
-		GetWithCountWords(ctx context.Context, uid uuid.UUID, access []uint8) ([]entity.VocabularyWithUser, error)
+		GetVocabsWithCountWords(ctx context.Context, uid uuid.UUID, access []uint8) ([]entity.VocabularyWithUser, error)
+		GetWithCountWords(ctx context.Context, vid uuid.UUID) (entity.VocabularyWithUser, error)
 	}
 
 	tagSvc interface {
@@ -181,10 +182,19 @@ func (s *Service) GetVocabulariesByUser(ctx context.Context, uid uuid.UUID, acce
 		accessIDs[i] = uint8(v)
 	}
 
-	vocabs, err := s.repoVocab.GetWithCountWords(ctx, uid, accessIDs)
+	vocabs, err := s.repoVocab.GetVocabsWithCountWords(ctx, uid, accessIDs)
 	if err != nil {
 		return nil, fmt.Errorf("vocabulary.Service.GetVocabulariesByUser: %w", err)
 	}
 
 	return vocabs, nil
+}
+
+func (s *Service) GetVocabularyInfo(ctx context.Context, uid, vid uuid.UUID) (entity.VocabularyWithUser, error) {
+	vocab, err := s.repoVocab.GetWithCountWords(ctx, vid)
+	if err != nil {
+		return entity.VocabularyWithUser{}, fmt.Errorf("vocabulary.Service.GetVocabularyInfo: %w", err)
+	}
+
+	return vocab, nil
 }

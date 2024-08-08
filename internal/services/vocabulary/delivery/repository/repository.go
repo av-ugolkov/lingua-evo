@@ -340,7 +340,7 @@ func (r *VocabRepo) CopyVocab(ctx context.Context, uid, vid uuid.UUID) (uuid.UUI
 	return vid, nil
 }
 
-func (r *VocabRepo) GetWithCountWords(ctx context.Context, uid uuid.UUID, access []uint8) ([]entity.VocabularyWithUser, error) {
+func (r *VocabRepo) GetVocabsWithCountWords(ctx context.Context, uid uuid.UUID, access []uint8) ([]entity.VocabularyWithUser, error) {
 	query := `
 		SELECT v.id, name, native_lang, translate_lang, access, count(w.id) FROM vocabulary v
 		LEFT JOIN word w ON w.vocabulary_id = v.id
@@ -363,6 +363,45 @@ func (r *VocabRepo) GetWithCountWords(ctx context.Context, uid uuid.UUID, access
 	}
 
 	return vocabs, nil
+}
+
+func (r *VocabRepo) GetWithCountWords(ctx context.Context, vid uuid.UUID) (entity.VocabularyWithUser, error) {
+	query := `
+		SELECT 
+			v.id, 
+			v.name, 
+			native_lang, 
+			translate_lang, 
+			access, 
+			count(w.id), 
+			v.description, 
+			v.created_at, 
+			v.updated_at, 
+			u."name" 
+		FROM vocabulary v
+		LEFT JOIN word w ON w.vocabulary_id = v.id
+		LEFT JOIN users u ON u.id = v.user_id 
+		WHERE v.id = $1
+		GROUP BY v.id, u."name";`
+
+	var vocab entity.VocabularyWithUser
+	err := r.pgxPool.QueryRow(ctx, query, vid).Scan(
+		&vocab.ID,
+		&vocab.Name,
+		&vocab.NativeLang,
+		&vocab.TranslateLang,
+		&vocab.Access,
+		&vocab.WordsCount,
+		&vocab.Description,
+		&vocab.CreatedAt,
+		&vocab.UpdatedAt,
+		&vocab.UserName,
+	)
+	if err != nil {
+		return entity.VocabularyWithUser{}, fmt.Errorf("vocabulary.delivery.repository.VocabRepo.GetWithCountWords: %w", err)
+	}
+
+	return vocab, nil
 }
 
 func getSorted(typeSorted int, order sorted.TypeOrder) string {
