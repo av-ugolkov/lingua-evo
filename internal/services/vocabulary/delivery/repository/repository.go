@@ -9,6 +9,7 @@ import (
 	sorted "github.com/av-ugolkov/lingua-evo/internal/pkg/utils"
 	entityTag "github.com/av-ugolkov/lingua-evo/internal/services/tag"
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary"
+	"github.com/av-ugolkov/lingua-evo/runtime/access"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -220,8 +221,8 @@ func (r *VocabRepo) GetCountVocabularies(ctx context.Context, userID uuid.UUID) 
 }
 
 func (r *VocabRepo) EditVocab(ctx context.Context, vocab entity.Vocabulary) error {
-	query := `UPDATE vocabulary SET name=$2, access=$3 WHERE id=$1;`
-	result, err := r.pgxPool.Exec(ctx, query, vocab.ID, vocab.Name, vocab.Access)
+	query := `UPDATE vocabulary SET name=$2, access=$3, description=$4 WHERE id=$1;`
+	result, err := r.pgxPool.Exec(ctx, query, vocab.ID, vocab.Name, vocab.Access, vocab.Description)
 	if err != nil {
 		return fmt.Errorf("vocabulary.delivery.repository.VocabRepo.Edit: %w", err)
 	}
@@ -231,7 +232,7 @@ func (r *VocabRepo) EditVocab(ctx context.Context, vocab entity.Vocabulary) erro
 	return nil
 }
 
-func (r *VocabRepo) GetVocabulariesCountByAccess(ctx context.Context, uid uuid.UUID, accessIDs []uint8, search, nativeLang, translateLang string) (int, error) {
+func (r *VocabRepo) GetVocabulariesCountByAccess(ctx context.Context, uid uuid.UUID, accessTypes []access.Type, search, nativeLang, translateLang string) (int, error) {
 	query := fmt.Sprintf(`
 	SELECT count(v.id)
 	FROM vocabulary v
@@ -239,7 +240,7 @@ func (r *VocabRepo) GetVocabulariesCountByAccess(ctx context.Context, uid uuid.U
 		AND (POSITION($3 in v."name")>0 OR POSITION($3 in v."description")>0) %s %s;`, getEqualLanguage("native_lang", nativeLang), getEqualLanguage("translate_lang", translateLang))
 
 	var countLine int
-	err := r.pgxPool.QueryRow(ctx, query, uid, accessIDs, search).Scan(&countLine)
+	err := r.pgxPool.QueryRow(ctx, query, uid, accessTypes, search).Scan(&countLine)
 	if err != nil {
 		return 0, fmt.Errorf("vocabulary.delivery.repository.VocabRepo.GetVocabulariesCountByAccess: %w", err)
 	}
@@ -247,7 +248,7 @@ func (r *VocabRepo) GetVocabulariesCountByAccess(ctx context.Context, uid uuid.U
 	return countLine, nil
 }
 
-func (r *VocabRepo) GetVocabulariesByAccess(ctx context.Context, uid uuid.UUID, accessIDs []uint8, page, itemsPerPage, typeSort, order int, search, nativeLang, translateLang string) ([]entity.VocabularyWithUser, error) {
+func (r *VocabRepo) GetVocabulariesByAccess(ctx context.Context, uid uuid.UUID, accessTypes []access.Type, page, itemsPerPage, typeSort, order int, search, nativeLang, translateLang string) ([]entity.VocabularyWithUser, error) {
 	query := fmt.Sprintf(`
 	SELECT 
 		v.id,
@@ -272,7 +273,7 @@ func (r *VocabRepo) GetVocabulariesByAccess(ctx context.Context, uid uuid.UUID, 
 	%s
 	LIMIT $4
 	OFFSET $5;`, getEqualLanguage("v.native_lang", nativeLang), getEqualLanguage("v.translate_lang", translateLang), getSorted(typeSort, sorted.TypeOrder(order)))
-	rows, err := r.pgxPool.Query(ctx, query, uid, accessIDs, search, itemsPerPage, (page-1)*itemsPerPage)
+	rows, err := r.pgxPool.Query(ctx, query, uid, accessTypes, search, itemsPerPage, (page-1)*itemsPerPage)
 	if err != nil {
 		return nil, fmt.Errorf("vocabulary.delivery.repository.VocabRepo.GetVocabulariesByAccess: %w", err)
 	}
@@ -369,7 +370,8 @@ func (r *VocabRepo) GetWithCountWords(ctx context.Context, vid uuid.UUID) (entit
 	query := `
 		SELECT 
 			v.id, 
-			v.name, 
+			v.name,
+			v.user_id,
 			native_lang, 
 			translate_lang, 
 			access, 
@@ -388,6 +390,7 @@ func (r *VocabRepo) GetWithCountWords(ctx context.Context, vid uuid.UUID) (entit
 	err := r.pgxPool.QueryRow(ctx, query, vid).Scan(
 		&vocab.ID,
 		&vocab.Name,
+		&vocab.UserID,
 		&vocab.NativeLang,
 		&vocab.TranslateLang,
 		&vocab.Access,

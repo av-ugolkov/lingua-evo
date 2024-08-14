@@ -37,8 +37,8 @@ type Logger struct {
 type SSL struct {
 	Enable  bool   `yaml:"enable"`
 	Path    string `yaml:"path" env-default:"./../cert"`
-	Public  string `yaml:"public" env-default:"certificate.crt"`
-	Private string `yaml:"private" env-default:"private.key"`
+	Public  string `yaml:"public"`
+	Private string `yaml:"private"`
 }
 
 func (s SSL) GetPublic() string {
