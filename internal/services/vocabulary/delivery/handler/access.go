@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
 	ginExt "github.com/av-ugolkov/lingua-evo/internal/delivery/handler/gin"
-	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler/middleware"
-	vocabAccess "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary_access"
+	"github.com/av-ugolkov/lingua-evo/internal/services/vocabulary"
+	"github.com/av-ugolkov/lingua-evo/runtime"
+	"github.com/av-ugolkov/lingua-evo/runtime/access"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -15,32 +15,40 @@ import (
 
 type (
 	VocabularyAccessRq struct {
-		ID         int       `json:"id,omitempty"`
-		VocabID    uuid.UUID `json:"vocab_id,omitempty"`
-		UserID     uuid.UUID `json:"user_id,omitempty"`
-		AccessEdit bool      `json:"access_edit,omitempty"`
+		ID      int           `json:"id,omitempty"`
+		VocabID uuid.UUID     `json:"vocab_id,omitempty"`
+		UserID  uuid.UUID     `json:"user_id,omitempty"`
+		Status  access.Status `json:"access_edit,omitempty"`
 	}
 )
 
-type Handler struct {
-	vocabAccessSvc *vocabAccess.Service
-}
+func (h *Handler) getAccessForUser(c *gin.Context) {
+	ctx := c.Request.Context()
 
-func Create(r *gin.Engine, vocabularySvc *vocabAccess.Service) {
-	h := newHandler(vocabularySvc)
-	h.register(r)
-}
-
-func newHandler(vocabAccessSvc *vocabAccess.Service) *Handler {
-	return &Handler{
-		vocabAccessSvc: vocabAccessSvc,
+	uid, err := runtime.UserIDFromContext(ctx)
+	if err != nil {
+		ginExt.SendError(c, http.StatusUnauthorized,
+			fmt.Errorf("vocabulary.delivery.Handler.getAccessForUser - unauthorized: %v", err))
+		return
 	}
-}
 
-func (h *Handler) register(r *gin.Engine) {
-	r.POST(handler.VocabularyAccessForUser, middleware.Auth(h.addAccessForUser))
-	r.DELETE(handler.VocabularyAccessForUser, middleware.Auth(h.removeAccessForUser))
-	r.PATCH(handler.VocabularyAccessForUser, middleware.Auth(h.updateAccessForUser))
+	vid, err := ginExt.GetQueryUUID(c, paramsVocabID)
+	if err != nil {
+		ginExt.SendError(c, http.StatusBadRequest,
+			fmt.Errorf("vocabulary.delivery.Handler.getAccessForUser - check query [vocab_id]: %v", err))
+		return
+	}
+
+	access, err := h.vocabSvc.GetAccessForUser(ctx, uid, vid)
+	if err != nil {
+		ginExt.SendError(c, http.StatusInternalServerError,
+			fmt.Errorf("vocabulary.delivery.Handler.getAccessForUser: %v", err))
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"access": access,
+	})
 }
 
 func (h *Handler) addAccessForUser(c *gin.Context) {
@@ -54,10 +62,10 @@ func (h *Handler) addAccessForUser(c *gin.Context) {
 		return
 	}
 
-	err = h.vocabAccessSvc.AddAccessForUser(ctx, vocabAccess.Access{
-		VocabID:    vocabAccessRq.VocabID,
-		UserID:     vocabAccessRq.UserID,
-		AccessEdit: vocabAccessRq.AccessEdit,
+	err = h.vocabSvc.AddAccessForUser(ctx, vocabulary.Access{
+		VocabID: vocabAccessRq.VocabID,
+		UserID:  vocabAccessRq.UserID,
+		Status:  vocabAccessRq.Status,
 	})
 	if err != nil {
 		ginExt.SendError(c, http.StatusInternalServerError,
@@ -79,7 +87,7 @@ func (h *Handler) removeAccessForUser(c *gin.Context) {
 		return
 	}
 
-	err = h.vocabAccessSvc.RemoveAccessForUser(ctx, vocabAccess.Access{
+	err = h.vocabSvc.RemoveAccessForUser(ctx, vocabulary.Access{
 		VocabID: vocabAccessRq.VocabID,
 		UserID:  vocabAccessRq.UserID,
 	})
@@ -103,10 +111,10 @@ func (h *Handler) updateAccessForUser(c *gin.Context) {
 		return
 	}
 
-	err = h.vocabAccessSvc.UpdateAccessForUser(ctx, vocabAccess.Access{
-		VocabID:    vocabAccessRq.VocabID,
-		UserID:     vocabAccessRq.UserID,
-		AccessEdit: vocabAccessRq.AccessEdit,
+	err = h.vocabSvc.UpdateAccessForUser(ctx, vocabulary.Access{
+		VocabID: vocabAccessRq.VocabID,
+		UserID:  vocabAccessRq.UserID,
+		Status:  vocabAccessRq.Status,
 	})
 	if err != nil {
 		ginExt.SendError(c, http.StatusInternalServerError,

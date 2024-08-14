@@ -5,16 +5,9 @@ import (
 	"time"
 
 	entityTag "github.com/av-ugolkov/lingua-evo/internal/services/tag"
+	"github.com/av-ugolkov/lingua-evo/runtime/access"
 
 	"github.com/google/uuid"
-)
-
-type AccessVocab uint8
-
-const (
-	AccessPrivate     AccessVocab = 0
-	AccessSubscribers AccessVocab = 1
-	AccessPublic      AccessVocab = 2
 )
 
 var (
@@ -40,5 +33,12 @@ type (
 		Vocabulary
 		UserName   string
 		WordsCount uint
+	}
+
+	Access struct {
+		ID      int
+		VocabID uuid.UUID
+		UserID  uuid.UUID
+		Status  access.Status
 	}
 )

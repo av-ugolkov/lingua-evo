@@ -12,6 +12,7 @@ import (
 	entityExample "github.com/av-ugolkov/lingua-evo/internal/services/example"
 	entityVocab "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary"
 	"github.com/av-ugolkov/lingua-evo/runtime"
+	"github.com/av-ugolkov/lingua-evo/runtime/access"
 	"github.com/jackc/pgx/v5"
 
 	"github.com/google/uuid"
@@ -34,10 +35,7 @@ type (
 
 	vocabSvc interface {
 		GetVocabulary(ctx context.Context, uid, vid uuid.UUID) (entityVocab.Vocabulary, error)
-		CheckAccess(ctx context.Context, uid, vid uuid.UUID) error
-	}
-
-	vocabAccessSvc interface {
+		GetAccessForUser(ctx context.Context, uid, vid uuid.UUID) (access.Status, error)
 		VocabularyEditable(ctx context.Context, uid, vid uuid.UUID) (bool, error)
 	}
 
@@ -54,13 +52,12 @@ type (
 )
 
 type Service struct {
-	tr             *transactor.Transactor
-	repo           repoWord
-	userSvc        userSvc
-	vocabSvc       vocabSvc
-	vocabAccessSvc vocabAccessSvc
-	dictSvc        dictSvc
-	exampleSvc     exampleSvc
+	tr         *transactor.Transactor
+	repo       repoWord
+	userSvc    userSvc
+	vocabSvc   vocabSvc
+	dictSvc    dictSvc
+	exampleSvc exampleSvc
 }
 
 func NewService(
@@ -68,18 +65,16 @@ func NewService(
 	repo repoWord,
 	userSvc userSvc,
 	vocabSvc vocabSvc,
-	vocabAccessSvc vocabAccessSvc,
 	dictSvc dictSvc,
 	exampleSvc exampleSvc,
 ) *Service {
 	return &Service{
-		tr:             tr,
-		repo:           repo,
-		userSvc:        userSvc,
-		vocabSvc:       vocabSvc,
-		vocabAccessSvc: vocabAccessSvc,
-		dictSvc:        dictSvc,
-		exampleSvc:     exampleSvc,
+		tr:         tr,
+		repo:       repo,
+		userSvc:    userSvc,
+		vocabSvc:   vocabSvc,
+		dictSvc:    dictSvc,
+		exampleSvc: exampleSvc,
 	}
 }
 
@@ -250,7 +245,7 @@ func (s *Service) GetWord(ctx context.Context, wordID uuid.UUID) (*VocabWordData
 }
 
 func (s *Service) GetWords(ctx context.Context, uid, vid uuid.UUID) ([]VocabWordData, bool, error) {
-	err := s.vocabSvc.CheckAccess(ctx, uid, vid)
+	_, err := s.vocabSvc.GetAccessForUser(ctx, uid, vid)
 	if err != nil {
 		return nil, false, fmt.Errorf("word.Service.GetWords - check access: %w", err)
 	}
@@ -262,7 +257,7 @@ func (s *Service) GetWords(ctx context.Context, uid, vid uuid.UUID) ([]VocabWord
 
 	editable := vocab.UserID == uid
 	if vocab.UserID != uid {
-		editable, err = s.vocabAccessSvc.VocabularyEditable(ctx, uid, vid)
+		editable, err = s.vocabSvc.VocabularyEditable(ctx, uid, vid)
 		if err != nil {
 			switch {
 			case !errors.Is(err, pgx.ErrNoRows):
