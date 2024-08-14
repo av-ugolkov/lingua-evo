@@ -78,13 +78,13 @@ func NewService(
 	}
 }
 
-func (s *Service) AddWord(ctx context.Context, userID uuid.UUID, vocabWordData VocabWordData) (VocabWord, error) {
-	userCountWord, err := s.userSvc.UserCountWord(ctx, userID)
+func (s *Service) AddWord(ctx context.Context, uid uuid.UUID, vocabWordData VocabWordData) (VocabWord, error) {
+	userCountWord, err := s.userSvc.UserCountWord(ctx, uid)
 	if err != nil {
 		return VocabWord{}, handler.NewError(fmt.Errorf("word.Service.AddWord - get count words: %w", err),
 			http.StatusInternalServerError, handler.ErrInternal)
 	}
-	count, err := s.repo.GetCountWords(ctx, userID)
+	count, err := s.repo.GetCountWords(ctx, uid)
 	if err != nil {
 		return VocabWord{}, handler.NewError(fmt.Errorf("word.Service.AddWord - get count words: %v", err),
 			http.StatusInternalServerError, handler.ErrInternal)
@@ -95,7 +95,7 @@ func (s *Service) AddWord(ctx context.Context, userID uuid.UUID, vocabWordData V
 			http.StatusInternalServerError, "You reached word limit")
 	}
 
-	vocab, err := s.vocabSvc.GetVocabulary(ctx, userID, vocabWordData.VocabID)
+	vocab, err := s.vocabSvc.GetVocabulary(ctx, uid, vocabWordData.VocabID)
 	if err != nil {
 		return VocabWord{}, handler.NewError(fmt.Errorf("word.Service.AddWord - get dictionary: %v", err),
 			http.StatusInternalServerError, handler.ErrInternal)
@@ -162,8 +162,8 @@ func (s *Service) AddWord(ctx context.Context, userID uuid.UUID, vocabWordData V
 	return vocabularyWord, nil
 }
 
-func (s *Service) UpdateWord(ctx context.Context, userID uuid.UUID, vocabWordData VocabWordData) (VocabWord, error) {
-	vocab, err := s.vocabSvc.GetVocabulary(ctx, userID, vocabWordData.VocabID)
+func (s *Service) UpdateWord(ctx context.Context, uid uuid.UUID, vocabWordData VocabWordData) (VocabWord, error) {
+	vocab, err := s.vocabSvc.GetVocabulary(ctx, uid, vocabWordData.VocabID)
 	if err != nil {
 		return VocabWord{}, fmt.Errorf("word.Service.UpdateWord - get dictionary: %w", err)
 	}
@@ -213,10 +213,10 @@ func (s *Service) UpdateWord(ctx context.Context, userID uuid.UUID, vocabWordDat
 	return vocabWord, nil
 }
 
-func (s *Service) DeleteWord(ctx context.Context, vocabID, wordID uuid.UUID) error {
+func (s *Service) DeleteWord(ctx context.Context, vid, wid uuid.UUID) error {
 	vocabWord := VocabWord{
-		ID:      wordID,
-		VocabID: vocabID,
+		ID:      wid,
+		VocabID: vid,
 	}
 
 	err := s.repo.DeleteWord(ctx, vocabWord)
@@ -226,8 +226,8 @@ func (s *Service) DeleteWord(ctx context.Context, vocabID, wordID uuid.UUID) err
 	return nil
 }
 
-func (s *Service) GetRandomWords(ctx context.Context, vocabID uuid.UUID, limit int) ([]VocabWordData, error) {
-	vocabWordsData, err := s.repo.GetRandomVocabulary(ctx, vocabID, limit)
+func (s *Service) GetRandomWords(ctx context.Context, vid uuid.UUID, limit int) ([]VocabWordData, error) {
+	vocabWordsData, err := s.repo.GetRandomVocabulary(ctx, vid, limit)
 	if err != nil {
 		return nil, fmt.Errorf("word.Service.GetWords - get words: %w", err)
 	}
@@ -235,8 +235,8 @@ func (s *Service) GetRandomWords(ctx context.Context, vocabID uuid.UUID, limit i
 	return vocabWordsData, nil
 }
 
-func (s *Service) GetWord(ctx context.Context, wordID uuid.UUID) (*VocabWordData, error) {
-	vocabWordData, err := s.repo.GetWord(ctx, wordID)
+func (s *Service) GetWord(ctx context.Context, wid uuid.UUID) (*VocabWordData, error) {
+	vocabWordData, err := s.repo.GetWord(ctx, wid)
 	if err != nil {
 		return nil, fmt.Errorf("word.Service.GetWord: %w", err)
 	}
@@ -274,8 +274,8 @@ func (s *Service) GetWords(ctx context.Context, uid, vid uuid.UUID) ([]VocabWord
 	return vocabWordsData, editable, nil
 }
 
-func (s *Service) GetPronunciation(ctx context.Context, userID, vocabID uuid.UUID, text string) (string, error) {
-	vocab, err := s.vocabSvc.GetVocabulary(ctx, userID, vocabID)
+func (s *Service) GetPronunciation(ctx context.Context, uid, vid uuid.UUID, text string) (string, error) {
+	vocab, err := s.vocabSvc.GetVocabulary(ctx, uid, vid)
 	if err != nil {
 		return runtime.EmptyString, fmt.Errorf("word.Service.GetPronunciation - get vocabulary: %w", err)
 	}
