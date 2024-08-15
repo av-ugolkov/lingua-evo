@@ -113,7 +113,7 @@ func (h *Handler) register(r *gin.Engine) {
 	r.GET(handler.VocabularyWords, middleware.OptionalAuth(h.getWords))
 	r.GET(handler.WordPronunciation, middleware.Auth(h.getPronunciation))
 
-	r.GET(handler.VocabularyAccessForUser, middleware.Auth(h.addAccessForUser))
+	r.GET(handler.VocabularyAccessForUser, middleware.Auth(h.getAccessForUser))
 	r.POST(handler.VocabularyAccessForUser, middleware.Auth(h.addAccessForUser))
 	r.DELETE(handler.VocabularyAccessForUser, middleware.Auth(h.removeAccessForUser))
 	r.PATCH(handler.VocabularyAccessForUser, middleware.Auth(h.updateAccessForUser))
