@@ -31,6 +31,7 @@ type (
 		GetWithCountWords(ctx context.Context, vid uuid.UUID) (entity.VocabularyWithUser, error)
 
 		repoVocabUser
+		repoWord
 		repoVocabAccess
 	}
 
@@ -46,6 +47,9 @@ type (
 type Service struct {
 	tr             *transactor.Transactor
 	repoVocab      repoVocab
+	userSvc        userSvc
+	exampleSvc     exampleSvc
+	dictSvc        dictSvc
 	tagSvc         tagSvc
 	subscribersSvc subscribersSvc
 }
@@ -53,12 +57,18 @@ type Service struct {
 func NewService(
 	tr *transactor.Transactor,
 	repoVocab repoVocab,
+	userSvc userSvc,
+	exampleSvc exampleSvc,
+	dictSvc dictSvc,
 	tagSvc tagSvc,
 	subscribersSvc subscribersSvc,
 ) *Service {
 	return &Service{
 		tr:             tr,
 		repoVocab:      repoVocab,
+		userSvc:        userSvc,
+		exampleSvc:     exampleSvc,
+		dictSvc:        dictSvc,
 		tagSvc:         tagSvc,
 		subscribersSvc: subscribersSvc,
 	}
@@ -163,13 +173,18 @@ func (s *Service) CanEdit(ctx context.Context, uid, vid uuid.UUID) (bool, error)
 	return true, nil
 }
 
-func (s *Service) CopyVocab(ctx context.Context, uid, vid uuid.UUID) (uuid.UUID, error) {
+func (s *Service) CopyVocab(ctx context.Context, uid, vid uuid.UUID) error {
 	copyVid, err := s.repoVocab.CopyVocab(ctx, uid, vid)
 	if err != nil {
-		return uuid.Nil, fmt.Errorf("vocabulary.Service.Copy - copy vocabulary: %w", err)
+		return fmt.Errorf("vocabulary.Service.Copy - copy vocabulary: %w", err)
 	}
 
-	return copyVid, nil
+	err = s.CopyWords(ctx, vid, copyVid)
+	if err != nil {
+		return fmt.Errorf("vocabulary.Service.Copy - copy words: %w", err)
+	}
+
+	return nil
 }
 
 func (s *Service) GetVocabulariesByUser(ctx context.Context, uid uuid.UUID, access []access.Type) ([]entity.VocabularyWithUser, error) {
