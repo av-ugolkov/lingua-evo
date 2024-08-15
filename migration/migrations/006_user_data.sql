@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS
         "subscribers_id" UUID NOT NULL REFERENCES "users" ("id") ON DELETE CASCADE
     );
 
-CREATE UNIQUE INDEX IF NOT EXISTS "idx_unique_user_subscribers__user_id_subscribers_id" ON "user_subscribers" ("user_id", "subscribers_id");
+CREATE UNIQUE INDEX IF NOT EXISTS "idx_unique_subscribers__user_id_subscribers_id" ON "subscribers" ("user_id", "subscribers_id");
 
 -- +goose Down
 DROP TABLE IF EXISTS "subscriptions";

@@ -10,7 +10,8 @@ FROM alpine:3.19
 LABEL key="Lingua Evo"
 
 ARG config_dir
-ARG cert_path
+ARG public_cert
+ARG private_cert
 ARG epsw
 
 RUN --mount=type=cache,target=/var/cache/apk apk --update --upgrade add ca-certificates git bash
@@ -19,8 +20,8 @@ WORKDIR /lingua-evo
 
 COPY /configs/${config_dir}.yaml ./configs/server_config.yaml
 COPY --from=builder ./build/cmd/main ./
-COPY --from=root /${cert_path}/certificate.crt ./cert/
-COPY --from=root /${cert_path}/private.key ./cert/
+COPY --from=root ${public_cert} ./cert/
+COPY --from=root ${private_cert} ./cert/
 
 EXPOSE 5000
 
