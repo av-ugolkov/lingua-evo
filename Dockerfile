@@ -19,8 +19,8 @@ WORKDIR /lingua-evo
 
 COPY /configs/${config_dir}.yaml ./configs/server_config.yaml
 COPY --from=builder ./build/cmd/main ./
-COPY --from=root /${cert_path}/certificate.crt ./cert/
-COPY --from=root /${cert_path}/private.key ./cert/
+COPY --from=root ${cert_path} ./cert/
+COPY --from=root ${cert_path} ./cert/
 
 EXPOSE 5000
 
