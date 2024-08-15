@@ -21,8 +21,9 @@ const (
 
 	Vocabularies            = "/vocabularies"           //get
 	Vocabulary              = "/vocabulary"             //get
+	VocabularyInfo          = "/vocabulary/info"        //get
 	VocabularyCopy          = "/vocabulary/copy"        //get
-	VocabularyAccessForUser = "/vocabulary/access/user" //post delete
+	VocabularyAccessForUser = "/vocabulary/access/user" //get post delete patch
 	VocabulariesByUser      = "/vocabularies/user"      //get
 
 	VocabularyWord        = "/vocabulary/word"               //get post delete
