@@ -17,8 +17,8 @@ import (
 )
 
 const (
+	paramsID            string = "id"
 	paramsVocabName     string = "name"
-	paramsVocabID       string = "id"
 	paramsPage          string = "page"
 	paramsPerPage       string = "per_page"
 	paramsSearch        string = "search"
@@ -103,6 +103,15 @@ func (h *Handler) register(r *gin.Engine) {
 	r.GET(handler.Vocabularies, middleware.OptionalAuth(h.getVocabularies))
 	r.GET(handler.VocabulariesByUser, middleware.OptionalAuth(h.getVocabulariesByUser))
 	r.GET(handler.VocabularyInfo, middleware.OptionalAuth(h.getVocabularyInfo))
+	r.POST(handler.VocabularyCopy, middleware.Auth(h.copyVocabulary))
+
+	r.GET(handler.VocabularyWord, middleware.Auth(h.getWord))
+	r.POST(handler.VocabularyWord, middleware.Auth(h.addWord))
+	r.DELETE(handler.VocabularyWord, middleware.Auth(h.deleteWord))
+	r.POST(handler.VocabularyWordUpdate, middleware.Auth(h.updateWord))
+	r.GET(handler.VocabularyRandomWords, middleware.Auth(h.getRandomWords))
+	r.GET(handler.VocabularyWords, middleware.OptionalAuth(h.getWords))
+	r.GET(handler.WordPronunciation, middleware.Auth(h.getPronunciation))
 
 	r.GET(handler.VocabularyAccessForUser, middleware.Auth(h.addAccessForUser))
 	r.POST(handler.VocabularyAccessForUser, middleware.Auth(h.addAccessForUser))
@@ -205,16 +214,16 @@ func (h *Handler) getVocabularies(c *gin.Context) {
 func (h *Handler) getVocabulary(c *gin.Context) {
 	ctx := c.Request.Context()
 
-	userID, _ := runtime.UserIDFromContext(ctx)
+	uid, _ := runtime.UserIDFromContext(ctx)
 
-	vocabID, err := ginExt.GetQueryUUID(c, paramsVocabID)
+	vid, err := ginExt.GetQueryUUID(c, paramsID)
 	if err != nil {
 		ginExt.SendError(c, http.StatusInternalServerError,
 			fmt.Errorf("vocabulary.delivery.Handler.getVocabulary - get query [name]: %v", err))
 		return
 	}
 
-	vocab, err := h.vocabSvc.GetVocabulary(ctx, userID, vocabID)
+	vocab, err := h.vocabSvc.GetVocabulary(ctx, uid, vid)
 	if err != nil {
 		ginExt.SendError(c, http.StatusInternalServerError, err)
 		return
@@ -291,16 +300,16 @@ func (h *Handler) getVocabulariesByUser(c *gin.Context) {
 func (h *Handler) getVocabularyInfo(c *gin.Context) {
 	ctx := c.Request.Context()
 
-	userID, _ := runtime.UserIDFromContext(ctx)
+	uid, _ := runtime.UserIDFromContext(ctx)
 
-	vocabID, err := ginExt.GetQueryUUID(c, paramsVocabID)
+	vid, err := ginExt.GetQueryUUID(c, paramsID)
 	if err != nil {
 		ginExt.SendError(c, http.StatusInternalServerError,
 			fmt.Errorf("vocabulary.delivery.Handler.getVocabulary - get query [name]: %v", err))
 		return
 	}
 
-	vocab, err := h.vocabSvc.GetVocabularyInfo(ctx, userID, vocabID)
+	vocab, err := h.vocabSvc.GetVocabularyInfo(ctx, uid, vid)
 	if err != nil {
 		ginExt.SendError(c, http.StatusInternalServerError, err)
 		return
@@ -332,4 +341,31 @@ func (h *Handler) getVocabularyInfo(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, vocabRs)
+}
+
+func (h *Handler) copyVocabulary(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	uid, err := runtime.UserIDFromContext(ctx)
+	if err != nil {
+		ginExt.SendError(c, http.StatusUnauthorized,
+			fmt.Errorf("vocabulary.delivery.Handler.copyVocabulary - get user id: %v", err))
+		return
+	}
+
+	vid, err := ginExt.GetQueryUUID(c, paramsID)
+	if err != nil {
+		ginExt.SendError(c, http.StatusBadRequest,
+			fmt.Errorf("vocabulary.delivery.Handler.copyVocabulary - get query [id]: %v", err))
+		return
+	}
+
+	err = h.vocabSvc.CopyVocab(ctx, uid, vid)
+	if err != nil {
+		ginExt.SendError(c, http.StatusInternalServerError,
+			fmt.Errorf("vocabulary.delivery.Handler.copyVocabulary: %v", err))
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{})
 }

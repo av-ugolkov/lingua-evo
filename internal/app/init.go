@@ -50,11 +50,6 @@ import (
 	vocabHandler "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary/delivery/handler"
 	vocabRepository "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary/delivery/repository"
 	vocabService "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary/service"
-	vocabWordsService "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary_words"
-	vocabWordsHandler "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary_words/delivery/handler"
-	wordService "github.com/av-ugolkov/lingua-evo/internal/services/word"
-	wordHandler "github.com/av-ugolkov/lingua-evo/internal/services/word/delivery/handler"
-	wordRepository "github.com/av-ugolkov/lingua-evo/internal/services/word/delivery/repository"
 )
 
 func ServerStart(cfg *config.Config) {
@@ -185,10 +180,7 @@ func initServer(cfg *config.Config, r *gin.Engine, pgxPool *pgxpool.Pool, redis 
 	tagRepo := tagRepository.NewRepo(pgxPool)
 	tagSvc := tagService.NewService(tagRepo)
 	vocabRepo := vocabRepository.NewRepo(pgxPool)
-	vocabSvc := vocabService.NewService(tr, vocabRepo, tagSvc, subscribersSvc)
-	wordRepo := wordRepository.NewRepo(pgxPool)
-	wordSvc := wordService.NewService(tr, wordRepo, userSvc, vocabSvc, dictSvc, exampleSvc)
-	vocabWordsSvc := vocabWordsService.NewService(vocabSvc, wordSvc)
+	vocabSvc := vocabService.NewService(tr, vocabRepo, userSvc, exampleSvc, dictSvc, tagSvc, subscribersSvc)
 	authRepo := authRepository.NewRepo(redis)
 	authSvc := authService.NewService(cfg.Email, authRepo, userSvc)
 
@@ -196,13 +188,11 @@ func initServer(cfg *config.Config, r *gin.Engine, pgxPool *pgxpool.Pool, redis 
 	userHandler.Create(r, userSvc)
 	languageHandler.Create(r, langSvc)
 	dictHandler.Create(r, dictSvc)
-	wordHandler.Create(r, wordSvc)
 	vocabHandler.Create(r, vocabSvc)
 	tagHandler.Create(r, tagSvc)
 	authHandler.Create(r, authSvc)
 	accessHandler.Create(r, accessSvc)
 	subscribersHandler.Create(r, subscribersSvc)
-	vocabWordsHandler.Create(r, vocabWordsSvc)
 
 	slog.Info("end init services")
 }
