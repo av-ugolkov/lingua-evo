@@ -39,7 +39,7 @@ func (h *Handler) userAddVocabulary(c *gin.Context) {
 		})
 	}
 
-	vocab, err := h.vocabularySvc.UserAddVocabulary(ctx, vocabulary.Vocabulary{
+	vocab, err := h.vocabSvc.UserAddVocabulary(ctx, vocabulary.Vocabulary{
 		UserID:        userID,
 		Name:          data.Name,
 		Access:        data.Access,
@@ -77,7 +77,7 @@ func (h *Handler) userDeleteVocabulary(c *gin.Context) {
 		return
 	}
 
-	err = h.vocabularySvc.UserDeleteVocabulary(ctx, userID, name)
+	err = h.vocabSvc.UserDeleteVocabulary(ctx, userID, name)
 	switch {
 	case errors.Is(err, vocabulary.ErrVocabularyNotFound):
 		ginExt.SendError(c, http.StatusNotFound,
@@ -101,7 +101,7 @@ func (h *Handler) userGetVocabularies(c *gin.Context) {
 		return
 	}
 
-	vocabularies, err := h.vocabularySvc.UserGetVocabularies(ctx, userID)
+	vocabularies, err := h.vocabSvc.UserGetVocabularies(ctx, userID)
 	if err != nil {
 		ginExt.SendError(c, http.StatusInternalServerError,
 			fmt.Errorf("vocabulary.delivery.Handler.getVocabularies: %v", err))
@@ -139,10 +139,11 @@ func (h *Handler) userEditVocabulary(c *gin.Context) {
 		return
 	}
 
-	err = h.vocabularySvc.UserEditVocabulary(ctx, vocabulary.Vocabulary{
-		ID:     data.ID,
-		Name:   data.Name,
-		Access: data.Access,
+	err = h.vocabSvc.UserEditVocabulary(ctx, vocabulary.Vocabulary{
+		ID:          data.ID,
+		Name:        data.Name,
+		Description: data.Desc,
+		Access:      data.Access,
 	})
 	if err != nil {
 		ginExt.SendError(c, http.StatusInternalServerError, fmt.Errorf("vocabulary.delivery.Handler.editVocabulary: %v", err))

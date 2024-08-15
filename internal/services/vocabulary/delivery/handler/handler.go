@@ -11,14 +11,14 @@ import (
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
 	ginExt "github.com/av-ugolkov/lingua-evo/internal/delivery/handler/gin"
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler/middleware"
-	entity "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary"
 	vocabulary "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary/service"
 	"github.com/av-ugolkov/lingua-evo/runtime"
+	"github.com/av-ugolkov/lingua-evo/runtime/access"
 )
 
 const (
+	paramsID            string = "id"
 	paramsVocabName     string = "name"
-	paramsVocabID       string = "id"
 	paramsPage          string = "page"
 	paramsPerPage       string = "per_page"
 	paramsSearch        string = "search"
@@ -74,22 +74,23 @@ type (
 	VocabularyEditRq struct {
 		ID     uuid.UUID `json:"id"`
 		Name   string    `json:"name"`
+		Desc   string    `json:"description"`
 		Access uint8     `json:"access_id"`
 	}
 )
 
 type Handler struct {
-	vocabularySvc *vocabulary.Service
+	vocabSvc *vocabulary.Service
 }
 
-func Create(r *gin.Engine, vocabularySvc *vocabulary.Service) {
-	h := newHandler(vocabularySvc)
+func Create(r *gin.Engine, vocabSvc *vocabulary.Service) {
+	h := newHandler(vocabSvc)
 	h.register(r)
 }
 
-func newHandler(vocabularySvc *vocabulary.Service) *Handler {
+func newHandler(vocabSvc *vocabulary.Service) *Handler {
 	return &Handler{
-		vocabularySvc: vocabularySvc,
+		vocabSvc: vocabSvc,
 	}
 }
 
@@ -101,6 +102,21 @@ func (h *Handler) register(r *gin.Engine) {
 	r.GET(handler.UserVocabularies, middleware.Auth(h.userGetVocabularies))
 	r.GET(handler.Vocabularies, middleware.OptionalAuth(h.getVocabularies))
 	r.GET(handler.VocabulariesByUser, middleware.OptionalAuth(h.getVocabulariesByUser))
+	r.GET(handler.VocabularyInfo, middleware.OptionalAuth(h.getVocabularyInfo))
+	r.POST(handler.VocabularyCopy, middleware.Auth(h.copyVocabulary))
+
+	r.GET(handler.VocabularyWord, middleware.Auth(h.getWord))
+	r.POST(handler.VocabularyWord, middleware.Auth(h.addWord))
+	r.DELETE(handler.VocabularyWord, middleware.Auth(h.deleteWord))
+	r.POST(handler.VocabularyWordUpdate, middleware.Auth(h.updateWord))
+	r.GET(handler.VocabularyRandomWords, middleware.Auth(h.getRandomWords))
+	r.GET(handler.VocabularyWords, middleware.OptionalAuth(h.getWords))
+	r.GET(handler.WordPronunciation, middleware.Auth(h.getPronunciation))
+
+	r.GET(handler.VocabularyAccessForUser, middleware.Auth(h.getAccessForUser))
+	r.POST(handler.VocabularyAccessForUser, middleware.Auth(h.addAccessForUser))
+	r.DELETE(handler.VocabularyAccessForUser, middleware.Auth(h.removeAccessForUser))
+	r.PATCH(handler.VocabularyAccessForUser, middleware.Auth(h.updateAccessForUser))
 }
 
 func (h *Handler) getVocabularies(c *gin.Context) {
@@ -156,7 +172,7 @@ func (h *Handler) getVocabularies(c *gin.Context) {
 		return
 	}
 
-	vocabularies, totalCount, err := h.vocabularySvc.GetVocabularies(ctx, userID, page, itemsPerPage, typeSort, order, search, nativeLang, translateLang)
+	vocabularies, totalCount, err := h.vocabSvc.GetVocabularies(ctx, userID, page, itemsPerPage, typeSort, order, search, nativeLang, translateLang)
 	if err != nil {
 		ginExt.SendError(c, http.StatusInternalServerError,
 			fmt.Errorf("vocabulary.delivery.Handler.getVocabularies: %v", err))
@@ -198,16 +214,16 @@ func (h *Handler) getVocabularies(c *gin.Context) {
 func (h *Handler) getVocabulary(c *gin.Context) {
 	ctx := c.Request.Context()
 
-	userID, _ := runtime.UserIDFromContext(ctx)
+	uid, _ := runtime.UserIDFromContext(ctx)
 
-	vocabID, err := ginExt.GetQueryUUID(c, paramsVocabID)
+	vid, err := ginExt.GetQueryUUID(c, paramsID)
 	if err != nil {
 		ginExt.SendError(c, http.StatusInternalServerError,
 			fmt.Errorf("vocabulary.delivery.Handler.getVocabulary - get query [name]: %v", err))
 		return
 	}
 
-	vocab, err := h.vocabularySvc.GetVocabulary(ctx, userID, vocabID)
+	vocab, err := h.vocabSvc.GetVocabulary(ctx, uid, vid)
 	if err != nil {
 		ginExt.SendError(c, http.StatusInternalServerError, err)
 		return
@@ -249,7 +265,7 @@ func (h *Handler) getVocabulariesByUser(c *gin.Context) {
 		return
 	}
 
-	vocabs, err := h.vocabularySvc.GetVocabulariesByUser(ctx, uid, []entity.AccessVocab{entity.AccessPublic, entity.AccessSubscribers})
+	vocabs, err := h.vocabSvc.GetVocabulariesByUser(ctx, uid, []access.Type{access.Public, access.Subscribers})
 	if err != nil {
 		ginExt.SendError(c, http.StatusInternalServerError,
 			fmt.Errorf("vocabulary.delivery.Handler.getVocabulariesByUser: %v", err))
@@ -279,4 +295,77 @@ func (h *Handler) getVocabulariesByUser(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, vocabulariesRs)
+}
+
+func (h *Handler) getVocabularyInfo(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	uid, _ := runtime.UserIDFromContext(ctx)
+
+	vid, err := ginExt.GetQueryUUID(c, paramsID)
+	if err != nil {
+		ginExt.SendError(c, http.StatusInternalServerError,
+			fmt.Errorf("vocabulary.delivery.Handler.getVocabulary - get query [name]: %v", err))
+		return
+	}
+
+	vocab, err := h.vocabSvc.GetVocabularyInfo(ctx, uid, vid)
+	if err != nil {
+		ginExt.SendError(c, http.StatusInternalServerError, err)
+		return
+	}
+	if vocab.ID == uuid.Nil {
+		ginExt.SendError(c, http.StatusNotFound,
+			fmt.Errorf("vocabulary.delivery.Handler.getVocabulary - vocabulary not found: %v", err))
+		return
+	}
+
+	tags := make([]string, 0, len(vocab.Tags))
+	for _, tag := range vocab.Tags {
+		tags = append(tags, tag.Text)
+	}
+
+	vocabRs := VocabularyWithUserRs{
+		ID:            vocab.ID,
+		AccessID:      vocab.Access,
+		UserID:        vocab.UserID,
+		UserName:      vocab.UserName,
+		Name:          vocab.Name,
+		NativeLang:    vocab.NativeLang,
+		TranslateLang: vocab.TranslateLang,
+		Description:   vocab.Description,
+		Tags:          tags,
+		WordsCount:    vocab.WordsCount,
+		CreatedAt:     vocab.CreatedAt,
+		UpdatedAt:     vocab.UpdatedAt,
+	}
+
+	c.JSON(http.StatusOK, vocabRs)
+}
+
+func (h *Handler) copyVocabulary(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	uid, err := runtime.UserIDFromContext(ctx)
+	if err != nil {
+		ginExt.SendError(c, http.StatusUnauthorized,
+			fmt.Errorf("vocabulary.delivery.Handler.copyVocabulary - get user id: %v", err))
+		return
+	}
+
+	vid, err := ginExt.GetQueryUUID(c, paramsID)
+	if err != nil {
+		ginExt.SendError(c, http.StatusBadRequest,
+			fmt.Errorf("vocabulary.delivery.Handler.copyVocabulary - get query [id]: %v", err))
+		return
+	}
+
+	err = h.vocabSvc.CopyVocab(ctx, uid, vid)
+	if err != nil {
+		ginExt.SendError(c, http.StatusInternalServerError,
+			fmt.Errorf("vocabulary.delivery.Handler.copyVocabulary: %v", err))
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{})
 }

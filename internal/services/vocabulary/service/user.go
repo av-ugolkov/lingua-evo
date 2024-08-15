@@ -9,6 +9,12 @@ import (
 	"github.com/google/uuid"
 )
 
+type (
+	repoVocabUser interface {
+		GetVocabulariesByUser(ctx context.Context, uid uuid.UUID) ([]entity.Vocabulary, error)
+	}
+)
+
 func (s *Service) UserAddVocabulary(ctx context.Context, vocabulary entity.Vocabulary) (entity.Vocabulary, error) {
 	vocabularies, err := s.repoVocab.GetVocabulariesByUser(ctx, vocabulary.UserID)
 	if err != nil {

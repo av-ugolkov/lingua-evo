@@ -50,13 +50,6 @@ import (
 	vocabHandler "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary/delivery/handler"
 	vocabRepository "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary/delivery/repository"
 	vocabService "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary/service"
-	vocabAccessService "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary_access"
-	vocabAccessRepository "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary_access/delivery/repository"
-	vocabWordsService "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary_words"
-	vocabWordsHandler "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary_words/delivery/handler"
-	wordService "github.com/av-ugolkov/lingua-evo/internal/services/word"
-	wordHandler "github.com/av-ugolkov/lingua-evo/internal/services/word/delivery/handler"
-	wordRepository "github.com/av-ugolkov/lingua-evo/internal/services/word/delivery/repository"
 )
 
 func ServerStart(cfg *config.Config) {
@@ -172,10 +165,10 @@ func ServerStart(cfg *config.Config) {
 func initServer(cfg *config.Config, r *gin.Engine, pgxPool *pgxpool.Pool, redis *redis.Redis) {
 	tr := transactor.NewTransactor(pgxPool)
 	slog.Info("create services")
-	accessRepo := accessRepository.NewRepo(pgxPool)
-	accessSvc := accessService.NewService(accessRepo)
 	userRepo := userRepository.NewRepo(pgxPool)
 	userSvc := userService.NewService(userRepo, redis)
+	accessRepo := accessRepository.NewRepo(pgxPool)
+	accessSvc := accessService.NewService(accessRepo)
 	langRepo := langRepository.NewRepo(pgxPool)
 	langSvc := langService.NewService(langRepo)
 	dictRepo := dictRepository.NewRepo(pgxPool)
@@ -186,13 +179,8 @@ func initServer(cfg *config.Config, r *gin.Engine, pgxPool *pgxpool.Pool, redis 
 	subscribersSvc := subscribersService.NewService(subscribersRepo)
 	tagRepo := tagRepository.NewRepo(pgxPool)
 	tagSvc := tagService.NewService(tagRepo)
-	vocabularyAccessRepo := vocabAccessRepository.NewRepo(pgxPool)
-	vocabularyAccessSvc := vocabAccessService.NewService(vocabularyAccessRepo)
 	vocabRepo := vocabRepository.NewRepo(pgxPool)
-	vocabSvc := vocabService.NewService(tr, vocabRepo, tagSvc, subscribersSvc, vocabularyAccessSvc)
-	wordRepo := wordRepository.NewRepo(pgxPool)
-	wordSvc := wordService.NewService(tr, wordRepo, userSvc, vocabSvc, vocabularyAccessSvc, dictSvc, exampleSvc)
-	vocabWordsSvc := vocabWordsService.NewService(vocabSvc, wordSvc)
+	vocabSvc := vocabService.NewService(tr, vocabRepo, userSvc, exampleSvc, dictSvc, tagSvc, subscribersSvc)
 	authRepo := authRepository.NewRepo(redis)
 	authSvc := authService.NewService(cfg.Email, authRepo, userSvc)
 
@@ -200,13 +188,11 @@ func initServer(cfg *config.Config, r *gin.Engine, pgxPool *pgxpool.Pool, redis 
 	userHandler.Create(r, userSvc)
 	languageHandler.Create(r, langSvc)
 	dictHandler.Create(r, dictSvc)
-	wordHandler.Create(r, wordSvc)
 	vocabHandler.Create(r, vocabSvc)
 	tagHandler.Create(r, tagSvc)
 	authHandler.Create(r, authSvc)
 	accessHandler.Create(r, accessSvc)
 	subscribersHandler.Create(r, subscribersSvc)
-	vocabWordsHandler.Create(r, vocabWordsSvc)
 
 	slog.Info("end init services")
 }
