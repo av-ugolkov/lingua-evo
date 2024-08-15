@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	queryVocabID = "vocab_id"
+	paramsVocabID = "vocab_id"
 )
 
 type (
@@ -45,10 +45,10 @@ func (h *Handler) register(r *gin.Engine) {
 
 func (h *Handler) getTags(c *gin.Context) {
 	ctx := c.Request.Context()
-	vocabIDStr, err := ginExt.GetQuery(c, queryVocabID)
+	vocabIDStr, err := ginExt.GetQuery(c, paramsVocabID)
 	if err != nil {
 		ginExt.SendError(c, http.StatusBadRequest,
-			fmt.Errorf("tag.delivery.Handler.getTags - query param [%s]: %v", queryVocabID, err))
+			fmt.Errorf("tag.delivery.Handler.getTags - query param [%s]: %v", paramsVocabID, err))
 		return
 	}
 
