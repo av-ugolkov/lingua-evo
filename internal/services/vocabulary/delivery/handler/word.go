@@ -6,13 +6,10 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
 	ginExt "github.com/av-ugolkov/lingua-evo/internal/delivery/handler/gin"
-	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler/middleware"
 	entityDict "github.com/av-ugolkov/lingua-evo/internal/services/dictionary"
 	entityExample "github.com/av-ugolkov/lingua-evo/internal/services/example"
-	"github.com/av-ugolkov/lingua-evo/internal/services/word"
-	entity "github.com/av-ugolkov/lingua-evo/internal/services/word"
+	entity "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary"
 	"github.com/av-ugolkov/lingua-evo/runtime"
 
 	"github.com/gin-gonic/gin"
@@ -20,10 +17,8 @@ import (
 )
 
 const (
-	ParamVocabID = "vocab_id"
-	ParamID      = "id"
-	ParamLimit   = "limit"
-	ParamText    = "text"
+	paramsLimit string = "limit"
+	paramsText  string = "text"
 )
 
 type (
@@ -55,31 +50,6 @@ type (
 		Updated    *time.Time `json:"updated,omitempty"`
 	}
 )
-
-type Handler struct {
-	wordSvc *word.Service
-}
-
-func Create(r *gin.Engine, wordSvc *word.Service) {
-	h := newHandler(wordSvc)
-	h.register(r)
-}
-
-func newHandler(wordSvc *word.Service) *Handler {
-	return &Handler{
-		wordSvc: wordSvc,
-	}
-}
-
-func (h *Handler) register(r *gin.Engine) {
-	r.GET(handler.VocabularyWord, middleware.Auth(h.getWord))
-	r.POST(handler.VocabularyWord, middleware.Auth(h.addWord))
-	r.DELETE(handler.VocabularyWord, middleware.Auth(h.deleteWord))
-	r.POST(handler.VocabularyWordUpdate, middleware.Auth(h.updateWord))
-	r.GET(handler.VocabularyRandomWords, middleware.Auth(h.getRandomWords))
-	r.GET(handler.VocabularyWords, middleware.OptionalAuth(h.getWords))
-	r.GET(handler.WordPronunciation, middleware.Auth(h.getPronunciation))
-}
 
 func (h *Handler) addWord(c *gin.Context) {
 	ctx := c.Request.Context()
@@ -118,7 +88,7 @@ func (h *Handler) addWord(c *gin.Context) {
 		})
 	}
 
-	vocabWord, err := h.wordSvc.AddWord(ctx, userID, entity.VocabWordData{
+	vocabWord, err := h.vocabSvc.AddWord(ctx, userID, entity.VocabWordData{
 		VocabID: data.VocabID,
 		Native: entityDict.DictWord{
 			ID:            uuid.New(),
@@ -134,7 +104,7 @@ func (h *Handler) addWord(c *gin.Context) {
 	})
 	if err != nil {
 		switch {
-		case errors.Is(err, word.ErrDuplicate):
+		case errors.Is(err, entity.ErrDuplicate):
 			ginExt.SendError(c, http.StatusConflict,
 				fmt.Errorf("word.delivery.Handler.addWord: %v", err))
 			return
@@ -192,7 +162,7 @@ func (h *Handler) updateWord(c *gin.Context) {
 		})
 	}
 
-	vocabWord, err := h.wordSvc.UpdateWord(ctx, userID, entity.VocabWordData{
+	vocabWord, err := h.vocabSvc.UpdateWord(ctx, userID, entity.VocabWordData{
 		ID:      *data.ID,
 		VocabID: data.VocabID,
 		Native: entityDict.DictWord{
@@ -232,7 +202,7 @@ func (h *Handler) deleteWord(c *gin.Context) {
 		return
 	}
 
-	err = h.wordSvc.DeleteWord(ctx, data.VocabID, data.WordID)
+	err = h.vocabSvc.DeleteWord(ctx, data.VocabID, data.WordID)
 	if err != nil {
 		ginExt.SendError(c, http.StatusInternalServerError,
 			fmt.Errorf("word.delivery.Handler.deleteWord: %v", err))
@@ -244,19 +214,19 @@ func (h *Handler) deleteWord(c *gin.Context) {
 
 func (h *Handler) getRandomWords(c *gin.Context) {
 	ctx := c.Request.Context()
-	vocabID, err := ginExt.GetQueryUUID(c, ParamVocabID)
+	vid, err := ginExt.GetQueryUUID(c, paramsID)
 	if err != nil {
 		ginExt.SendError(c, http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getSeveralWords - get vocab id: %w", err))
 		return
 	}
 
-	limit, err := ginExt.GetQueryInt(c, ParamLimit)
+	limit, err := ginExt.GetQueryInt(c, paramsLimit)
 	if err != nil {
 		ginExt.SendError(c, http.StatusInternalServerError,
 			fmt.Errorf("word.delivery.Handler.getSeveralWords - get limit: %w", err))
 		return
 	}
-	vocabWords, err := h.wordSvc.GetRandomWords(ctx, vocabID, limit)
+	vocabWords, err := h.vocabSvc.GetRandomWords(ctx, vid, limit)
 	if err != nil {
 		ginExt.SendError(c, http.StatusInternalServerError,
 			fmt.Errorf("word.delivery.Handler.getSeveralWords: %w", err))
@@ -286,14 +256,14 @@ func (h *Handler) getRandomWords(c *gin.Context) {
 
 func (h *Handler) getWord(c *gin.Context) {
 	ctx := c.Request.Context()
-	wordID, err := ginExt.GetQueryUUID(c, ParamID)
+	wordID, err := ginExt.GetQueryUUID(c, paramsID)
 	if err != nil {
 		ginExt.SendError(c, http.StatusInternalServerError,
 			fmt.Errorf("word.delivery.Handler.getWords: %w", err))
 		return
 	}
 
-	vocabWord, err := h.wordSvc.GetWord(ctx, wordID)
+	vocabWord, err := h.vocabSvc.GetWord(ctx, wordID)
 	if err != nil {
 		ginExt.SendError(c, http.StatusInternalServerError,
 			fmt.Errorf("word.delivery.Handler.getWords: %w", err))
@@ -327,16 +297,16 @@ func (h *Handler) getWord(c *gin.Context) {
 func (h *Handler) getWords(c *gin.Context) {
 	ctx := c.Request.Context()
 
-	userID, _ := runtime.UserIDFromContext(ctx)
+	uid, _ := runtime.UserIDFromContext(ctx)
 
-	vocabID, err := ginExt.GetQueryUUID(c, ParamVocabID)
+	vid, err := ginExt.GetQueryUUID(c, paramsID)
 	if err != nil {
 		ginExt.SendError(c, http.StatusInternalServerError,
 			fmt.Errorf("word.delivery.Handler.getWords - get dict id: %w", err))
 		return
 	}
 
-	vocabWords, editable, err := h.wordSvc.GetWords(ctx, userID, vocabID)
+	vocabWords, editable, err := h.vocabSvc.GetWords(ctx, uid, vid)
 	if err != nil {
 		ginExt.SendError(c, http.StatusInternalServerError,
 			fmt.Errorf("word.delivery.Handler.getWords: %w", err))
@@ -385,28 +355,28 @@ func (h *Handler) getWords(c *gin.Context) {
 func (h *Handler) getPronunciation(c *gin.Context) {
 	ctx := c.Request.Context()
 
-	userID, err := runtime.UserIDFromContext(ctx)
+	uid, err := runtime.UserIDFromContext(ctx)
 	if err != nil {
 		ginExt.SendError(c, http.StatusUnauthorized,
 			fmt.Errorf("word.delivery.Handler.getPronunciation - unauthorized: %w", err))
 		return
 	}
 
-	text, err := ginExt.GetQuery(c, ParamText)
+	text, err := ginExt.GetQuery(c, paramsText)
 	if err != nil {
 		ginExt.SendError(c, http.StatusInternalServerError,
 			fmt.Errorf("word.delivery.Handler.getPronunciation - get word id: %w", err))
 		return
 	}
 
-	vocabID, err := ginExt.GetQueryUUID(c, ParamVocabID)
+	vid, err := ginExt.GetQueryUUID(c, paramsID)
 	if err != nil {
 		ginExt.SendError(c, http.StatusInternalServerError,
 			fmt.Errorf("word.delivery.Handler.getPronunciation - get word id: %w", err))
 		return
 	}
 
-	pronunciation, err := h.wordSvc.GetPronunciation(ctx, userID, vocabID, text)
+	pronunciation, err := h.vocabSvc.GetPronunciation(ctx, uid, vid, text)
 	if err != nil {
 		ginExt.SendError(c, http.StatusInternalServerError, err)
 		return
