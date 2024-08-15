@@ -10,8 +10,8 @@ logger:
 ssl:
     enable: true
     path: ./cert
-    public: certificate.crt
-    private: private.key
+    public: fullchain.pem
+    private: privkey.pem
 jwt:
     secret: 54f3sY%v0kzQ
     expire_access: 300 #5 min
