@@ -1,16 +1,16 @@
-version: "3.5"
+version: '3.5'
 services:
   redis:
     container_name: redis-base
     image: redis:7.2.4-alpine
     expose:
-      - "6379"
+      - '6379'
     networks:
       - lingua
     entrypoint:
-      - "/bin/sh"
-      - "-ecx"
-      - "redis-server --requirepass itBg40drEvZsw2gbHyp0"
+      - '/bin/sh'
+      - '-ecx'
+      - 'redis-server --requirepass itBg40drEvZsw2gbHyp0'
 
   postgres:
     container_name: postgres-base
@@ -25,7 +25,7 @@ services:
         source: /home/lingua-dumps
         target: /home/dumps
     expose:
-      - "5432"
+      - '5432'
     networks:
       - lingua
 
@@ -36,7 +36,8 @@ services:
       dockerfile: Dockerfile
       args:
         config_dir: ${CONFIG:-docker/server_config}
-        cert_path: ${CERT:-home/cert/linguaevo.twc1.net}
+        public_cert: ${CERT:-/home/cert/linguaevo.twc1.net/fullchain.pem}
+        private_cert: ${CERT:-/home/cert/linguaevo.twc1.net/privkey.pem}
         epsw: ${EPSW}
       additional_contexts:
         root: /
@@ -49,11 +50,11 @@ services:
       - redis
     restart: always
     extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - 'host.docker.internal:host-gateway'
     expose:
-      - "5000"
+      - '5000'
     ports:
-      - "5000:5000"
+      - '5000:5000'
     networks:
       - lingua
 
@@ -66,9 +67,9 @@ services:
     networks:
       - lingua
     entrypoint:
-      - "/bin/sh"
-      - "-ecx"
-      - "./migration -cmd up -url lingua:pb6v0CdeN3FmKt4anX1j3@postgres-base:5432/pg-lingua-evo?sslmode=disable"
+      - '/bin/sh'
+      - '-ecx'
+      - './migration -cmd up -url lingua:pb6v0CdeN3FmKt4anX1j3@postgres-base:5432/pg-lingua-evo?sslmode=disable'
 
 networks:
   lingua:
