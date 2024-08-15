@@ -8,12 +8,11 @@ import (
 
 	entityDict "github.com/av-ugolkov/lingua-evo/internal/services/dictionary"
 	entityExample "github.com/av-ugolkov/lingua-evo/internal/services/example"
-	entity "github.com/av-ugolkov/lingua-evo/internal/services/word"
+	entity "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 const (
@@ -21,17 +20,7 @@ const (
 	UniqueViolation = "23505"
 )
 
-type WordRepo struct {
-	pgxPool *pgxpool.Pool
-}
-
-func NewRepo(pgxPool *pgxpool.Pool) *WordRepo {
-	return &WordRepo{
-		pgxPool: pgxPool,
-	}
-}
-
-func (r *WordRepo) GetWord(ctx context.Context, id uuid.UUID) (entity.VocabWordData, error) {
+func (r *VocabRepo) GetWord(ctx context.Context, id uuid.UUID) (entity.VocabWordData, error) {
 	const query = `
 	SELECT 
 		w.id,
@@ -80,7 +69,7 @@ func (r *WordRepo) GetWord(ctx context.Context, id uuid.UUID) (entity.VocabWordD
 	return vocabWordData, nil
 }
 
-func (r *WordRepo) AddWord(ctx context.Context, word entity.VocabWord) error {
+func (r *VocabRepo) AddWord(ctx context.Context, word entity.VocabWord) error {
 	const query = `INSERT INTO word (id, vocabulary_id, native_id, translate_ids, example_ids, updated_at, created_at) VALUES($1, $2, $3, $4, $5, $6, $6);`
 	_, err := r.pgxPool.Exec(ctx, query, uuid.New(), word.VocabID, word.NativeID, word.TranslateIDs, word.ExampleIDs, time.Now().UTC())
 	if err != nil {
@@ -96,7 +85,7 @@ func (r *WordRepo) AddWord(ctx context.Context, word entity.VocabWord) error {
 	return nil
 }
 
-func (r *WordRepo) GetWordsFromVocabulary(ctx context.Context, dictID uuid.UUID, capacity int) ([]string, error) {
+func (r *VocabRepo) GetWordsFromVocabulary(ctx context.Context, dictID uuid.UUID, capacity int) ([]string, error) {
 	const query = `
 	SELECT text 
 	FROM dictionary 
@@ -124,7 +113,7 @@ func (r *WordRepo) GetWordsFromVocabulary(ctx context.Context, dictID uuid.UUID,
 	return words, nil
 }
 
-func (r *WordRepo) GetRandomWord(ctx context.Context, vocabID uuid.UUID) (entity.VocabWord, error) {
+func (r *VocabRepo) GetRandomWord(ctx context.Context, vocabID uuid.UUID) (entity.VocabWord, error) {
 	var vocabWord entity.VocabWord
 	query := `SELECT native_id, translate_ids, example_ids FROM word WHERE vocabulary_id=$1 ORDER BY random() LIMIT 1;`
 	err := r.pgxPool.QueryRow(ctx, query, vocabID).Scan(
@@ -138,7 +127,7 @@ func (r *WordRepo) GetRandomWord(ctx context.Context, vocabID uuid.UUID) (entity
 	return vocabWord, nil
 }
 
-func (r *WordRepo) DeleteWord(ctx context.Context, vocabWord entity.VocabWord) error {
+func (r *VocabRepo) DeleteWord(ctx context.Context, vocabWord entity.VocabWord) error {
 	query := `DELETE FROM word WHERE vocabulary_id=$1 AND id=$2;`
 	result, err := r.pgxPool.Exec(ctx, query, vocabWord.VocabID, vocabWord.ID)
 	if err != nil {
@@ -152,7 +141,7 @@ func (r *WordRepo) DeleteWord(ctx context.Context, vocabWord entity.VocabWord) e
 	return nil
 }
 
-func (r *WordRepo) GetRandomVocabulary(ctx context.Context, vocabID uuid.UUID, limit int) ([]entity.VocabWordData, error) {
+func (r *VocabRepo) GetRandomVocabulary(ctx context.Context, vocabID uuid.UUID, limit int) ([]entity.VocabWordData, error) {
 	query := `
 	SELECT 
 		n.id native_id,
@@ -196,7 +185,7 @@ func (r *WordRepo) GetRandomVocabulary(ctx context.Context, vocabID uuid.UUID, l
 	return vocabularyWords, nil
 }
 
-func (r *WordRepo) GetVocabulary(ctx context.Context, vocabID uuid.UUID) ([]entity.VocabWord, error) {
+func (r *VocabRepo) GetVocabulary(ctx context.Context, vocabID uuid.UUID) ([]entity.VocabWord, error) {
 	query := `SELECT id, native_id, translate_ids, example_ids, updated_at, created_at FROM word WHERE vocabulary_id=$1;`
 	rows, err := r.pgxPool.Query(ctx, query, vocabID)
 	if err != nil {
@@ -224,7 +213,7 @@ func (r *WordRepo) GetVocabulary(ctx context.Context, vocabID uuid.UUID) ([]enti
 	return vocabularies, nil
 }
 
-func (r *WordRepo) GetVocabularyWords(ctx context.Context, vocabID uuid.UUID) ([]entity.VocabWordData, error) {
+func (r *VocabRepo) GetVocabularyWords(ctx context.Context, vocabID uuid.UUID) ([]entity.VocabWordData, error) {
 	var countRows int
 	err := r.pgxPool.QueryRow(ctx, `SELECT count(*) FROM word WHERE vocabulary_id=$1`, vocabID).Scan(&countRows)
 	if err != nil {
@@ -297,7 +286,7 @@ func (r *WordRepo) GetVocabularyWords(ctx context.Context, vocabID uuid.UUID) ([
 	return vocabularyWords, nil
 }
 
-func (r *WordRepo) UpdateWord(ctx context.Context, vocabWord entity.VocabWord) error {
+func (r *VocabRepo) UpdateWord(ctx context.Context, vocabWord entity.VocabWord) error {
 	query := `UPDATE word SET native_id=$1, pronunciation=$2, translate_ids=$3, example_ids=$4, updated_at=$5 WHERE id=$6;`
 
 	result, err := r.pgxPool.Exec(ctx, query, vocabWord.NativeID, vocabWord.Pronunciation, vocabWord.TranslateIDs, vocabWord.ExampleIDs, vocabWord.UpdatedAt.Format(time.RFC3339), vocabWord.ID)
@@ -312,7 +301,7 @@ func (r *WordRepo) UpdateWord(ctx context.Context, vocabWord entity.VocabWord) e
 	return nil
 }
 
-func (r *WordRepo) GetCountWords(ctx context.Context, userID uuid.UUID) (int, error) {
+func (r *VocabRepo) GetCountWords(ctx context.Context, userID uuid.UUID) (int, error) {
 	const query = `SELECT count(id) FROM word WHERE vocabulary_id=ANY(SELECT id FROM vocabulary WHERE user_id=$1);`
 
 	var count int
