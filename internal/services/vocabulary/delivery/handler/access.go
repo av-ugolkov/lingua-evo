@@ -32,7 +32,7 @@ func (h *Handler) getAccessForUser(c *gin.Context) {
 		return
 	}
 
-	vid, err := ginExt.GetQueryUUID(c, paramsVocabID)
+	vid, err := ginExt.GetQueryUUID(c, paramsID)
 	if err != nil {
 		ginExt.SendError(c, http.StatusBadRequest,
 			fmt.Errorf("vocabulary.delivery.Handler.getAccessForUser - check query [vocab_id]: %v", err))
