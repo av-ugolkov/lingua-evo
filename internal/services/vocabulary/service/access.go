@@ -2,10 +2,12 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary"
 	runtimeAccess "github.com/av-ugolkov/lingua-evo/runtime/access"
+	"github.com/jackc/pgx/v5"
 
 	"github.com/google/uuid"
 )
@@ -20,10 +22,14 @@ type (
 
 func (s *Service) VocabularyEditable(ctx context.Context, uid, vid uuid.UUID) (bool, error) {
 	editable, err := s.repoVocab.GetEditable(ctx, vid, uid)
-	if err != nil {
-		return false, fmt.Errorf("vocabulary_access.Service.GetVocabularyAccess: %w", err)
+	switch {
+	case errors.Is(err, pgx.ErrNoRows):
+		return false, nil
+	case err != nil:
+		return false, fmt.Errorf("vocabulary_access.Service.VocabularyEditable: %w", err)
+	default:
+		return editable, nil
 	}
-	return editable, nil
 }
 
 func (s *Service) AddAccessForUser(ctx context.Context, access entity.Access) error {

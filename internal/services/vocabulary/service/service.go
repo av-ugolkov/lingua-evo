@@ -117,36 +117,39 @@ func (s *Service) GetVocabulary(ctx context.Context, uid, vid uuid.UUID) (entity
 func (s *Service) GetAccessForUser(ctx context.Context, uid, vid uuid.UUID) (access.Status, error) {
 	accessID, err := s.repoVocab.GetAccess(ctx, vid)
 	if err != nil {
-		return access.Forbidden, fmt.Errorf("vocabulary.Service.checkAccess - get access type: %w", err)
+		return access.Forbidden, fmt.Errorf("vocabulary.Service.GetAccessForUser - get access type: %w", err)
 	}
 	acc := access.Type(accessID)
 	if uid == uuid.Nil && acc != access.Public {
-		return access.Forbidden, fmt.Errorf("vocabulary.Service.checkAccess - %w", entity.ErrAccessDenied)
-	}
-	if acc == access.Public {
-		return access.Forbidden, nil
+		return access.Forbidden, fmt.Errorf("vocabulary.Service.GetAccessForUser - %w", entity.ErrAccessDenied)
 	}
 
 	creatodID, err := s.repoVocab.GetCreatorVocab(ctx, vid)
 	if err != nil {
-		return access.Forbidden, fmt.Errorf("vocabulary.Service.checkAccess - get creator: %w", err)
+		return access.Forbidden, fmt.Errorf("vocabulary.Service.GetAccessForUser - get creator: %w", err)
 	}
-
 	if creatodID == uid {
-		return access.Forbidden, nil
+		return access.Edit, nil
 	}
 
-	isSubscribers, err := s.subscribersSvc.Check(ctx, creatodID, uid)
-	if err != nil {
-		return access.Forbidden, fmt.Errorf("vocabulary.Service.checkAccess - check subscribers: %w", err)
-	}
-	if isSubscribers {
-		return access.Forbidden, nil
-	}
+	if acc == access.Public {
+		return access.Read, nil
+	} else {
+		editable, err := s.VocabularyEditable(ctx, uid, vid)
+		if err != nil {
+			return access.Forbidden, fmt.Errorf("vocabulary.Service.GetAccessForUser - get vocabulary access: %w", err)
+		}
 
-	_, err = s.VocabularyEditable(ctx, uid, vid)
-	if err != nil {
-		return access.Forbidden, fmt.Errorf("vocabulary.Service.checkAccess - get vocabulary access: %w", err)
+		isSubscribers, err := s.subscribersSvc.Check(ctx, creatodID, uid)
+		if err != nil {
+			return access.Forbidden, fmt.Errorf("vocabulary.Service.GetAccessForUser - check subscribers: %w", err)
+		}
+		if isSubscribers {
+			if editable {
+				return access.Edit, nil
+			}
+			return access.Read, nil
+		}
 	}
 
 	return access.Forbidden, nil
