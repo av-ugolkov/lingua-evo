@@ -33,28 +33,41 @@ func (r *DictionaryRepo) AddWords(ctx context.Context, inWords []entity.DictWord
 			",$" + strconv.Itoa(counter+3) +
 			",$" + strconv.Itoa(counter+4) +
 			",$" + strconv.Itoa(counter+5) +
-			",$" + strconv.Itoa(counter+6) +
-			",$" + strconv.Itoa(counter+7)
+			",$" + strconv.Itoa(counter+6)
 
-		counter += 7
+		counter += 6
 		statements = append(statements, "("+statement+")")
 
-		params = append(params, word.ID, word.Text, word.Pronunciation, word.LangCode, word.Creator, word.UpdatedAt.Format(time.RFC3339), word.CreatedAt.Format(time.RFC3339))
+		params = append(params, word.ID, word.Text, word.LangCode, word.Creator, word.UpdatedAt.Format(time.RFC3339), word.CreatedAt.Format(time.RFC3339))
 	}
 
 	table := getTable(inWords[0].LangCode)
-	query := fmt.Sprintf(`INSERT INTO "%s" (id, text, pronunciation, lang_code, creator, updated_at, created_at) VALUES %s ON CONFLICT DO NOTHING RETURNING id, text, pronunciation, lang_code, creator, updated_at, created_at;`, table, strings.Join(statements, ", "))
+	query := fmt.Sprintf(`
+		INSERT INTO "%s" (
+			id, 
+			text, 
+			lang_code, 
+			creator, 
+			updated_at, 
+			created_at) 
+		VALUES %s ON CONFLICT DO NOTHING RETURNING 
+			id, 
+			text, 
+			lang_code, 
+			creator, 
+			updated_at, 
+			created_at;`, table, strings.Join(statements, ", "))
 	rows, err := r.pgxPool.Query(ctx, query, params...)
 	if err != nil {
-		return nil, fmt.Errorf("dictionary.repository.DictionaryRepo.AddWord - query: %w", err)
+		return nil, fmt.Errorf("dictionary.repository.DictionaryRepo.AddWords - query: %w", err)
 	}
 	defer rows.Close()
 
 	words := make([]entity.DictWord, 0, len(inWords))
 	for rows.Next() {
 		var word entity.DictWord
-		if err := rows.Scan(&word.ID, &word.Text, &word.Pronunciation, &word.LangCode, &word.Creator, &word.UpdatedAt, &word.CreatedAt); err != nil {
-			return nil, fmt.Errorf("dictionary.repository.DictionaryRepo.AddWord - scan: %w", err)
+		if err := rows.Scan(&word.ID, &word.Text, &word.LangCode, &word.Creator, &word.UpdatedAt, &word.CreatedAt); err != nil {
+			return nil, fmt.Errorf("dictionary.repository.DictionaryRepo.AddWords - scan: %w", err)
 		}
 		words = append(words, word)
 	}
@@ -77,10 +90,14 @@ func (r *DictionaryRepo) GetWordsByText(ctx context.Context, inWords []entity.Di
 	defer rows.Close()
 
 	words := make([]entity.DictWord, 0, len(inWords))
+	var pron *string
 	for rows.Next() {
 		var word entity.DictWord
-		if err := rows.Scan(&word.ID, &word.Text, &word.Pronunciation, &word.LangCode, &word.Creator, &word.UpdatedAt, &word.CreatedAt); err != nil {
-			return nil, fmt.Errorf("dictionary.repository.DictionaryRepo.AddWord - scan: %w", err)
+		if err := rows.Scan(&word.ID, &word.Text, &pron, &word.LangCode, &word.Creator, &word.UpdatedAt, &word.CreatedAt); err != nil {
+			return nil, fmt.Errorf("dictionary.repository.DictionaryRepo.GetWordsByText - scan: %w", err)
+		}
+		if pron != nil {
+			word.Pronunciation = *pron
 		}
 		words = append(words, word)
 	}

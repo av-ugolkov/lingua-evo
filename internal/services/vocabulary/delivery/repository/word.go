@@ -70,8 +70,18 @@ func (r *VocabRepo) GetWord(ctx context.Context, id uuid.UUID) (entity.VocabWord
 }
 
 func (r *VocabRepo) AddWord(ctx context.Context, word entity.VocabWord) error {
-	const query = `INSERT INTO word (id, vocabulary_id, native_id, translate_ids, example_ids, updated_at, created_at) VALUES($1, $2, $3, $4, $5, $6, $6);`
-	_, err := r.pgxPool.Exec(ctx, query, uuid.New(), word.VocabID, word.NativeID, word.TranslateIDs, word.ExampleIDs, time.Now().UTC())
+	const query = `
+	INSERT INTO word (
+		id,
+		vocabulary_id,
+		native_id, 
+		pronunciation, 
+		translate_ids, 
+		example_ids, 
+		updated_at, 
+		created_at) 
+	VALUES($1, $2, $3, $4, $5, $6, $7, $7);`
+	_, err := r.pgxPool.Exec(ctx, query, uuid.New(), word.VocabID, word.NativeID, word.Pronunciation, word.TranslateIDs, word.ExampleIDs, time.Now().UTC())
 	if err != nil {
 		var pgErr *pgconn.PgError
 		switch {
