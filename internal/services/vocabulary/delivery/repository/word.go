@@ -69,20 +69,31 @@ func (r *VocabRepo) GetWord(ctx context.Context, id uuid.UUID) (entity.VocabWord
 	return vocabWordData, nil
 }
 
-func (r *VocabRepo) AddWord(ctx context.Context, word entity.VocabWord) error {
-	const query = `INSERT INTO word (id, vocabulary_id, native_id, translate_ids, example_ids, updated_at, created_at) VALUES($1, $2, $3, $4, $5, $6, $6);`
-	_, err := r.pgxPool.Exec(ctx, query, uuid.New(), word.VocabID, word.NativeID, word.TranslateIDs, word.ExampleIDs, time.Now().UTC())
+func (r *VocabRepo) AddWord(ctx context.Context, word entity.VocabWord) (uuid.UUID, error) {
+	const query = `
+	INSERT INTO word (
+		id,
+		vocabulary_id,
+		native_id, 
+		pronunciation, 
+		translate_ids, 
+		example_ids, 
+		updated_at, 
+		created_at) 
+	VALUES($1, $2, $3, $4, $5, $6, $7, $7);`
+	vocabWordID := uuid.New()
+	_, err := r.pgxPool.Exec(ctx, query, vocabWordID, word.VocabID, word.NativeID, word.Pronunciation, word.TranslateIDs, word.ExampleIDs, time.Now().UTC())
 	if err != nil {
 		var pgErr *pgconn.PgError
 		switch {
 		case errors.As(err, &pgErr) && pgErr.Code == UniqueViolation:
-			return fmt.Errorf("word.repository.WordRepo.AddWord: %w", entity.ErrDuplicate)
+			return uuid.Nil, fmt.Errorf("word.repository.WordRepo.AddWord: %w", entity.ErrDuplicate)
 		default:
-			return fmt.Errorf("word.repository.WordRepo.AddWord: %w", err)
+			return uuid.Nil, fmt.Errorf("word.repository.WordRepo.AddWord: %w", err)
 		}
 	}
 
-	return nil
+	return vocabWordID, nil
 }
 
 func (r *VocabRepo) GetWordsFromVocabulary(ctx context.Context, dictID uuid.UUID, capacity int) ([]string, error) {
