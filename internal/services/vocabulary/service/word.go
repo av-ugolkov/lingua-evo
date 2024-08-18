@@ -19,7 +19,7 @@ import (
 type (
 	repoWord interface {
 		GetWord(ctx context.Context, wordID uuid.UUID) (entity.VocabWordData, error)
-		AddWord(ctx context.Context, word entity.VocabWord) error
+		AddWord(ctx context.Context, word entity.VocabWord) (uuid.UUID, error)
 		DeleteWord(ctx context.Context, word entity.VocabWord) error
 		GetRandomVocabulary(ctx context.Context, vid uuid.UUID, limit int) ([]entity.VocabWordData, error)
 		GetVocabularyWords(ctx context.Context, vid uuid.UUID) ([]entity.VocabWordData, error)
@@ -95,7 +95,7 @@ func (s *Service) AddWord(ctx context.Context, uid uuid.UUID, vocabWordData enti
 			return fmt.Errorf("add example: %w", err)
 		}
 
-		err = s.repoVocab.AddWord(ctx, entity.VocabWord{
+		vocabWordData.ID, err = s.repoVocab.AddWord(ctx, entity.VocabWord{
 			VocabID:       vocabWordData.VocabID,
 			NativeID:      nativeWordID,
 			Pronunciation: vocabWordData.Native.Pronunciation,
@@ -272,7 +272,7 @@ func (s *Service) CopyWords(ctx context.Context, vid, copyVid uuid.UUID) error {
 			exIDs = append(exIDs, ex.ID)
 		}
 
-		err = s.repoVocab.AddWord(ctx, entity.VocabWord{
+		_, err = s.repoVocab.AddWord(ctx, entity.VocabWord{
 			VocabID:       copyVid,
 			NativeID:      word.Native.ID,
 			Pronunciation: word.Native.Pronunciation,
