@@ -250,7 +250,9 @@ func (s *Service) GetPronunciation(ctx context.Context, uid, vid uuid.UUID, text
 	}
 	word := words[0]
 	if word.Pronunciation == runtime.EmptyString {
-		return runtime.EmptyString, fmt.Errorf("word.Service.GetPronunciation: %w", entity.ErrWordPronunciation)
+		return runtime.EmptyString,
+			handler.NewError(fmt.Errorf("word.Service.GetPronunciation: %w", entity.ErrWordPronunciation),
+				http.StatusInternalServerError, entity.ErrWordPronunciation.Error())
 	}
 	return word.Pronunciation, nil
 }
