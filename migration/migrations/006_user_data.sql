@@ -39,8 +39,9 @@ FROM
 
 CREATE TABLE IF NOT EXISTS
     "subscribers" (
-        "user_id" UUID PRIMARY KEY REFERENCES "users" ("id") ON DELETE CASCADE,
-        "subscribers_id" UUID NOT NULL REFERENCES "users" ("id") ON DELETE CASCADE
+        "user_id" UUID KEY REFERENCES "users" ("id") ON DELETE CASCADE,
+        "subscribers_id" UUID NOT NULL REFERENCES "users" ("id") ON DELETE CASCADE,
+        "created_at" TIMESTAMP NOT NULL
     );
 
 CREATE UNIQUE INDEX IF NOT EXISTS "idx_unique_subscribers__user_id_subscribers_id" ON "subscribers" ("user_id", "subscribers_id");

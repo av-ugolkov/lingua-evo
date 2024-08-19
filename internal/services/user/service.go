@@ -168,7 +168,7 @@ func (s *Service) UserCountWord(ctx context.Context, userID uuid.UUID) (int, err
 	return maxWords, nil
 }
 
-func (s *Service) GetUsers(ctx context.Context, page, perPage, sort, order int, search string) ([]UserData, int, error) {
+func (s *Service) GetUsers(ctx context.Context, uid uuid.UUID, page, perPage, sort, order int, search string) ([]UserData, int, error) {
 	users, countUsers, err := s.repo.GetUsers(ctx, page, perPage, sort, order, search)
 	if err != nil {
 		return nil, 0, fmt.Errorf("user.Service.GetUsers: %w", err)
