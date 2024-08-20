@@ -36,5 +36,7 @@ const (
 
 	Accesses = "/accesses" //get
 
-	Subscribers = "/respondents" //get
+	CheckSubscriber = "/subscriber/check" //get
+	Subscribe       = "/user/subscribe"   //post
+	Unsubscribe     = "/user/unsubscribe" //post
 )

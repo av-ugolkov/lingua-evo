@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -56,6 +57,32 @@ func (r *SubscribersRepo) GetRespondents(ctx context.Context, uid uuid.UUID) ([]
 		ids = append(ids, id)
 	}
 	return ids, nil
+}
+
+func (r *SubscribersRepo) Subscribe(ctx context.Context, uid, subID uuid.UUID) error {
+	const query = `INSERT INTO subscribers (user_id, subscribers_id, created_at) VALUES ($1, $2, $3);`
+
+	_, err := r.pgxPool.Exec(ctx, query, uid, subID, time.Now().UTC())
+	if err != nil {
+		return fmt.Errorf("subscribers.delivery.repository.SubscribersRepo.Subscribe: %w", err)
+	}
+
+	return nil
+}
+
+func (r *SubscribersRepo) Unsubscribe(ctx context.Context, uid, subID uuid.UUID) error {
+	const query = `DELETE FROM subscribers WHERE user_id=$1 AND subscribers_id=$2;`
+
+	result, err := r.pgxPool.Exec(ctx, query, uid, subID)
+	if err != nil {
+		return fmt.Errorf("subscribers.delivery.repository.SubscribersRepo.Unsubscribe: %w", err)
+	}
+
+	if rows := result.RowsAffected(); rows != 1 {
+		return fmt.Errorf("subscribers.delivery.repository.SubscribersRepo.Unsubscribe: change 0 or more than 1 rows")
+	}
+
+	return nil
 }
 
 func (r *SubscribersRepo) Check(ctx context.Context, uid, subID uuid.UUID) (bool, error) {
