@@ -152,6 +152,8 @@ func (h *Handler) getUserByID(c *gin.Context) {
 func (h *Handler) getUsers(c *gin.Context) {
 	ctx := c.Request.Context()
 
+	uid, _ := runtime.UserIDFromContext(ctx)
+
 	page, err := ginExt.GetQueryInt(c, paramsPage)
 	if err != nil {
 		ginExt.SendError(c, http.StatusBadRequest,
@@ -187,7 +189,7 @@ func (h *Handler) getUsers(c *gin.Context) {
 		return
 	}
 
-	users, countUsers, err := h.userSvc.GetUsers(ctx, page, perPage, sort, order, search)
+	users, countUsers, err := h.userSvc.GetUsers(ctx, uid, page, perPage, sort, order, search)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": fmt.Errorf("user.delivery.Handler.getUsers: %v", err),
