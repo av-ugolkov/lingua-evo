@@ -39,7 +39,7 @@ FROM
 
 CREATE TABLE IF NOT EXISTS
     "subscribers" (
-        "user_id" UUID KEY REFERENCES "users" ("id") ON DELETE CASCADE,
+        "user_id" UUID NOT NULL REFERENCES "users" ("id") ON DELETE CASCADE,
         "subscribers_id" UUID NOT NULL REFERENCES "users" ("id") ON DELETE CASCADE,
         "created_at" TIMESTAMP NOT NULL
     );
