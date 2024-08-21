@@ -1,21 +1,20 @@
 package handler
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 
-	"github.com/av-ugolkov/lingua-evo/internal/delivery"
-	"github.com/av-ugolkov/lingua-evo/internal/pkg/http/exchange"
-	"github.com/av-ugolkov/lingua-evo/internal/pkg/middleware"
+	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
+	ginExt "github.com/av-ugolkov/lingua-evo/internal/delivery/handler/gin"
+	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler/middleware"
 	tagSvc "github.com/av-ugolkov/lingua-evo/internal/services/tag"
 
+	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/gorilla/mux"
 )
 
 const (
-	queryVocabID = "vocab_id"
+	paramsVocabID = "vocab_id"
 )
 
 type (
@@ -29,7 +28,7 @@ type Handler struct {
 	tagSvc *tagSvc.Service
 }
 
-func Create(r *mux.Router, tagSvc *tagSvc.Service) {
+func Create(r *gin.Engine, tagSvc *tagSvc.Service) {
 	h := newHandler(tagSvc)
 	h.register(r)
 }
@@ -40,26 +39,30 @@ func newHandler(tagSvc *tagSvc.Service) *Handler {
 	}
 }
 
-func (h *Handler) register(r *mux.Router) {
-	r.HandleFunc(delivery.VocabularyTags, middleware.Auth(h.getTags)).Methods(http.MethodGet)
+func (h *Handler) register(r *gin.Engine) {
+	r.GET(handler.VocabularyTags, middleware.Auth(h.getTags))
 }
 
-func (h *Handler) getTags(ctx context.Context, ex *exchange.Exchanger) {
-	vocabIDStr, err := ex.QueryParamString(queryVocabID)
+func (h *Handler) getTags(c *gin.Context) {
+	ctx := c.Request.Context()
+	vocabIDStr, err := ginExt.GetQuery(c, paramsVocabID)
 	if err != nil {
-		ex.SendError(http.StatusBadRequest, fmt.Errorf("tag.delivery.Handler.getTags - query param [%s]: %v", queryVocabID, err))
+		ginExt.SendError(c, http.StatusBadRequest,
+			fmt.Errorf("tag.delivery.Handler.getTags - query param [%s]: %v", paramsVocabID, err))
 		return
 	}
 
 	vocabID, err := uuid.Parse(vocabIDStr)
 	if err != nil {
-		ex.SendError(http.StatusBadRequest, fmt.Errorf("tag.delivery.Handler.getTags - invalid id: %v", err))
+		ginExt.SendError(c, http.StatusBadRequest,
+			fmt.Errorf("tag.delivery.Handler.getTags - invalid id: %v", err))
 		return
 	}
 
 	tags, err := h.tagSvc.GetTagsInVocabulary(ctx, vocabID)
 	if err != nil {
-		ex.SendError(http.StatusInternalServerError, fmt.Errorf("tag.delivery.Handler.getTags: %v", err))
+		ginExt.SendError(c, http.StatusInternalServerError,
+			fmt.Errorf("tag.delivery.Handler.getTags: %v", err))
 		return
 	}
 
@@ -71,5 +74,5 @@ func (h *Handler) getTags(ctx context.Context, ex *exchange.Exchanger) {
 		})
 	}
 
-	ex.SendData(http.StatusOK, tagsRs)
+	c.JSON(http.StatusOK, tagsRs)
 }

@@ -25,7 +25,7 @@ type (
 		LastVisitAt  time.Time
 	}
 
-	UserData struct {
+	UserCreate struct {
 		ID       uuid.UUID
 		Name     string
 		Password string
@@ -37,6 +37,29 @@ type (
 	Session struct {
 		UserID      uuid.UUID `json:"user_id"`
 		Fingerprint string    `json:"fingerprint"`
+	}
+
+	UserData struct {
+		ID          uuid.UUID
+		Name        string
+		Role        runtime.Role
+		CreatedAt   time.Time
+		LastVisited time.Time
+	}
+
+	Data struct {
+		UserID        uuid.UUID
+		MaxCountWords int
+		Newsletters   bool
+	}
+
+	Subscriptions struct {
+		ID             uuid.UUID
+		UserID         uuid.UUID
+		SubscriptionID int
+		CountWord      int
+		StartedAt      time.Time
+		EndedAt        time.Time
 	}
 )
 

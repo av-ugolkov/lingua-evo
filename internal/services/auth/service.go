@@ -2,7 +2,6 @@ package auth
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"math/rand"
@@ -14,6 +13,7 @@ import (
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/utils"
 	entityUser "github.com/av-ugolkov/lingua-evo/internal/services/user"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 )
 
 var (
@@ -31,9 +31,8 @@ type (
 
 	userSvc interface {
 		GetUser(ctx context.Context, login string) (*entityUser.User, error)
-		GetUserByID(ctx context.Context, uid uuid.UUID) (*entityUser.User, error)
 		GetUserByEmail(ctx context.Context, email string) (*entityUser.User, error)
-		GetUserByName(ctx context.Context, name string) (*entityUser.User, error)
+		UpdateLastVisited(ctx context.Context, uid uuid.UUID) error
 	}
 )
 
@@ -60,6 +59,11 @@ func (s *Service) SignIn(ctx context.Context, user, password, fingerprint string
 		return nil, fmt.Errorf("auth.Service.SignIn - incorrect password: %v", err)
 	}
 
+	err = s.userSvc.UpdateLastVisited(ctx, u.ID)
+	if err != nil {
+		return nil, fmt.Errorf("auth.Service.SignIn - update last visited: %v", err)
+	}
+
 	additionalTime := config.GetConfig().JWT.ExpireAccess
 	duration := time.Duration(additionalTime) * time.Second
 	now := time.Now().UTC()
@@ -76,7 +80,6 @@ func (s *Service) SignIn(ctx context.Context, user, password, fingerprint string
 
 	claims := &Claims{
 		ID:        refreshTokenID,
-		UserID:    u.ID,
 		ExpiresAt: now.Add(duration),
 	}
 
@@ -94,8 +97,8 @@ func (s *Service) SignIn(ctx context.Context, user, password, fingerprint string
 }
 
 // RefreshSessionToken - the method is called from the client
-func (s *Service) RefreshSessionToken(ctx context.Context, tokenID, refreshTokenID uuid.UUID, fingerprint string) (*Tokens, error) {
-	oldRefreshSession, err := s.repo.GetSession(ctx, refreshTokenID)
+func (s *Service) RefreshSessionToken(ctx context.Context, newTokenID, oldTokenID uuid.UUID, fingerprint string) (*Tokens, error) {
+	oldRefreshSession, err := s.repo.GetSession(ctx, oldTokenID)
 	if err != nil {
 		return nil, fmt.Errorf("auth.Service.RefreshSessionToken - get session: %v", err)
 	}
@@ -110,36 +113,36 @@ func (s *Service) RefreshSessionToken(ctx context.Context, tokenID, refreshToken
 		CreatedAt:   time.Now().UTC(),
 	}
 
-	err = s.addRefreshSession(ctx, tokenID, newSession)
+	err = s.addRefreshSession(ctx, newTokenID, newSession)
 	if err != nil {
 		return nil, fmt.Errorf("auth.Service.RefreshSessionToken - addRefreshSession: %v", err)
 	}
 
-	err = s.repo.DeleteSession(ctx, refreshTokenID)
+	err = s.repo.DeleteSession(ctx, oldTokenID)
 	if err != nil {
 		return nil, fmt.Errorf("auth.Service.RefreshSessionToken - delete session: %v", err)
+	}
+
+	err = s.userSvc.UpdateLastVisited(ctx, oldRefreshSession.UserID)
+	if err != nil {
+		return nil, fmt.Errorf("auth.Service.RefreshSessionToken - update last visited: %v", err)
 	}
 
 	additionalTime := config.GetConfig().JWT.ExpireAccess
 	duration := time.Duration(additionalTime) * time.Second
 	claims := &Claims{
-		ID:        tokenID,
-		UserID:    oldRefreshSession.UserID,
+		ID:        newTokenID,
 		ExpiresAt: time.Now().UTC().Add(duration),
 	}
-	u, err := s.userSvc.GetUserByID(ctx, oldRefreshSession.UserID)
-	if err != nil {
-		return nil, fmt.Errorf("auth.Service.CreateSession - get user by ID: %v", err)
-	}
 
-	accessToken, err := token.NewJWTToken(u.ID, claims.ID, claims.ExpiresAt)
+	accessToken, err := token.NewJWTToken(oldRefreshSession.UserID, claims.ID, claims.ExpiresAt)
 	if err != nil {
 		return nil, fmt.Errorf("auth.Service.CreateSession - create access token: %v", err)
 	}
 
 	tokens := &Tokens{
 		AccessToken:  accessToken,
-		RefreshToken: tokenID,
+		RefreshToken: newTokenID,
 	}
 
 	return tokens, nil
@@ -148,16 +151,16 @@ func (s *Service) RefreshSessionToken(ctx context.Context, tokenID, refreshToken
 func (s *Service) SignOut(ctx context.Context, refreshToken uuid.UUID, fingerprint string) error {
 	oldRefreshSession, err := s.repo.GetSession(ctx, refreshToken)
 	if err != nil {
-		return fmt.Errorf("auth.Service.Logout - GetSession: %v", err)
+		return fmt.Errorf("auth.Service.SignOut - GetSession: %v", err)
 	}
 
 	if oldRefreshSession.Fingerprint != fingerprint {
-		return fmt.Errorf("auth.Service.Logout: %w", errNotEqualFingerprints)
+		return fmt.Errorf("auth.Service.SignOut: %w", errNotEqualFingerprints)
 	}
 
 	err = s.repo.DeleteSession(ctx, refreshToken)
 	if err != nil {
-		return fmt.Errorf("auth.Service.Logout - DeleteSession: %v", err)
+		return fmt.Errorf("auth.Service.SignOut - DeleteSession: %v", err)
 	}
 
 	return nil
@@ -215,13 +218,13 @@ func (s *Service) validateEmail(ctx context.Context, email string) error {
 	}
 
 	userData, err := s.userSvc.GetUserByEmail(ctx, email)
-	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 		return err
-	} else if errors.Is(err, sql.ErrNoRows) {
+	} else if errors.Is(err, pgx.ErrNoRows) {
 		return nil
-	} else if userData.ID == uuid.Nil && err == nil {
+	} else if userData != nil && userData.ID == uuid.Nil && err == nil {
 		return ErrItIsAdmin
-	} else if userData.ID != uuid.Nil {
+	} else if userData != nil && userData.ID != uuid.Nil {
 		return ErrEmailBusy
 	}
 

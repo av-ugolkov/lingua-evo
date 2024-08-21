@@ -29,19 +29,19 @@ func (_m *mockLangSvc) CheckLanguage(ctx context.Context, langCode string) error
 }
 
 // GetAvailableLanguages provides a mock function with given fields: ctx
-func (_m *mockLangSvc) GetAvailableLanguages(ctx context.Context) ([]*language.Language, error) {
+func (_m *mockLangSvc) GetAvailableLanguages(ctx context.Context) ([]language.Language, error) {
 	ret := _m.Called(ctx)
 
-	var r0 []*language.Language
+	var r0 []language.Language
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context) ([]*language.Language, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) ([]language.Language, error)); ok {
 		return rf(ctx)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context) []*language.Language); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) []language.Language); ok {
 		r0 = rf(ctx)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*language.Language)
+			r0 = ret.Get(0).([]language.Language)
 		}
 	}
 
