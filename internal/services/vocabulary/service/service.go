@@ -93,9 +93,14 @@ func (s *Service) GetVocabularies(ctx context.Context, uid uuid.UUID, page, item
 }
 
 func (s *Service) GetVocabulary(ctx context.Context, uid, vid uuid.UUID) (entity.Vocabulary, error) {
-	_, err := s.GetAccessForUser(ctx, uid, vid)
+	accessStatus, err := s.GetAccessForUser(ctx, uid, vid)
 	if err != nil {
 		return entity.Vocabulary{}, handler.NewError(fmt.Errorf("vocabulary.Service.GetVocabulary - %w: %w", entity.ErrAccessDenied, err),
+			http.StatusForbidden, handler.ErrForbidden)
+	}
+
+	if accessStatus == access.Forbidden {
+		return entity.Vocabulary{}, handler.NewError(fmt.Errorf("vocabulary.Service.GetVocabulary - %w", entity.ErrAccessDenied),
 			http.StatusForbidden, handler.ErrForbidden)
 	}
 
@@ -140,7 +145,7 @@ func (s *Service) GetAccessForUser(ctx context.Context, uid, vid uuid.UUID) (acc
 			return access.Forbidden, fmt.Errorf("vocabulary.Service.GetAccessForUser - get vocabulary access: %w", err)
 		}
 
-		isSubscribers, err := s.subscribersSvc.Check(ctx, creatodID, uid)
+		isSubscribers, err := s.subscribersSvc.Check(ctx, uid, creatodID)
 		if err != nil {
 			return access.Forbidden, fmt.Errorf("vocabulary.Service.GetAccessForUser - check subscribers: %w", err)
 		}
