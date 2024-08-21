@@ -1,29 +1,24 @@
 package handler
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"net/http"
 	"time"
 
-	"github.com/av-ugolkov/lingua-evo/internal/delivery"
-	"github.com/av-ugolkov/lingua-evo/internal/pkg/http/exchange"
-	"github.com/av-ugolkov/lingua-evo/internal/pkg/middleware"
+	ginExt "github.com/av-ugolkov/lingua-evo/internal/delivery/handler/gin"
 	entityDict "github.com/av-ugolkov/lingua-evo/internal/services/dictionary"
 	entityExample "github.com/av-ugolkov/lingua-evo/internal/services/example"
-	"github.com/av-ugolkov/lingua-evo/internal/services/word"
-	entity "github.com/av-ugolkov/lingua-evo/internal/services/word"
+	entity "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary"
+	"github.com/av-ugolkov/lingua-evo/runtime"
 
+	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/gorilla/mux"
 )
 
 const (
-	ParamVocabID = "vocab_id"
-	ParamID      = "id"
-	ParamLimit   = "limit"
-	ParamText    = "text"
+	paramsLimit string = "limit"
+	paramsText  string = "text"
 )
 
 type (
@@ -56,36 +51,21 @@ type (
 	}
 )
 
-type Handler struct {
-	wordSvc *word.Service
-}
+func (h *Handler) addWord(c *gin.Context) {
+	ctx := c.Request.Context()
 
-func Create(r *mux.Router, wordSvc *word.Service) {
-	h := newHandler(wordSvc)
-	h.register(r)
-}
-
-func newHandler(wordSvc *word.Service) *Handler {
-	return &Handler{
-		wordSvc: wordSvc,
-	}
-}
-
-func (h *Handler) register(r *mux.Router) {
-	r.HandleFunc(delivery.VocabularyWord, middleware.Auth(h.getWord)).Methods(http.MethodGet)
-	r.HandleFunc(delivery.VocabularyWord, middleware.Auth(h.addWord)).Methods(http.MethodPost)
-	r.HandleFunc(delivery.VocabularyWord, middleware.Auth(h.deleteWord)).Methods(http.MethodDelete)
-	r.HandleFunc(delivery.VocabularyWordUpdate, middleware.Auth(h.updateWord)).Methods(http.MethodPost)
-	r.HandleFunc(delivery.VocabularySeveralWords, middleware.Auth(h.getSeveralWords)).Methods(http.MethodGet)
-	r.HandleFunc(delivery.VocabularyWords, middleware.Auth(h.getWords)).Methods(http.MethodGet)
-	r.HandleFunc(delivery.GetPronunciation, middleware.Auth(h.getPronunciation)).Methods(http.MethodGet)
-}
-
-func (h *Handler) addWord(ctx context.Context, ex *exchange.Exchanger) {
-	var data VocabWordRq
-	err := ex.CheckBody(&data)
+	userID, err := runtime.UserIDFromContext(ctx)
 	if err != nil {
-		ex.SendError(http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.addWord - check body: %v", err))
+		ginExt.SendError(c, http.StatusUnauthorized,
+			fmt.Errorf("word.delivery.Handler.addWord - check body: %v", err))
+		return
+	}
+
+	var data VocabWordRq
+	err = c.Bind(&data)
+	if err != nil {
+		ginExt.SendError(c, http.StatusInternalServerError,
+			fmt.Errorf("word.delivery.Handler.addWord - check body: %v", err))
 		return
 	}
 
@@ -108,8 +88,7 @@ func (h *Handler) addWord(ctx context.Context, ex *exchange.Exchanger) {
 		})
 	}
 
-	vocabWord, err := h.wordSvc.AddWord(ctx, entity.VocabWordData{
-		ID:      uuid.New(),
+	vocabWord, err := h.vocabSvc.AddWord(ctx, userID, entity.VocabWordData{
 		VocabID: data.VocabID,
 		Native: entityDict.DictWord{
 			ID:            uuid.New(),
@@ -125,11 +104,12 @@ func (h *Handler) addWord(ctx context.Context, ex *exchange.Exchanger) {
 	})
 	if err != nil {
 		switch {
-		case errors.Is(err, word.ErrDuplicate):
-			ex.SendError(http.StatusConflict, fmt.Errorf("word.delivery.Handler.addWord: %v", err))
+		case errors.Is(err, entity.ErrDuplicate):
+			ginExt.SendError(c, http.StatusConflict,
+				fmt.Errorf("word.delivery.Handler.addWord: %v", err))
 			return
 		default:
-			ex.SendError(http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.addWord: %v", err))
+			ginExt.SendError(c, http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.addWord: %v", err))
 			return
 		}
 	}
@@ -143,15 +123,23 @@ func (h *Handler) addWord(ctx context.Context, ex *exchange.Exchanger) {
 		Updated: &vocabWord.UpdatedAt,
 	}
 
-	ex.SetContentType(exchange.ContentTypeJSON)
-	ex.SendData(http.StatusCreated, wordRs)
+	c.JSON(http.StatusCreated, wordRs)
 }
 
-func (h *Handler) updateWord(ctx context.Context, ex *exchange.Exchanger) {
-	var data VocabWordRq
-	err := ex.CheckBody(&data)
+func (h *Handler) updateWord(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	userID, err := runtime.UserIDFromContext(ctx)
 	if err != nil {
-		ex.SendError(http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.updateWord - check body: %v", err))
+		ginExt.SendError(c, http.StatusUnauthorized, fmt.Errorf("word.delivery.Handler.updateWord - unauthorized: %v", err))
+		return
+	}
+
+	var data VocabWordRq
+	err = c.Bind(&data)
+	if err != nil {
+		ginExt.SendError(c, http.StatusInternalServerError,
+			fmt.Errorf("word.delivery.Handler.updateWord - check body: %v", err))
 		return
 	}
 
@@ -174,7 +162,7 @@ func (h *Handler) updateWord(ctx context.Context, ex *exchange.Exchanger) {
 		})
 	}
 
-	vocabWord, err := h.wordSvc.UpdateWord(ctx, entity.VocabWordData{
+	vocabWord, err := h.vocabSvc.UpdateWord(ctx, userID, entity.VocabWordData{
 		ID:      *data.ID,
 		VocabID: data.VocabID,
 		Native: entityDict.DictWord{
@@ -188,7 +176,8 @@ func (h *Handler) updateWord(ctx context.Context, ex *exchange.Exchanger) {
 		UpdatedAt:  time.Now().UTC(),
 	})
 	if err != nil {
-		ex.SendError(http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.updateWord: %v", err))
+		ginExt.SendError(c, http.StatusInternalServerError,
+			fmt.Errorf("word.delivery.Handler.updateWord: %v", err))
 		return
 	}
 
@@ -200,41 +189,47 @@ func (h *Handler) updateWord(ctx context.Context, ex *exchange.Exchanger) {
 		Updated: &vocabWord.UpdatedAt,
 	}
 
-	ex.SetContentType(exchange.ContentTypeJSON)
-	ex.SendData(http.StatusOK, wordRs)
+	c.JSON(http.StatusOK, wordRs)
 }
 
-func (h *Handler) deleteWord(ctx context.Context, ex *exchange.Exchanger) {
+func (h *Handler) deleteWord(c *gin.Context) {
+	ctx := c.Request.Context()
 	var data RemoveVocabWordRq
-	err := ex.CheckBody(&data)
+	err := c.Bind(&data)
 	if err != nil {
-		ex.SendError(http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.deleteWord - check body: %v", err))
+		ginExt.SendError(c, http.StatusInternalServerError,
+			fmt.Errorf("word.delivery.Handler.deleteWord - check body: %v", err))
 		return
 	}
 
-	err = h.wordSvc.DeleteWord(ctx, data.VocabID, data.WordID)
+	err = h.vocabSvc.DeleteWord(ctx, data.VocabID, data.WordID)
 	if err != nil {
-		ex.SendError(http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.deleteWord: %v", err))
+		ginExt.SendError(c, http.StatusInternalServerError,
+			fmt.Errorf("word.delivery.Handler.deleteWord: %v", err))
 		return
 	}
-	ex.SendEmptyData(http.StatusOK)
+
+	c.JSON(http.StatusOK, gin.H{})
 }
 
-func (h *Handler) getSeveralWords(ctx context.Context, ex *exchange.Exchanger) {
-	vocabID, err := ex.QueryParamUUID(ParamVocabID)
+func (h *Handler) getRandomWords(c *gin.Context) {
+	ctx := c.Request.Context()
+	vid, err := ginExt.GetQueryUUID(c, paramsID)
 	if err != nil {
-		ex.SendError(http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getSeveralWords - get vocab id: %w", err))
+		ginExt.SendError(c, http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getSeveralWords - get vocab id: %w", err))
 		return
 	}
 
-	limit, err := ex.QueryParamInt(ParamLimit)
+	limit, err := ginExt.GetQueryInt(c, paramsLimit)
 	if err != nil {
-		ex.SendError(http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getSeveralWords - get limit: %w", err))
+		ginExt.SendError(c, http.StatusInternalServerError,
+			fmt.Errorf("word.delivery.Handler.getSeveralWords - get limit: %w", err))
 		return
 	}
-	vocabWords, err := h.wordSvc.GetRandomWords(ctx, vocabID, limit)
+	vocabWords, err := h.vocabSvc.GetRandomWords(ctx, vid, limit)
 	if err != nil {
-		ex.SendError(http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getSeveralWords: %w", err))
+		ginExt.SendError(c, http.StatusInternalServerError,
+			fmt.Errorf("word.delivery.Handler.getSeveralWords: %w", err))
 		return
 	}
 
@@ -256,20 +251,22 @@ func (h *Handler) getSeveralWords(ctx context.Context, ex *exchange.Exchanger) {
 		wordsRs = append(wordsRs, wordRs)
 	}
 
-	ex.SetContentType(exchange.ContentTypeJSON)
-	ex.SendData(http.StatusOK, wordsRs)
+	c.JSON(http.StatusOK, wordsRs)
 }
 
-func (h *Handler) getWord(ctx context.Context, ex *exchange.Exchanger) {
-	wordID, err := ex.QueryParamUUID(ParamID)
+func (h *Handler) getWord(c *gin.Context) {
+	ctx := c.Request.Context()
+	wordID, err := ginExt.GetQueryUUID(c, paramsID)
 	if err != nil {
-		ex.SendError(http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getWords - get word id: %w", err))
+		ginExt.SendError(c, http.StatusInternalServerError,
+			fmt.Errorf("word.delivery.Handler.getWords: %w", err))
 		return
 	}
 
-	vocabWord, err := h.wordSvc.GetWord(ctx, wordID)
+	vocabWord, err := h.vocabSvc.GetWord(ctx, wordID)
 	if err != nil {
-		ex.SendError(http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getWords: %w", err))
+		ginExt.SendError(c, http.StatusInternalServerError,
+			fmt.Errorf("word.delivery.Handler.getWords: %w", err))
 		return
 	}
 
@@ -294,20 +291,25 @@ func (h *Handler) getWord(ctx context.Context, ex *exchange.Exchanger) {
 		Examples:   examples,
 	}
 
-	ex.SetContentType(exchange.ContentTypeJSON)
-	ex.SendData(http.StatusOK, wordRs)
+	c.JSON(http.StatusOK, wordRs)
 }
 
-func (h *Handler) getWords(ctx context.Context, ex *exchange.Exchanger) {
-	vocabID, err := ex.QueryParamUUID(ParamVocabID)
+func (h *Handler) getWords(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	uid, _ := runtime.UserIDFromContext(ctx)
+
+	vid, err := ginExt.GetQueryUUID(c, paramsID)
 	if err != nil {
-		ex.SendError(http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getWords - get dict id: %w", err))
+		ginExt.SendError(c, http.StatusInternalServerError,
+			fmt.Errorf("word.delivery.Handler.getWords - get dict id: %w", err))
 		return
 	}
 
-	vocabWords, err := h.wordSvc.GetWords(ctx, vocabID)
+	vocabWords, editable, err := h.vocabSvc.GetWords(ctx, uid, vid)
 	if err != nil {
-		ex.SendError(http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getWords: %w", err))
+		ginExt.SendError(c, http.StatusInternalServerError,
+			fmt.Errorf("word.delivery.Handler.getWords: %w", err))
 		return
 	}
 
@@ -339,33 +341,52 @@ func (h *Handler) getWords(ctx context.Context, ex *exchange.Exchanger) {
 		wordsRs = append(wordsRs, wordRs)
 	}
 
-	ex.SetContentType(exchange.ContentTypeJSON)
-	ex.SendData(http.StatusOK, wordsRs)
+	type Response struct {
+		Words    []VocabWordRs `json:"words"`
+		Editable bool          `json:"editable"`
+	}
+
+	c.JSON(http.StatusOK, Response{
+		Words:    wordsRs,
+		Editable: editable,
+	})
 }
 
-func (h *Handler) getPronunciation(ctx context.Context, ex *exchange.Exchanger) {
-	text, err := ex.QueryParamString(ParamText)
+func (h *Handler) getPronunciation(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	uid, err := runtime.UserIDFromContext(ctx)
 	if err != nil {
-		ex.SendError(http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getPronunciation - get word id: %w", err))
+		ginExt.SendError(c, http.StatusUnauthorized,
+			fmt.Errorf("word.delivery.Handler.getPronunciation - unauthorized: %w", err))
 		return
 	}
 
-	vocabID, err := ex.QueryParamUUID(ParamVocabID)
+	text, err := ginExt.GetQuery(c, paramsText)
 	if err != nil {
-		ex.SendError(http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getPronunciation - get word id: %w", err))
+		ginExt.SendError(c, http.StatusInternalServerError,
+			fmt.Errorf("word.delivery.Handler.getPronunciation - get word id: %w", err))
 		return
 	}
 
-	pronunciation, err := h.wordSvc.GetPronunciation(ctx, vocabID, text)
+	vid, err := ginExt.GetQueryUUID(c, paramsID)
 	if err != nil {
-		ex.SendError(http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getPronunciation: %w", err))
+		ginExt.SendError(c, http.StatusInternalServerError,
+			fmt.Errorf("word.delivery.Handler.getPronunciation - get word id: %w", err))
 		return
 	}
 
-	ex.SetContentType(exchange.ContentTypeJSON)
-	ex.SendData(http.StatusOK, VocabWordRs{
+	pronunciation, err := h.vocabSvc.GetPronunciation(ctx, uid, vid, text)
+	if err != nil {
+		ginExt.SendError(c, http.StatusInternalServerError, err)
+		return
+	}
+
+	vocabWrodRs := VocabWordRs{
 		Native: &VocabWord{
 			Pronunciation: pronunciation,
 		},
-	})
+	}
+
+	c.JSON(http.StatusOK, vocabWrodRs)
 }

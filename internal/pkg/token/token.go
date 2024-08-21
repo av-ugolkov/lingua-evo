@@ -48,7 +48,7 @@ func ValidateJWT(tokenStr string, secret string) (*UserClaims, error) {
 	if errors.Is(err, jwt.ErrTokenExpired) {
 		return nil, fmt.Errorf("pkg.jwt.token.ValidateToken - token expired")
 	} else if err != nil {
-		return nil, fmt.Errorf("pkg.jwt.token.ValidateToken - can't parse token: %w", err)
+		return nil, fmt.Errorf("pkg.jwt.token.ValidateToken - can't parse token [%s]: %w", tokenStr, err)
 	}
 
 	claims, ok := token.Claims.(*UserClaims)
