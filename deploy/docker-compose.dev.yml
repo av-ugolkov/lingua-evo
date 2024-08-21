@@ -1,18 +1,18 @@
-version: "3.5"
+version: '3.5'
 services:
   redis:
     container_name: redis-base-dev
     image: redis:7.2.4-alpine
     expose:
-      - "6379"
+      - '6379'
     ports:
-      - "6379:6379"
+      - '6379:6379'
     networks:
       - lingua-dev
     entrypoint:
-      - "/bin/sh"
-      - "-ecx"
-      - "redis-server --requirepass "
+      - '/bin/sh'
+      - '-ecx'
+      - 'redis-server --requirepass '
 
   postgres:
     container_name: postgres-base-dev
@@ -27,9 +27,9 @@ services:
         source: /home/alex/DockerShareFiles
         target: /home/dump
     expose:
-      - "5432"
+      - '5432'
     ports:
-      - "6432:5432"
+      - '6432:5432'
     networks:
       - lingua-dev
 
@@ -40,7 +40,8 @@ services:
       dockerfile: Dockerfile
       args:
         config_dir: ${CONFIG:-docker/server_config_dev}
-        cert_path: ${CERT:-home/alex/cert/linguaevo.twc1.net}
+        public_cert: ${CERT:-/home/alex/cert/linguaevo.twc1.net/fullchain.pem}
+        private_cert: ${CERT:-/home/alex/cert/linguaevo.twc1.net/privkey.pem}
         epsw: ${EPSW}
       additional_contexts:
         root: /
@@ -53,11 +54,11 @@ services:
       - redis
     restart: always
     extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - 'host.docker.internal:host-gateway'
     expose:
-      - "5000"
+      - '5000'
     ports:
-      - "5000:5000"
+      - '5000:5000'
     networks:
       - lingua-dev
 
@@ -70,9 +71,9 @@ services:
     networks:
       - lingua-dev
     entrypoint:
-      - "/bin/sh"
-      - "-ecx"
-      - "./migration -cmd up -url lingua:@postgres-base-dev:5432/pg-lingua-evo?sslmode=disable"
+      - '/bin/sh'
+      - '-ecx'
+      - './migration -cmd up -url lingua:@postgres-base-dev:5432/pg-lingua-evo?sslmode=disable'
 
 networks:
   lingua-dev:

@@ -11,7 +11,7 @@ import (
 type (
 	repoTag interface {
 		AddTag(ctx context.Context, id uuid.UUID, text string) (uuid.UUID, error)
-		FindTag(ctx context.Context, text string) ([]*Tag, error)
+		FindTag(ctx context.Context, text string) ([]Tag, error)
 		GetTag(ctx context.Context, text string) (uuid.UUID, error)
 		GetTagsInVocabulary(ctx context.Context, vocabID uuid.UUID) ([]Tag, error)
 		GetAllTags(ctx context.Context) ([]Tag, error)
@@ -55,7 +55,7 @@ func (s *Service) AddTags(ctx context.Context, tags []Tag) ([]uuid.UUID, error) 
 	return ids, nil
 }
 
-func (s *Service) FindTag(ctx context.Context, text string) ([]*Tag, error) {
+func (s *Service) FindTag(ctx context.Context, text string) ([]Tag, error) {
 	tags, err := s.repo.FindTag(ctx, text)
 	if err != nil {
 		return nil, fmt.Errorf("tag.Service.FindTag: %w", err)
