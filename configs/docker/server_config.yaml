@@ -10,14 +10,13 @@ logger:
 ssl:
     enable: true
     path: ./cert
-    public: certificate.crt
-    private: private.key
+    public: fullchain.pem
+    private: privkey.pem
 jwt:
     secret: 54f3sY%v0kzQ
     expire_access: 300 #5 min
     expire_refresh: 2592000 #30 days
 service:
-    type: tcp
     port: 5000
     allowed_origins:
         - 'http://linguaevo.twc1.net'
@@ -30,6 +29,12 @@ postgres:
     password: pb6v0CdeN3FmKt4anX1j3
     host: postgres-base
     port: 5432
+    max_conns: 4
+    min_conns: 0
+    max_conn_lifetime: 3600
+    max_conn_idle_time: 1800
+    health_check_period: 60
+    connect_timeout: 5
 redis:
     name: redis
     host: redis

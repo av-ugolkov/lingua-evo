@@ -12,7 +12,7 @@ var (
 
 func init() {
 	usernameRegex = regexp.MustCompile(`^[a-zA-Z0-9]{3,16}$`)
-	emailRegex = regexp.MustCompile(`^[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,4}$`)
+	emailRegex = regexp.MustCompile(`^[a-z0-9._%+\-]+@[a-z0-9._\-]+\.[a-z]{2,4}$`)
 	passwordRegex = regexp.MustCompile(`^[a-zA-Z0-9.!@#$^&*(){}\[\]_%+\-]`)
 }
 

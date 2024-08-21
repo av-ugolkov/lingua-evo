@@ -27,7 +27,7 @@ func TestService_AddWord(t *testing.T) {
 		repoWordMock.On("AddWords", ctx, mock.Anything).Return(data, nil)
 		repoWordMock.On("GetWordsByText", ctx, mock.Anything).Return([]DictWord{}, nil)
 		langSvcMock := new(mockLangSvc)
-		langSvcMock.On("GetAvailableLanguages", ctx).Return([]*entityLanguage.Language{{Code: data[0].LangCode}}, nil)
+		langSvcMock.On("GetAvailableLanguages", ctx).Return([]entityLanguage.Language{{Code: data[0].LangCode}}, nil)
 
 		s := &Service{repo: repoWordMock, langSvc: langSvcMock}
 

@@ -2,13 +2,13 @@ package repository
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"time"
 
 	authEntity "github.com/av-ugolkov/lingua-evo/internal/services/auth"
 
 	"github.com/google/uuid"
+	jsoniter "github.com/json-iterator/go"
 )
 
 type (
@@ -46,7 +46,7 @@ func (r *SessionRepo) GetSession(ctx context.Context, refreshToken uuid.UUID) (*
 		return nil, fmt.Errorf("auth.repository.SessionRepo.GetSession: %w", err)
 	}
 
-	err = json.Unmarshal([]byte(s2), &s)
+	err = jsoniter.Unmarshal([]byte(s2), &s)
 	if err != nil {
 		return nil, fmt.Errorf("auth.repository.SessionRepo.GetSession - unmarshal: %w", err)
 	}

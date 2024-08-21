@@ -2,31 +2,25 @@ package repository
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"time"
 
 	entityDict "github.com/av-ugolkov/lingua-evo/internal/services/dictionary"
 	entityExample "github.com/av-ugolkov/lingua-evo/internal/services/example"
-	entity "github.com/av-ugolkov/lingua-evo/internal/services/word"
+	entity "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
-	"github.com/lib/pq"
 )
 
-type WordRepo struct {
-	db *sql.DB
-}
+const (
+	// https://www.postgresql.org/docs/10/static/errcodes-appendix.html
+	UniqueViolation = "23505"
+)
 
-func NewRepo(db *sql.DB) *WordRepo {
-	return &WordRepo{
-		db: db,
-	}
-}
-
-func (r *WordRepo) GetWord(ctx context.Context, id uuid.UUID) (entity.VocabWordData, error) {
+func (r *VocabRepo) GetWord(ctx context.Context, id uuid.UUID) (entity.VocabWordData, error) {
 	const query = `
 	SELECT 
 		w.id,
@@ -43,24 +37,25 @@ func (r *WordRepo) GetWord(ctx context.Context, id uuid.UUID) (entity.VocabWordD
 		LEFT JOIN "dictionary" n ON n.id = w.native_id
 		LEFT JOIN "dictionary" t ON t.id = ANY(w.translate_ids)
 		LEFT JOIN "example" e ON e.id = ANY(w.example_ids)
-	WHERE id=$1
+	WHERE w.id=$1
 	GROUP BY w.id, n.id, n."text", w.pronunciation, n.lang_code;`
 
 	var vocabWordData entity.VocabWordData
 	var translates []string
 	var examples []string
-	err := r.db.QueryRowContext(ctx, query, id).Scan(
+	err := r.pgxPool.QueryRow(ctx, query, id).Scan(
 		&vocabWordData.ID,
+		&vocabWordData.VocabID,
 		&vocabWordData.Native.ID,
 		&vocabWordData.Native.Text,
 		&vocabWordData.Native.Pronunciation,
 		&vocabWordData.Native.LangCode,
-		pq.Array(&translates),
-		pq.Array(&examples),
+		&translates,
+		&examples,
 		&vocabWordData.UpdatedAt,
 		&vocabWordData.CreatedAt)
 	if err != nil {
-		return entity.VocabWordData{}, fmt.Errorf("word.repository.WordRepo.GetVocabularyWords: %w", err)
+		return entity.VocabWordData{}, fmt.Errorf("word.repository.WordRepo.GetWord: %w", err)
 	}
 
 	for _, tr := range translates {
@@ -74,23 +69,34 @@ func (r *WordRepo) GetWord(ctx context.Context, id uuid.UUID) (entity.VocabWordD
 	return vocabWordData, nil
 }
 
-func (r *WordRepo) AddWord(ctx context.Context, word entity.VocabWord) error {
-	const query = `INSERT INTO word (id, vocabulary_id, native_id, translate_ids, example_ids, updated_at, created_at) VALUES($1, $2, $3, $4, $5, $6, $6);`
-	_, err := r.db.ExecContext(ctx, query, word.ID, word.VocabID, word.NativeID, word.TranslateIDs, word.ExampleIDs, time.Now().UTC())
+func (r *VocabRepo) AddWord(ctx context.Context, word entity.VocabWord) (uuid.UUID, error) {
+	const query = `
+	INSERT INTO word (
+		id,
+		vocabulary_id,
+		native_id, 
+		pronunciation, 
+		translate_ids, 
+		example_ids, 
+		updated_at, 
+		created_at) 
+	VALUES($1, $2, $3, $4, $5, $6, $7, $7);`
+	vocabWordID := uuid.New()
+	_, err := r.pgxPool.Exec(ctx, query, vocabWordID, word.VocabID, word.NativeID, word.Pronunciation, word.TranslateIDs, word.ExampleIDs, time.Now().UTC())
 	if err != nil {
 		var pgErr *pgconn.PgError
 		switch {
-		case errors.As(err, &pgErr) && pgErr.Code == "23505":
-			return fmt.Errorf("word.repository.WordRepo.AddWord: %w", entity.ErrDuplicate)
+		case errors.As(err, &pgErr) && pgErr.Code == UniqueViolation:
+			return uuid.Nil, fmt.Errorf("word.repository.WordRepo.AddWord: %w", entity.ErrDuplicate)
 		default:
-			return fmt.Errorf("word.repository.WordRepo.AddWord: %w", err)
+			return uuid.Nil, fmt.Errorf("word.repository.WordRepo.AddWord: %w", err)
 		}
 	}
 
-	return nil
+	return vocabWordID, nil
 }
 
-func (r *WordRepo) GetWordsFromVocabulary(ctx context.Context, dictID uuid.UUID, capacity int) ([]string, error) {
+func (r *VocabRepo) GetWordsFromVocabulary(ctx context.Context, dictID uuid.UUID, capacity int) ([]string, error) {
 	const query = `
 	SELECT text 
 	FROM dictionary 
@@ -99,11 +105,11 @@ func (r *WordRepo) GetWordsFromVocabulary(ctx context.Context, dictID uuid.UUID,
 		FROM word 
 		WHERE vocabulary_id=$1
 			ORDER BY random() LIMIT $2)`
-	rows, err := r.db.QueryContext(ctx, query, dictID, capacity)
+	rows, err := r.pgxPool.Query(ctx, query, dictID, capacity)
 	if err != nil {
 		return nil, fmt.Errorf("word.repository.WordRepo.GetWordsFromVocabulary: %w", err)
 	}
-	defer func() { _ = rows.Close() }()
+	defer rows.Close()
 
 	words := make([]string, 0, capacity)
 	for rows.Next() {
@@ -118,10 +124,10 @@ func (r *WordRepo) GetWordsFromVocabulary(ctx context.Context, dictID uuid.UUID,
 	return words, nil
 }
 
-func (r *WordRepo) GetRandomWord(ctx context.Context, vocabID uuid.UUID) (entity.VocabWord, error) {
+func (r *VocabRepo) GetRandomWord(ctx context.Context, vocabID uuid.UUID) (entity.VocabWord, error) {
 	var vocabWord entity.VocabWord
 	query := `SELECT native_id, translate_ids, example_ids FROM word WHERE vocabulary_id=$1 ORDER BY random() LIMIT 1;`
-	err := r.db.QueryRowContext(ctx, query, vocabID).Scan(
+	err := r.pgxPool.QueryRow(ctx, query, vocabID).Scan(
 		&vocabWord.NativeID,
 		&vocabWord.TranslateIDs,
 		&vocabWord.ExampleIDs,
@@ -132,22 +138,21 @@ func (r *WordRepo) GetRandomWord(ctx context.Context, vocabID uuid.UUID) (entity
 	return vocabWord, nil
 }
 
-func (r *WordRepo) DeleteWord(ctx context.Context, vocabWord entity.VocabWord) error {
+func (r *VocabRepo) DeleteWord(ctx context.Context, vocabWord entity.VocabWord) error {
 	query := `DELETE FROM word WHERE vocabulary_id=$1 AND id=$2;`
-	result, err := r.db.ExecContext(ctx, query, vocabWord.VocabID, vocabWord.ID)
+	result, err := r.pgxPool.Exec(ctx, query, vocabWord.VocabID, vocabWord.ID)
 	if err != nil {
 		return fmt.Errorf("word.repository.WordRepo.DeleteWord - exec: %w", err)
 	}
 
-	if rowsAffected, err := result.RowsAffected(); rowsAffected == 0 {
-		return fmt.Errorf("word.repository.WordRepo.DeleteWord - rows affected: %w", sql.ErrNoRows)
-	} else if err != nil {
-		return fmt.Errorf("word.repository.WordRepo.DeleteWord: %w", err)
+	if rows := result.RowsAffected(); rows == 0 {
+		return fmt.Errorf("word.repository.WordRepo.DeleteWord - rows affected: %w", pgx.ErrNoRows)
 	}
+
 	return nil
 }
 
-func (r *WordRepo) GetRandomVocabulary(ctx context.Context, vocabID uuid.UUID, limit int) ([]entity.VocabWordData, error) {
+func (r *VocabRepo) GetRandomVocabulary(ctx context.Context, vocabID uuid.UUID, limit int) ([]entity.VocabWordData, error) {
 	query := `
 	SELECT 
 		n.id native_id,
@@ -161,11 +166,11 @@ func (r *WordRepo) GetRandomVocabulary(ctx context.Context, vocabID uuid.UUID, l
 	GROUP BY n.id, n."text", w.pronunciation
 	ORDER BY RANDOM() 
 	LIMIT $2;`
-	rows, err := r.db.QueryContext(ctx, query, vocabID, limit)
+	rows, err := r.pgxPool.Query(ctx, query, vocabID, limit)
 	if err != nil {
 		return nil, fmt.Errorf("word.repository.WordRepo.GetRandomVocabulary: %w", err)
 	}
-	defer func() { _ = rows.Close() }()
+	defer rows.Close()
 
 	vocabularyWords := make([]entity.VocabWordData, 0, limit)
 	for rows.Next() {
@@ -175,7 +180,7 @@ func (r *WordRepo) GetRandomVocabulary(ctx context.Context, vocabID uuid.UUID, l
 			&vocabulary.Native.ID,
 			&vocabulary.Native.Text,
 			&vocabulary.Native.Pronunciation,
-			pq.Array(&translates),
+			&translates,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("word.repository.WordRepo.GetRandomVocabulary - scan: %w", err)
@@ -191,15 +196,13 @@ func (r *WordRepo) GetRandomVocabulary(ctx context.Context, vocabID uuid.UUID, l
 	return vocabularyWords, nil
 }
 
-func (r *WordRepo) GetVocabulary(ctx context.Context, vocabID uuid.UUID) ([]entity.VocabWord, error) {
+func (r *VocabRepo) GetVocabulary(ctx context.Context, vocabID uuid.UUID) ([]entity.VocabWord, error) {
 	query := `SELECT id, native_id, translate_ids, example_ids, updated_at, created_at FROM word WHERE vocabulary_id=$1;`
-	rows, err := r.db.QueryContext(ctx, query, vocabID)
+	rows, err := r.pgxPool.Query(ctx, query, vocabID)
 	if err != nil {
 		return nil, fmt.Errorf("word.repository.WordRepo.GetVocabulary: %w", err)
 	}
-	defer func() {
-		_ = rows.Close()
-	}()
+	defer rows.Close()
 
 	vocabularies := make([]entity.VocabWord, 0, 25)
 	for rows.Next() {
@@ -207,8 +210,8 @@ func (r *WordRepo) GetVocabulary(ctx context.Context, vocabID uuid.UUID) ([]enti
 		err = rows.Scan(
 			&vocabulary.ID,
 			&vocabulary.NativeID,
-			pq.Array(&vocabulary.TranslateIDs),
-			pq.Array(&vocabulary.ExampleIDs),
+			&vocabulary.TranslateIDs,
+			&vocabulary.ExampleIDs,
 			&vocabulary.UpdatedAt,
 			&vocabulary.CreatedAt,
 		)
@@ -221,92 +224,102 @@ func (r *WordRepo) GetVocabulary(ctx context.Context, vocabID uuid.UUID) ([]enti
 	return vocabularies, nil
 }
 
-func (r *WordRepo) GetVocabularyWords(ctx context.Context, vocabID uuid.UUID) ([]entity.VocabWordData, error) {
+func (r *VocabRepo) GetVocabularyWords(ctx context.Context, vocabID uuid.UUID) ([]entity.VocabWordData, error) {
 	var countRows int
-	err := r.db.QueryRowContext(ctx, `SELECT count(*) FROM word WHERE vocabulary_id=$1`, vocabID).Scan(&countRows)
+	err := r.pgxPool.QueryRow(ctx, `SELECT count(*) FROM word WHERE vocabulary_id=$1`, vocabID).Scan(&countRows)
 	if err != nil {
 		return nil, fmt.Errorf("word.repository.WordRepo.GetVocabularyWords - count: %w", err)
 	}
 
 	var langNative, langTranslate string
-	err = r.db.QueryRowContext(ctx, `SELECT native_lang, translate_lang FROM vocabulary WHERE id=$1`, vocabID).Scan(&langNative, &langTranslate)
+	err = r.pgxPool.QueryRow(ctx, `SELECT native_lang, translate_lang FROM vocabulary WHERE id=$1`, vocabID).Scan(&langNative, &langTranslate)
 	if err != nil {
 		return nil, fmt.Errorf("word.repository.WordRepo.GetVocabularyWords - get langs: %w", err)
 	}
 
 	query := fmt.Sprintf(`
-	SELECT 
-		w.id, 
+	SELECT
+		w.id,
 		n.id native_id,
-		n."text", 
-		CASE WHEN w.pronunciation IS NOT NULL THEN w.pronunciation ELSE '' END pronunciation, 
-		n.lang_code, 
-		array_agg(distinct t."text") FILTER (WHERE t."text" IS NOT NULL) translates, 
+		n."text",
+		CASE WHEN w.pronunciation IS NOT NULL THEN w.pronunciation ELSE '' END pronunciation,
+		array_agg(distinct t."text") FILTER (WHERE t."text" IS NOT NULL) translates,
 		array_agg(distinct e."text") FILTER (WHERE e."text" IS NOT NULL) examples,
 		w.updated_at,
-		w.created_at 
+		w.created_at
 	FROM word w
 		LEFT JOIN "dictionary_%[1]s" n ON n.id = w.native_id
 		LEFT JOIN "dictionary_%[2]s" t ON t.id = ANY(w.translate_ids)
 		LEFT JOIN "example_%[1]s" e ON e.id = ANY(w.example_ids)
-	WHERE vocabulary_id=$1
+	WHERE w.vocabulary_id=$1
 	GROUP BY w.id, n.id, n."text", w.pronunciation, n.lang_code
 	LIMIT $2;`, langNative, langTranslate)
 
-	rows, err := r.db.QueryContext(ctx, query, vocabID, countRows)
+	rows, err := r.pgxPool.Query(ctx, query, vocabID, countRows)
 	if err != nil {
 		return nil, fmt.Errorf("word.repository.WordRepo.GetVocabularyWords: %w", err)
 	}
-	defer func() {
-		_ = rows.Close()
-	}()
+	defer rows.Close()
 
 	vocabularyWords := make([]entity.VocabWordData, 0, countRows)
 	for rows.Next() {
-		var vocabulary entity.VocabWordData
+		var wordData entity.VocabWordData
 		var translates []string
 		var examples []string
 		err = rows.Scan(
-			&vocabulary.ID,
-			&vocabulary.Native.ID,
-			&vocabulary.Native.Text,
-			&vocabulary.Native.Pronunciation,
-			&vocabulary.Native.LangCode,
-			pq.Array(&translates),
-			pq.Array(&examples),
-			&vocabulary.UpdatedAt,
-			&vocabulary.CreatedAt,
+			&wordData.ID,
+			&wordData.Native.ID,
+			&wordData.Native.Text,
+			&wordData.Native.Pronunciation,
+			&translates,
+			&examples,
+			&wordData.UpdatedAt,
+			&wordData.CreatedAt,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("word.repository.WordRepo.GetVocabularyWords - scan: %w", err)
 		}
 
 		for _, tr := range translates {
-			vocabulary.Translates = append(vocabulary.Translates, entityDict.DictWord{Text: tr})
+			wordData.Translates = append(wordData.Translates, entityDict.DictWord{Text: tr, LangCode: langTranslate})
 		}
 
 		for _, ex := range examples {
-			vocabulary.Examples = append(vocabulary.Examples, entityExample.Example{Text: ex})
+			wordData.Examples = append(wordData.Examples, entityExample.Example{Text: ex})
 		}
 
-		vocabularyWords = append(vocabularyWords, vocabulary)
+		wordData.VocabID = vocabID
+		wordData.Native.LangCode = langNative
+
+		vocabularyWords = append(vocabularyWords, wordData)
 	}
 
 	return vocabularyWords, nil
 }
 
-func (r *WordRepo) UpdateWord(ctx context.Context, vocabWord entity.VocabWord) error {
+func (r *VocabRepo) UpdateWord(ctx context.Context, vocabWord entity.VocabWord) error {
 	query := `UPDATE word SET native_id=$1, pronunciation=$2, translate_ids=$3, example_ids=$4, updated_at=$5 WHERE id=$6;`
 
-	result, err := r.db.ExecContext(ctx, query, vocabWord.NativeID, vocabWord.Pronunciation, vocabWord.TranslateIDs, vocabWord.ExampleIDs, vocabWord.UpdatedAt.Format(time.RFC3339), vocabWord.ID)
+	result, err := r.pgxPool.Exec(ctx, query, vocabWord.NativeID, vocabWord.Pronunciation, vocabWord.TranslateIDs, vocabWord.ExampleIDs, vocabWord.UpdatedAt.Format(time.RFC3339), vocabWord.ID)
 	if err != nil {
 		return fmt.Errorf("word.repository.WordRepo.UpdateWord - exec: %w", err)
 	}
 
-	if rowsAffected, err := result.RowsAffected(); rowsAffected == 0 {
-		return fmt.Errorf("word.repository.WordRepo.UpdateWord - rows affected: %w", sql.ErrNoRows)
-	} else if err != nil {
-		return fmt.Errorf("word.repository.WordRepo.UpdateWord: %w", err)
+	if rows := result.RowsAffected(); rows == 0 {
+		return fmt.Errorf("word.repository.WordRepo.UpdateWord - rows affected: %w", pgx.ErrNoRows)
 	}
+
 	return nil
+}
+
+func (r *VocabRepo) GetCountWords(ctx context.Context, userID uuid.UUID) (int, error) {
+	const query = `SELECT count(id) FROM word WHERE vocabulary_id=ANY(SELECT id FROM vocabulary WHERE user_id=$1);`
+
+	var count int
+	err := r.pgxPool.QueryRow(ctx, query, userID).Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("word.repository.WordRepo.GetCountWords: %w", err)
+	}
+
+	return count, nil
 }

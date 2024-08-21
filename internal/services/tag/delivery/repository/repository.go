@@ -2,21 +2,21 @@ package repository
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/tag"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type TagRepo struct {
-	db *sql.DB
+	pgxPool *pgxpool.Pool
 }
 
-func NewRepo(db *sql.DB) *TagRepo {
+func NewRepo(pgxPool *pgxpool.Pool) *TagRepo {
 	return &TagRepo{
-		db: db,
+		pgxPool: pgxPool,
 	}
 }
 
@@ -35,22 +35,22 @@ func (r *TagRepo) AddTag(ctx context.Context, id uuid.UUID, text string) (uuid.U
 		SELECT id
 		FROM s;`
 	var tid uuid.UUID
-	err := r.db.QueryRowContext(ctx, query, id, text).Scan(&tid)
+	err := r.pgxPool.QueryRow(ctx, query, id, text).Scan(&tid)
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("example.repository.TagRepo.AddTag: %w", err)
 	}
 	return tid, nil
 }
 
-func (r *TagRepo) FindTag(ctx context.Context, text string) ([]*entity.Tag, error) {
+func (r *TagRepo) FindTag(ctx context.Context, text string) ([]entity.Tag, error) {
 	query := `SELECT id, text FROM tag WHERE text LIKE '$1%'`
-	rows, err := r.db.QueryContext(ctx, query, text)
+	rows, err := r.pgxPool.Query(ctx, query, text)
 	if err != nil {
 		return nil, fmt.Errorf("example.repository.TagRepo.GetAllTags: %w", err)
 	}
-	defer func() { _ = rows.Close() }()
+	defer rows.Close()
 
-	var tags []*entity.Tag
+	var tags []entity.Tag
 	for rows.Next() {
 		var tag entity.Tag
 		err = rows.Scan(&tag.ID, &tag.Text)
@@ -58,7 +58,7 @@ func (r *TagRepo) FindTag(ctx context.Context, text string) ([]*entity.Tag, erro
 			return nil, fmt.Errorf("example.repository.TagRepo.GetAllTags - scan: %w", err)
 		}
 
-		tags = append(tags, &tag)
+		tags = append(tags, tag)
 	}
 
 	return tags, nil
@@ -67,7 +67,7 @@ func (r *TagRepo) FindTag(ctx context.Context, text string) ([]*entity.Tag, erro
 func (r *TagRepo) GetTag(ctx context.Context, text string) (uuid.UUID, error) {
 	query := `SELECT id FROM tag WHERE text = $1`
 	var id uuid.UUID
-	err := r.db.QueryRowContext(ctx, query, text).Scan(&id)
+	err := r.pgxPool.QueryRow(ctx, query, text).Scan(&id)
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("example.repository.TagRepo.GetTag: %w", err)
 	}
@@ -76,11 +76,11 @@ func (r *TagRepo) GetTag(ctx context.Context, text string) (uuid.UUID, error) {
 
 func (r *TagRepo) GetTagsInVocabulary(ctx context.Context, vocabID uuid.UUID) ([]entity.Tag, error) {
 	query := `SELECT id,text FROM tag WHERE id=ANY((SELECT tags FROM vocabulary WHERE id=$1)::uuid[]);`
-	rows, err := r.db.QueryContext(ctx, query, vocabID)
+	rows, err := r.pgxPool.Query(ctx, query, vocabID)
 	if err != nil {
 		return nil, fmt.Errorf("example.repository.TagRepo.GetTags: %w", err)
 	}
-	defer func() { _ = rows.Close() }()
+	defer rows.Close()
 
 	tags := make([]entity.Tag, 0)
 	for rows.Next() {
@@ -98,11 +98,11 @@ func (r *TagRepo) GetTagsInVocabulary(ctx context.Context, vocabID uuid.UUID) ([
 
 func (r *TagRepo) GetAllTags(ctx context.Context) ([]entity.Tag, error) {
 	query := `SELECT id, text FROM tag`
-	rows, err := r.db.QueryContext(ctx, query)
+	rows, err := r.pgxPool.Query(ctx, query)
 	if err != nil {
 		return nil, fmt.Errorf("example.repository.TagRepo.GetAllTags: %w", err)
 	}
-	defer func() { _ = rows.Close() }()
+	defer rows.Close()
 
 	var tags []entity.Tag
 	for rows.Next() {
