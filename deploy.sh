@@ -7,8 +7,15 @@ dev() {
         BRANCH=${BRANCH} \
         COMMIT=${COMMIT} \
         docker compose -p lingua-evo-dev -f deploy/docker-compose.dev.yml up --build --force-recreate
-    )
-        
+    )    
+}
+
+database() {
+    BRANCH="$(git rev-parse --abbrev-ref HEAD)"
+    echo $(
+        BRANCH=${BRANCH} \
+        docker compose -p lingua-evo-dev -f deploy/docker-compose.dev.yml up redis postgres migration --build --force-recreate
+    )    
 }
 
 release() {
@@ -45,10 +52,12 @@ release() {
     fi
 
     EPSW="$(cat .env | xargs)"
-    COMMIT="$(git $dir rev-parse HEAD)"
-
+    
     echo "$(git fetch)"
     echo "$(git pull)"
+
+    COMMIT="$(git $dir rev-parse HEAD)"
+    
     echo $(
         EPSW=${EPSW} \
         BRANCH=${BRANCH} \
