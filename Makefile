@@ -6,22 +6,17 @@ build:
 run:
 	./cmd/main
 
-.PHONY: deploy
-deploy:
-	./deploy.sh
-
 .PHONY: backup
 backup:
 	./backup.sh
 
-.PHONY: run.docker
-run.docker:
-	EPSW='${EPSW}'
-	docker compose -p lingua-evo -f deploy/docker-compose.yml up --build --force-recreate
+.PHONY: release
+release:
+	@echo ${shell ./deploy.sh release}
 
-.PHONY: run.docker.dev
-run.docker.dev:
-	docker compose -p lingua-evo-dev -f deploy/docker-compose.dev.yml up --build --force-recreate
+.PHONY: dev
+dev:
+	@echo ${shell ./deploy.sh dev}
 
 .PHONY: run.docker.database
 run.docker.database:
