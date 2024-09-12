@@ -30,6 +30,7 @@ services:
 
   service:
     container_name: lingua-evo
+    image: lingua-evo:${BRANCH:-release}
     build:
       context: ../.
       dockerfile: Dockerfile
@@ -61,6 +62,7 @@ services:
 
   migration:
     container_name: migration
+    image: migration:${BRANCH:-release}
     build:
       context: ../migration
     depends_on:
