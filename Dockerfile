@@ -13,6 +13,11 @@ ARG config_dir
 ARG public_cert
 ARG private_cert
 ARG epsw
+ARG branch
+ARG commit
+
+LABEL git.branch=$branch
+LABEL git.commit=$commit
 
 RUN --mount=type=cache,target=/var/cache/apk apk --update --upgrade add ca-certificates git bash
 
