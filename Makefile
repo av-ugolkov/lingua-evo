@@ -18,9 +18,9 @@ release:
 dev:
 	@echo ${shell ./deploy.sh dev}
 
-.PHONY: run.docker.database
-run.docker.database:
-	docker compose -p lingua-evo-dev -f deploy/docker-compose.dev.yml up redis postgres migration --build --force-recreate
+.PHONY: database
+database:
+	@echo ${shell ./deploy.sh database}
 
 .PHONY: lint
 lint:
