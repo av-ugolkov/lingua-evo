@@ -1,4 +1,3 @@
-version: '3.5'
 services:
   redis:
     container_name: redis-base
@@ -39,6 +38,8 @@ services:
         public_cert: ${CERT:-/home/cert/linguaevo.twc1.net/fullchain.pem}
         private_cert: ${CERT:-/home/cert/linguaevo.twc1.net/privkey.pem}
         epsw: ${EPSW}
+        branch: ${BRANCH}
+        commit: ${COMMIT}
       additional_contexts:
         root: /
     volumes:
