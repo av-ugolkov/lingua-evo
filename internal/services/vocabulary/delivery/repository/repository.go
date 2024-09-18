@@ -352,6 +352,75 @@ func (r *VocabRepo) GetWithCountWords(ctx context.Context, vid uuid.UUID) (entit
 	return vocab, nil
 }
 
+func (r *VocabRepo) GetVocabulariesWithMaxWords(ctx context.Context, limit int, access []uint8) ([]entity.VocabularyWithUser, error) {
+	const query = `
+		SELECT 
+			v.id,
+			user_id, 
+			name, 
+			native_lang, 
+			translate_lang, 
+			access, 
+			count(w.id) cw, 
+			description 
+		FROM vocabulary v
+		LEFT JOIN word w ON w.vocabulary_id = v.id 
+		WHERE v.access = ANY($2)
+		GROUP BY v.id
+		HAVING count(w.id) > 0
+		ORDER BY cw DESC
+		LIMIT $1`
+
+	rows, err := r.pgxPool.Query(ctx, query, limit, access)
+	if err != nil {
+		return nil, fmt.Errorf("vocabulary.delivery.repository.VocabRepo.GetVocabulariesRandom: %w", err)
+	}
+
+	vocabs := make([]entity.VocabularyWithUser, 0, limit)
+	var vocab entity.VocabularyWithUser
+	for rows.Next() {
+		err := rows.Scan(
+			&vocab.ID,
+			&vocab.UserID,
+			&vocab.Name,
+			&vocab.NativeLang,
+			&vocab.TranslateLang,
+			&vocab.Access,
+			&vocab.WordsCount,
+			&vocab.Description,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("vocabulary.delivery.repository.VocabRepo.GetVocabulariesRandom - scan: %w", err)
+		}
+		vocabs = append(vocabs, vocab)
+	}
+
+	return vocabs, nil
+}
+
+func (r *VocabRepo) GetVocabulariesRecommended(ctx context.Context, uid uuid.UUID) ([]entity.VocabularyWithUser, error) {
+	const query = `
+		SELECT 
+			v.id,
+			user_id,
+			name,
+			native_lang,
+			translate_lang,
+			access,
+			count(w.id) cw,
+			description
+		FROM vocabulary v
+		LEFT JOIN word w ON w.vocabulary_id = v.id 
+		WHERE v.access = ANY($2) 
+			AND v.native_lang = any(SELECT DISTINCT native_lang FROM vocabulary v WHERE v.user_id = $1) 
+			AND v.user_id != $1
+		GROUP BY v.id
+		HAVING count(w.id) > 0
+		ORDER BY cw DESC 
+		LIMIT $3;`
+	return nil, nil
+}
+
 func getSorted(typeSorted int, order sorted.TypeOrder) string {
 	switch sorted.TypeSorted(typeSorted) {
 	case sorted.Created:

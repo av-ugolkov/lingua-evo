@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/access"
-
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 

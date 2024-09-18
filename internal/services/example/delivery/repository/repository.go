@@ -8,12 +8,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/av-ugolkov/lingua-evo/internal/services/example"
+	entity "github.com/av-ugolkov/lingua-evo/internal/services/example"
+
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-
-	"github.com/av-ugolkov/lingua-evo/internal/services/example"
-	entity "github.com/av-ugolkov/lingua-evo/internal/services/example"
 )
 
 type ExampleRepo struct {

@@ -29,6 +29,7 @@ type (
 		CopyVocab(ctx context.Context, uid, vid uuid.UUID) (uuid.UUID, error)
 		GetVocabsWithCountWords(ctx context.Context, uid uuid.UUID, access []uint8) ([]entity.VocabularyWithUser, error)
 		GetWithCountWords(ctx context.Context, vid uuid.UUID) (entity.VocabularyWithUser, error)
+		GetVocabulariesWithMaxWords(ctx context.Context, limit int, access []uint8) ([]entity.VocabularyWithUser, error)
 
 		repoVocabUser
 		repoWord
@@ -216,4 +217,21 @@ func (s *Service) GetVocabularyInfo(ctx context.Context, uid, vid uuid.UUID) (en
 	}
 
 	return vocab, nil
+}
+
+func (s *Service) GetRecommendedVocabularies(ctx context.Context, uid uuid.UUID) ([]entity.VocabularyWithUser, error) {
+	if uid == uuid.Nil {
+		vocabs, err := s.repoVocab.GetVocabulariesWithMaxWords(ctx, 3, []uint8{uint8(access.Public), uint8(access.Subscribers)})
+		if err != nil {
+			return nil, fmt.Errorf("vocabulary.Service.GetRecommendedVocabularies: %w", err)
+		}
+		return vocabs, nil
+	}
+
+	vocabs, err := s.repoVocab.GetVocabsWithCountWords(ctx, uid, []uint8{1, 2, 3})
+	if err != nil {
+		return nil, fmt.Errorf("vocabulary.Service.GetRecommendedVocabularies: %w", err)
+	}
+
+	return vocabs, nil
 }
