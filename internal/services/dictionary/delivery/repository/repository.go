@@ -7,10 +7,10 @@ import (
 	"strings"
 	"time"
 
+	entity "github.com/av-ugolkov/lingua-evo/internal/services/dictionary"
+
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
-
-	entity "github.com/av-ugolkov/lingua-evo/internal/services/dictionary"
 )
 
 type DictionaryRepo struct {
@@ -175,7 +175,12 @@ func (r *DictionaryRepo) DeleteWordByText(ctx context.Context, w *entity.DictWor
 
 func (r *DictionaryRepo) GetRandomWord(ctx context.Context, langCode string) (entity.DictWord, error) {
 	table := getTable(langCode)
-	query := fmt.Sprintf(`SELECT text, pronunciation, lang_code FROM "%s" WHERE moderator IS NOT NULL ORDER BY RANDOM() LIMIT 1;`, table)
+	query := fmt.Sprintf(`
+		SELECT text, pronunciation, lang_code 
+		FROM "%s" 
+		WHERE moderator IS NOT NULL 
+		ORDER BY RANDOM() 
+		LIMIT 1;`, table)
 	word := entity.DictWord{}
 	err := r.pgxPool.QueryRow(ctx, query).Scan(&word.Text, &word.Pronunciation, &word.LangCode)
 	if err != nil {
