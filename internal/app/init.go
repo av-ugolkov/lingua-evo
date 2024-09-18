@@ -74,7 +74,7 @@ func ServerStart(cfg *config.Config) {
 		}()
 	}
 
-	pgxPool, err := pg.NewDB(cfg.DbSQL)
+	pgxPool, err := pg.NewDB(cfg.DbSQL.PgxPoolConfig())
 	if err != nil {
 		slog.Error(fmt.Sprintf("can't create pg pool: %v", err))
 		return
