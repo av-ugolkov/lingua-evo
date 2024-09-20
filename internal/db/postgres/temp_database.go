@@ -2,22 +2,17 @@ package postgres
 
 import (
 	"context"
-	"fmt"
-	"log"
-	"log/slog"
 
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
-
-	//"github.com/testcontainers/testcontainers-go"
-	tc "github.com/testcontainers/testcontainers-go/modules/compose"
-	"github.com/testcontainers/testcontainers-go/modules/postgres"
-	//"github.com/testcontainers/testcontainers-go/wait"
+	// "github.com/testcontainers/testcontainers-go"
+	// "github.com/testcontainers/testcontainers-go/modules/postgres"
+	// "github.com/testcontainers/testcontainers-go/wait"
 )
 
 type TempPostgres struct {
-	container *postgres.PostgresContainer
-	pgxPool   *pgxpool.Pool
+	// container *postgres.PostgresContainer
+	pgxPool *pgxpool.Pool
 }
 
 func NewTempPostgres(ctx context.Context, dbName string) *TempPostgres {
@@ -26,22 +21,6 @@ func NewTempPostgres(ctx context.Context, dbName string) *TempPostgres {
 
 	// var err error
 	tempP := TempPostgres{}
-	dc, err := tc.NewDockerCompose("../../../../../deploy/docker-compose.db.yml")
-	err = dc.WithEnv(map[string]string{
-		"DB_NAME": dbName,
-		"BRANCH":  "test",
-	}).Up(ctx, tc.Wait(true))
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	defer func() {
-		err = dc.Down(ctx)
-		if err != nil {
-			log.Fatal(err)
-		}
-	}()
-
 	// tempP.container, err = postgres.Run(ctx,
 	// 	"docker.io/postgres:16.1-alpine3.19",
 	// 	postgres.WithDatabase(dbName),
@@ -73,9 +52,9 @@ func NewTempPostgres(ctx context.Context, dbName string) *TempPostgres {
 }
 
 func (t *TempPostgres) DropDB(ctx context.Context) {
-	if err := t.container.Terminate(ctx); err != nil {
-		slog.Error(fmt.Sprintf("failed to terminate container: %s", err))
-	}
+	// if err := t.container.Terminate(ctx); err != nil {
+	// 	slog.Error(fmt.Sprintf("failed to terminate container: %s", err))
+	// }
 }
 
 func (t *TempPostgres) Exec(ctx context.Context, query string, args ...any) (pgconn.CommandTag, error) {
