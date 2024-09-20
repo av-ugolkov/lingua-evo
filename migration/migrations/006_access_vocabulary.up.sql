@@ -1,4 +1,3 @@
--- +goose Up
 CREATE TABLE IF NOT EXISTS
     "access" ("id" BIGINT PRIMARY KEY, "type" VARCHAR(25) NOT NULL UNIQUE, "name" VARCHAR(25) NOT NULL UNIQUE);
 
@@ -7,7 +6,8 @@ INSERT INTO
 VALUES
     (0, 'private', 'Private'),
     (1, 'subscribers', 'Subscribers'),
-    (2, 'public', 'Public');
+    (2, 'public', 'Public') ON CONFLICT
+DO NOTHING;
 
 ALTER TABLE IF EXISTS "vocabulary"
 ADD COLUMN IF NOT EXISTS "access" BIGINT NOT NULL DEFAULT 2 CONSTRAINT "vocabulary_access_fkey" REFERENCES "access" ("id") ON DELETE CASCADE;
@@ -23,13 +23,3 @@ CREATE UNIQUE INDEX IF NOT EXISTS "idx_unique_vocabulary_users_access__vocab_id_
 
 ALTER TABLE IF EXISTS "vocabulary"
 ADD COLUMN IF NOT EXISTS "description" VARCHAR(255) NOT NULL DEFAULT '';
-
--- +goose Down
-DROP TABLE IF EXISTS "access";
-
-ALTER TABLE IF EXISTS "vocabulary"
-DROP COLUMN IF EXISTS "access";
-
-DROP TABLE IF EXISTS "vocabulary_users_access";
-
-DROP INDEX IF EXISTS "idx_unique_vocabulary_users_access__vocab_id_subscriber_id";
