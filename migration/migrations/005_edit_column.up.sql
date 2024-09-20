@@ -37,7 +37,8 @@ INSERT INTO
 SELECT
     "id"
 FROM
-    "users";
+    "users" ON CONFLICT
+DO NOTHING;
 
 CREATE TABLE IF NOT EXISTS
     "subscribers" (
