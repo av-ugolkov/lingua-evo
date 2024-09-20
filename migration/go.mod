@@ -3,7 +3,7 @@ module migration
 go 1.22.0
 
 require (
-	github.com/golang-migrate/migrate/v4 v4.18.1
+	github.com/golang-migrate/migrate/v4 v4.18.0
 	github.com/jackc/pgx/v5 v5.5.5
 )
 
