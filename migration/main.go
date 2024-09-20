@@ -2,16 +2,17 @@ package main
 
 import (
 	"database/sql"
-	"embed"
+	"errors"
 	"flag"
 	"log"
 	"strings"
 	"time"
 
+	"github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/stdlib"
-	"github.com/pkg/errors"
-	"github.com/pressly/goose/v3"
 )
 
 const (
@@ -20,13 +21,10 @@ const (
 	downCmd   = "down"
 )
 
-//go:embed migrations/*.sql
-var embedMigrations embed.FS
-
 func main() {
 	log.Printf("migration start")
 
-	cmd := flag.String("cmd", "status", "goose command")
+	cmd := flag.String("cmd", "status", "migration command")
 	connString := flag.String("url", "", "connection postgres URL")
 	flag.Parse()
 
@@ -34,32 +32,33 @@ func main() {
 
 	connConfig, err := pgx.ParseConfig(*connString)
 	if err != nil {
-		log.Fatal(errors.WithMessage(err, "parse config"))
+		log.Fatal(err, "parse config")
 	}
 
 	connStr := stdlib.RegisterConnConfig(connConfig)
 	db, err := sql.Open("pgx", connStr)
 	if err != nil {
-		log.Fatal(errors.WithMessage(err, "open db"))
+		log.Fatal(err, "open db")
 	}
 
 	if err := retryPing(db, 3, 30*time.Second); err != nil {
-		log.Fatal(errors.WithMessage(err, "ping db"))
+		log.Fatal(err, "ping db")
 	}
 
-	goose.SetBaseFS(embedMigrations)
+	m, err := migrate.New("file://migrations", *connString)
+	if err != nil {
+		log.Fatal("can't create migrate instance", err)
+	}
 
 	log.Printf("migration start with command '%s' with connection string '%s'", *cmd, *connString)
 
 	switch {
-	case strings.EqualFold(*cmd, statusCmd):
-		err = goose.Status(db, "migrations")
 	case strings.EqualFold(*cmd, upCmd):
-		err = goose.Up(db, "migrations")
+		err = m.Up()
 	case strings.EqualFold(*cmd, downCmd):
-		err = goose.Down(db, "migrations")
+		err = m.Down()
 	default:
-		log.Fatal("cmd is not fit for 'goose'")
+		log.Fatal("cmd is not fit for 'migration'")
 	}
 	if err != nil {
 		log.Fatal(err)
