@@ -22,6 +22,10 @@ dev:
 database:
 	@echo ${shell ./deploy.sh database}
 
+.PHONY: database.down
+database.down:
+	@echo ${shell ./deploy.sh database_down}
+
 .PHONY: lint
 lint:
 	@go version
