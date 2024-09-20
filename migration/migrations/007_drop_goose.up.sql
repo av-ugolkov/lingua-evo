@@ -1,0 +1,1 @@
+DROP TABLE IF EXISTS "goose_db_version" CASCADE;
