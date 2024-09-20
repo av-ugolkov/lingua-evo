@@ -18,6 +18,15 @@ database() {
     )    
 }
 
+database_down() {
+    BRANCH="$(git rev-parse --abbrev-ref HEAD)"
+    echo $(
+        BRANCH=${BRANCH} \
+        CMD=down \
+        docker compose -p lingua-evo-dev -f deploy/docker-compose.dev.yml up redis postgres migration --build --force-recreate
+    )    
+}
+
 release() {
     clear
 

@@ -27,6 +27,10 @@ test_db:
 	DB_NAME=test \
     docker compose -p lingua-evo-test -f deploy/docker-compose.db.yml up --build --force-recreate
 
+.PHONY: database.down
+database.down:
+	@echo ${shell ./deploy.sh database_down}
+
 .PHONY: lint
 lint:
 	@go version
