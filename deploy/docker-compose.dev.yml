@@ -76,7 +76,7 @@ services:
     entrypoint:
       - '/bin/sh'
       - '-ecx'
-      - './migration -cmd up -url lingua:@postgres-base-dev:5432/pg-lingua-evo?sslmode=disable'
+      - './migration -cmd ${CMD:-up} -url lingua:@postgres-base-dev:5432/pg-lingua-evo?sslmode=disable'
 
 networks:
   lingua-dev:
