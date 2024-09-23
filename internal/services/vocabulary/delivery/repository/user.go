@@ -28,7 +28,7 @@ func (r *VocabRepo) GetVocabulariesByUser(ctx context.Context, userID uuid.UUID)
 	LEFT JOIN "tag" tg ON tg.id = ANY(v.tags)
 	WHERE user_id=$1
 	GROUP BY v.id;`
-	rows, err := r.pgxPool.Query(ctx, query, userID)
+	rows, err := r.tr.Query(ctx, query, userID)
 	if err != nil {
 		return nil, err
 	}

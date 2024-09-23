@@ -4,23 +4,23 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/av-ugolkov/lingua-evo/internal/db/transactor"
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/access"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type AccessRepo struct {
-	pgxPool *pgxpool.Pool
+	tr *transactor.Transactor
 }
 
-func NewRepo(pgxPool *pgxpool.Pool) *AccessRepo {
+func NewRepo(tr *transactor.Transactor) *AccessRepo {
 	return &AccessRepo{
-		pgxPool: pgxPool,
+		tr: tr,
 	}
 }
 
 func (r *AccessRepo) GetAccesses(ctx context.Context) ([]entity.Access, error) {
 	query := `SELECT id, type, name FROM access`
-	rows, err := r.pgxPool.Query(ctx, query)
+	rows, err := r.tr.Query(ctx, query)
 	if err != nil {
 		return nil, fmt.Errorf("access.delivery.repository.AccessRepo.GetAccesses: %w", err)
 	}

@@ -2,21 +2,24 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	entityUser "github.com/av-ugolkov/lingua-evo/internal/services/user"
-	"github.com/av-ugolkov/lingua-evo/internal/services/user/delivery/repository"
-	"github.com/av-ugolkov/lingua-evo/runtime"
 	"testing"
 	"time"
 
 	"github.com/av-ugolkov/lingua-evo/internal/db/postgres"
 	"github.com/av-ugolkov/lingua-evo/internal/db/transactor"
+	entityUser "github.com/av-ugolkov/lingua-evo/internal/services/user"
+	"github.com/av-ugolkov/lingua-evo/internal/services/user/delivery/repository"
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary"
+	"github.com/av-ugolkov/lingua-evo/runtime"
 	"github.com/av-ugolkov/lingua-evo/runtime/access"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 )
+
+var errCancelTx = errors.New("transaction canceled")
 
 func TestGetVocabulariesWithMaxWords(t *testing.T) {
 	ctx := context.Background()
@@ -28,12 +31,12 @@ func TestGetVocabulariesWithMaxWords(t *testing.T) {
 		t.Fatal("can't init container for DB")
 	}
 
-	repo := NewRepo(tp.PgxPool)
-	userRepo := repository.NewRepo(tp.PgxPool)
 	tr := transactor.NewTransactor(tp.PgxPool)
+	repo := NewRepo(tr)
+	userRepo := repository.NewRepo(tr)
 
 	t.Run("empty vocabularies", func(t *testing.T) {
-		vocabs, err := repo.GetVocabulariesWithMaxWords(ctx, 3, []uint8{1, 2})
+		vocabs, err := repo.GetVocabulariesWithMaxWords(ctx, 3, []uint8{uint8(access.Public), uint8(access.Subscribers)})
 		if err != nil {
 			assert.Error(t, err)
 		}
@@ -70,17 +73,17 @@ func TestGetVocabulariesWithMaxWords(t *testing.T) {
 				}
 			}
 
-			vocabs, err := repo.GetVocabulariesWithMaxWords(ctx, 3, []uint8{1, 2})
+			vocabs, err := repo.GetVocabulariesWithMaxWords(ctx, 3, []uint8{uint8(access.Public), uint8(access.Subscribers)})
 			if err != nil {
 				return err
 			}
 
 			assert.Equal(t, 0, len(vocabs))
 
-			return nil
+			return errCancelTx
 		})
 
-		assert.NoError(t, err)
+		assert.ErrorIs(t, err, errCancelTx)
 	})
 	t.Run("get vocabularies with max count words", func(t *testing.T) {
 		err := tr.CreateTransaction(ctx, func(ctx context.Context) error {
@@ -126,7 +129,7 @@ func TestGetVocabulariesWithMaxWords(t *testing.T) {
 				}
 			}
 
-			vocabs, err := repo.GetVocabulariesWithMaxWords(ctx, 3, []uint8{1, 2})
+			vocabs, err := repo.GetVocabulariesWithMaxWords(ctx, 3, []uint8{uint8(access.Public), uint8(access.Subscribers)})
 			if err != nil {
 				return err
 			}
@@ -136,9 +139,51 @@ func TestGetVocabulariesWithMaxWords(t *testing.T) {
 			assert.Equal(t, uint(9), vocabs[1].WordsCount)
 			assert.Equal(t, uint(8), vocabs[2].WordsCount)
 
-			return nil
+			return errCancelTx
 		})
 
-		assert.NoError(t, err)
+		assert.ErrorIs(t, err, errCancelTx)
 	})
+}
+
+func TestGetVocabsWithCountWords(t *testing.T) {
+	ctx := context.Background()
+
+	tp := postgres.NewTempPostgres(ctx, "../../../../..")
+	defer tp.DropDB(ctx)
+
+	if tp == nil {
+		t.Fatal("can't init container for DB")
+	}
+
+	tr := transactor.NewTransactor(tp.PgxPool)
+	repo := NewRepo(tr)
+	userRepo := repository.NewRepo(tr)
+
+	uid, err := userRepo.AddUser(ctx, &entityUser.User{
+		ID:           uuid.New(),
+		Name:         "test_user",
+		Email:        "test_user@email.com",
+		Role:         runtime.User,
+		PasswordHash: "qwerty",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Run("empty vocabularies", func(t *testing.T) {
+		vocabs, err := repo.GetVocabsWithCountWords(ctx, uid, []uint8{uint8(access.Public), uint8(access.Subscribers)})
+		if err != nil {
+			assert.Error(t, err)
+		}
+		assert.Equal(t, 0, len(vocabs))
+	})
+	//t.Run("user without vocabs", func(t *testing.T) {
+	//	vocabs, err := repo.GetVocabsWithCountWords(ctx, uid, []uint8{uint8(access.Public), uint8(access.Subscribers)})
+	//	if err != nil {
+	//		t.Fatal(err)
+	//	}
+	//
+	//	assert.Equal(t, 3, len(vocabs))
+	//})
 }

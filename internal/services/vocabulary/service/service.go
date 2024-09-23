@@ -228,7 +228,7 @@ func (s *Service) GetRecommendedVocabularies(ctx context.Context, uid uuid.UUID)
 		return vocabs, nil
 	}
 
-	vocabs, err := s.repoVocab.GetVocabsWithCountWords(ctx, uid, []uint8{1, 2, 3})
+	vocabs, err := s.repoVocab.GetVocabsWithCountWords(ctx, uid, []uint8{uint8(access.Public), uint8(access.Subscribers)})
 	if err != nil {
 		return nil, fmt.Errorf("vocabulary.Service.GetRecommendedVocabularies: %w", err)
 	}
