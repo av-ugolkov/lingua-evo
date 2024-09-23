@@ -16,20 +16,20 @@ import (
 
 type (
 	repoVocab interface {
-		AddVocab(ctx context.Context, vocab entity.Vocabulary, tagIDs []uuid.UUID) (uuid.UUID, error)
-		DeleteVocab(ctx context.Context, vocab entity.Vocabulary) error
-		GetVocab(ctx context.Context, vid uuid.UUID) (entity.Vocabulary, error)
-		GetByName(ctx context.Context, uid uuid.UUID, name string) (entity.Vocabulary, error)
+		AddVocab(ctx context.Context, vocab entity.Vocab, tagIDs []uuid.UUID) (uuid.UUID, error)
+		DeleteVocab(ctx context.Context, vocab entity.Vocab) error
+		GetVocab(ctx context.Context, vid uuid.UUID) (entity.Vocab, error)
+		GetByName(ctx context.Context, uid uuid.UUID, name string) (entity.Vocab, error)
 		GetTagsVocabulary(ctx context.Context, vid uuid.UUID) ([]string, error)
-		EditVocab(ctx context.Context, vocab entity.Vocabulary) error
-		GetVocabulariesByAccess(ctx context.Context, uid uuid.UUID, access []access.Type, page, itemsPerPage, typeSort, order int, search, nativeLang, translateLang string) ([]entity.VocabularyWithUser, error)
+		EditVocab(ctx context.Context, vocab entity.Vocab) error
+		GetVocabulariesByAccess(ctx context.Context, uid uuid.UUID, access []access.Type, page, itemsPerPage, typeSort, order int, search, nativeLang, translateLang string) ([]entity.VocabWithUser, error)
 		GetVocabulariesCountByAccess(ctx context.Context, uid uuid.UUID, access []access.Type, search, nativeLang, translateLang string) (int, error)
 		GetAccess(ctx context.Context, vid uuid.UUID) (uint8, error)
 		GetCreatorVocab(ctx context.Context, vid uuid.UUID) (uuid.UUID, error)
 		CopyVocab(ctx context.Context, uid, vid uuid.UUID) (uuid.UUID, error)
-		GetVocabsWithCountWords(ctx context.Context, uid uuid.UUID, access []uint8) ([]entity.VocabularyWithUser, error)
-		GetWithCountWords(ctx context.Context, vid uuid.UUID) (entity.VocabularyWithUser, error)
-		GetVocabulariesWithMaxWords(ctx context.Context, limit int, access []uint8) ([]entity.VocabularyWithUser, error)
+		GetVocabsWithCountWords(ctx context.Context, uid uuid.UUID, access []uint8) ([]entity.VocabWithUser, error)
+		GetWithCountWords(ctx context.Context, vid uuid.UUID) (entity.VocabWithUser, error)
+		GetVocabulariesWithMaxWords(ctx context.Context, limit int, access []uint8) ([]entity.VocabWithUser, error)
 
 		repoVocabUser
 		repoWord
@@ -75,14 +75,14 @@ func NewService(
 	}
 }
 
-func (s *Service) GetVocabularies(ctx context.Context, uid uuid.UUID, page, itemsPerPage, typeSort, order int, search, nativeLang, translateLang string) ([]entity.VocabularyWithUser, int, error) {
+func (s *Service) GetVocabularies(ctx context.Context, uid uuid.UUID, page, itemsPerPage, typeSort, order int, search, nativeLang, translateLang string) ([]entity.VocabWithUser, int, error) {
 	countItems, err := s.repoVocab.GetVocabulariesCountByAccess(ctx, uid, []access.Type{access.Subscribers, access.Public}, search, nativeLang, translateLang)
 	if err != nil {
 		return nil, 0, fmt.Errorf("vocabulary.Service.GetVocabularies: %w", err)
 	}
 
 	if countItems == 0 {
-		return []entity.VocabularyWithUser{}, 0, nil
+		return []entity.VocabWithUser{}, 0, nil
 	}
 
 	vocabularies, err := s.repoVocab.GetVocabulariesByAccess(ctx, uid, []access.Type{access.Subscribers, access.Public}, page, itemsPerPage, typeSort, order, search, nativeLang, translateLang)
@@ -93,26 +93,26 @@ func (s *Service) GetVocabularies(ctx context.Context, uid uuid.UUID, page, item
 	return vocabularies, countItems, nil
 }
 
-func (s *Service) GetVocabulary(ctx context.Context, uid, vid uuid.UUID) (entity.Vocabulary, error) {
+func (s *Service) GetVocabulary(ctx context.Context, uid, vid uuid.UUID) (entity.Vocab, error) {
 	accessStatus, err := s.GetAccessForUser(ctx, uid, vid)
 	if err != nil {
-		return entity.Vocabulary{}, handler.NewError(fmt.Errorf("vocabulary.Service.GetVocabulary - %w: %w", entity.ErrAccessDenied, err),
+		return entity.Vocab{}, handler.NewError(fmt.Errorf("vocabulary.Service.GetVocabulary - %w: %w", entity.ErrAccessDenied, err),
 			http.StatusForbidden, handler.ErrForbidden)
 	}
 
 	if accessStatus == access.Forbidden {
-		return entity.Vocabulary{}, handler.NewError(fmt.Errorf("vocabulary.Service.GetVocabulary - %w", entity.ErrAccessDenied),
+		return entity.Vocab{}, handler.NewError(fmt.Errorf("vocabulary.Service.GetVocabulary - %w", entity.ErrAccessDenied),
 			http.StatusForbidden, handler.ErrForbidden)
 	}
 
 	vocab, err := s.repoVocab.GetVocab(ctx, vid)
 	if err != nil {
-		return entity.Vocabulary{}, fmt.Errorf("vocabulary.Service.GetVocabulary: %w", err)
+		return entity.Vocab{}, fmt.Errorf("vocabulary.Service.GetVocabulary: %w", err)
 	}
 
 	tags, err := s.repoVocab.GetTagsVocabulary(ctx, vocab.ID)
 	if err != nil {
-		return entity.Vocabulary{}, fmt.Errorf("vocabulary.Service.GetVocabulary: %w", err)
+		return entity.Vocab{}, fmt.Errorf("vocabulary.Service.GetVocabulary: %w", err)
 	}
 	for _, tag := range tags {
 		vocab.Tags = append(vocab.Tags, entityTag.Tag{Text: tag})
@@ -196,7 +196,7 @@ func (s *Service) CopyVocab(ctx context.Context, uid, vid uuid.UUID) error {
 	return nil
 }
 
-func (s *Service) GetVocabulariesByUser(ctx context.Context, uid uuid.UUID, access []access.Type) ([]entity.VocabularyWithUser, error) {
+func (s *Service) GetVocabulariesByUser(ctx context.Context, uid uuid.UUID, access []access.Type) ([]entity.VocabWithUser, error) {
 	accessIDs := make([]uint8, len(access))
 	for i, v := range access {
 		accessIDs[i] = uint8(v)
@@ -210,16 +210,16 @@ func (s *Service) GetVocabulariesByUser(ctx context.Context, uid uuid.UUID, acce
 	return vocabs, nil
 }
 
-func (s *Service) GetVocabularyInfo(ctx context.Context, uid, vid uuid.UUID) (entity.VocabularyWithUser, error) {
+func (s *Service) GetVocabularyInfo(ctx context.Context, uid, vid uuid.UUID) (entity.VocabWithUser, error) {
 	vocab, err := s.repoVocab.GetWithCountWords(ctx, vid)
 	if err != nil {
-		return entity.VocabularyWithUser{}, fmt.Errorf("vocabulary.Service.GetVocabularyInfo: %w", err)
+		return entity.VocabWithUser{}, fmt.Errorf("vocabulary.Service.GetVocabularyInfo: %w", err)
 	}
 
 	return vocab, nil
 }
 
-func (s *Service) GetRecommendedVocabularies(ctx context.Context, uid uuid.UUID) ([]entity.VocabularyWithUser, error) {
+func (s *Service) GetRecommendedVocabularies(ctx context.Context, uid uuid.UUID) ([]entity.VocabWithUser, error) {
 	if uid == uuid.Nil {
 		vocabs, err := s.repoVocab.GetVocabulariesWithMaxWords(ctx, 3, []uint8{uint8(access.Public), uint8(access.Subscribers)})
 		if err != nil {
