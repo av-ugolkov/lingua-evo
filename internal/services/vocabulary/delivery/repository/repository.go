@@ -25,7 +25,7 @@ func NewRepo(pgxPool *pgxpool.Pool) *VocabRepo {
 	}
 }
 
-func (r *VocabRepo) AddVocab(ctx context.Context, vocab entity.Vocabulary, tagIDs []uuid.UUID) (uuid.UUID, error) {
+func (r *VocabRepo) AddVocab(ctx context.Context, vocab entity.Vocab, tagIDs []uuid.UUID) (uuid.UUID, error) {
 	query := `
 	INSERT INTO vocabulary (
 		id, 
@@ -49,7 +49,7 @@ func (r *VocabRepo) AddVocab(ctx context.Context, vocab entity.Vocabulary, tagID
 	return vid, nil
 }
 
-func (r *VocabRepo) DeleteVocab(ctx context.Context, vocab entity.Vocabulary) error {
+func (r *VocabRepo) DeleteVocab(ctx context.Context, vocab entity.Vocab) error {
 	query := `DELETE FROM vocabulary WHERE user_id=$1 AND name=$2;`
 	result, err := r.pgxPool.Exec(ctx, query, vocab.UserID, vocab.Name)
 	if err != nil {
@@ -62,7 +62,7 @@ func (r *VocabRepo) DeleteVocab(ctx context.Context, vocab entity.Vocabulary) er
 	return nil
 }
 
-func (r *VocabRepo) GetVocab(ctx context.Context, vid uuid.UUID) (entity.Vocabulary, error) {
+func (r *VocabRepo) GetVocab(ctx context.Context, vid uuid.UUID) (entity.Vocab, error) {
 	query := `
 	SELECT 
 		id, 
@@ -77,7 +77,7 @@ func (r *VocabRepo) GetVocab(ctx context.Context, vid uuid.UUID) (entity.Vocabul
 		updated_at
 	FROM vocabulary v
 	WHERE id=$1;`
-	var vocab entity.Vocabulary
+	var vocab entity.Vocab
 	var tags []uuid.UUID
 	err := r.pgxPool.QueryRow(ctx, query, vid).Scan(
 		&vocab.ID,
@@ -115,12 +115,12 @@ func (r *VocabRepo) GetCreatorVocab(ctx context.Context, vocabID uuid.UUID) (uui
 	return userID, nil
 }
 
-func (r *VocabRepo) GetByName(ctx context.Context, userID uuid.UUID, name string) (entity.Vocabulary, error) {
+func (r *VocabRepo) GetByName(ctx context.Context, userID uuid.UUID, name string) (entity.Vocab, error) {
 	query := `
 	SELECT id, user_id, name, native_lang, translate_lang, description 
 	FROM vocabulary v
 	WHERE user_id=$1 AND name=$2;`
-	var vocab entity.Vocabulary
+	var vocab entity.Vocab
 	err := r.pgxPool.QueryRow(ctx, query, userID, name).Scan(&vocab.ID, &vocab.UserID, &vocab.Name, &vocab.NativeLang, &vocab.TranslateLang, &vocab.Description)
 	if err != nil {
 		return vocab, fmt.Errorf("vocabulary.delivery.repository.VocabRepo.GetByName: %w", err)
@@ -165,7 +165,7 @@ func (r *VocabRepo) GetCountVocabularies(ctx context.Context, userID uuid.UUID) 
 	return countVocabularies, nil
 }
 
-func (r *VocabRepo) EditVocab(ctx context.Context, vocab entity.Vocabulary) error {
+func (r *VocabRepo) EditVocab(ctx context.Context, vocab entity.Vocab) error {
 	query := `UPDATE vocabulary SET name=$2, access=$3, description=$4 WHERE id=$1;`
 	result, err := r.pgxPool.Exec(ctx, query, vocab.ID, vocab.Name, vocab.Access, vocab.Description)
 	if err != nil {
@@ -193,7 +193,7 @@ func (r *VocabRepo) GetVocabulariesCountByAccess(ctx context.Context, uid uuid.U
 	return countLine, nil
 }
 
-func (r *VocabRepo) GetVocabulariesByAccess(ctx context.Context, uid uuid.UUID, accessTypes []access.Type, page, itemsPerPage, typeSort, order int, search, nativeLang, translateLang string) ([]entity.VocabularyWithUser, error) {
+func (r *VocabRepo) GetVocabulariesByAccess(ctx context.Context, uid uuid.UUID, accessTypes []access.Type, page, itemsPerPage, typeSort, order int, search, nativeLang, translateLang string) ([]entity.VocabWithUser, error) {
 	query := fmt.Sprintf(`
 	SELECT 
 		v.id,
@@ -224,9 +224,9 @@ func (r *VocabRepo) GetVocabulariesByAccess(ctx context.Context, uid uuid.UUID, 
 	}
 	defer rows.Close()
 
-	var vocabularies []entity.VocabularyWithUser
+	var vocabularies []entity.VocabWithUser
+	var vocab entity.VocabWithUser
 	for rows.Next() {
-		var vocab entity.VocabularyWithUser
 		var sqlTags []sql.NullString
 		err := rows.Scan(
 			&vocab.ID,
@@ -286,7 +286,7 @@ func (r *VocabRepo) CopyVocab(ctx context.Context, uid, vid uuid.UUID) (uuid.UUI
 	return vid, nil
 }
 
-func (r *VocabRepo) GetVocabsWithCountWords(ctx context.Context, uid uuid.UUID, access []uint8) ([]entity.VocabularyWithUser, error) {
+func (r *VocabRepo) GetVocabsWithCountWords(ctx context.Context, uid uuid.UUID, access []uint8) ([]entity.VocabWithUser, error) {
 	query := `
 		SELECT v.id, name, native_lang, translate_lang, access, count(w.id) FROM vocabulary v
 		LEFT JOIN word w ON w.vocabulary_id = v.id
@@ -298,8 +298,8 @@ func (r *VocabRepo) GetVocabsWithCountWords(ctx context.Context, uid uuid.UUID, 
 		return nil, fmt.Errorf("vocabulary.delivery.repository.VocabRepo.GetWithCountWords: %w", err)
 	}
 
-	vocabs := make([]entity.VocabularyWithUser, 0, 10)
-	var vocab entity.VocabularyWithUser
+	vocabs := make([]entity.VocabWithUser, 0, 10)
+	var vocab entity.VocabWithUser
 	for rows.Next() {
 		err := rows.Scan(&vocab.ID, &vocab.Name, &vocab.NativeLang, &vocab.TranslateLang, &vocab.Access, &vocab.WordsCount)
 		if err != nil {
@@ -311,7 +311,7 @@ func (r *VocabRepo) GetVocabsWithCountWords(ctx context.Context, uid uuid.UUID, 
 	return vocabs, nil
 }
 
-func (r *VocabRepo) GetWithCountWords(ctx context.Context, vid uuid.UUID) (entity.VocabularyWithUser, error) {
+func (r *VocabRepo) GetWithCountWords(ctx context.Context, vid uuid.UUID) (entity.VocabWithUser, error) {
 	query := `
 		SELECT 
 			v.id, 
@@ -331,7 +331,7 @@ func (r *VocabRepo) GetWithCountWords(ctx context.Context, vid uuid.UUID) (entit
 		WHERE v.id = $1
 		GROUP BY v.id, u."name";`
 
-	var vocab entity.VocabularyWithUser
+	var vocab entity.VocabWithUser
 	err := r.pgxPool.QueryRow(ctx, query, vid).Scan(
 		&vocab.ID,
 		&vocab.Name,
@@ -346,13 +346,13 @@ func (r *VocabRepo) GetWithCountWords(ctx context.Context, vid uuid.UUID) (entit
 		&vocab.UserName,
 	)
 	if err != nil {
-		return entity.VocabularyWithUser{}, fmt.Errorf("vocabulary.delivery.repository.VocabRepo.GetWithCountWords: %w", err)
+		return entity.VocabWithUser{}, fmt.Errorf("vocabulary.delivery.repository.VocabRepo.GetWithCountWords: %w", err)
 	}
 
 	return vocab, nil
 }
 
-func (r *VocabRepo) GetVocabulariesWithMaxWords(ctx context.Context, limit int, access []uint8) ([]entity.VocabularyWithUser, error) {
+func (r *VocabRepo) GetVocabulariesWithMaxWords(ctx context.Context, limit int, access []uint8) ([]entity.VocabWithUser, error) {
 	const query = `
 		SELECT 
 			v.id,
@@ -376,8 +376,8 @@ func (r *VocabRepo) GetVocabulariesWithMaxWords(ctx context.Context, limit int, 
 		return nil, fmt.Errorf("vocabulary.delivery.repository.VocabRepo.GetVocabulariesRandom: %w", err)
 	}
 
-	vocabs := make([]entity.VocabularyWithUser, 0, limit)
-	var vocab entity.VocabularyWithUser
+	vocabs := make([]entity.VocabWithUser, 0, limit)
+	var vocab entity.VocabWithUser
 	for rows.Next() {
 		err := rows.Scan(
 			&vocab.ID,
@@ -398,7 +398,7 @@ func (r *VocabRepo) GetVocabulariesWithMaxWords(ctx context.Context, limit int, 
 	return vocabs, nil
 }
 
-func (r *VocabRepo) GetVocabulariesRecommended(ctx context.Context, uid uuid.UUID) ([]entity.VocabularyWithUser, error) {
+func (r *VocabRepo) GetVocabulariesRecommended(ctx context.Context, uid uuid.UUID) ([]entity.VocabWithUser, error) {
 	const query = `
 		SELECT 
 			v.id,
