@@ -6,6 +6,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"log/slog"
 	"path"
+	"sync"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -19,15 +20,29 @@ type TempPostgres struct {
 	PgxPool   *pgxpool.Pool
 }
 
+var (
+	Instance *TempPostgres
+	mx       sync.Mutex
+	wg       sync.WaitGroup
+)
+
 func NewTempPostgres(ctx context.Context, root string) *TempPostgres {
+	mx.Lock()
+	defer mx.Unlock()
+	wg.Add(1)
+
 	var err error
-	tempP := TempPostgres{}
-	tempP.container, err = postgres.Run(ctx,
+	if Instance != nil {
+		return Instance
+	}
+
+	Instance = &TempPostgres{}
+	Instance.container, err = postgres.Run(ctx,
 		"docker.io/postgres:16.1-alpine3.19",
 		postgres.WithInitScripts(
 			path.Join(root, "migration/migrations/001_create_tables.up.sql"),
 			path.Join(root, "migration/migrations/002_add_data.up.sql"),
-			path.Join(root, "migration/migrations/003_insert_dictionary_words.up.sql"),
+			//path.Join(root, "migration/migrations/003_insert_dictionary_words.up.sql"),
 			path.Join(root, "migration/migrations/004_unique_index.up.sql"),
 			path.Join(root, "migration/migrations/005_edit_column.up.sql"),
 			path.Join(root, "migration/migrations/006_access_vocabulary.up.sql"),
@@ -45,25 +60,33 @@ func NewTempPostgres(ctx context.Context, root string) *TempPostgres {
 		return nil
 	}
 
-	connStr, err := tempP.container.ConnectionString(ctx, "sslmode=disable")
+	connStr, err := Instance.container.ConnectionString(ctx, "sslmode=disable")
 	if err != nil {
 		slog.Error(fmt.Sprintf("failed to get connection string: %s", err))
 		return nil
 	}
 
-	tempP.PgxPool, err = pgxpool.New(ctx, connStr)
+	Instance.PgxPool, err = pgxpool.New(ctx, connStr)
 	if err != nil {
 		slog.Error(fmt.Sprintf("failed to create pgxpool: %s", err))
 		return nil
 	}
 
-	return &tempP
+	return Instance
 }
 
 func (t *TempPostgres) DropDB(ctx context.Context) {
-	if err := t.container.Terminate(ctx); err != nil {
-		slog.Error(fmt.Sprintf("failed to terminate container: %s", err))
-	}
+	go func() {
+		wg.Done()
+		time.Sleep(1 * time.Second)
+
+		wg.Wait()
+		if err := t.container.Terminate(ctx); err != nil {
+			slog.Error(fmt.Sprintf("failed to terminate container: %s", err))
+		}
+
+		Instance = nil
+	}()
 }
 
 func (t *TempPostgres) Query(ctx context.Context, query string, args ...any) (pgx.Rows, error) {
