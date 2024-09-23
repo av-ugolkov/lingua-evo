@@ -11,7 +11,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func (r *VocabRepo) GetVocabulariesByUser(ctx context.Context, userID uuid.UUID) ([]entity.Vocabulary, error) {
+func (r *VocabRepo) GetVocabulariesByUser(ctx context.Context, userID uuid.UUID) ([]entity.Vocab, error) {
 	query := `
 	SELECT 
 		v.id,
@@ -34,9 +34,9 @@ func (r *VocabRepo) GetVocabulariesByUser(ctx context.Context, userID uuid.UUID)
 	}
 	defer rows.Close()
 
-	var vocabularies []entity.Vocabulary
+	var vocabularies []entity.Vocab
+	var vocab entity.Vocab
 	for rows.Next() {
-		var vocab entity.Vocabulary
 		var sqlTags []sql.NullString
 		err := rows.Scan(
 			&vocab.ID,
