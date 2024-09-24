@@ -21,7 +21,7 @@ type (
 		GetUserByName(ctx context.Context, name string) (*User, error)
 		GetUserByEmail(ctx context.Context, email string) (*User, error)
 		GetUserByToken(ctx context.Context, token uuid.UUID) (*User, error)
-		RemoveUser(ctx context.Context, u *User) error
+		RemoveUser(ctx context.Context, u uuid.UUID) error
 		GetUserData(ctx context.Context, uid uuid.UUID) (*Data, error)
 		GetUserSubscriptions(ctx context.Context, uid uuid.UUID) ([]Subscriptions, error)
 		GetUsers(ctx context.Context, page, perPage, sort, order int, search string) ([]UserData, int, error)

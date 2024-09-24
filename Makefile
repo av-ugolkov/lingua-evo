@@ -22,6 +22,11 @@ dev:
 database:
 	@echo ${shell ./deploy.sh database}
 
+.PHONY: test_db
+test_db:
+	DB_NAME=test \
+    docker compose -p lingua-evo-test -f deploy/docker-compose.db.yml up --build --force-recreate
+
 .PHONY: database.down
 database.down:
 	@echo ${shell ./deploy.sh database_down}
@@ -34,7 +39,7 @@ lint:
 
 .PHONY: test
 test: 
-	go test ./... -count=1
+	go test ./... -count=1 -cover
 
 .PHONY: count line
 count line:

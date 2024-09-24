@@ -5,20 +5,20 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/av-ugolkov/lingua-evo/internal/db/transactor"
 	sorted "github.com/av-ugolkov/lingua-evo/internal/pkg/utils"
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/user"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type UserRepo struct {
-	pgxPool *pgxpool.Pool
+	tr *transactor.Transactor
 }
 
-func NewRepo(pgxPool *pgxpool.Pool) *UserRepo {
+func NewRepo(tr *transactor.Transactor) *UserRepo {
 	return &UserRepo{
-		pgxPool: pgxPool,
+		tr: tr,
 	}
 }
 
@@ -26,7 +26,7 @@ func (r *UserRepo) AddUser(ctx context.Context, u *entity.User) (uuid.UUID, erro
 	query := `INSERT INTO users (id, name, email, password_hash, role, last_visit_at, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7) ON CONFLICT DO NOTHING RETURNING id`
 
 	var uid uuid.UUID
-	err := r.pgxPool.QueryRow(ctx, query, u.ID, u.Name, u.Email, u.PasswordHash, u.Role, u.LastVisitAt, u.CreatedAt).Scan(&uid)
+	err := r.tr.QueryRow(ctx, query, u.ID, u.Name, u.Email, u.PasswordHash, u.Role, u.LastVisitAt, u.CreatedAt).Scan(&uid)
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("user.repository.UserRepo.AddUser: %w", err)
 	}
@@ -41,7 +41,7 @@ func (r *UserRepo) EditUser(ctx context.Context, u *entity.User) error {
 func (r *UserRepo) GetUserByID(ctx context.Context, uid uuid.UUID) (*entity.User, error) {
 	query := `SELECT id, name, email, password_hash, role, last_visit_at, created_at FROM users where id=$1`
 	var u entity.User
-	err := r.pgxPool.QueryRow(ctx, query, uid).Scan(&u.ID, &u.Name, &u.Email, &u.PasswordHash, &u.Role, &u.LastVisitAt, &u.CreatedAt)
+	err := r.tr.QueryRow(ctx, query, uid).Scan(&u.ID, &u.Name, &u.Email, &u.PasswordHash, &u.Role, &u.LastVisitAt, &u.CreatedAt)
 	if err != nil {
 		return nil, fmt.Errorf("user.repository.UserRepo.GetUserByID: %w", err)
 	}
@@ -53,7 +53,7 @@ func (r *UserRepo) GetUserByName(ctx context.Context, name string) (*entity.User
 
 	var u entity.User
 
-	err := r.pgxPool.QueryRow(ctx, query, name).Scan(&u.ID, &u.Name, &u.Email, &u.PasswordHash, &u.Role, &u.LastVisitAt, &u.CreatedAt)
+	err := r.tr.QueryRow(ctx, query, name).Scan(&u.ID, &u.Name, &u.Email, &u.PasswordHash, &u.Role, &u.LastVisitAt, &u.CreatedAt)
 	if err != nil {
 		return nil, fmt.Errorf("user.repository.UserRepo.GetUserByName: %w", err)
 	}
@@ -66,7 +66,7 @@ func (r *UserRepo) GetUserByEmail(ctx context.Context, email string) (*entity.Us
 
 	var u entity.User
 
-	err := r.pgxPool.QueryRow(ctx, query, email).Scan(&u.ID, &u.Name, &u.Email, &u.PasswordHash, &u.Role, &u.LastVisitAt, &u.CreatedAt)
+	err := r.tr.QueryRow(ctx, query, email).Scan(&u.ID, &u.Name, &u.Email, &u.PasswordHash, &u.Role, &u.LastVisitAt, &u.CreatedAt)
 	if err != nil {
 		return nil, fmt.Errorf("user.repository.UserRepo.GetUserByEmail: %w", err)
 	}
@@ -80,7 +80,7 @@ func (r *UserRepo) GetUserByToken(ctx context.Context, token uuid.UUID) (*entity
 	query := `SELECT id, name, email, password_hash, role, last_visit_at, created_at FROM users where id = $1`
 
 	var u entity.User
-	err := r.pgxPool.QueryRow(ctx, query, token).Scan(&u.ID, &u.Name, &u.Email, &u.PasswordHash, &u.Role, &u.LastVisitAt, &u.CreatedAt)
+	err := r.tr.QueryRow(ctx, query, token).Scan(&u.ID, &u.Name, &u.Email, &u.PasswordHash, &u.Role, &u.LastVisitAt, &u.CreatedAt)
 	if err != nil {
 		return nil, fmt.Errorf("user.repository.UserRepo.GetUserByToken: %w", err)
 	}
@@ -88,7 +88,17 @@ func (r *UserRepo) GetUserByToken(ctx context.Context, token uuid.UUID) (*entity
 	return &u, nil
 }
 
-func (r *UserRepo) RemoveUser(ctx context.Context, u *entity.User) error {
+func (r *UserRepo) RemoveUser(ctx context.Context, uid uuid.UUID) error {
+	query := `DELETE FROM users WHERE id = $1`
+	result, err := r.tr.Exec(ctx, query, uid)
+	if err != nil {
+		return fmt.Errorf("user.repository.UserRepo.RemoveUser: %w", err)
+	}
+
+	if rows := result.RowsAffected(); rows == 0 {
+		return fmt.Errorf("user.repository.UserRepo.RemoveUser: change 0 or more than 1 rows")
+	}
+
 	return nil
 }
 
@@ -96,7 +106,7 @@ func (r *UserRepo) GetUserData(ctx context.Context, userID uuid.UUID) (*entity.D
 	const query = `SELECT max_count_words, newsletter FROM user_data WHERE user_id = $1`
 
 	var data entity.Data
-	err := r.pgxPool.QueryRow(ctx, query, userID).Scan(&data.MaxCountWords, &data.Newsletters)
+	err := r.tr.QueryRow(ctx, query, userID).Scan(&data.MaxCountWords, &data.Newsletters)
 	if err != nil {
 		return nil, fmt.Errorf("user.repository.UserRepo.GetUserData: %w", err)
 	}
@@ -111,7 +121,7 @@ func (r *UserRepo) GetUserSubscriptions(ctx context.Context, userID uuid.UUID) (
 	LEFT JOIN subscriptions s ON s.id = us.subscription_id
 	WHERE user_id = $1;`
 
-	rows, err := r.pgxPool.Query(ctx, query, userID)
+	rows, err := r.tr.Query(ctx, query, userID)
 	if err != nil {
 		return nil, fmt.Errorf("user.repository.UserRepo.GetUserSubscriptions: %w", err)
 	}
@@ -131,7 +141,7 @@ func (r *UserRepo) GetUserSubscriptions(ctx context.Context, userID uuid.UUID) (
 func (r *UserRepo) GetUsers(ctx context.Context, page, perPage, sort, order int, search string) ([]entity.UserData, int, error) {
 	const queryCountUsers = `SELECT COUNT(id) FROM users`
 	var countUser int
-	err := r.pgxPool.QueryRow(ctx, queryCountUsers).Scan(&countUser)
+	err := r.tr.QueryRow(ctx, queryCountUsers).Scan(&countUser)
 	if err != nil {
 		return nil, 0, fmt.Errorf("user.repository.UserRepo.GetUsers: %w", err)
 	}
@@ -144,7 +154,7 @@ func (r *UserRepo) GetUsers(ctx context.Context, page, perPage, sort, order int,
 	LIMIT $2
 	OFFSET $3;`, getSorted(sort, sorted.TypeOrder(order)))
 
-	rows, err := r.pgxPool.Query(ctx, query, search, perPage, (page-1)*perPage)
+	rows, err := r.tr.Query(ctx, query, search, perPage, (page-1)*perPage)
 	if err != nil {
 		return nil, 0, fmt.Errorf("user.repository.UserRepo.GetUsers: %w", err)
 	}
@@ -170,7 +180,7 @@ func (r *UserRepo) GetUsers(ctx context.Context, page, perPage, sort, order int,
 func (r *UserRepo) UpdateLastVisited(ctx context.Context, uid uuid.UUID) error {
 	const query = `UPDATE users SET last_visit_at = $2 WHERE id = $1`
 
-	_, err := r.pgxPool.Exec(ctx, query, uid, time.Now().UTC())
+	_, err := r.tr.Exec(ctx, query, uid, time.Now().UTC())
 	if err != nil {
 		return fmt.Errorf("user.repository.UserRepo.UpdateLastVisited: %w", err)
 	}
