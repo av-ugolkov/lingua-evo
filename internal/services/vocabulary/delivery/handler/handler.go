@@ -301,8 +301,6 @@ func (h *Handler) getVocabulariesByUser(c *gin.Context) {
 func (h *Handler) getVocabularyInfo(c *gin.Context) {
 	ctx := c.Request.Context()
 
-	uid, _ := runtime.UserIDFromContext(ctx)
-
 	vid, err := ginExt.GetQueryUUID(c, paramsID)
 	if err != nil {
 		ginExt.SendError(c, http.StatusInternalServerError,
@@ -310,7 +308,7 @@ func (h *Handler) getVocabularyInfo(c *gin.Context) {
 		return
 	}
 
-	vocab, err := h.vocabSvc.GetVocabularyInfo(ctx, uid, vid)
+	vocab, err := h.vocabSvc.GetVocabularyInfo(ctx, vid)
 	if err != nil {
 		ginExt.SendError(c, http.StatusInternalServerError, err)
 		return
@@ -373,7 +371,6 @@ func (h *Handler) copyVocabulary(c *gin.Context) {
 
 func (h *Handler) getRecommendedVocabularies(c *gin.Context) {
 	ctx := c.Request.Context()
-
 	uid, _ := runtime.UserIDFromContext(ctx)
 
 	vocabs, err := h.vocabSvc.GetRecommendedVocabularies(ctx, uid)
