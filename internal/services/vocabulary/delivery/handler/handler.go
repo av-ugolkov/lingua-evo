@@ -104,6 +104,7 @@ func (h *Handler) register(r *gin.Engine) {
 	r.GET(handler.VocabulariesByUser, middleware.OptionalAuth(h.getVocabulariesByUser))
 	r.GET(handler.VocabularyInfo, middleware.OptionalAuth(h.getVocabularyInfo))
 	r.POST(handler.VocabularyCopy, middleware.Auth(h.copyVocabulary))
+	r.GET(handler.VocabulariesRecommended, middleware.OptionalAuth(h.getRecommendedVocabularies))
 
 	r.GET(handler.VocabularyWord, middleware.Auth(h.getWord))
 	r.POST(handler.VocabularyWord, middleware.Auth(h.addWord))
@@ -300,8 +301,6 @@ func (h *Handler) getVocabulariesByUser(c *gin.Context) {
 func (h *Handler) getVocabularyInfo(c *gin.Context) {
 	ctx := c.Request.Context()
 
-	uid, _ := runtime.UserIDFromContext(ctx)
-
 	vid, err := ginExt.GetQueryUUID(c, paramsID)
 	if err != nil {
 		ginExt.SendError(c, http.StatusInternalServerError,
@@ -309,7 +308,7 @@ func (h *Handler) getVocabularyInfo(c *gin.Context) {
 		return
 	}
 
-	vocab, err := h.vocabSvc.GetVocabularyInfo(ctx, uid, vid)
+	vocab, err := h.vocabSvc.GetVocabularyInfo(ctx, vid)
 	if err != nil {
 		ginExt.SendError(c, http.StatusInternalServerError, err)
 		return
@@ -368,4 +367,38 @@ func (h *Handler) copyVocabulary(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{})
+}
+
+func (h *Handler) getRecommendedVocabularies(c *gin.Context) {
+	ctx := c.Request.Context()
+	uid, _ := runtime.UserIDFromContext(ctx)
+
+	vocabs, err := h.vocabSvc.GetRecommendedVocabularies(ctx, uid)
+	if err != nil {
+		ginExt.SendError(c, http.StatusInternalServerError,
+			fmt.Errorf("vocabulary.delivery.Handler.getRecommendedVocabularies: %v", err))
+		return
+	}
+
+	vocabulariesRs := make([]VocabularyWithUserRs, 0, len(vocabs))
+	for _, vocab := range vocabs {
+		tags := make([]string, 0, len(vocab.Tags))
+		for _, tag := range vocab.Tags {
+			tags = append(tags, tag.Text)
+		}
+
+		vocabulariesRs = append(vocabulariesRs, VocabularyWithUserRs{
+			ID:            vocab.ID,
+			UserID:        vocab.UserID,
+			Name:          vocab.Name,
+			AccessID:      vocab.Access,
+			NativeLang:    vocab.NativeLang,
+			TranslateLang: vocab.TranslateLang,
+			Description:   vocab.Description,
+			Tags:          tags,
+			WordsCount:    vocab.WordsCount,
+		})
+	}
+
+	c.JSON(http.StatusOK, vocabulariesRs)
 }

@@ -3,8 +3,8 @@ package transactor
 import (
 	"context"
 	"fmt"
-
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -43,7 +43,44 @@ func (t *Transactor) CreateTransaction(ctx context.Context, fn func(ctx context.
 		}
 	}()
 
-	return fn(injectTx(ctx, tx))
+	err = fn(injectTx(ctx, tx))
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func getExecutor(ctx context.Context) pgx.Tx {
+	tx, ok := ctx.Value(txKey{}).(pgx.Tx)
+	if !ok {
+		return nil
+	}
+	return tx
+}
+
+func (t *Transactor) QueryRow(ctx context.Context, sql string, args ...interface{}) pgx.Row {
+	tx := getExecutor(ctx)
+	if tx == nil {
+		return t.pgxPool.QueryRow(ctx, sql, args...)
+	}
+
+	return tx.QueryRow(ctx, sql, args...)
+}
+
+func (t *Transactor) Query(ctx context.Context, sql string, args ...interface{}) (pgx.Rows, error) {
+	tx := getExecutor(ctx)
+	if tx == nil {
+		return t.pgxPool.Query(ctx, sql, args...)
+	}
+	return tx.Query(ctx, sql, args...)
+}
+
+func (t *Transactor) Exec(ctx context.Context, sql string, args ...interface{}) (pgconn.CommandTag, error) {
+	tx := getExecutor(ctx)
+	if tx == nil {
+		return t.pgxPool.Exec(ctx, sql, args...)
+	}
+	return tx.Exec(ctx, sql, args...)
 }
 
 func injectTx(ctx context.Context, tx pgx.Tx) context.Context {

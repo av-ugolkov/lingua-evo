@@ -3,8 +3,10 @@ package config
 import (
 	"fmt"
 	"log/slog"
+	"time"
 
 	"github.com/ilyakaznacheev/cleanenv"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type Config struct {
@@ -72,6 +74,22 @@ type DbSQL struct {
 	MaxConnIdleTime   uint32 `yaml:"max_conn_idle_time"`
 	HealthCheckPeriod uint32 `yaml:"health_check_period"`
 	ConnectTimeout    uint32 `yaml:"connect_timeout"`
+}
+
+func (db *DbSQL) PgxPoolConfig() *pgxpool.Config {
+	dbConfig, err := pgxpool.ParseConfig(db.GetConnStr())
+	if err != nil {
+		return nil
+	}
+
+	dbConfig.MaxConns = int32(db.MaxConns)
+	dbConfig.MinConns = int32(db.MinConns)
+	dbConfig.MaxConnLifetime = time.Duration(db.MaxConnLifetime) * time.Second
+	dbConfig.MaxConnIdleTime = time.Duration(db.MaxConnIdleTime) * time.Second
+	dbConfig.HealthCheckPeriod = time.Duration(db.HealthCheckPeriod) * time.Second
+	dbConfig.ConnConfig.ConnectTimeout = time.Duration(db.ConnectTimeout) * time.Second
+
+	return dbConfig
 }
 
 func (db *DbSQL) GetConnStr() string {
