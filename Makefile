@@ -39,7 +39,7 @@ lint:
 
 .PHONY: test
 test: 
-	go test ./... -count=1
+	go test ./... -count=1 -cover
 
 .PHONY: count line
 count line:

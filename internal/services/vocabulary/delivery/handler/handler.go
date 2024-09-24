@@ -398,6 +398,7 @@ func (h *Handler) getRecommendedVocabularies(c *gin.Context) {
 			NativeLang:    vocab.NativeLang,
 			TranslateLang: vocab.TranslateLang,
 			Description:   vocab.Description,
+			Tags:          tags,
 			WordsCount:    vocab.WordsCount,
 		})
 	}
