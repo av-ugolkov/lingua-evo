@@ -30,6 +30,7 @@ type (
 		GetVocabsWithCountWords(ctx context.Context, uid uuid.UUID, access []uint8) ([]entity.VocabWithUser, error)
 		GetWithCountWords(ctx context.Context, vid uuid.UUID) (entity.VocabWithUser, error)
 		GetVocabulariesWithMaxWords(ctx context.Context, limit int, access []uint8) ([]entity.VocabWithUser, error)
+		GetVocabulariesRecommended(ctx context.Context, uid uuid.UUID, access []uint8, limit uint) ([]entity.VocabWithUser, error)
 
 		repoVocabUser
 		repoWord
@@ -228,7 +229,7 @@ func (s *Service) GetRecommendedVocabularies(ctx context.Context, uid uuid.UUID)
 		return vocabs, nil
 	}
 
-	vocabs, err := s.repoVocab.GetVocabsWithCountWords(ctx, uid, []uint8{uint8(access.Public), uint8(access.Subscribers)})
+	vocabs, err := s.repoVocab.GetVocabulariesRecommended(ctx, uid, []uint8{uint8(access.Public), uint8(access.Subscribers)}, 3)
 	if err != nil {
 		return nil, fmt.Errorf("vocabulary.Service.GetRecommendedVocabularies: %w", err)
 	}

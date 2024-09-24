@@ -178,12 +178,35 @@ func TestGetVocabsWithCountWords(t *testing.T) {
 		}
 		assert.Equal(t, 0, len(vocabs))
 	})
-	//t.Run("user without vocabs", func(t *testing.T) {
-	//	vocabs, err := repo.GetVocabsWithCountWords(ctx, uid, []uint8{uint8(access.Public), uint8(access.Subscribers)})
-	//	if err != nil {
-	//		t.Fatal(err)
-	//	}
-	//
-	//	assert.Equal(t, 3, len(vocabs))
-	//})
+	t.Run("get user vocabs", func(t *testing.T) {
+		err := tr.CreateTransaction(ctx, func(ctx context.Context) error {
+			for i := 0; i < 10; i++ {
+				_, err := repo.AddVocab(ctx, entity.Vocab{
+					ID:            uuid.New(),
+					UserID:        uid,
+					Name:          fmt.Sprintf("test_%d", i),
+					Access:        uint8(access.Subscribers),
+					NativeLang:    "en",
+					TranslateLang: "ru",
+					Description:   "",
+					Tags:          nil,
+					CreatedAt:     time.Now().UTC(),
+					UpdatedAt:     time.Now().UTC(),
+				}, nil)
+				if err != nil {
+					return err
+				}
+			}
+			vocabs, err := repo.GetVocabsWithCountWords(ctx, uid, []uint8{uint8(access.Public), uint8(access.Subscribers)})
+			if err != nil {
+				return err
+			}
+
+			assert.Equal(t, 10, len(vocabs))
+
+			return errCancelTx
+		})
+
+		assert.ErrorIs(t, err, errCancelTx)
+	})
 }
