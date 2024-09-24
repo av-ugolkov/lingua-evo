@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS
     );
 
 INSERT INTO
-    goose_db_version (id, version_id, is_applied, tstamp)
+    "goose_db_version" ("id", "version_id", "is_applied", "tstamp")
 VALUES
     (1, 0, true, now()),
     (2, 1, true, now()),

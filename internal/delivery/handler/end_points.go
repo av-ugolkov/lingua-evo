@@ -19,12 +19,13 @@ const (
 	UserVocabulary   = "/account/vocabulary"   //post, put, delete
 	UserVocabularies = "/account/vocabularies" //get
 
-	Vocabularies            = "/vocabularies"           //get
-	Vocabulary              = "/vocabulary"             //get
-	VocabularyInfo          = "/vocabulary/info"        //get
-	VocabularyCopy          = "/vocabulary/copy"        //get
-	VocabularyAccessForUser = "/vocabulary/access/user" //get post delete patch
-	VocabulariesByUser      = "/vocabularies/user"      //get
+	Vocabularies            = "/vocabularies"             //get
+	VocabulariesRecommended = "/vocabularies/recommended" //get
+	Vocabulary              = "/vocabulary"               //get
+	VocabularyInfo          = "/vocabulary/info"          //get
+	VocabularyCopy          = "/vocabulary/copy"          //get
+	VocabularyAccessForUser = "/vocabulary/access/user"   //get post delete patch
+	VocabulariesByUser      = "/vocabularies/user"        //get
 
 	VocabularyWord        = "/vocabulary/word"               //get post delete
 	VocabularyWordUpdate  = "/vocabulary/word/update"        //post

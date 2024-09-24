@@ -39,7 +39,7 @@ func (h *Handler) userAddVocabulary(c *gin.Context) {
 		})
 	}
 
-	vocab, err := h.vocabSvc.UserAddVocabulary(ctx, vocabulary.Vocabulary{
+	vocab, err := h.vocabSvc.UserAddVocabulary(ctx, vocabulary.Vocab{
 		UserID:        userID,
 		Name:          data.Name,
 		Access:        data.Access,
@@ -139,7 +139,7 @@ func (h *Handler) userEditVocabulary(c *gin.Context) {
 		return
 	}
 
-	err = h.vocabSvc.UserEditVocabulary(ctx, vocabulary.Vocabulary{
+	err = h.vocabSvc.UserEditVocabulary(ctx, vocabulary.Vocab{
 		ID:          data.ID,
 		Name:        data.Name,
 		Description: data.Desc,

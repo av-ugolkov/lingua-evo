@@ -11,7 +11,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func (r *VocabRepo) GetVocabulariesByUser(ctx context.Context, userID uuid.UUID) ([]entity.Vocabulary, error) {
+func (r *VocabRepo) GetVocabulariesByUser(ctx context.Context, userID uuid.UUID) ([]entity.Vocab, error) {
 	query := `
 	SELECT 
 		v.id,
@@ -28,15 +28,15 @@ func (r *VocabRepo) GetVocabulariesByUser(ctx context.Context, userID uuid.UUID)
 	LEFT JOIN "tag" tg ON tg.id = ANY(v.tags)
 	WHERE user_id=$1
 	GROUP BY v.id;`
-	rows, err := r.pgxPool.Query(ctx, query, userID)
+	rows, err := r.tr.Query(ctx, query, userID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var vocabularies []entity.Vocabulary
+	var vocabularies []entity.Vocab
+	var vocab entity.Vocab
 	for rows.Next() {
-		var vocab entity.Vocabulary
 		var sqlTags []sql.NullString
 		err := rows.Scan(
 			&vocab.ID,
