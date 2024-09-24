@@ -176,13 +176,13 @@ func (r *DictionaryRepo) DeleteWordByText(ctx context.Context, w *entity.DictWor
 func (r *DictionaryRepo) GetRandomWord(ctx context.Context, langCode string) (entity.DictWord, error) {
 	table := getTable(langCode)
 	query := fmt.Sprintf(`
-		SELECT text, pronunciation, lang_code 
+		SELECT id, text, pronunciation, lang_code 
 		FROM "%s" 
 		WHERE moderator IS NOT NULL 
 		ORDER BY RANDOM() 
 		LIMIT 1;`, table)
 	word := entity.DictWord{}
-	err := r.tr.QueryRow(ctx, query).Scan(&word.Text, &word.Pronunciation, &word.LangCode)
+	err := r.tr.QueryRow(ctx, query).Scan(&word.ID, &word.Text, &word.Pronunciation, &word.LangCode)
 	if err != nil {
 		return entity.DictWord{}, fmt.Errorf("dictionary.repository.DictionaryRepo.GetRandomWord - scan: %w", err)
 	}
