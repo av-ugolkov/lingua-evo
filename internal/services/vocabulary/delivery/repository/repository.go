@@ -363,7 +363,7 @@ func (r *VocabRepo) GetWithCountWords(ctx context.Context, vid uuid.UUID) (entit
 	return vocab, nil
 }
 
-func (r *VocabRepo) GetVocabulariesWithMaxWords(ctx context.Context, limit int, access []uint8) ([]entity.VocabWithUser, error) {
+func (r *VocabRepo) GetVocabulariesWithMaxWords(ctx context.Context, access []uint8, limit int) ([]entity.VocabWithUser, error) {
 	const query = `
 		SELECT 
 			v.id,
