@@ -29,7 +29,7 @@ type (
 		CopyVocab(ctx context.Context, uid, vid uuid.UUID) (uuid.UUID, error)
 		GetVocabsWithCountWords(ctx context.Context, uid uuid.UUID, access []uint8) ([]entity.VocabWithUser, error)
 		GetWithCountWords(ctx context.Context, vid uuid.UUID) (entity.VocabWithUser, error)
-		GetVocabulariesWithMaxWords(ctx context.Context, limit int, access []uint8) ([]entity.VocabWithUser, error)
+		GetVocabulariesWithMaxWords(ctx context.Context, access []uint8, limit int) ([]entity.VocabWithUser, error)
 		GetVocabulariesRecommended(ctx context.Context, uid uuid.UUID, access []uint8, limit uint) ([]entity.VocabWithUser, error)
 
 		repoVocabUser
@@ -211,7 +211,7 @@ func (s *Service) GetVocabulariesByUser(ctx context.Context, uid uuid.UUID, acce
 	return vocabs, nil
 }
 
-func (s *Service) GetVocabularyInfo(ctx context.Context, uid, vid uuid.UUID) (entity.VocabWithUser, error) {
+func (s *Service) GetVocabularyInfo(ctx context.Context, vid uuid.UUID) (entity.VocabWithUser, error) {
 	vocab, err := s.repoVocab.GetWithCountWords(ctx, vid)
 	if err != nil {
 		return entity.VocabWithUser{}, fmt.Errorf("vocabulary.Service.GetVocabularyInfo: %w", err)
@@ -222,7 +222,7 @@ func (s *Service) GetVocabularyInfo(ctx context.Context, uid, vid uuid.UUID) (en
 
 func (s *Service) GetRecommendedVocabularies(ctx context.Context, uid uuid.UUID) ([]entity.VocabWithUser, error) {
 	if uid == uuid.Nil {
-		vocabs, err := s.repoVocab.GetVocabulariesWithMaxWords(ctx, 3, []uint8{uint8(access.Public), uint8(access.Subscribers)})
+		vocabs, err := s.repoVocab.GetVocabulariesWithMaxWords(ctx, []uint8{uint8(access.Public), uint8(access.Subscribers)}, 3)
 		if err != nil {
 			return nil, fmt.Errorf("vocabulary.Service.GetRecommendedVocabularies: %w", err)
 		}

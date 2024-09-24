@@ -36,7 +36,7 @@ func TestGetVocabulariesWithMaxWords(t *testing.T) {
 	userRepo := repository.NewRepo(tr)
 
 	t.Run("empty vocabularies", func(t *testing.T) {
-		vocabs, err := repo.GetVocabulariesWithMaxWords(ctx, 3, []uint8{uint8(access.Public), uint8(access.Subscribers)})
+		vocabs, err := repo.GetVocabulariesWithMaxWords(ctx, []uint8{uint8(access.Public), uint8(access.Subscribers)}, 3)
 		if err != nil {
 			assert.Error(t, err)
 		}
@@ -73,7 +73,7 @@ func TestGetVocabulariesWithMaxWords(t *testing.T) {
 				}
 			}
 
-			vocabs, err := repo.GetVocabulariesWithMaxWords(ctx, 3, []uint8{uint8(access.Public), uint8(access.Subscribers)})
+			vocabs, err := repo.GetVocabulariesWithMaxWords(ctx, []uint8{uint8(access.Public), uint8(access.Subscribers)}, 3)
 			if err != nil {
 				return err
 			}
@@ -129,7 +129,7 @@ func TestGetVocabulariesWithMaxWords(t *testing.T) {
 				}
 			}
 
-			vocabs, err := repo.GetVocabulariesWithMaxWords(ctx, 3, []uint8{uint8(access.Public), uint8(access.Subscribers)})
+			vocabs, err := repo.GetVocabulariesWithMaxWords(ctx, []uint8{uint8(access.Public), uint8(access.Subscribers)}, 3)
 			if err != nil {
 				return err
 			}
@@ -414,7 +414,6 @@ func TestGetVocabulariesRecommended(t *testing.T) {
 					if err != nil {
 						return err
 					}
-
 				}
 			}
 			vocabs, err := repo.GetVocabulariesRecommended(ctx, uid, []uint8{uint8(access.Public), uint8(access.Subscribers)}, 3)
