@@ -54,9 +54,9 @@ type Handler struct {
 	userSvc *user.Service
 }
 
-func Create(r *gin.Engine, userSvc *user.Service) {
+func Create(g *gin.Engine, userSvc *user.Service) {
 	h := newHandler(userSvc)
-	h.register(r)
+	h.register(g)
 }
 
 func newHandler(userSvc *user.Service) *Handler {
@@ -65,10 +65,10 @@ func newHandler(userSvc *user.Service) *Handler {
 	}
 }
 
-func (h *Handler) register(r *gin.Engine) {
-	r.POST(handler.SignUp, h.signUp)
-	r.GET(handler.UserByID, middleware.Auth(h.getUserByID))
-	r.GET(handler.Users, h.getUsers)
+func (h *Handler) register(g *gin.Engine) {
+	g.POST(handler.SignUp, h.signUp)
+	g.GET(handler.UserByID, middleware.Auth(h.getUserByID))
+	g.GET(handler.Users, h.getUsers)
 }
 
 func (h *Handler) signUp(c *gin.Context) {

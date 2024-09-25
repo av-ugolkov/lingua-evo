@@ -40,4 +40,6 @@ const (
 	CheckSubscriber = "/subscriber/check" //get
 	Subscribe       = "/user/subscribe"   //post
 	Unsubscribe     = "/user/unsubscribe" //post
+
+	NotificationVocab = "/notifications/vocabulary"
 )
