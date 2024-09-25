@@ -38,6 +38,9 @@ import (
 	langService "github.com/av-ugolkov/lingua-evo/internal/services/language"
 	languageHandler "github.com/av-ugolkov/lingua-evo/internal/services/language/delivery/handler"
 	langRepository "github.com/av-ugolkov/lingua-evo/internal/services/language/delivery/repository"
+	notificationService "github.com/av-ugolkov/lingua-evo/internal/services/notifications"
+	notificationHandler "github.com/av-ugolkov/lingua-evo/internal/services/notifications/delivery/handler"
+	notificationRepository "github.com/av-ugolkov/lingua-evo/internal/services/notifications/delivery/repository"
 	subscribersService "github.com/av-ugolkov/lingua-evo/internal/services/subscribers"
 	subscribersHandler "github.com/av-ugolkov/lingua-evo/internal/services/subscribers/delivery/handler"
 	subscribersRepository "github.com/av-ugolkov/lingua-evo/internal/services/subscribers/delivery/repository"
@@ -183,6 +186,8 @@ func initServer(cfg *config.Config, r *gin.Engine, pgxPool *pgxpool.Pool, redis 
 	vocabSvc := vocabService.NewService(tr, vocabRepo, userSvc, exampleSvc, dictSvc, tagSvc, subscribersSvc)
 	authRepo := authRepository.NewRepo(redis)
 	authSvc := authService.NewService(cfg.Email, authRepo, userSvc)
+	notificationRepo := notificationRepository.NewRepo(tr)
+	notificationSvc := notificationService.NewService(notificationRepo)
 
 	slog.Info("create handlers")
 	userHandler.Create(r, userSvc)
@@ -193,6 +198,7 @@ func initServer(cfg *config.Config, r *gin.Engine, pgxPool *pgxpool.Pool, redis 
 	authHandler.Create(r, authSvc)
 	accessHandler.Create(r, accessSvc)
 	subscribersHandler.Create(r, subscribersSvc)
+	notificationHandler.Create(r, notificationSvc)
 
 	slog.Info("end init services")
 }
