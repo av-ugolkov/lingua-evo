@@ -7,8 +7,10 @@ import (
 	"github.com/google/uuid"
 )
 
+//go:generate mockery --inpackage --outpkg notifications --testonly --name "repoNotification"
+
 type (
-	notificationRepo interface {
+	repoNotification interface {
 		GetVocabNotification(ctx context.Context, uid, vid uuid.UUID) (bool, error)
 		SetVocabNotification(ctx context.Context, uid, vid uuid.UUID) error
 		DeleteVocabNotification(ctx context.Context, uid, vid uuid.UUID) error
@@ -16,10 +18,10 @@ type (
 )
 
 type Service struct {
-	repo notificationRepo
+	repo repoNotification
 }
 
-func NewService(repo notificationRepo) *Service {
+func NewService(repo repoNotification) *Service {
 	return &Service{
 		repo: repo,
 	}
