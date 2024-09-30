@@ -13,7 +13,6 @@ import (
 	"github.com/av-ugolkov/lingua-evo/runtime"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
 )
 
 type (
@@ -209,34 +208,18 @@ func (s *Service) GetWord(ctx context.Context, wid uuid.UUID) (*entity.VocabWord
 	return &vocabWordData, nil
 }
 
-func (s *Service) GetWords(ctx context.Context, uid, vid uuid.UUID) ([]entity.VocabWordData, bool, error) {
+func (s *Service) GetWords(ctx context.Context, uid, vid uuid.UUID) ([]entity.VocabWordData, error) {
 	_, err := s.GetAccessForUser(ctx, uid, vid)
 	if err != nil {
-		return nil, false, fmt.Errorf("word.Service.GetWords - check access: %w", err)
-	}
-
-	vocab, err := s.GetVocabulary(ctx, uid, vid)
-	if err != nil {
-		return nil, false, fmt.Errorf("word.Service.GetWords - get vocabulary: %w", err)
-	}
-
-	editable := vocab.UserID == uid
-	if vocab.UserID != uid {
-		editable, err = s.VocabularyEditable(ctx, uid, vid)
-		if err != nil {
-			switch {
-			case !errors.Is(err, pgx.ErrNoRows):
-				return nil, false, fmt.Errorf("word.Service.GetWords - check access: %w", err)
-			}
-		}
+		return nil, fmt.Errorf("word.Service.GetWords - check access: %w", err)
 	}
 
 	vocabWordsData, err := s.repoVocab.GetVocabularyWords(ctx, vid)
 	if err != nil {
-		return nil, false, fmt.Errorf("word.Service.GetWords - get words: %w", err)
+		return nil, fmt.Errorf("word.Service.GetWords - get words: %w", err)
 	}
 
-	return vocabWordsData, editable, nil
+	return vocabWordsData, nil
 }
 
 func (s *Service) GetPronunciation(ctx context.Context, uid, vid uuid.UUID, text string) (string, error) {
