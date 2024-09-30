@@ -226,7 +226,7 @@ func (r *VocabRepo) GetVocabulariesByAccess(ctx context.Context, uid uuid.UUID, 
 	}
 	defer rows.Close()
 
-	var vocabularies []entity.VocabWithUser
+	vocabularies := make([]entity.VocabWithUser, 0, itemsPerPage)
 	var vocab entity.VocabWithUser
 	for rows.Next() {
 		var sqlTags []sql.NullString

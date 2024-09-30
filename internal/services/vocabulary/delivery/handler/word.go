@@ -306,7 +306,7 @@ func (h *Handler) getWords(c *gin.Context) {
 		return
 	}
 
-	vocabWords, editable, err := h.vocabSvc.GetWords(ctx, uid, vid)
+	vocabWords, err := h.vocabSvc.GetWords(ctx, uid, vid)
 	if err != nil {
 		ginExt.SendError(c, http.StatusInternalServerError,
 			fmt.Errorf("word.delivery.Handler.getWords: %w", err))
@@ -341,15 +341,7 @@ func (h *Handler) getWords(c *gin.Context) {
 		wordsRs = append(wordsRs, wordRs)
 	}
 
-	type Response struct {
-		Words    []VocabWordRs `json:"words"`
-		Editable bool          `json:"editable"`
-	}
-
-	c.JSON(http.StatusOK, Response{
-		Words:    wordsRs,
-		Editable: editable,
-	})
+	c.JSON(http.StatusOK, wordsRs)
 }
 
 func (h *Handler) getPronunciation(c *gin.Context) {
