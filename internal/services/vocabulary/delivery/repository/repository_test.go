@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"testing"
 	"time"
@@ -18,8 +17,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 )
-
-var errCancelTx = errors.New("transaction canceled")
 
 func TestGetVocabulariesWithMaxWords(t *testing.T) {
 	ctx := context.Background()
@@ -39,6 +36,7 @@ func TestGetVocabulariesWithMaxWords(t *testing.T) {
 		vocabs, err := repo.GetVocabulariesWithMaxWords(ctx, []uint8{uint8(access.Public), uint8(access.Subscribers)}, 3)
 		if err != nil {
 			assert.Error(t, err)
+			return
 		}
 		assert.Equal(t, 0, len(vocabs))
 	})
@@ -80,10 +78,10 @@ func TestGetVocabulariesWithMaxWords(t *testing.T) {
 
 			assert.Equal(t, 0, len(vocabs))
 
-			return errCancelTx
+			return transactor.ErrCancelTx
 		})
 
-		assert.ErrorIs(t, err, errCancelTx)
+		assert.ErrorIs(t, err, transactor.ErrCancelTx)
 	})
 	t.Run("get vocabularies with max count words", func(t *testing.T) {
 		err := tr.CreateTransaction(ctx, func(ctx context.Context) error {
@@ -139,10 +137,10 @@ func TestGetVocabulariesWithMaxWords(t *testing.T) {
 			assert.Equal(t, uint(9), vocabs[1].WordsCount)
 			assert.Equal(t, uint(8), vocabs[2].WordsCount)
 
-			return errCancelTx
+			return transactor.ErrCancelTx
 		})
 
-		assert.ErrorIs(t, err, errCancelTx)
+		assert.ErrorIs(t, err, transactor.ErrCancelTx)
 	})
 }
 
@@ -211,10 +209,10 @@ func TestGetVocabsWithCountWords(t *testing.T) {
 
 			assert.Equal(t, 10, len(vocabs))
 
-			return errCancelTx
+			return transactor.ErrCancelTx
 		})
 
-		assert.ErrorIs(t, err, errCancelTx)
+		assert.ErrorIs(t, err, transactor.ErrCancelTx)
 	})
 }
 
@@ -296,10 +294,10 @@ func TestGetVocabulariesRecommended(t *testing.T) {
 
 			assert.Equal(t, 0, len(vocabs))
 
-			return errCancelTx
+			return transactor.ErrCancelTx
 		})
 
-		assert.ErrorIs(t, err, errCancelTx)
+		assert.ErrorIs(t, err, transactor.ErrCancelTx)
 	})
 	t.Run("get recommended vocabularies when user have vocabs with different language", func(t *testing.T) {
 		err := tr.CreateTransaction(ctx, func(ctx context.Context) error {
@@ -354,10 +352,10 @@ func TestGetVocabulariesRecommended(t *testing.T) {
 
 			assert.Equal(t, 0, len(vocabs))
 
-			return errCancelTx
+			return transactor.ErrCancelTx
 		})
 
-		assert.ErrorIs(t, err, errCancelTx)
+		assert.ErrorIs(t, err, transactor.ErrCancelTx)
 	})
 	t.Run("get recommended vocabularies", func(t *testing.T) {
 		err := tr.CreateTransaction(ctx, func(ctx context.Context) error {
@@ -426,9 +424,9 @@ func TestGetVocabulariesRecommended(t *testing.T) {
 			assert.Equal(t, uint(9), vocabs[1].WordsCount)
 			assert.Equal(t, uint(8), vocabs[2].WordsCount)
 
-			return errCancelTx
+			return transactor.ErrCancelTx
 		})
 
-		assert.ErrorIs(t, err, errCancelTx)
+		assert.ErrorIs(t, err, transactor.ErrCancelTx)
 	})
 }
