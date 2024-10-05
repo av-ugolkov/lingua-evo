@@ -200,5 +200,7 @@ func initServer(cfg *config.Config, r *gin.Engine, pgxPool *pgxpool.Pool, redis 
 	subscribersHandler.Create(r, subscribersSvc)
 	notificationHandler.Create(r, notificationSvc)
 
+	testHandle(r)
+
 	slog.Info("end init services")
 }
