@@ -2,7 +2,9 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"github.com/jackc/pgx/v5"
 	"net/http"
 
 	"github.com/av-ugolkov/lingua-evo/internal/db/transactor"
@@ -162,27 +164,6 @@ func (s *Service) GetAccessForUser(ctx context.Context, uid, vid uuid.UUID) (acc
 	return access.Forbidden, nil
 }
 
-func (s *Service) CanEdit(ctx context.Context, uid, vid uuid.UUID) (bool, error) {
-	vocab, err := s.GetVocabulary(ctx, uid, vid)
-	if err != nil {
-		return false, fmt.Errorf("vocabulary.Service.CanEdit - get vocabulary: %w", err)
-	}
-
-	if vocab.UserID == uid {
-		return true, nil
-	}
-
-	accessID, err := s.repoVocab.GetAccess(ctx, vid)
-	if err != nil {
-		return false, fmt.Errorf("vocabulary.Service.CanEdit - get access type: %w", err)
-	}
-	if access.Type(accessID) == access.Public {
-		return false, nil
-	}
-
-	return true, nil
-}
-
 func (s *Service) CopyVocab(ctx context.Context, uid, vid uuid.UUID) error {
 	copyVid, err := s.repoVocab.CopyVocab(ctx, uid, vid)
 	if err != nil {
@@ -211,10 +192,22 @@ func (s *Service) GetVocabulariesByUser(ctx context.Context, uid uuid.UUID, acce
 	return vocabs, nil
 }
 
-func (s *Service) GetVocabularyInfo(ctx context.Context, vid uuid.UUID) (entity.VocabWithUser, error) {
+func (s *Service) GetVocabularyInfo(ctx context.Context, uid, vid uuid.UUID) (entity.VocabWithUser, error) {
 	vocab, err := s.repoVocab.GetWithCountWords(ctx, vid)
 	if err != nil {
 		return entity.VocabWithUser{}, fmt.Errorf("vocabulary.Service.GetVocabularyInfo: %w", err)
+	}
+
+	if vocab.UserID != uid {
+		vocab.Editable, err = s.VocabularyEditable(ctx, uid, vid)
+		if err != nil {
+			switch {
+			case !errors.Is(err, pgx.ErrNoRows):
+				return vocab, fmt.Errorf("word.Service.GetWords - check access: %w", err)
+			}
+		}
+	} else {
+		vocab.Editable = true
 	}
 
 	return vocab, nil
