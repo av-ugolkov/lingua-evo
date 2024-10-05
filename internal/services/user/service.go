@@ -60,25 +60,34 @@ func (s *Service) SignUp(ctx context.Context, userCreate UserCreate) (uuid.UUID,
 		return uuid.Nil, fmt.Errorf("auth.Service.SignUp: code mismatch")
 	}
 
-	if err := s.validateUsername(ctx, userCreate.Name); err != nil {
-		return uuid.Nil, fmt.Errorf("auth.Service.SignUp - validateUsername: %v", err)
-	}
-
-	if err := validatePassword(userCreate.Password); err != nil {
-		return uuid.Nil, fmt.Errorf("auth.Service.SignUp - validatePassword: %v", err)
-	}
-
-	hashPassword, err := utils.HashPassword(userCreate.Password)
+	uid, err := s.AddUser(ctx, userCreate)
 	if err != nil {
-		return uuid.Nil, fmt.Errorf("auth.Service.SignUp - hashPassword: %v", err)
+		return uuid.Nil, fmt.Errorf("auth.Service.SignUp - AddUser: %v", err)
+	}
+
+	return uid, nil
+}
+
+func (s *Service) AddUser(ctx context.Context, usr UserCreate) (uuid.UUID, error) {
+	if err := s.validateUsername(ctx, usr.Name); err != nil {
+		return uuid.Nil, fmt.Errorf("auth.Service.AddUser - validateUsername: %v", err)
+	}
+
+	if err := validatePassword(usr.Password); err != nil {
+		return uuid.Nil, fmt.Errorf("auth.Service.AddUser - validatePassword: %v", err)
+	}
+
+	hashPassword, err := utils.HashPassword(usr.Password)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("auth.Service.AddUser - hashPassword: %v", err)
 	}
 
 	user := &User{
-		ID:           userCreate.ID,
-		Name:         userCreate.Name,
+		ID:           usr.ID,
+		Name:         usr.Name,
 		PasswordHash: hashPassword,
-		Email:        userCreate.Email,
-		Role:         userCreate.Role,
+		Email:        usr.Email,
+		Role:         usr.Role,
 		CreatedAt:    time.Now().UTC(),
 		LastVisitAt:  time.Now().UTC(),
 	}

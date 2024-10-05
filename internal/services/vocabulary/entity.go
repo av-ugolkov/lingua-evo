@@ -38,6 +38,7 @@ type (
 	VocabWithUser struct {
 		Vocab
 		UserName   string
+		Editable   bool
 		WordsCount uint
 	}
 
