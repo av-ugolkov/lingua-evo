@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/jackc/pgx/v5"
+	"log/slog"
 	"net/http"
 
 	"github.com/av-ugolkov/lingua-evo/internal/db/transactor"
@@ -12,8 +12,10 @@ import (
 	entityTag "github.com/av-ugolkov/lingua-evo/internal/services/tag"
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary"
 	"github.com/av-ugolkov/lingua-evo/runtime/access"
+	"github.com/av-ugolkov/lingua-evo/tools/math"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 )
 
 type (
@@ -78,14 +80,14 @@ func NewService(
 	}
 }
 
-func (s *Service) GetVocabularies(ctx context.Context, uid uuid.UUID, page, itemsPerPage, typeSort, order int, search, nativeLang, translateLang string) ([]entity.VocabWithUser, int, error) {
+func (s *Service) GetVocabularies(ctx context.Context, uid uuid.UUID, page, itemsPerPage, typeSort, order int, search, nativeLang, translateLang string, maxWords int) ([]entity.VocabWithUserAndWords, int, error) {
 	countItems, err := s.repoVocab.GetVocabulariesCountByAccess(ctx, uid, []access.Type{access.Subscribers, access.Public}, search, nativeLang, translateLang)
 	if err != nil {
 		return nil, 0, fmt.Errorf("vocabulary.Service.GetVocabularies: %w", err)
 	}
 
 	if countItems == 0 {
-		return []entity.VocabWithUser{}, 0, nil
+		return []entity.VocabWithUserAndWords{}, 0, nil
 	}
 
 	vocabularies, err := s.repoVocab.GetVocabulariesByAccess(ctx, uid, []access.Type{access.Subscribers, access.Public}, page, itemsPerPage, typeSort, order, search, nativeLang, translateLang)
@@ -93,7 +95,21 @@ func (s *Service) GetVocabularies(ctx context.Context, uid uuid.UUID, page, item
 		return nil, 0, fmt.Errorf("vocabulary.Service.GetVocabularies: %w", err)
 	}
 
-	return vocabularies, countItems, nil
+	vocabsWithWords := make([]entity.VocabWithUserAndWords, 0, len(vocabularies))
+	for _, v := range vocabularies {
+		words, err := s.GetSeveralWords(ctx, v.UserID, v.ID, maxWords)
+		if err != nil {
+			slog.Error(fmt.Sprintf("vocabulary.Service.GetVocabularies: GetWords: %v", err))
+		}
+
+		vocabWords := make([]string, 0, maxWords)
+		for _, w := range words[0:math.MinInt(len(words), maxWords)] {
+			vocabWords = append(vocabWords, w.Native.Text)
+		}
+
+		vocabsWithWords = append(vocabsWithWords, entity.VocabWithUserAndWords{Words: vocabWords, VocabWithUser: v})
+	}
+	return vocabsWithWords, countItems, nil
 }
 
 func (s *Service) GetVocabulary(ctx context.Context, uid, vid uuid.UUID) (entity.Vocab, error) {

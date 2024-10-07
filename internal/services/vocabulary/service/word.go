@@ -21,7 +21,8 @@ type (
 		AddWord(ctx context.Context, word entity.VocabWord) (uuid.UUID, error)
 		DeleteWord(ctx context.Context, word entity.VocabWord) error
 		GetRandomVocabulary(ctx context.Context, vid uuid.UUID, limit int) ([]entity.VocabWordData, error)
-		GetVocabularyWords(ctx context.Context, vid uuid.UUID) ([]entity.VocabWordData, error)
+		GetVocabWords(ctx context.Context, vid uuid.UUID) ([]entity.VocabWordData, error)
+		GetVocabSeveralWords(ctx context.Context, vid uuid.UUID, count int, nativeLang, translateLang string) ([]entity.VocabWordData, error)
 		UpdateWord(ctx context.Context, word entity.VocabWord) error
 		GetCountWords(ctx context.Context, uid uuid.UUID) (int, error)
 	}
@@ -214,7 +215,25 @@ func (s *Service) GetWords(ctx context.Context, uid, vid uuid.UUID) ([]entity.Vo
 		return nil, fmt.Errorf("word.Service.GetWords - check access: %w", err)
 	}
 
-	vocabWordsData, err := s.repoVocab.GetVocabularyWords(ctx, vid)
+	vocabWordsData, err := s.repoVocab.GetVocabWords(ctx, vid)
+	if err != nil {
+		return nil, fmt.Errorf("word.Service.GetWords - get words: %w", err)
+	}
+	return vocabWordsData, nil
+}
+
+func (s *Service) GetSeveralWords(ctx context.Context, uid, vid uuid.UUID, count int) ([]entity.VocabWordData, error) {
+	_, err := s.GetAccessForUser(ctx, uid, vid)
+	if err != nil {
+		return nil, fmt.Errorf("word.Service.GetWords - check access: %w", err)
+	}
+
+	vocab, err := s.repoVocab.GetVocab(ctx, vid)
+	if err != nil {
+		return nil, fmt.Errorf("word.Service.GetWords - get vocab: %w", err)
+	}
+
+	vocabWordsData, err := s.repoVocab.GetVocabSeveralWords(ctx, vid, count, vocab.NativeLang, vocab.TranslateLang)
 	if err != nil {
 		return nil, fmt.Errorf("word.Service.GetWords - get words: %w", err)
 	}
@@ -246,7 +265,7 @@ func (s *Service) GetPronunciation(ctx context.Context, uid, vid uuid.UUID, text
 }
 
 func (s *Service) CopyWords(ctx context.Context, vid, copyVid uuid.UUID) error {
-	vocabWordsData, err := s.repoVocab.GetVocabularyWords(ctx, vid)
+	vocabWordsData, err := s.repoVocab.GetVocabWords(ctx, vid)
 	if err != nil {
 		return fmt.Errorf("word.Service.GetWords - get words: %w", err)
 	}

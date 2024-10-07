@@ -5,15 +5,14 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
-
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
 	ginExt "github.com/av-ugolkov/lingua-evo/internal/delivery/handler/gin"
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler/middleware"
 	vocabulary "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary/service"
 	"github.com/av-ugolkov/lingua-evo/runtime"
 	"github.com/av-ugolkov/lingua-evo/runtime/access"
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 const (
@@ -27,6 +26,7 @@ const (
 	paramsNativeLang    string = "native_lang"
 	paramsTranslateLang string = "translate_lang"
 	paramsUserID        string = "user_id"
+	paramsMaxWords      string = "max_words"
 )
 
 type (
@@ -54,6 +54,11 @@ type (
 		WordsCount    *uint     `json:"words_count,omitempty"`
 		CreatedAt     time.Time `json:"created_at,omitempty"`
 		UpdatedAt     time.Time `json:"updated_at,omitempty"`
+	}
+
+	VocabularyWithWords struct {
+		VocabularyRs
+		Words []string `json:"words,omitempty"`
 	}
 )
 
@@ -150,37 +155,47 @@ func (h *Handler) getVocabularies(c *gin.Context) {
 		return
 	}
 
-	vocabularies, totalCount, err := h.vocabSvc.GetVocabularies(ctx, userID, page, itemsPerPage, typeSort, order, search, nativeLang, translateLang)
+	maxWords, err := ginExt.GetQueryInt(c, paramsMaxWords)
+	if err != nil {
+		ginExt.SendError(c, http.StatusInternalServerError,
+			fmt.Errorf("vocabulary.delivery.Handler.getVocabularies - get query [max_words]: %v", err))
+		return
+	}
+
+	vocabularies, totalCount, err := h.vocabSvc.GetVocabularies(ctx, userID, page, itemsPerPage, typeSort, order, search, nativeLang, translateLang, maxWords)
 	if err != nil {
 		ginExt.SendError(c, http.StatusInternalServerError,
 			fmt.Errorf("vocabulary.delivery.Handler.getVocabularies: %v", err))
 	}
 
-	vocabulariesRs := make([]VocabularyRs, 0, len(vocabularies))
+	vocabsWithWordsRs := make([]VocabularyWithWords, 0, len(vocabularies))
 	for _, vocab := range vocabularies {
 		tags := make([]string, 0, len(vocab.Tags))
 		for _, tag := range vocab.Tags {
 			tags = append(tags, tag.Text)
 		}
 
-		vocabulariesRs = append(vocabulariesRs, VocabularyRs{
-			ID:            vocab.ID,
-			UserID:        vocab.UserID,
-			UserName:      vocab.UserName,
-			Name:          vocab.Name,
-			AccessID:      &vocab.Access,
-			NativeLang:    vocab.NativeLang,
-			TranslateLang: vocab.TranslateLang,
-			Description:   vocab.Description,
-			WordsCount:    &vocab.WordsCount,
-			Tags:          tags,
-			CreatedAt:     vocab.CreatedAt,
-			UpdatedAt:     vocab.UpdatedAt,
+		vocabsWithWordsRs = append(vocabsWithWordsRs, VocabularyWithWords{
+			VocabularyRs: VocabularyRs{
+				ID:            vocab.ID,
+				UserID:        vocab.UserID,
+				UserName:      vocab.UserName,
+				Name:          vocab.Name,
+				AccessID:      &vocab.Access,
+				NativeLang:    vocab.NativeLang,
+				TranslateLang: vocab.TranslateLang,
+				Description:   vocab.Description,
+				WordsCount:    &vocab.WordsCount,
+				Tags:          tags,
+				CreatedAt:     vocab.CreatedAt,
+				UpdatedAt:     vocab.UpdatedAt,
+			},
+			Words: vocab.Words,
 		})
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"vocabularies": vocabulariesRs,
+		"vocabularies": vocabsWithWordsRs,
 		"total_count":  totalCount,
 	})
 }
