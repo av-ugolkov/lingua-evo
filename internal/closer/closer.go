@@ -9,32 +9,28 @@ import (
 
 type Func func(ctx context.Context) error
 
-type Closer struct {
+var (
 	mu    sync.Mutex
 	funcs []Func
+)
+
+func Add(f Func) {
+	mu.Lock()
+	defer mu.Unlock()
+	funcs = append(funcs, f)
 }
 
-func NewCloser() *Closer {
-	return &Closer{}
-}
-
-func (c *Closer) Add(f Func) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	c.funcs = append(c.funcs, f)
-}
-
-func (c *Closer) Close(ctx context.Context) error {
-	c.mu.Lock()
-	defer c.mu.Unlock()
+func Close(ctx context.Context) error {
+	mu.Lock()
+	defer mu.Unlock()
 
 	var (
 		complete = make(chan struct{}, 1)
-		errs     = make([]string, 0, len(c.funcs))
+		errs     = make([]string, 0, len(funcs))
 	)
 
 	go func() {
-		for _, f := range c.funcs {
+		for _, f := range funcs {
 			if err := f(ctx); err != nil {
 				errs = append(errs, err.Error())
 			}

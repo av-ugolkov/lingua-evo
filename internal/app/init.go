@@ -56,8 +56,6 @@ import (
 )
 
 func ServerStart(cfg *config.Config) {
-	closer := closer.NewCloser()
-
 	logger := log.CustomLogger(&cfg.Logger)
 	if logger == nil {
 		return
