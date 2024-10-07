@@ -103,6 +103,7 @@ func ServerStart(cfg *config.Config) {
 
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.Default()
+	router.UseH2C = true
 	router.Use(cors.New(cors.Config{
 		AllowOrigins:     cfg.Service.AllowedOrigins,
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"},
@@ -115,7 +116,7 @@ func ServerStart(cfg *config.Config) {
 
 	server := http.Server{
 		Addr:         address,
-		Handler:      router,
+		Handler:      router.Handler(),
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 		ErrorLog:     logger.ServerLoger,
