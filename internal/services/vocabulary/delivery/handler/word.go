@@ -17,8 +17,7 @@ import (
 )
 
 const (
-	paramsLimit string = "limit"
-	paramsText  string = "text"
+	paramsText string = "text"
 )
 
 type (
@@ -205,48 +204,6 @@ func (h *Handler) deleteWord(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{})
-}
-
-func (h *Handler) getRandomWords(c *gin.Context) {
-	ctx := c.Request.Context()
-	vid, err := ginExt.GetQueryUUID(c, paramsID)
-	if err != nil {
-		ginExt.SendError(c, http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getSeveralWords - get vocab id: %w", err))
-		return
-	}
-
-	limit, err := ginExt.GetQueryInt(c, paramsLimit)
-	if err != nil {
-		ginExt.SendError(c, http.StatusInternalServerError,
-			fmt.Errorf("word.delivery.Handler.getSeveralWords - get limit: %w", err))
-		return
-	}
-	vocabWords, err := h.vocabSvc.GetRandomWords(ctx, vid, limit)
-	if err != nil {
-		ginExt.SendError(c, http.StatusInternalServerError,
-			fmt.Errorf("word.delivery.Handler.getSeveralWords: %w", err))
-		return
-	}
-
-	wordsRs := make([]VocabWordRs, 0, len(vocabWords))
-	for _, vocabWord := range vocabWords {
-		translates := make([]string, 0, len(vocabWord.Translates))
-		for _, translate := range vocabWord.Translates {
-			translates = append(translates, translate.Text)
-		}
-
-		wordRs := VocabWordRs{
-			Native: &VocabWord{
-				Text:          vocabWord.Native.Text,
-				Pronunciation: vocabWord.Native.Pronunciation,
-			},
-			Translates: translates,
-		}
-
-		wordsRs = append(wordsRs, wordRs)
-	}
-
-	c.JSON(http.StatusOK, wordsRs)
 }
 
 func (h *Handler) getWord(c *gin.Context) {
