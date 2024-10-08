@@ -117,7 +117,7 @@ func ServerStart(cfg *config.Config) {
 		Handler:      router.Handler(),
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
-		ErrorLog:     logger.ServerLoger,
+		ErrorLog:     logger.ServerLogger,
 	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
