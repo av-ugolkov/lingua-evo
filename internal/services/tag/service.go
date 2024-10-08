@@ -10,7 +10,7 @@ import (
 
 type (
 	repoTag interface {
-		AddTag(ctx context.Context, id uuid.UUID, text string) (uuid.UUID, error)
+		AddTag(ctx context.Context, text string) (uuid.UUID, error)
 		FindTag(ctx context.Context, text string) ([]Tag, error)
 		GetTag(ctx context.Context, text string) (uuid.UUID, error)
 		GetTagsInVocabulary(ctx context.Context, vocabID uuid.UUID) ([]Tag, error)
@@ -29,7 +29,7 @@ func NewService(repo repoTag) *Service {
 }
 
 func (s *Service) AddTag(ctx context.Context, tag Tag) (uuid.UUID, error) {
-	id, err := s.repo.AddTag(ctx, tag.ID, tag.Text)
+	id, err := s.repo.AddTag(ctx, tag.Text)
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("tag.Service.AddTag: %w", err)
 	}
@@ -43,7 +43,7 @@ func (s *Service) AddTags(ctx context.Context, tags []Tag) ([]uuid.UUID, error) 
 		if err != nil {
 			slog.Warn(fmt.Sprintf("tag.Service.AddTags: %v", err))
 
-			id, err = s.repo.AddTag(ctx, tag.ID, tag.Text)
+			id, err = s.repo.AddTag(ctx, tag.Text)
 			if err != nil {
 				return nil, fmt.Errorf("tag.Service.AddTags: %w", err)
 			}
