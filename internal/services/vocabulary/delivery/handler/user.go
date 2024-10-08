@@ -5,13 +5,11 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
-
 	ginExt "github.com/av-ugolkov/lingua-evo/internal/delivery/handler/gin"
 	entityTag "github.com/av-ugolkov/lingua-evo/internal/services/tag"
 	"github.com/av-ugolkov/lingua-evo/internal/services/vocabulary"
 	"github.com/av-ugolkov/lingua-evo/runtime"
+	"github.com/gin-gonic/gin"
 )
 
 func (h *Handler) userAddVocabulary(c *gin.Context) {
@@ -34,7 +32,6 @@ func (h *Handler) userAddVocabulary(c *gin.Context) {
 	tags := make([]entityTag.Tag, 0, len(data.Tags))
 	for _, tag := range data.Tags {
 		tags = append(tags, entityTag.Tag{
-			ID:   uuid.New(),
 			Text: tag,
 		})
 	}

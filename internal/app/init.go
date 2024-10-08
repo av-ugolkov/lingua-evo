@@ -168,7 +168,7 @@ func initServer(cfg *config.Config, r *gin.Engine, pgxPool *pgxpool.Pool, redis 
 	tr := transactor.NewTransactor(pgxPool)
 	slog.Info("create services")
 	userRepo := userRepository.NewRepo(tr)
-	userSvc := userService.NewService(userRepo, redis)
+	userSvc := userService.NewService(userRepo, redis, tr)
 	accessRepo := accessRepository.NewRepo(tr)
 	accessSvc := accessService.NewService(accessRepo)
 	langRepo := langRepository.NewRepo(tr)
