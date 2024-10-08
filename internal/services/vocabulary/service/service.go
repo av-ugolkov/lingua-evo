@@ -80,7 +80,7 @@ func NewService(
 	}
 }
 
-func (s *Service) GetVocabularies(ctx context.Context, uid uuid.UUID, page, itemsPerPage, typeSort, order int, search, nativeLang, translateLang string, maxWords int) ([]entity.VocabWithUserAndWords, int, error) {
+func (s *Service) GetVocabularies(ctx context.Context, uid uuid.UUID, page, itemsPerPage, typeSort, order int, search, nativeLang, translateLang string, limitWords int) ([]entity.VocabWithUserAndWords, int, error) {
 	countItems, err := s.repoVocab.GetVocabulariesCountByAccess(ctx, uid, []access.Type{access.Subscribers, access.Public}, search, nativeLang, translateLang)
 	if err != nil {
 		return nil, 0, fmt.Errorf("vocabulary.Service.GetVocabularies: %w", err)
@@ -97,13 +97,13 @@ func (s *Service) GetVocabularies(ctx context.Context, uid uuid.UUID, page, item
 
 	vocabsWithWords := make([]entity.VocabWithUserAndWords, 0, len(vocabularies))
 	for _, v := range vocabularies {
-		words, err := s.GetSeveralWords(ctx, v.UserID, v.ID, maxWords)
+		words, err := s.GetSeveralWords(ctx, v.UserID, v.ID, limitWords)
 		if err != nil {
 			slog.Error(fmt.Sprintf("vocabulary.Service.GetVocabularies: GetWords: %v", err))
 		}
 
-		vocabWords := make([]string, 0, maxWords)
-		for _, w := range words[0:math.MinInt(len(words), maxWords)] {
+		vocabWords := make([]string, 0, limitWords)
+		for _, w := range words[0:math.MinInt(len(words), limitWords)] {
 			vocabWords = append(vocabWords, w.Native.Text)
 		}
 

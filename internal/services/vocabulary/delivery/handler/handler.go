@@ -26,7 +26,7 @@ const (
 	paramsNativeLang    string = "native_lang"
 	paramsTranslateLang string = "translate_lang"
 	paramsUserID        string = "user_id"
-	paramsMaxWords      string = "max_words"
+	paramsLimitWords    string = "limit_words"
 )
 
 type (
@@ -92,7 +92,6 @@ func (h *Handler) register(r *gin.Engine) {
 	r.POST(handler.VocabularyWord, middleware.Auth(h.addWord))
 	r.DELETE(handler.VocabularyWord, middleware.Auth(h.deleteWord))
 	r.POST(handler.VocabularyWordUpdate, middleware.Auth(h.updateWord))
-	r.GET(handler.VocabularyRandomWords, middleware.Auth(h.getRandomWords))
 	r.GET(handler.VocabularyWords, middleware.OptionalAuth(h.getWords))
 	r.GET(handler.WordPronunciation, middleware.Auth(h.getPronunciation))
 
@@ -155,14 +154,14 @@ func (h *Handler) getVocabularies(c *gin.Context) {
 		return
 	}
 
-	maxWords, err := ginExt.GetQueryInt(c, paramsMaxWords)
+	limitWords, err := ginExt.GetQueryInt(c, paramsLimitWords)
 	if err != nil {
 		ginExt.SendError(c, http.StatusInternalServerError,
-			fmt.Errorf("vocabulary.delivery.Handler.getVocabularies - get query [max_words]: %v", err))
+			fmt.Errorf("vocabulary.delivery.Handler.getVocabularies - get query [limit_words]: %v", err))
 		return
 	}
 
-	vocabularies, totalCount, err := h.vocabSvc.GetVocabularies(ctx, userID, page, itemsPerPage, typeSort, order, search, nativeLang, translateLang, maxWords)
+	vocabularies, totalCount, err := h.vocabSvc.GetVocabularies(ctx, userID, page, itemsPerPage, typeSort, order, search, nativeLang, translateLang, limitWords)
 	if err != nil {
 		ginExt.SendError(c, http.StatusInternalServerError,
 			fmt.Errorf("vocabulary.delivery.Handler.getVocabularies: %v", err))
