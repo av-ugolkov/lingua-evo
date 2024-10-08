@@ -26,11 +26,10 @@ const (
 	VocabularyAccessForUser = "/vocabulary/access/user"   //get post delete patch
 	VocabulariesByUser      = "/vocabularies/user"        //get
 
-	VocabularyWord        = "/vocabulary/word"               //get post delete
-	VocabularyWordUpdate  = "/vocabulary/word/update"        //post
-	VocabularyRandomWords = "/vocabulary/words/random"       //get
-	VocabularyWords       = "/vocabulary/words"              //get
-	WordPronunciation     = "/vocabulary/word/pronunciation" //get
+	VocabularyWord       = "/vocabulary/word"               //get post delete
+	VocabularyWordUpdate = "/vocabulary/word/update"        //post
+	VocabularyWords      = "/vocabulary/words"              //get
+	WordPronunciation    = "/vocabulary/word/pronunciation" //get
 
 	VocabularyTags = "/vocabulary/tag" //get
 
