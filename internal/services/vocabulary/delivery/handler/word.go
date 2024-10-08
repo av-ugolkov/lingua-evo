@@ -72,7 +72,6 @@ func (h *Handler) addWord(c *gin.Context) {
 	translateWords := make([]entityDict.DictWord, 0, len(data.Translates))
 	for _, translateWord := range data.Translates {
 		translateWords = append(translateWords, entityDict.DictWord{
-			ID:        uuid.New(),
 			Text:      translateWord,
 			CreatedAt: time.Now().UTC(),
 			UpdatedAt: time.Now().UTC(),
@@ -82,7 +81,6 @@ func (h *Handler) addWord(c *gin.Context) {
 	examples := make([]entityExample.Example, 0, len(data.Examples))
 	for _, example := range data.Examples {
 		examples = append(examples, entityExample.Example{
-			ID:        uuid.New(),
 			Text:      example,
 			CreatedAt: time.Now().UTC(),
 		})
@@ -91,7 +89,6 @@ func (h *Handler) addWord(c *gin.Context) {
 	vocabWord, err := h.vocabSvc.AddWord(ctx, userID, entity.VocabWordData{
 		VocabID: data.VocabID,
 		Native: entityDict.DictWord{
-			ID:            uuid.New(),
 			Text:          data.Native.Text,
 			Pronunciation: data.Native.Pronunciation,
 			CreatedAt:     time.Now().UTC(),
@@ -146,7 +143,6 @@ func (h *Handler) updateWord(c *gin.Context) {
 	translates := make([]entityDict.DictWord, 0, len(data.Translates))
 	for _, tr := range data.Translates {
 		translates = append(translates, entityDict.DictWord{
-			ID:        uuid.New(),
 			Text:      tr,
 			CreatedAt: time.Now().UTC(),
 			UpdatedAt: time.Now().UTC(),
@@ -156,7 +152,6 @@ func (h *Handler) updateWord(c *gin.Context) {
 	examples := make([]entityExample.Example, 0, len(data.Examples))
 	for _, example := range data.Examples {
 		examples = append(examples, entityExample.Example{
-			ID:        uuid.New(),
 			Text:      example,
 			CreatedAt: time.Now().UTC(),
 		})

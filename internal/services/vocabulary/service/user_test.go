@@ -35,7 +35,7 @@ func TestService_UserGetVocabularies(t *testing.T) {
 	tr := transactor.NewTransactor(tp.PgxPool)
 	vocabRepo := vocabRepository.NewRepo(tr)
 	userRepo := userRepository.NewRepo(tr)
-	userSvc := user.NewService(userRepo, nil)
+	userSvc := user.NewService(userRepo, nil, tr)
 	subscribersSvc := subscribers.NewService(subscribersRepository.NewRepo(tr))
 
 	usr, err := userSvc.GetUserByName(ctx, "admin")
@@ -65,7 +65,7 @@ func TestService_UserGetVocabularies(t *testing.T) {
 			t.Errorf("UserGetVocabularies() got = %v, want %v", count, 0)
 		}
 		if !assert.Equal(t, 0, len(vocabs)) {
-			t.Errorf("UserGetVocabularies() got1 = %v, want %v", len(vocabs), 5)
+			t.Errorf("UserGetVocabularies() got = %v, want %v", len(vocabs), 5)
 		}
 	})
 
@@ -98,7 +98,7 @@ func TestService_UserGetVocabularies(t *testing.T) {
 				t.Errorf("UserGetVocabularies() got = %v, want %v", count, expectCount)
 			}
 			if !assert.Equal(t, expectVocabs, len(sortVocab)) {
-				t.Errorf("UserGetVocabularies() got1 = %v, want %v", len(sortVocab), expectVocabs)
+				t.Errorf("UserGetVocabularies() got = %v, want %v", len(sortVocab), expectVocabs)
 			}
 
 			return transactor.ErrCancelTx
@@ -129,7 +129,7 @@ func TestService_UserGetVocabularies(t *testing.T) {
 			}
 
 			for i := 0; i < 3; i++ {
-				uid, err := userSvc.AddUser(context.Background(), entityUser.UserCreate{
+				uid, err := userSvc.AddUser(ctx, entityUser.UserCreate{
 					ID:       uuid.New(),
 					Name:     fmt.Sprintf("user_%d", i),
 					Password: fmt.Sprintf("password_%d", i),
@@ -160,7 +160,7 @@ func TestService_UserGetVocabularies(t *testing.T) {
 				t.Errorf("UserGetVocabularies() got = %v, want %v", count, expectCount)
 			}
 			if !assert.Equal(t, expectVocabs, len(sortVocab)) {
-				t.Errorf("UserGetVocabularies() got1 = %v, want %v", len(sortVocab), expectVocabs)
+				t.Errorf("UserGetVocabularies() got = %v, want %v", len(sortVocab), expectVocabs)
 			}
 
 			return transactor.ErrCancelTx
