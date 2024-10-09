@@ -13,7 +13,7 @@ ssl:
     private: privkey.pem
 jwt:
     secret: 
-    expire_access: 300 #5 min
+    expire_access: 180 #3 min
     expire_refresh: 2592000 #30 days
 service:
     port: 5000
