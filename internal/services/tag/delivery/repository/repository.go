@@ -20,7 +20,7 @@ func NewRepo(tr *transactor.Transactor) *TagRepo {
 	}
 }
 
-func (r *TagRepo) AddTag(ctx context.Context, id uuid.UUID, text string) (uuid.UUID, error) {
+func (r *TagRepo) AddTag(ctx context.Context, text string) (uuid.UUID, error) {
 	query := `
 	WITH s AS (
     SELECT id, text FROM tag WHERE text = $2),
@@ -35,7 +35,7 @@ func (r *TagRepo) AddTag(ctx context.Context, id uuid.UUID, text string) (uuid.U
 		SELECT id
 		FROM s;`
 	var tid uuid.UUID
-	err := r.tr.QueryRow(ctx, query, id, text).Scan(&tid)
+	err := r.tr.QueryRow(ctx, query, uuid.New(), text).Scan(&tid)
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("example.repository.TagRepo.AddTag: %w", err)
 	}

@@ -76,7 +76,6 @@ func (h *Handler) addWord(c *gin.Context) {
 
 	words, err := h.dictSvc.GetOrAddWords(ctx, []entity.DictWord{
 		{
-			ID:            uuid.New(),
 			Text:          data.Text,
 			Pronunciation: data.Pronunciation,
 			LangCode:      data.LangCode,

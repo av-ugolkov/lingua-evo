@@ -26,7 +26,7 @@ func (r *UserRepo) AddUser(ctx context.Context, u *entity.User) (uuid.UUID, erro
 	query := `INSERT INTO users (id, name, email, password_hash, role, last_visit_at, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7) ON CONFLICT DO NOTHING RETURNING id`
 
 	var uid uuid.UUID
-	err := r.tr.QueryRow(ctx, query, u.ID, u.Name, u.Email, u.PasswordHash, u.Role, u.LastVisitAt, u.CreatedAt).Scan(&uid)
+	err := r.tr.QueryRow(ctx, query, uuid.New(), u.Name, u.Email, u.PasswordHash, u.Role, u.LastVisitAt, u.CreatedAt).Scan(&uid)
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("user.repository.UserRepo.AddUser: %w", err)
 	}
@@ -114,6 +114,17 @@ func (r *UserRepo) GetUserData(ctx context.Context, userID uuid.UUID) (*entity.D
 	return &data, nil
 }
 
+func (r *UserRepo) AddUserData(ctx context.Context, userID uuid.UUID, maxCountWords int, newsletter bool) error {
+	const query = `INSERT INTO user_data(user_id, max_count_words, newsletter) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING`
+
+	_, err := r.tr.Exec(ctx, query, userID, maxCountWords, newsletter)
+	if err != nil {
+		return fmt.Errorf("user.repository.UserRepo.GetUserData: %w", err)
+	}
+
+	return nil
+}
+
 func (r *UserRepo) GetUserSubscriptions(ctx context.Context, userID uuid.UUID) ([]entity.Subscriptions, error) {
 	const query = `
 	SELECT us.id, user_id, subscription_id, s.add_words count_word, us.started_at, us.ended_at 
@@ -138,6 +149,7 @@ func (r *UserRepo) GetUserSubscriptions(ctx context.Context, userID uuid.UUID) (
 
 	return subscriptions, nil
 }
+
 func (r *UserRepo) GetUsers(ctx context.Context, page, perPage, sort, order int, search string) ([]entity.UserData, int, error) {
 	const queryCountUsers = `SELECT COUNT(id) FROM users`
 	var countUser int
