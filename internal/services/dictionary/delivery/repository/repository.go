@@ -38,7 +38,7 @@ func (r *DictionaryRepo) AddWords(ctx context.Context, inWords []entity.DictWord
 		counter += 6
 		statements = append(statements, "("+statement+")")
 
-		params = append(params, word.ID, word.Text, word.LangCode, word.Creator, word.UpdatedAt.Format(time.RFC3339), word.CreatedAt.Format(time.RFC3339))
+		params = append(params, uuid.New(), word.Text, word.LangCode, word.Creator, word.UpdatedAt.Format(time.RFC3339), word.CreatedAt.Format(time.RFC3339))
 	}
 
 	table := getTable(inWords[0].LangCode)
