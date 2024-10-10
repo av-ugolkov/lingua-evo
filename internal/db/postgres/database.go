@@ -12,6 +12,5 @@ func NewDB(cfg *pgxpool.Config) (*pgxpool.Pool, error) {
 	if err != nil {
 		return nil, fmt.Errorf("create DB connection pool: %w", err)
 	}
-
 	return connPool, nil
 }

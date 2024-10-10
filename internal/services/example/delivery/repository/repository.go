@@ -41,7 +41,7 @@ func (r *ExampleRepo) AddExamples(ctx context.Context, examples []entity.Example
 		counter += 3
 		statements = append(statements, "("+statement+")")
 
-		params = append(params, examples[i].ID, examples[i].Text, examples[i].CreatedAt.Format(time.RFC3339))
+		params = append(params, uuid.New(), examples[i].Text, examples[i].CreatedAt.Format(time.RFC3339))
 	}
 
 	query := fmt.Sprintf(`

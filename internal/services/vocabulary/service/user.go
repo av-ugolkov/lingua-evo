@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary"
 	"github.com/av-ugolkov/lingua-evo/runtime/access"
 

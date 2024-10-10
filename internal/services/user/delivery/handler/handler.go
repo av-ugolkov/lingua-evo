@@ -102,7 +102,6 @@ func (h *Handler) signUp(c *gin.Context) {
 	}
 
 	uid, err := h.userSvc.SignUp(c.Request.Context(), entity.UserCreate{
-		ID:       uuid.New(),
 		Name:     data.Username,
 		Password: data.Password,
 		Email:    data.Email,
