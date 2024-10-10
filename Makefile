@@ -12,15 +12,15 @@ backup:
 
 .PHONY: release
 release:
-	@echo ${shell ./deploy.sh release}
+	@./deploy.sh release
 
 .PHONY: dev
 dev:
-	@echo ${shell ./deploy.sh dev}
+	@./deploy.sh dev
 
 .PHONY: database
 database:
-	@echo ${shell ./deploy.sh database}
+	@./deploy.sh database
 
 .PHONY: test_db
 test_db:
