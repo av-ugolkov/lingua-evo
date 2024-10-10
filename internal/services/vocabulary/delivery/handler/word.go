@@ -17,8 +17,7 @@ import (
 )
 
 const (
-	paramsLimit string = "limit"
-	paramsText  string = "text"
+	paramsText string = "text"
 )
 
 type (
@@ -72,7 +71,6 @@ func (h *Handler) addWord(c *gin.Context) {
 	translateWords := make([]entityDict.DictWord, 0, len(data.Translates))
 	for _, translateWord := range data.Translates {
 		translateWords = append(translateWords, entityDict.DictWord{
-			ID:        uuid.New(),
 			Text:      translateWord,
 			CreatedAt: time.Now().UTC(),
 			UpdatedAt: time.Now().UTC(),
@@ -82,7 +80,6 @@ func (h *Handler) addWord(c *gin.Context) {
 	examples := make([]entityExample.Example, 0, len(data.Examples))
 	for _, example := range data.Examples {
 		examples = append(examples, entityExample.Example{
-			ID:        uuid.New(),
 			Text:      example,
 			CreatedAt: time.Now().UTC(),
 		})
@@ -91,7 +88,6 @@ func (h *Handler) addWord(c *gin.Context) {
 	vocabWord, err := h.vocabSvc.AddWord(ctx, userID, entity.VocabWordData{
 		VocabID: data.VocabID,
 		Native: entityDict.DictWord{
-			ID:            uuid.New(),
 			Text:          data.Native.Text,
 			Pronunciation: data.Native.Pronunciation,
 			CreatedAt:     time.Now().UTC(),
@@ -146,7 +142,6 @@ func (h *Handler) updateWord(c *gin.Context) {
 	translates := make([]entityDict.DictWord, 0, len(data.Translates))
 	for _, tr := range data.Translates {
 		translates = append(translates, entityDict.DictWord{
-			ID:        uuid.New(),
 			Text:      tr,
 			CreatedAt: time.Now().UTC(),
 			UpdatedAt: time.Now().UTC(),
@@ -156,7 +151,6 @@ func (h *Handler) updateWord(c *gin.Context) {
 	examples := make([]entityExample.Example, 0, len(data.Examples))
 	for _, example := range data.Examples {
 		examples = append(examples, entityExample.Example{
-			ID:        uuid.New(),
 			Text:      example,
 			CreatedAt: time.Now().UTC(),
 		})
@@ -210,48 +204,6 @@ func (h *Handler) deleteWord(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{})
-}
-
-func (h *Handler) getRandomWords(c *gin.Context) {
-	ctx := c.Request.Context()
-	vid, err := ginExt.GetQueryUUID(c, paramsID)
-	if err != nil {
-		ginExt.SendError(c, http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.getSeveralWords - get vocab id: %w", err))
-		return
-	}
-
-	limit, err := ginExt.GetQueryInt(c, paramsLimit)
-	if err != nil {
-		ginExt.SendError(c, http.StatusInternalServerError,
-			fmt.Errorf("word.delivery.Handler.getSeveralWords - get limit: %w", err))
-		return
-	}
-	vocabWords, err := h.vocabSvc.GetRandomWords(ctx, vid, limit)
-	if err != nil {
-		ginExt.SendError(c, http.StatusInternalServerError,
-			fmt.Errorf("word.delivery.Handler.getSeveralWords: %w", err))
-		return
-	}
-
-	wordsRs := make([]VocabWordRs, 0, len(vocabWords))
-	for _, vocabWord := range vocabWords {
-		translates := make([]string, 0, len(vocabWord.Translates))
-		for _, translate := range vocabWord.Translates {
-			translates = append(translates, translate.Text)
-		}
-
-		wordRs := VocabWordRs{
-			Native: &VocabWord{
-				Text:          vocabWord.Native.Text,
-				Pronunciation: vocabWord.Native.Pronunciation,
-			},
-			Translates: translates,
-		}
-
-		wordsRs = append(wordsRs, wordRs)
-	}
-
-	c.JSON(http.StatusOK, wordsRs)
 }
 
 func (h *Handler) getWord(c *gin.Context) {

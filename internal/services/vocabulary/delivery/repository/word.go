@@ -224,7 +224,7 @@ func (r *VocabRepo) GetVocabulary(ctx context.Context, vocabID uuid.UUID) ([]ent
 	return vocabularies, nil
 }
 
-func (r *VocabRepo) GetVocabularyWords(ctx context.Context, vocabID uuid.UUID) ([]entity.VocabWordData, error) {
+func (r *VocabRepo) GetVocabWords(ctx context.Context, vocabID uuid.UUID) ([]entity.VocabWordData, error) {
 	var countRows int
 	err := r.tr.QueryRow(ctx, `SELECT count(*) FROM word WHERE vocabulary_id=$1`, vocabID).Scan(&countRows)
 	if err != nil {
@@ -290,6 +290,67 @@ func (r *VocabRepo) GetVocabularyWords(ctx context.Context, vocabID uuid.UUID) (
 
 		wordData.VocabID = vocabID
 		wordData.Native.LangCode = langNative
+
+		vocabularyWords = append(vocabularyWords, wordData)
+	}
+
+	return vocabularyWords, nil
+}
+
+func (r *VocabRepo) GetVocabSeveralWords(ctx context.Context, vocabID uuid.UUID, count int, nativeLang, translateLang string) ([]entity.VocabWordData, error) {
+	query := fmt.Sprintf(`
+		SELECT
+			w.id,
+			n.id as native_id,
+			n."text",
+			coalesce(w.pronunciation, '') as pronunciation,
+			array_agg(distinct t."text") FILTER (WHERE t."text" IS NOT NULL) translates,
+			array_agg(distinct e."text") FILTER (WHERE e."text" IS NOT NULL) examples,
+			w.updated_at,
+			w.created_at
+		FROM word w
+			LEFT JOIN "dictionary_%[1]s" n ON n.id = w.native_id
+			LEFT JOIN "dictionary_%[2]s" t ON t.id = ANY(w.translate_ids)
+			LEFT JOIN "example_%[1]s" e ON e.id = ANY(w.example_ids)
+		WHERE w.vocabulary_id=$1
+		GROUP BY w.id, n.id, n."text", w.pronunciation, n.lang_code
+		LIMIT $2;`, nativeLang, translateLang)
+
+	rows, err := r.tr.Query(ctx, query, vocabID, count)
+	if err != nil {
+		return nil, fmt.Errorf("word.repository.WordRepo.GetVocabularyWords: %w", err)
+	}
+	defer rows.Close()
+
+	vocabularyWords := make([]entity.VocabWordData, 0, count)
+	for rows.Next() {
+		var wordData entity.VocabWordData
+		var translates []string
+		var examples []string
+		err = rows.Scan(
+			&wordData.ID,
+			&wordData.Native.ID,
+			&wordData.Native.Text,
+			&wordData.Native.Pronunciation,
+			&translates,
+			&examples,
+			&wordData.UpdatedAt,
+			&wordData.CreatedAt,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("word.repository.WordRepo.GetVocabularyWords - scan: %w", err)
+		}
+
+		for _, tr := range translates {
+			wordData.Translates = append(wordData.Translates, entityDict.DictWord{Text: tr, LangCode: translateLang})
+		}
+
+		for _, ex := range examples {
+			wordData.Examples = append(wordData.Examples, entityExample.Example{Text: ex})
+		}
+
+		wordData.VocabID = vocabID
+		wordData.Native.LangCode = nativeLang
 
 		vocabularyWords = append(vocabularyWords, wordData)
 	}

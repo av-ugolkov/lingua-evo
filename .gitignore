@@ -2,7 +2,10 @@
 logs/*
 cmd/main
 cmd/logs/*
-tools/*
+tools/banch/*
+tools/fill_db/*
+tools/user/*
+
 
 .DS_Store
 .vs/

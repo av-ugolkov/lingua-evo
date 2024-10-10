@@ -56,8 +56,6 @@ import (
 )
 
 func ServerStart(cfg *config.Config) {
-	closer := closer.NewCloser()
-
 	logger := log.CustomLogger(&cfg.Logger)
 	if logger == nil {
 		return
@@ -103,6 +101,7 @@ func ServerStart(cfg *config.Config) {
 
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.Default()
+	router.UseH2C = true
 	router.Use(cors.New(cors.Config{
 		AllowOrigins:     cfg.Service.AllowedOrigins,
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"},
@@ -115,10 +114,10 @@ func ServerStart(cfg *config.Config) {
 
 	server := http.Server{
 		Addr:         address,
-		Handler:      router,
+		Handler:      router.Handler(),
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
-		ErrorLog:     logger.ServerLoger,
+		ErrorLog:     logger.ServerLogger,
 	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
@@ -169,7 +168,7 @@ func initServer(cfg *config.Config, r *gin.Engine, pgxPool *pgxpool.Pool, redis 
 	tr := transactor.NewTransactor(pgxPool)
 	slog.Info("create services")
 	userRepo := userRepository.NewRepo(tr)
-	userSvc := userService.NewService(userRepo, redis)
+	userSvc := userService.NewService(userRepo, redis, tr)
 	accessRepo := accessRepository.NewRepo(tr)
 	accessSvc := accessService.NewService(accessRepo)
 	langRepo := langRepository.NewRepo(tr)

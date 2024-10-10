@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/av-ugolkov/lingua-evo/internal/db/transactor"
 	"time"
 
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/utils"
@@ -23,6 +24,7 @@ type (
 		GetUserByToken(ctx context.Context, token uuid.UUID) (*User, error)
 		RemoveUser(ctx context.Context, u uuid.UUID) error
 		GetUserData(ctx context.Context, uid uuid.UUID) (*Data, error)
+		AddUserData(ctx context.Context, userID uuid.UUID, maxCountWords int, newsletter bool) error
 		GetUserSubscriptions(ctx context.Context, uid uuid.UUID) ([]Subscriptions, error)
 		GetUsers(ctx context.Context, page, perPage, sort, order int, search string) ([]UserData, int, error)
 		UpdateLastVisited(ctx context.Context, uid uuid.UUID) error
@@ -37,12 +39,14 @@ type (
 type Service struct {
 	repo  userRepo
 	redis redis
+	tr    *transactor.Transactor
 }
 
-func NewService(repo userRepo, redis redis) *Service {
+func NewService(repo userRepo, redis redis, tr *transactor.Transactor) *Service {
 	return &Service{
 		repo:  repo,
 		redis: redis,
+		tr:    tr,
 	}
 }
 
@@ -83,7 +87,6 @@ func (s *Service) AddUser(ctx context.Context, usr UserCreate) (uuid.UUID, error
 	}
 
 	user := &User{
-		ID:           usr.ID,
 		Name:         usr.Name,
 		PasswordHash: hashPassword,
 		Email:        usr.Email,
@@ -92,9 +95,23 @@ func (s *Service) AddUser(ctx context.Context, usr UserCreate) (uuid.UUID, error
 		LastVisitAt:  time.Now().UTC(),
 	}
 
-	uid, err := s.repo.AddUser(ctx, user)
+	uid := uuid.Nil
+	err = s.tr.CreateTransaction(ctx, func(ctx context.Context) error {
+		uid, err = s.repo.AddUser(ctx, user)
+		if err != nil {
+			return err
+		}
+
+		err = s.repo.AddUserData(ctx, uid, 300, true)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+
 	if err != nil {
-		return uuid.Nil, fmt.Errorf("user.Service.AddUser: %w", err)
+		return uuid.Nil, fmt.Errorf("user.Service.AddUser: %v", err)
 	}
 
 	return uid, nil

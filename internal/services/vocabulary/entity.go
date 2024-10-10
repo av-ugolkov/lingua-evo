@@ -42,6 +42,11 @@ type (
 		WordsCount uint
 	}
 
+	VocabWithUserAndWords struct {
+		VocabWithUser
+		Words []string
+	}
+
 	VocabWord struct {
 		ID            uuid.UUID
 		VocabID       uuid.UUID
