@@ -97,7 +97,7 @@ func (h *Handler) register(r *gin.Engine) {
 	r.DELETE(handler.Vocabulary, middleware.Auth(h.userDeleteVocabulary))
 	r.PUT(handler.Vocabulary, middleware.Auth(h.userEditVocabulary))
 	r.GET(handler.UserVocabularies, middleware.Auth(h.userGetVocabularies))
-	r.GET(handler.Vocabularies, middleware.OptionalAuth(h.getVocabularies))
+	r.GET(handler.Vocabularies, h.getVocabularies)
 	r.GET(handler.VocabulariesByUser, middleware.OptionalAuth(h.getVocabulariesByUser))
 	r.GET(handler.VocabularyInfo, middleware.OptionalAuth(h.getVocabularyInfo))
 	r.POST(handler.VocabularyCopy, middleware.Auth(h.copyVocabulary))
