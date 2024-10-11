@@ -11,6 +11,7 @@ import (
 	vocabulary "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary/service"
 	"github.com/av-ugolkov/lingua-evo/runtime"
 	"github.com/av-ugolkov/lingua-evo/runtime/access"
+
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -54,6 +55,20 @@ type (
 		WordsCount    *uint     `json:"words_count,omitempty"`
 		CreatedAt     time.Time `json:"created_at,omitempty"`
 		UpdatedAt     time.Time `json:"updated_at,omitempty"`
+	}
+
+	VocabByUserRs struct {
+		ID            uuid.UUID `json:"id,omitempty"`
+		UserID        uuid.UUID `json:"user_id,omitempty"`
+		Name          string    `json:"name,omitempty"`
+		AccessID      *uint8    `json:"access_id,omitempty"`
+		NativeLang    string    `json:"native_lang,omitempty"`
+		TranslateLang string    `json:"translate_lang,omitempty"`
+		Description   string    `json:"description,omitempty"`
+		UserName      string    `json:"user_name,omitempty"`
+		WordsCount    *uint     `json:"words_count,omitempty"`
+		Editable      bool      `json:"editable,omitempty"`
+		Notification  bool      `json:"notification,omitempty"`
 	}
 
 	VocabularyWithWords struct {
@@ -202,39 +217,41 @@ func (h *Handler) getVocabularies(c *gin.Context) {
 func (h *Handler) getVocabulariesByUser(c *gin.Context) {
 	ctx := c.Request.Context()
 
-	uid, err := ginExt.GetQueryUUID(c, paramsUserID)
+	uid, _ := runtime.UserIDFromContext(ctx)
+
+	owner, err := ginExt.GetQueryUUID(c, paramsUserID)
 	if err != nil {
 		ginExt.SendError(c, http.StatusInternalServerError,
 			fmt.Errorf("vocabulary.delivery.Handler.getVocabulariesByUser - get query [user_id]: %v", err))
 		return
 	}
 
-	vocabs, err := h.vocabSvc.GetVocabulariesByUser(ctx, uid, []access.Type{access.Public, access.Subscribers})
+	vocabs, err := h.vocabSvc.GetVocabulariesByUser(ctx, uid, owner, []access.Type{access.Public, access.Subscribers})
 	if err != nil {
 		ginExt.SendError(c, http.StatusInternalServerError,
 			fmt.Errorf("vocabulary.delivery.Handler.getVocabulariesByUser: %v", err))
 		return
 	}
 
-	vocabulariesRs := make([]VocabularyRs, 0, len(vocabs))
+	vocabulariesRs := make([]VocabByUserRs, 0, len(vocabs))
 	for _, vocab := range vocabs {
 		tags := make([]string, 0, len(vocab.Tags))
 		for _, tag := range vocab.Tags {
 			tags = append(tags, tag.Text)
 		}
 
-		vocabulariesRs = append(vocabulariesRs, VocabularyRs{
+		vocabulariesRs = append(vocabulariesRs, VocabByUserRs{
 			ID:            vocab.ID,
-			UserID:        vocab.UserID,
 			Name:          vocab.Name,
+			UserID:        vocab.UserID,
+			UserName:      vocab.UserName,
 			AccessID:      &vocab.Access,
 			NativeLang:    vocab.NativeLang,
 			TranslateLang: vocab.TranslateLang,
 			Description:   vocab.Description,
 			WordsCount:    &vocab.WordsCount,
-			Tags:          tags,
-			CreatedAt:     vocab.CreatedAt,
-			UpdatedAt:     vocab.UpdatedAt,
+			Editable:      vocab.Editable,
+			Notification:  vocab.Notification,
 		})
 	}
 
