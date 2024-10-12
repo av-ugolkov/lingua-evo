@@ -49,7 +49,7 @@ func (s *Service) CheckLanguage(ctx context.Context, langCode string) error {
 	}
 
 	if _, err := s.repo.GetLanguage(ctx, langCode); err != nil {
-		return handler.NewError(fmt.Errorf("language.Service.CheckLanguage - not found language: %s", langCode),
+		return handler.NewError(fmt.Errorf("language.Service.CheckLanguage: %w", err),
 			http.StatusInternalServerError, handler.ErrInternal)
 	}
 	return nil

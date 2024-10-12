@@ -8,21 +8,21 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
-
+	"github.com/av-ugolkov/lingua-evo/internal/db/transactor"
 	"github.com/av-ugolkov/lingua-evo/internal/services/example"
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/example"
+
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 )
 
 type ExampleRepo struct {
-	pgxPool *pgxpool.Pool
+	tr *transactor.Transactor
 }
 
-func NewRepo(pgxPool *pgxpool.Pool) *ExampleRepo {
+func NewRepo(tr *transactor.Transactor) *ExampleRepo {
 	return &ExampleRepo{
-		pgxPool: pgxPool,
+		tr: tr,
 	}
 }
 
@@ -41,7 +41,7 @@ func (r *ExampleRepo) AddExamples(ctx context.Context, examples []entity.Example
 		counter += 3
 		statements = append(statements, "("+statement+")")
 
-		params = append(params, examples[i].ID, examples[i].Text, examples[i].CreatedAt.Format(time.RFC3339))
+		params = append(params, uuid.New(), examples[i].Text, examples[i].CreatedAt.Format(time.RFC3339))
 	}
 
 	query := fmt.Sprintf(`
@@ -56,7 +56,7 @@ func (r *ExampleRepo) AddExamples(ctx context.Context, examples []entity.Example
 		UNION ALL
 		SELECT id
 		FROM s;`, langCode, strings.Join(statements, ", "))
-	rows, err := r.pgxPool.Query(ctx, query, params...)
+	rows, err := r.tr.Query(ctx, query, params...)
 	if err != nil {
 		return nil, fmt.Errorf("example.repository.ExampleRepo.AddExamples - query: %w", err)
 	}
@@ -78,7 +78,7 @@ func (r *ExampleRepo) AddExamples(ctx context.Context, examples []entity.Example
 func (r *ExampleRepo) GetExampleByValue(ctx context.Context, text, langCode string) (uuid.UUID, error) {
 	var id uuid.UUID
 	query := fmt.Sprintf(`SELECT id FROM example_%s WHERE text=$1`, langCode)
-	err := r.pgxPool.QueryRow(ctx, query, text).Scan(&id)
+	err := r.tr.QueryRow(ctx, query, text).Scan(&id)
 	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 		return uuid.Nil, fmt.Errorf("example.repository.ExampleRepo.GetExample: %w", err)
 	} else if errors.Is(err, pgx.ErrNoRows) {
@@ -91,7 +91,7 @@ func (r *ExampleRepo) GetExampleByValue(ctx context.Context, text, langCode stri
 func (r *ExampleRepo) GetExampleById(ctx context.Context, id uuid.UUID, langCode string) (string, error) {
 	var text string
 	query := fmt.Sprintf(`SELECT text FROM example_%s WHERE id=$1`, langCode)
-	err := r.pgxPool.QueryRow(ctx, query, id).Scan(&text)
+	err := r.tr.QueryRow(ctx, query, id).Scan(&text)
 	if err != nil {
 		return "", fmt.Errorf("example.repository.ExampleRepo.AddExample: %w", err)
 	}
@@ -101,7 +101,7 @@ func (r *ExampleRepo) GetExampleById(ctx context.Context, id uuid.UUID, langCode
 
 func (r *ExampleRepo) GetExamples(ctx context.Context, ids []uuid.UUID) ([]example.Example, error) {
 	query := `SELECT id, text FROM example WHERE id = ANY($1)`
-	rows, err := r.pgxPool.Query(ctx, query, ids)
+	rows, err := r.tr.Query(ctx, query, ids)
 	if err != nil {
 		return nil, fmt.Errorf("example.repository.ExampleRepo.GetExamples: %w", err)
 	}

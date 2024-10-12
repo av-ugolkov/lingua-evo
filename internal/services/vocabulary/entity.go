@@ -22,7 +22,7 @@ var (
 )
 
 type (
-	Vocabulary struct {
+	Vocab struct {
 		ID            uuid.UUID
 		UserID        uuid.UUID
 		Name          string
@@ -35,10 +35,16 @@ type (
 		UpdatedAt     time.Time
 	}
 
-	VocabularyWithUser struct {
-		Vocabulary
+	VocabWithUser struct {
+		Vocab
 		UserName   string
+		Editable   bool
 		WordsCount uint
+	}
+
+	VocabWithUserAndWords struct {
+		VocabWithUser
+		Words []string
 	}
 
 	VocabWord struct {

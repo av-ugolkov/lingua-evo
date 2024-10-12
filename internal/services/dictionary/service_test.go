@@ -2,12 +2,13 @@ package dictionary
 
 import (
 	"context"
-	entityLanguage "github.com/av-ugolkov/lingua-evo/internal/services/language"
-	"github.com/google/uuid"
-	"github.com/stretchr/testify/mock"
 	"testing"
 
+	entityLanguage "github.com/av-ugolkov/lingua-evo/internal/services/language"
+
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestService_AddWord(t *testing.T) {

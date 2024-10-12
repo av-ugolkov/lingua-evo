@@ -1,4 +1,3 @@
--- +goose Up
 CREATE TABLE IF NOT EXISTS
     "users" (
         "id" UUID PRIMARY KEY,
@@ -63,18 +62,3 @@ CREATE TABLE IF NOT EXISTS
     );
 
 CREATE UNIQUE INDEX IF NOT EXISTS "idx_unique_word__vocabulary_id_native_id" ON "word" ("vocabulary_id", "native_id");
-
--- +goose Down
-DROP TABLE IF EXISTS "users";
-
-DROP TABLE IF EXISTS "language";
-
-DROP TABLE IF EXISTS "dictionary";
-
-DROP TABLE IF EXISTS "example";
-
-DROP TABLE IF EXISTS "word";
-
-DROP TABLE IF EXISTS "vocabulary";
-
-DROP TABLE IF EXISTS "tag";

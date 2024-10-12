@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/av-ugolkov/lingua-evo/internal/db/transactor"
 	"time"
 
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/utils"
@@ -21,8 +22,9 @@ type (
 		GetUserByName(ctx context.Context, name string) (*User, error)
 		GetUserByEmail(ctx context.Context, email string) (*User, error)
 		GetUserByToken(ctx context.Context, token uuid.UUID) (*User, error)
-		RemoveUser(ctx context.Context, u *User) error
+		RemoveUser(ctx context.Context, u uuid.UUID) error
 		GetUserData(ctx context.Context, uid uuid.UUID) (*Data, error)
+		AddUserData(ctx context.Context, userID uuid.UUID, maxCountWords int, newsletter bool) error
 		GetUserSubscriptions(ctx context.Context, uid uuid.UUID) ([]Subscriptions, error)
 		GetUsers(ctx context.Context, page, perPage, sort, order int, search string) ([]UserData, int, error)
 		UpdateLastVisited(ctx context.Context, uid uuid.UUID) error
@@ -37,12 +39,14 @@ type (
 type Service struct {
 	repo  userRepo
 	redis redis
+	tr    *transactor.Transactor
 }
 
-func NewService(repo userRepo, redis redis) *Service {
+func NewService(repo userRepo, redis redis, tr *transactor.Transactor) *Service {
 	return &Service{
 		repo:  repo,
 		redis: redis,
+		tr:    tr,
 	}
 }
 
@@ -60,32 +64,54 @@ func (s *Service) SignUp(ctx context.Context, userCreate UserCreate) (uuid.UUID,
 		return uuid.Nil, fmt.Errorf("auth.Service.SignUp: code mismatch")
 	}
 
-	if err := s.validateUsername(ctx, userCreate.Name); err != nil {
-		return uuid.Nil, fmt.Errorf("auth.Service.SignUp - validateUsername: %v", err)
-	}
-
-	if err := validatePassword(userCreate.Password); err != nil {
-		return uuid.Nil, fmt.Errorf("auth.Service.SignUp - validatePassword: %v", err)
-	}
-
-	hashPassword, err := utils.HashPassword(userCreate.Password)
+	uid, err := s.AddUser(ctx, userCreate)
 	if err != nil {
-		return uuid.Nil, fmt.Errorf("auth.Service.SignUp - hashPassword: %v", err)
+		return uuid.Nil, fmt.Errorf("auth.Service.SignUp - AddUser: %v", err)
+	}
+
+	return uid, nil
+}
+
+func (s *Service) AddUser(ctx context.Context, usr UserCreate) (uuid.UUID, error) {
+	if err := s.validateUsername(ctx, usr.Name); err != nil {
+		return uuid.Nil, fmt.Errorf("auth.Service.AddUser - validateUsername: %v", err)
+	}
+
+	if err := validatePassword(usr.Password); err != nil {
+		return uuid.Nil, fmt.Errorf("auth.Service.AddUser - validatePassword: %v", err)
+	}
+
+	hashPassword, err := utils.HashPassword(usr.Password)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("auth.Service.AddUser - hashPassword: %v", err)
 	}
 
 	user := &User{
-		ID:           userCreate.ID,
-		Name:         userCreate.Name,
+		Name:         usr.Name,
 		PasswordHash: hashPassword,
-		Email:        userCreate.Email,
-		Role:         userCreate.Role,
+		Email:        usr.Email,
+		Role:         usr.Role,
 		CreatedAt:    time.Now().UTC(),
 		LastVisitAt:  time.Now().UTC(),
 	}
 
-	uid, err := s.repo.AddUser(ctx, user)
+	uid := uuid.Nil
+	err = s.tr.CreateTransaction(ctx, func(ctx context.Context) error {
+		uid, err = s.repo.AddUser(ctx, user)
+		if err != nil {
+			return err
+		}
+
+		err = s.repo.AddUserData(ctx, uid, 300, true)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+
 	if err != nil {
-		return uuid.Nil, fmt.Errorf("user.Service.AddUser: %w", err)
+		return uuid.Nil, fmt.Errorf("user.Service.AddUser: %v", err)
 	}
 
 	return uid, nil

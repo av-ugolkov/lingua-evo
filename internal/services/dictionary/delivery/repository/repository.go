@@ -7,19 +7,19 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgxpool"
-
+	"github.com/av-ugolkov/lingua-evo/internal/db/transactor"
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/dictionary"
+
+	"github.com/google/uuid"
 )
 
 type DictionaryRepo struct {
-	pgxPool *pgxpool.Pool
+	tr *transactor.Transactor
 }
 
-func NewRepo(pgxPool *pgxpool.Pool) *DictionaryRepo {
+func NewRepo(tr *transactor.Transactor) *DictionaryRepo {
 	return &DictionaryRepo{
-		pgxPool: pgxPool,
+		tr: tr,
 	}
 }
 
@@ -38,7 +38,7 @@ func (r *DictionaryRepo) AddWords(ctx context.Context, inWords []entity.DictWord
 		counter += 6
 		statements = append(statements, "("+statement+")")
 
-		params = append(params, word.ID, word.Text, word.LangCode, word.Creator, word.UpdatedAt.Format(time.RFC3339), word.CreatedAt.Format(time.RFC3339))
+		params = append(params, uuid.New(), word.Text, word.LangCode, word.Creator, word.UpdatedAt.Format(time.RFC3339), word.CreatedAt.Format(time.RFC3339))
 	}
 
 	table := getTable(inWords[0].LangCode)
@@ -57,7 +57,7 @@ func (r *DictionaryRepo) AddWords(ctx context.Context, inWords []entity.DictWord
 			creator, 
 			updated_at, 
 			created_at;`, table, strings.Join(statements, ", "))
-	rows, err := r.pgxPool.Query(ctx, query, params...)
+	rows, err := r.tr.Query(ctx, query, params...)
 	if err != nil {
 		return nil, fmt.Errorf("dictionary.repository.DictionaryRepo.AddWords - query: %w", err)
 	}
@@ -83,7 +83,7 @@ func (r *DictionaryRepo) GetWordsByText(ctx context.Context, inWords []entity.Di
 	table := getTable(inWords[0].LangCode)
 	query := fmt.Sprintf(`SELECT id, text, pronunciation, lang_code, creator, updated_at, created_at FROM "%s" WHERE text = ANY($1::text[]);`, table)
 
-	rows, err := r.pgxPool.Query(ctx, query, texts)
+	rows, err := r.tr.Query(ctx, query, texts)
 	if err != nil {
 		return nil, fmt.Errorf("dictionary.repository.DictionaryRepo.GetWordByText: %w", err)
 	}
@@ -107,7 +107,7 @@ func (r *DictionaryRepo) GetWordsByText(ctx context.Context, inWords []entity.Di
 
 func (r *DictionaryRepo) GetWords(ctx context.Context, ids []uuid.UUID) ([]entity.DictWord, error) {
 	query := `SELECT id, text, pronunciation, created_at, updated_at FROM dictionary WHERE id=ANY($1);`
-	rows, err := r.pgxPool.Query(ctx, query, ids)
+	rows, err := r.tr.Query(ctx, query, ids)
 	if err != nil {
 		return nil, fmt.Errorf("dictionary.repository.DictionaryRepo.GetWords - query: %w", err)
 	}
@@ -127,7 +127,7 @@ func (r *DictionaryRepo) GetWords(ctx context.Context, ids []uuid.UUID) ([]entit
 
 func (r *DictionaryRepo) UpdateWord(ctx context.Context, w *entity.DictWord) error {
 	query := `UPDATE dictionary SET text=$2, pronunciation=$3, updated_at=$4 WHERE id=$1`
-	result, err := r.pgxPool.Exec(ctx, query, w.ID, w.Text, w.Pronunciation, w.UpdatedAt)
+	result, err := r.tr.Exec(ctx, query, w.ID, w.Text, w.Pronunciation, w.UpdatedAt)
 	if err != nil {
 		return fmt.Errorf("dictionary.repository.DictionaryRepo.EditWord - exec: %w", err)
 	}
@@ -142,7 +142,7 @@ func (r *DictionaryRepo) UpdateWord(ctx context.Context, w *entity.DictWord) err
 func (r *DictionaryRepo) FindWords(ctx context.Context, w *entity.DictWord) ([]uuid.UUID, error) {
 	var ids []uuid.UUID
 	query := `SELECT id FROM dictionary WHERE text=$1 AND lang_code=$2;`
-	rows, err := r.pgxPool.Query(ctx, query, w.Text, w.LangCode)
+	rows, err := r.tr.Query(ctx, query, w.Text, w.LangCode)
 	if err != nil {
 		return nil, fmt.Errorf("dictionary.repository.DictionaryRepo.FindWords - query: %w", err)
 	}
@@ -162,7 +162,7 @@ func (r *DictionaryRepo) FindWords(ctx context.Context, w *entity.DictWord) ([]u
 
 func (r *DictionaryRepo) DeleteWordByText(ctx context.Context, w *entity.DictWord) error {
 	query := `DELETE FROM dictionary WHERE text=$1 AND lang_code=$2`
-	result, err := r.pgxPool.Exec(ctx, query, w.Text, w.LangCode)
+	result, err := r.tr.Exec(ctx, query, w.Text, w.LangCode)
 	if err != nil {
 		return fmt.Errorf("dictionary.repository.DictionaryRepo.DeleteWordByText - exec: %w", err)
 	}
@@ -175,9 +175,14 @@ func (r *DictionaryRepo) DeleteWordByText(ctx context.Context, w *entity.DictWor
 
 func (r *DictionaryRepo) GetRandomWord(ctx context.Context, langCode string) (entity.DictWord, error) {
 	table := getTable(langCode)
-	query := fmt.Sprintf(`SELECT text, pronunciation, lang_code FROM "%s" WHERE moderator IS NOT NULL ORDER BY RANDOM() LIMIT 1;`, table)
+	query := fmt.Sprintf(`
+		SELECT id, text, pronunciation, lang_code 
+		FROM "%s" 
+		WHERE moderator IS NOT NULL 
+		ORDER BY RANDOM() 
+		LIMIT 1;`, table)
 	word := entity.DictWord{}
-	err := r.pgxPool.QueryRow(ctx, query).Scan(&word.Text, &word.Pronunciation, &word.LangCode)
+	err := r.tr.QueryRow(ctx, query).Scan(&word.ID, &word.Text, &word.Pronunciation, &word.LangCode)
 	if err != nil {
 		return entity.DictWord{}, fmt.Errorf("dictionary.repository.DictionaryRepo.GetRandomWord - scan: %w", err)
 	}
