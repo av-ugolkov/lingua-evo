@@ -158,7 +158,7 @@ func TestGetVocabsWithCountWords(t *testing.T) {
 	repo := NewRepo(tr)
 	userRepo := repository.NewRepo(tr)
 
-	uid, err := userRepo.AddUser(ctx, &entityUser.User{
+	owner, err := userRepo.AddUser(ctx, &entityUser.User{
 		ID:           uuid.New(),
 		Name:         "test_user",
 		Email:        "test_user@email.com",
@@ -170,14 +170,14 @@ func TestGetVocabsWithCountWords(t *testing.T) {
 	}
 
 	t.Cleanup(func() {
-		err = userRepo.RemoveUser(ctx, uid)
+		err = userRepo.RemoveUser(ctx, owner)
 		if err != nil {
 			t.Fatal(err)
 		}
 	})
 
 	t.Run("empty vocabularies", func(t *testing.T) {
-		vocabs, err := repo.GetVocabsWithCountWords(ctx, uid, []uint8{uint8(access.Public), uint8(access.Subscribers)})
+		vocabs, err := repo.GetVocabsWithCountWords(ctx, uuid.Nil, owner, []uint8{uint8(access.Public), uint8(access.Subscribers)})
 		if err != nil {
 			assert.Error(t, err)
 		}
@@ -188,7 +188,7 @@ func TestGetVocabsWithCountWords(t *testing.T) {
 			for i := 0; i < 10; i++ {
 				_, err := repo.AddVocab(ctx, entity.Vocab{
 					ID:            uuid.New(),
-					UserID:        uid,
+					UserID:        owner,
 					Name:          fmt.Sprintf("test_%d", i),
 					Access:        uint8(access.Subscribers),
 					NativeLang:    "en",
@@ -202,7 +202,7 @@ func TestGetVocabsWithCountWords(t *testing.T) {
 					return err
 				}
 			}
-			vocabs, err := repo.GetVocabsWithCountWords(ctx, uid, []uint8{uint8(access.Public), uint8(access.Subscribers)})
+			vocabs, err := repo.GetVocabsWithCountWords(ctx, uuid.Nil, owner, []uint8{uint8(access.Public), uint8(access.Subscribers)})
 			if err != nil {
 				return err
 			}
