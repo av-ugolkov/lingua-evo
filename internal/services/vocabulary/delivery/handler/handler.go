@@ -235,11 +235,6 @@ func (h *Handler) getVocabulariesByUser(c *gin.Context) {
 
 	vocabulariesRs := make([]VocabByUserRs, 0, len(vocabs))
 	for _, vocab := range vocabs {
-		tags := make([]string, 0, len(vocab.Tags))
-		for _, tag := range vocab.Tags {
-			tags = append(tags, tag.Text)
-		}
-
 		vocabulariesRs = append(vocabulariesRs, VocabByUserRs{
 			ID:            vocab.ID,
 			Name:          vocab.Name,
