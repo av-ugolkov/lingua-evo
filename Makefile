@@ -6,26 +6,30 @@ build:
 run:
 	./cmd/main
 
-.PHONY: deploy
-deploy:
-	./deploy.sh
-
 .PHONY: backup
 backup:
 	./backup.sh
 
-.PHONY: run.docker
-run.docker:
-	EPSW='${EPSW}'
-	docker compose -p lingua-evo -f deploy/docker-compose.yml up --build --force-recreate
+.PHONY: release
+release:
+	@./deploy.sh release
 
-.PHONY: run.docker.dev
-run.docker.dev:
-	docker compose -p lingua-evo-dev -f deploy/docker-compose.dev.yml up --build --force-recreate
+.PHONY: dev
+dev:
+	@./deploy.sh dev
 
-.PHONY: run.docker.database
-run.docker.database:
-	docker compose -p lingua-evo-dev -f deploy/docker-compose.dev.yml up redis postgres migration --build --force-recreate
+.PHONY: database
+database:
+	@./deploy.sh database
+
+.PHONY: test_db
+test_db:
+	DB_NAME=test \
+    docker compose -p lingua-evo-test -f deploy/docker-compose.db.yml up --build --force-recreate
+
+.PHONY: database.down
+database.down:
+	@echo ${shell ./deploy.sh database_down}
 
 .PHONY: lint
 lint:
@@ -35,7 +39,7 @@ lint:
 
 .PHONY: test
 test: 
-	go test ./... -count=1
+	go test ./... -count=1 -cover
 
 .PHONY: count line
 count line:

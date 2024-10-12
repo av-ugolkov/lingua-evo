@@ -1,0 +1,34 @@
+services:
+  postgres:
+    container_name: postgres-test
+    image: postgres:16.1-alpine3.19
+    environment:
+      - POSTGRES_DB=pg-lingua-${DB_NAME}
+      - POSTGRES_PASSWORD=1234567
+      - POSTGRES_USER=linuser
+    volumes:
+      - /var/lib/postgresql/lingua-evo-test/data:/var/lib/postgresql/data
+    expose:
+      - '5432'
+    ports:
+      - '6432:5432'
+    networks:
+      - lingua-test
+
+  migration:
+    container_name: migration-test
+    image: migration:test
+    build:
+      context: ../migration
+    depends_on:
+      - postgres
+    networks:
+      - lingua-test
+    entrypoint:
+      - '/bin/sh'
+      - '-ecx'
+      - './migration -cmd up -url linuser:1234567@postgres-test:5432/pg-lingua-${DB_NAME}?sslmode=disable'
+
+networks:
+  lingua-test:
+    name: lingua-test

@@ -1,4 +1,6 @@
--- +goose Up
+ALTER TABLE IF EXISTS "word"
+ADD COLUMN IF NOT EXISTS "pronunciation" TEXT;
+
 CREATE TABLE IF NOT EXISTS
     "subscriptions" (
         "id" BIGINT PRIMARY KEY,
@@ -35,7 +37,8 @@ INSERT INTO
 SELECT
     "id"
 FROM
-    "users";
+    "users" ON CONFLICT
+DO NOTHING;
 
 CREATE TABLE IF NOT EXISTS
     "subscribers" (
@@ -45,14 +48,3 @@ CREATE TABLE IF NOT EXISTS
     );
 
 CREATE UNIQUE INDEX IF NOT EXISTS "idx_unique_subscribers__user_id_subscribers_id" ON "subscribers" ("user_id", "subscribers_id");
-
--- +goose Down
-DROP TABLE IF EXISTS "subscriptions";
-
-DROP TABLE IF EXISTS "user_subscription";
-
-DROP TABLE IF EXISTS "user_subscribers";
-
-DROP TABLE IF EXISTS "user_data";
-
-DROP INDEX IF EXISTS "idx_unique_user_subscribers__user_id_subscribers_id";

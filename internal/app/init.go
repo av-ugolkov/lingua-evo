@@ -38,6 +38,9 @@ import (
 	langService "github.com/av-ugolkov/lingua-evo/internal/services/language"
 	languageHandler "github.com/av-ugolkov/lingua-evo/internal/services/language/delivery/handler"
 	langRepository "github.com/av-ugolkov/lingua-evo/internal/services/language/delivery/repository"
+	notificationService "github.com/av-ugolkov/lingua-evo/internal/services/notifications"
+	notificationHandler "github.com/av-ugolkov/lingua-evo/internal/services/notifications/delivery/handler"
+	notificationRepository "github.com/av-ugolkov/lingua-evo/internal/services/notifications/delivery/repository"
 	subscribersService "github.com/av-ugolkov/lingua-evo/internal/services/subscribers"
 	subscribersHandler "github.com/av-ugolkov/lingua-evo/internal/services/subscribers/delivery/handler"
 	subscribersRepository "github.com/av-ugolkov/lingua-evo/internal/services/subscribers/delivery/repository"
@@ -53,8 +56,6 @@ import (
 )
 
 func ServerStart(cfg *config.Config) {
-	closer := closer.NewCloser()
-
 	logger := log.CustomLogger(&cfg.Logger)
 	if logger == nil {
 		return
@@ -74,7 +75,7 @@ func ServerStart(cfg *config.Config) {
 		}()
 	}
 
-	pgxPool, err := pg.NewDB(cfg.DbSQL)
+	pgxPool, err := pg.NewDB(cfg.DbSQL.PgxPoolConfig())
 	if err != nil {
 		slog.Error(fmt.Sprintf("can't create pg pool: %v", err))
 		return
@@ -100,6 +101,7 @@ func ServerStart(cfg *config.Config) {
 
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.Default()
+	router.UseH2C = true
 	router.Use(cors.New(cors.Config{
 		AllowOrigins:     cfg.Service.AllowedOrigins,
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"},
@@ -112,10 +114,10 @@ func ServerStart(cfg *config.Config) {
 
 	server := http.Server{
 		Addr:         address,
-		Handler:      router,
+		Handler:      router.Handler(),
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
-		ErrorLog:     logger.ServerLoger,
+		ErrorLog:     logger.ServerLogger,
 	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
@@ -165,24 +167,26 @@ func ServerStart(cfg *config.Config) {
 func initServer(cfg *config.Config, r *gin.Engine, pgxPool *pgxpool.Pool, redis *redis.Redis) {
 	tr := transactor.NewTransactor(pgxPool)
 	slog.Info("create services")
-	userRepo := userRepository.NewRepo(pgxPool)
-	userSvc := userService.NewService(userRepo, redis)
-	accessRepo := accessRepository.NewRepo(pgxPool)
+	userRepo := userRepository.NewRepo(tr)
+	userSvc := userService.NewService(userRepo, redis, tr)
+	accessRepo := accessRepository.NewRepo(tr)
 	accessSvc := accessService.NewService(accessRepo)
-	langRepo := langRepository.NewRepo(pgxPool)
+	langRepo := langRepository.NewRepo(tr)
 	langSvc := langService.NewService(langRepo)
-	dictRepo := dictRepository.NewRepo(pgxPool)
+	dictRepo := dictRepository.NewRepo(tr)
 	dictSvc := dictService.NewService(dictRepo, langSvc)
-	exampleRepo := exampleRepository.NewRepo(pgxPool)
+	exampleRepo := exampleRepository.NewRepo(tr)
 	exampleSvc := exampleService.NewService(exampleRepo)
-	subscribersRepo := subscribersRepository.NewRepo(pgxPool)
+	subscribersRepo := subscribersRepository.NewRepo(tr)
 	subscribersSvc := subscribersService.NewService(subscribersRepo)
-	tagRepo := tagRepository.NewRepo(pgxPool)
+	tagRepo := tagRepository.NewRepo(tr)
 	tagSvc := tagService.NewService(tagRepo)
-	vocabRepo := vocabRepository.NewRepo(pgxPool)
+	vocabRepo := vocabRepository.NewRepo(tr)
 	vocabSvc := vocabService.NewService(tr, vocabRepo, userSvc, exampleSvc, dictSvc, tagSvc, subscribersSvc)
 	authRepo := authRepository.NewRepo(redis)
 	authSvc := authService.NewService(cfg.Email, authRepo, userSvc)
+	notificationRepo := notificationRepository.NewRepo(tr)
+	notificationSvc := notificationService.NewService(notificationRepo)
 
 	slog.Info("create handlers")
 	userHandler.Create(r, userSvc)
@@ -193,6 +197,7 @@ func initServer(cfg *config.Config, r *gin.Engine, pgxPool *pgxpool.Pool, redis 
 	authHandler.Create(r, authSvc)
 	accessHandler.Create(r, accessSvc)
 	subscribersHandler.Create(r, subscribersSvc)
+	notificationHandler.Create(r, notificationSvc)
 
 	slog.Info("end init services")
 }

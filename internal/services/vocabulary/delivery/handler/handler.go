@@ -5,15 +5,14 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
-
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
 	ginExt "github.com/av-ugolkov/lingua-evo/internal/delivery/handler/gin"
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler/middleware"
 	vocabulary "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary/service"
 	"github.com/av-ugolkov/lingua-evo/runtime"
 	"github.com/av-ugolkov/lingua-evo/runtime/access"
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 const (
@@ -27,55 +26,39 @@ const (
 	paramsNativeLang    string = "native_lang"
 	paramsTranslateLang string = "translate_lang"
 	paramsUserID        string = "user_id"
+	paramsLimitWords    string = "limit_words"
 )
 
 type (
 	VocabularyRq struct {
-		Name          string   `json:"name"`
-		Access        uint8    `json:"access_id"`
-		NativeLang    string   `json:"native_lang"`
-		TranslateLang string   `json:"translate_lang"`
-		Description   string   `json:"description"`
-		Tags          []string `json:"tags"`
-	}
-
-	VocabularyIDRs struct {
-		ID uuid.UUID `json:"id"`
+		ID            uuid.UUID `json:"id,omitempty"`
+		Name          string    `json:"name,omitempty"`
+		Access        uint8     `json:"access_id,omitempty"`
+		NativeLang    string    `json:"native_lang,omitempty"`
+		TranslateLang string    `json:"translate_lang,omitempty"`
+		Description   string    `json:"description,omitempty"`
+		Tags          []string  `json:"tags,omitempty"`
 	}
 
 	VocabularyRs struct {
-		ID            uuid.UUID `json:"id"`
-		UserID        uuid.UUID `json:"user_id"`
-		Name          string    `json:"name"`
-		AccessID      uint8     `json:"access_id"`
-		NativeLang    string    `json:"native_lang"`
-		TranslateLang string    `json:"translate_lang"`
-		Description   string    `json:"description"`
-		Tags          []string  `json:"tags"`
-		CreatedAt     time.Time `json:"created_at"`
-		UpdatedAt     time.Time `json:"updated_at"`
+		ID            uuid.UUID `json:"id,omitempty"`
+		UserID        uuid.UUID `json:"user_id,omitempty"`
+		Name          string    `json:"name,omitempty"`
+		AccessID      *uint8    `json:"access_id,omitempty"`
+		NativeLang    string    `json:"native_lang,omitempty"`
+		TranslateLang string    `json:"translate_lang,omitempty"`
+		Description   string    `json:"description,omitempty"`
+		Tags          []string  `json:"tags,omitempty"`
+		UserName      string    `json:"user_name,omitempty"`
+		Editable      *bool     `json:"editable,omitempty"`
+		WordsCount    *uint     `json:"words_count,omitempty"`
+		CreatedAt     time.Time `json:"created_at,omitempty"`
+		UpdatedAt     time.Time `json:"updated_at,omitempty"`
 	}
 
-	VocabularyWithUserRs struct {
-		ID            uuid.UUID `json:"id"`
-		UserID        uuid.UUID `json:"user_id"`
-		UserName      string    `json:"user_name"`
-		Name          string    `json:"name"`
-		AccessID      uint8     `json:"access_id"`
-		NativeLang    string    `json:"native_lang"`
-		TranslateLang string    `json:"translate_lang"`
-		Description   string    `json:"description"`
-		WordsCount    uint      `json:"words_count"`
-		Tags          []string  `json:"tags"`
-		CreatedAt     time.Time `json:"created_at"`
-		UpdatedAt     time.Time `json:"updated_at"`
-	}
-
-	VocabularyEditRq struct {
-		ID     uuid.UUID `json:"id"`
-		Name   string    `json:"name"`
-		Desc   string    `json:"description"`
-		Access uint8     `json:"access_id"`
+	VocabularyWithWords struct {
+		VocabularyRs
+		Words []string `json:"words,omitempty"`
 	}
 )
 
@@ -95,21 +78,20 @@ func newHandler(vocabSvc *vocabulary.Service) *Handler {
 }
 
 func (h *Handler) register(r *gin.Engine) {
-	r.POST(handler.UserVocabulary, middleware.Auth(h.userAddVocabulary))
-	r.DELETE(handler.UserVocabulary, middleware.Auth(h.userDeleteVocabulary))
-	r.GET(handler.Vocabulary, middleware.OptionalAuth(h.getVocabulary))
-	r.PUT(handler.UserVocabulary, middleware.Auth(h.userEditVocabulary))
+	r.POST(handler.Vocabulary, middleware.Auth(h.userAddVocabulary))
+	r.DELETE(handler.Vocabulary, middleware.Auth(h.userDeleteVocabulary))
+	r.PUT(handler.Vocabulary, middleware.Auth(h.userEditVocabulary))
 	r.GET(handler.UserVocabularies, middleware.Auth(h.userGetVocabularies))
 	r.GET(handler.Vocabularies, middleware.OptionalAuth(h.getVocabularies))
 	r.GET(handler.VocabulariesByUser, middleware.OptionalAuth(h.getVocabulariesByUser))
 	r.GET(handler.VocabularyInfo, middleware.OptionalAuth(h.getVocabularyInfo))
 	r.POST(handler.VocabularyCopy, middleware.Auth(h.copyVocabulary))
+	r.GET(handler.VocabulariesRecommended, middleware.OptionalAuth(h.getRecommendedVocabularies))
 
 	r.GET(handler.VocabularyWord, middleware.Auth(h.getWord))
 	r.POST(handler.VocabularyWord, middleware.Auth(h.addWord))
 	r.DELETE(handler.VocabularyWord, middleware.Auth(h.deleteWord))
 	r.POST(handler.VocabularyWordUpdate, middleware.Auth(h.updateWord))
-	r.GET(handler.VocabularyRandomWords, middleware.Auth(h.getRandomWords))
 	r.GET(handler.VocabularyWords, middleware.OptionalAuth(h.getWords))
 	r.GET(handler.WordPronunciation, middleware.Auth(h.getPronunciation))
 
@@ -172,87 +154,49 @@ func (h *Handler) getVocabularies(c *gin.Context) {
 		return
 	}
 
-	vocabularies, totalCount, err := h.vocabSvc.GetVocabularies(ctx, userID, page, itemsPerPage, typeSort, order, search, nativeLang, translateLang)
+	limitWords, err := ginExt.GetQueryInt(c, paramsLimitWords)
+	if err != nil {
+		ginExt.SendError(c, http.StatusInternalServerError,
+			fmt.Errorf("vocabulary.delivery.Handler.getVocabularies - get query [limit_words]: %v", err))
+		return
+	}
+
+	vocabularies, totalCount, err := h.vocabSvc.GetVocabularies(ctx, userID, page, itemsPerPage, typeSort, order, search, nativeLang, translateLang, limitWords)
 	if err != nil {
 		ginExt.SendError(c, http.StatusInternalServerError,
 			fmt.Errorf("vocabulary.delivery.Handler.getVocabularies: %v", err))
 	}
 
-	vocabulariesRs := make([]VocabularyWithUserRs, 0, len(vocabularies))
+	vocabsWithWordsRs := make([]VocabularyWithWords, 0, len(vocabularies))
 	for _, vocab := range vocabularies {
 		tags := make([]string, 0, len(vocab.Tags))
 		for _, tag := range vocab.Tags {
 			tags = append(tags, tag.Text)
 		}
 
-		vocabulariesRs = append(vocabulariesRs, VocabularyWithUserRs{
-			ID:            vocab.ID,
-			UserID:        vocab.UserID,
-			UserName:      vocab.UserName,
-			Name:          vocab.Name,
-			AccessID:      vocab.Access,
-			NativeLang:    vocab.NativeLang,
-			TranslateLang: vocab.TranslateLang,
-			Description:   vocab.Description,
-			WordsCount:    vocab.WordsCount,
-			Tags:          tags,
-			CreatedAt:     vocab.CreatedAt,
-			UpdatedAt:     vocab.UpdatedAt,
+		vocabsWithWordsRs = append(vocabsWithWordsRs, VocabularyWithWords{
+			VocabularyRs: VocabularyRs{
+				ID:            vocab.ID,
+				UserID:        vocab.UserID,
+				UserName:      vocab.UserName,
+				Name:          vocab.Name,
+				AccessID:      &vocab.Access,
+				NativeLang:    vocab.NativeLang,
+				TranslateLang: vocab.TranslateLang,
+				Description:   vocab.Description,
+				WordsCount:    &vocab.WordsCount,
+				Tags:          tags,
+				CreatedAt:     vocab.CreatedAt,
+				UpdatedAt:     vocab.UpdatedAt,
+			},
+			Words: vocab.Words,
 		})
 	}
 
-	var rs struct {
-		Vocabularies []VocabularyWithUserRs `json:"vocabularies"`
-		TotalCount   int                    `json:"total_count"`
-	}
-	rs.Vocabularies = vocabulariesRs
-	rs.TotalCount = totalCount
-
-	c.JSON(http.StatusOK, rs)
-}
-
-func (h *Handler) getVocabulary(c *gin.Context) {
-	ctx := c.Request.Context()
-
-	uid, _ := runtime.UserIDFromContext(ctx)
-
-	vid, err := ginExt.GetQueryUUID(c, paramsID)
-	if err != nil {
-		ginExt.SendError(c, http.StatusInternalServerError,
-			fmt.Errorf("vocabulary.delivery.Handler.getVocabulary - get query [name]: %v", err))
-		return
-	}
-
-	vocab, err := h.vocabSvc.GetVocabulary(ctx, uid, vid)
-	if err != nil {
-		ginExt.SendError(c, http.StatusInternalServerError, err)
-		return
-	}
-	if vocab.ID == uuid.Nil {
-		ginExt.SendError(c, http.StatusNotFound,
-			fmt.Errorf("vocabulary.delivery.Handler.getVocabulary - vocabulary not found: %v", err))
-		return
-	}
-
-	tags := make([]string, 0, len(vocab.Tags))
-	for _, tag := range vocab.Tags {
-		tags = append(tags, tag.Text)
-	}
-
-	vocabRs := VocabularyRs{
-		ID:            vocab.ID,
-		AccessID:      vocab.Access,
-		UserID:        vocab.UserID,
-		Name:          vocab.Name,
-		NativeLang:    vocab.NativeLang,
-		TranslateLang: vocab.TranslateLang,
-		Description:   vocab.Description,
-		Tags:          tags,
-		CreatedAt:     vocab.CreatedAt,
-		UpdatedAt:     vocab.UpdatedAt,
-	}
-
-	c.JSON(http.StatusOK, vocabRs)
+	c.JSON(http.StatusOK, gin.H{
+		"vocabularies": vocabsWithWordsRs,
+		"total_count":  totalCount,
+	})
 }
 
 func (h *Handler) getVocabulariesByUser(c *gin.Context) {
@@ -272,22 +216,22 @@ func (h *Handler) getVocabulariesByUser(c *gin.Context) {
 		return
 	}
 
-	vocabulariesRs := make([]VocabularyWithUserRs, 0, len(vocabs))
+	vocabulariesRs := make([]VocabularyRs, 0, len(vocabs))
 	for _, vocab := range vocabs {
 		tags := make([]string, 0, len(vocab.Tags))
 		for _, tag := range vocab.Tags {
 			tags = append(tags, tag.Text)
 		}
 
-		vocabulariesRs = append(vocabulariesRs, VocabularyWithUserRs{
+		vocabulariesRs = append(vocabulariesRs, VocabularyRs{
 			ID:            vocab.ID,
 			UserID:        vocab.UserID,
 			Name:          vocab.Name,
-			AccessID:      vocab.Access,
+			AccessID:      &vocab.Access,
 			NativeLang:    vocab.NativeLang,
 			TranslateLang: vocab.TranslateLang,
 			Description:   vocab.Description,
-			WordsCount:    vocab.WordsCount,
+			WordsCount:    &vocab.WordsCount,
 			Tags:          tags,
 			CreatedAt:     vocab.CreatedAt,
 			UpdatedAt:     vocab.UpdatedAt,
@@ -325,17 +269,18 @@ func (h *Handler) getVocabularyInfo(c *gin.Context) {
 		tags = append(tags, tag.Text)
 	}
 
-	vocabRs := VocabularyWithUserRs{
+	vocabRs := VocabularyRs{
 		ID:            vocab.ID,
-		AccessID:      vocab.Access,
+		AccessID:      &vocab.Access,
 		UserID:        vocab.UserID,
 		UserName:      vocab.UserName,
 		Name:          vocab.Name,
 		NativeLang:    vocab.NativeLang,
 		TranslateLang: vocab.TranslateLang,
 		Description:   vocab.Description,
+		Editable:      &vocab.Editable,
 		Tags:          tags,
-		WordsCount:    vocab.WordsCount,
+		WordsCount:    &vocab.WordsCount,
 		CreatedAt:     vocab.CreatedAt,
 		UpdatedAt:     vocab.UpdatedAt,
 	}
@@ -368,4 +313,38 @@ func (h *Handler) copyVocabulary(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{})
+}
+
+func (h *Handler) getRecommendedVocabularies(c *gin.Context) {
+	ctx := c.Request.Context()
+	uid, _ := runtime.UserIDFromContext(ctx)
+
+	vocabs, err := h.vocabSvc.GetRecommendedVocabularies(ctx, uid)
+	if err != nil {
+		ginExt.SendError(c, http.StatusInternalServerError,
+			fmt.Errorf("vocabulary.delivery.Handler.getRecommendedVocabularies: %v", err))
+		return
+	}
+
+	vocabulariesRs := make([]VocabularyRs, 0, len(vocabs))
+	for _, vocab := range vocabs {
+		tags := make([]string, 0, len(vocab.Tags))
+		for _, tag := range vocab.Tags {
+			tags = append(tags, tag.Text)
+		}
+
+		vocabulariesRs = append(vocabulariesRs, VocabularyRs{
+			ID:            vocab.ID,
+			UserID:        vocab.UserID,
+			Name:          vocab.Name,
+			AccessID:      &vocab.Access,
+			NativeLang:    vocab.NativeLang,
+			TranslateLang: vocab.TranslateLang,
+			Description:   vocab.Description,
+			Tags:          tags,
+			WordsCount:    &vocab.WordsCount,
+		})
+	}
+
+	c.JSON(http.StatusOK, vocabulariesRs)
 }

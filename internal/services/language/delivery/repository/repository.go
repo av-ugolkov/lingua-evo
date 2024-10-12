@@ -4,25 +4,24 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/av-ugolkov/lingua-evo/internal/db/transactor"
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/language"
-
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type LangRepo struct {
-	pgxPool *pgxpool.Pool
+	tr *transactor.Transactor
 }
 
-func NewRepo(pgxPool *pgxpool.Pool) *LangRepo {
+func NewRepo(tr *transactor.Transactor) *LangRepo {
 	return &LangRepo{
-		pgxPool: pgxPool,
+		tr: tr,
 	}
 }
 
 func (r *LangRepo) GetLanguage(ctx context.Context, langCode string) (string, error) {
 	query := `SELECT lang FROM language WHERE code=$1`
 	var language string
-	err := r.pgxPool.QueryRow(ctx, query, langCode).Scan(&language)
+	err := r.tr.QueryRow(ctx, query, langCode).Scan(&language)
 	if err != nil {
 		return "", fmt.Errorf("language.repository.LangRepo.GetLanguage: %v", err)
 	}
@@ -32,7 +31,7 @@ func (r *LangRepo) GetLanguage(ctx context.Context, langCode string) (string, er
 
 func (r *LangRepo) GetAvailableLanguages(ctx context.Context) ([]entity.Language, error) {
 	query := `SELECT code, lang FROM language ORDER BY lang`
-	rows, err := r.pgxPool.Query(ctx, query)
+	rows, err := r.tr.Query(ctx, query)
 	if err != nil {
 		return nil, fmt.Errorf("language.repository.LangRepo.GetAvailableLanguages: %v", err)
 	}

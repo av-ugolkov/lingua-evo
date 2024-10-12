@@ -1,4 +1,4 @@
-FROM golang:1.22.0-alpine as builder
+FROM golang:1.23.2-alpine as builder
 
 RUN --mount=type=cache,target=/var/cache/apk apk --no-cache --update --upgrade add git make ca-certificates openssl
 
@@ -6,13 +6,18 @@ WORKDIR /build
 COPY . .
 RUN --mount=type=cache,target=/go make build
 
-FROM alpine:3.19
+FROM alpine:3.20.3
 LABEL key="Lingua Evo"
 
 ARG config_dir
 ARG public_cert
 ARG private_cert
 ARG epsw
+ARG branch
+ARG commit
+
+LABEL git.branch=$branch
+LABEL git.commit=$commit
 
 RUN --mount=type=cache,target=/var/cache/apk apk --update --upgrade add ca-certificates git bash
 

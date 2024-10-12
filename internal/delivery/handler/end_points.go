@@ -16,21 +16,20 @@ const (
 	DictionaryWord = "/dictionary/word"        //get post
 	GetRandomWord  = "/dictionary/word/random" //get
 
-	UserVocabulary   = "/account/vocabulary"   //post, put, delete
 	UserVocabularies = "/account/vocabularies" //get
 
-	Vocabularies            = "/vocabularies"           //get
-	Vocabulary              = "/vocabulary"             //get
-	VocabularyInfo          = "/vocabulary/info"        //get
-	VocabularyCopy          = "/vocabulary/copy"        //get
-	VocabularyAccessForUser = "/vocabulary/access/user" //get post delete patch
-	VocabulariesByUser      = "/vocabularies/user"      //get
+	Vocabulary              = "/vocabulary"               //post, put, delete
+	Vocabularies            = "/vocabularies"             //get
+	VocabulariesRecommended = "/vocabularies/recommended" //get
+	VocabularyInfo          = "/vocabulary/info"          //get
+	VocabularyCopy          = "/vocabulary/copy"          //get
+	VocabularyAccessForUser = "/vocabulary/access/user"   //get post delete patch
+	VocabulariesByUser      = "/vocabularies/user"        //get
 
-	VocabularyWord        = "/vocabulary/word"               //get post delete
-	VocabularyWordUpdate  = "/vocabulary/word/update"        //post
-	VocabularyRandomWords = "/vocabulary/words/random"       //get
-	VocabularyWords       = "/vocabulary/words"              //get
-	WordPronunciation     = "/vocabulary/word/pronunciation" //get
+	VocabularyWord       = "/vocabulary/word"               //get post delete
+	VocabularyWordUpdate = "/vocabulary/word/update"        //post
+	VocabularyWords      = "/vocabulary/words"              //get
+	WordPronunciation    = "/vocabulary/word/pronunciation" //get
 
 	VocabularyTags = "/vocabulary/tag" //get
 
@@ -39,4 +38,6 @@ const (
 	CheckSubscriber = "/subscriber/check" //get
 	Subscribe       = "/user/subscribe"   //post
 	Unsubscribe     = "/user/unsubscribe" //post
+
+	NotificationVocab = "/notifications/vocabulary"
 )
