@@ -298,7 +298,15 @@ func (r *VocabRepo) GetVocabsWithCountWords(ctx context.Context, uid, owner uuid
 	}
 
 	query := `
-		SELECT v.id, name, native_lang, translate_lang, access, count(w.id), count(vn.user_id)!=0 notification FROM vocabulary v
+		SELECT 
+		    v.id, 
+		    name, 
+		    native_lang, 
+		    translate_lang, 
+		    access, 
+		    count(w.id), 
+		    count(vn.user_id)!=0 notification 
+		FROM vocabulary v
 		LEFT JOIN word w ON w.vocabulary_id = v.id
 		LEFT JOIN vocabulary_notifications vn ON vn.user_id=$3 AND vn.vocab_id=v.id
 		WHERE v.user_id = $1 AND "access" = any($2)
