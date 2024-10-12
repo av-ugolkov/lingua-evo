@@ -31,7 +31,7 @@ type (
 		GetAccess(ctx context.Context, vid uuid.UUID) (uint8, error)
 		GetCreatorVocab(ctx context.Context, vid uuid.UUID) (uuid.UUID, error)
 		CopyVocab(ctx context.Context, uid, vid uuid.UUID) (uuid.UUID, error)
-		GetVocabsWithCountWords(ctx context.Context, uid uuid.UUID, access []uint8) ([]entity.VocabWithUser, error)
+		GetVocabsWithCountWords(ctx context.Context, uid, owner uuid.UUID, access []uint8) ([]entity.VocabWithUser, error)
 		GetWithCountWords(ctx context.Context, vid uuid.UUID) (entity.VocabWithUser, error)
 		GetVocabulariesWithMaxWords(ctx context.Context, access []uint8, limit int) ([]entity.VocabWithUser, error)
 		GetVocabulariesRecommended(ctx context.Context, uid uuid.UUID, access []uint8, limit uint) ([]entity.VocabWithUser, error)
@@ -194,13 +194,13 @@ func (s *Service) CopyVocab(ctx context.Context, uid, vid uuid.UUID) error {
 	return nil
 }
 
-func (s *Service) GetVocabulariesByUser(ctx context.Context, uid uuid.UUID, access []access.Type) ([]entity.VocabWithUser, error) {
+func (s *Service) GetVocabulariesByUser(ctx context.Context, uid, owner uuid.UUID, access []access.Type) ([]entity.VocabWithUser, error) {
 	accessIDs := make([]uint8, len(access))
 	for i, v := range access {
 		accessIDs[i] = uint8(v)
 	}
 
-	vocabs, err := s.repoVocab.GetVocabsWithCountWords(ctx, uid, accessIDs)
+	vocabs, err := s.repoVocab.GetVocabsWithCountWords(ctx, uid, owner, accessIDs)
 	if err != nil {
 		return nil, fmt.Errorf("vocabulary.Service.GetVocabulariesByUser: %w", err)
 	}
