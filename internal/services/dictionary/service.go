@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"net/http"
 	"slices"
 	"strings"
 
@@ -49,8 +48,7 @@ func NewService(repo repoDictionary, langSvc langSvc) *Service {
 func (s *Service) GetOrAddWords(ctx context.Context, inWords []DictWord) ([]DictWord, error) {
 	languages, err := s.langSvc.GetAvailableLanguages(ctx)
 	if err != nil {
-		return nil, handler.NewError(fmt.Errorf("dictionary.Service.AddWords - get languages: %v", err),
-			http.StatusInternalServerError, handler.ErrInternal)
+		return nil, handler.NewError(fmt.Errorf("dictionary.Service.AddWords - get languages: %v", err), handler.ErrInternal)
 	}
 
 	dictWords := checkWords(inWords, languages)
@@ -60,14 +58,12 @@ func (s *Service) GetOrAddWords(ctx context.Context, inWords []DictWord) ([]Dict
 
 	getWords, err := s.repo.GetWordsByText(ctx, dictWords)
 	if err != nil {
-		return nil, handler.NewError(fmt.Errorf("dictionary.Service.AddWords - get words: %v", err),
-			http.StatusInternalServerError, handler.ErrInternal)
+		return nil, handler.NewError(fmt.Errorf("dictionary.Service.AddWords - get words: %v", err), handler.ErrInternal)
 	}
 
 	addWords, err := s.repo.AddWords(ctx, dictWords)
 	if err != nil {
-		return nil, handler.NewError(fmt.Errorf("dictionary.Service.AddWords: %v", err),
-			http.StatusInternalServerError, handler.ErrInternal)
+		return nil, handler.NewError(fmt.Errorf("dictionary.Service.AddWords: %v", err), handler.ErrInternal)
 	}
 
 	words := make([]DictWord, 0, len(getWords)+len(addWords))
@@ -84,8 +80,7 @@ func (s *Service) GetWordsByID(ctx context.Context, wordIDs []uuid.UUID) ([]Dict
 
 	words, err := s.repo.GetWords(ctx, wordIDs)
 	if err != nil {
-		return nil, handler.NewError(fmt.Errorf("dictionary.Service.GetWords: %v", err),
-			http.StatusInternalServerError, handler.ErrInternal)
+		return nil, handler.NewError(fmt.Errorf("dictionary.Service.GetWords: %v", err), handler.ErrInternal)
 	}
 
 	return words, nil
@@ -94,20 +89,17 @@ func (s *Service) GetWordsByID(ctx context.Context, wordIDs []uuid.UUID) ([]Dict
 func (s *Service) GetWordsByText(ctx context.Context, inWords []DictWord) ([]DictWord, error) {
 	languages, err := s.langSvc.GetAvailableLanguages(ctx)
 	if err != nil {
-		return nil, handler.NewError(fmt.Errorf("dictionary.Service.AddWords - get languages: %v", err),
-			http.StatusInternalServerError, handler.ErrInternal)
+		return nil, handler.NewError(fmt.Errorf("dictionary.Service.AddWords - get languages: %v", err), handler.ErrInternal)
 	}
 
 	dictWords := checkWords(inWords, languages)
 	if len(dictWords) == 0 {
-		return nil, handler.NewError(fmt.Errorf("dictionary.Service.AddWords - no words"),
-			http.StatusNotFound, handler.ErrNotFound)
+		return nil, handler.NewError(fmt.Errorf("dictionary.Service.AddWords - no words"), handler.ErrNotFound)
 	}
 
 	words, err := s.repo.GetWordsByText(ctx, dictWords)
 	if err != nil {
-		return nil, handler.NewError(fmt.Errorf("dictionary.Service.GetWordByText: %v", err),
-			http.StatusInternalServerError, handler.ErrInternal)
+		return nil, handler.NewError(fmt.Errorf("dictionary.Service.GetWordByText: %v", err), handler.ErrInternal)
 	}
 	return words, nil
 }
@@ -115,14 +107,12 @@ func (s *Service) GetWordsByText(ctx context.Context, inWords []DictWord) ([]Dic
 func (s *Service) GetRandomWord(ctx context.Context, langCode string) (DictWord, error) {
 	err := s.langSvc.CheckLanguage(ctx, langCode)
 	if err != nil {
-		return DictWord{}, handler.NewError(fmt.Errorf("dictionary.Service.GetRandomWord - check language: %v", err),
-			http.StatusInternalServerError, handler.ErrInternal)
+		return DictWord{}, handler.NewError(fmt.Errorf("dictionary.Service.GetRandomWord - check language: %v", err), handler.ErrInternal)
 	}
 
 	word, err := s.repo.GetRandomWord(ctx, langCode)
 	if err != nil {
-		return DictWord{}, handler.NewError(fmt.Errorf("dictionary.Service.GetRandomWord: %v", err),
-			http.StatusInternalServerError, handler.ErrInternal)
+		return DictWord{}, handler.NewError(fmt.Errorf("dictionary.Service.GetRandomWord: %v", err), handler.ErrInternal)
 	}
 
 	return word, nil

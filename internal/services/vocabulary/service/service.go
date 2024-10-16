@@ -4,15 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log/slog"
-	"net/http"
-
 	"github.com/av-ugolkov/lingua-evo/internal/db/transactor"
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
 	entityTag "github.com/av-ugolkov/lingua-evo/internal/services/tag"
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary"
 	"github.com/av-ugolkov/lingua-evo/runtime/access"
 	"github.com/av-ugolkov/lingua-evo/tools/math"
+	"log/slog"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -115,13 +113,11 @@ func (s *Service) GetVocabularies(ctx context.Context, uid uuid.UUID, page, item
 func (s *Service) GetVocabulary(ctx context.Context, uid, vid uuid.UUID) (entity.Vocab, error) {
 	accessStatus, err := s.GetAccessForUser(ctx, uid, vid)
 	if err != nil {
-		return entity.Vocab{}, handler.NewError(fmt.Errorf("vocabulary.Service.GetVocabulary - %w: %w", entity.ErrAccessDenied, err),
-			http.StatusForbidden, handler.ErrForbidden)
+		return entity.Vocab{}, handler.NewError(fmt.Errorf("vocabulary.Service.GetVocabulary - %w: %w", entity.ErrAccessDenied, err), handler.ErrForbidden)
 	}
 
 	if accessStatus == access.Forbidden {
-		return entity.Vocab{}, handler.NewError(fmt.Errorf("vocabulary.Service.GetVocabulary - %w", entity.ErrAccessDenied),
-			http.StatusForbidden, handler.ErrForbidden)
+		return entity.Vocab{}, handler.NewError(fmt.Errorf("vocabulary.Service.GetVocabulary - %w", entity.ErrAccessDenied), handler.ErrForbidden)
 	}
 
 	vocab, err := s.repoVocab.GetVocab(ctx, vid)
