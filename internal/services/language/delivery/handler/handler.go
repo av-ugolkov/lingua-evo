@@ -13,7 +13,7 @@ import (
 
 type (
 	LanguageRs struct {
-		Language string `json:"language,omitempty"`
+		Language string `json:"lang,omitempty"`
 		Code     string `json:"code"`
 	}
 
