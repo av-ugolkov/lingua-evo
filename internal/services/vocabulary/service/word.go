@@ -9,13 +9,12 @@ import (
 	entityExample "github.com/av-ugolkov/lingua-evo/internal/services/example"
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary"
 	"github.com/av-ugolkov/lingua-evo/runtime"
-
 	"github.com/google/uuid"
 )
 
 type (
 	repoWord interface {
-		GetWord(ctx context.Context, wordID uuid.UUID) (entity.VocabWordData, error)
+		GetWord(ctx context.Context, wordID uuid.UUID, nativeLang, translateLang string) (entity.VocabWordData, error)
 		AddWord(ctx context.Context, word entity.VocabWord) (uuid.UUID, error)
 		DeleteWord(ctx context.Context, word entity.VocabWord) error
 		GetRandomVocabulary(ctx context.Context, vid uuid.UUID, limit int) ([]entity.VocabWordData, error)
@@ -194,8 +193,13 @@ func (s *Service) GetRandomWords(ctx context.Context, vid uuid.UUID, limit int) 
 	return vocabWordsData, nil
 }
 
-func (s *Service) GetWord(ctx context.Context, wid uuid.UUID) (*entity.VocabWordData, error) {
-	vocabWordData, err := s.repoVocab.GetWord(ctx, wid)
+func (s *Service) GetWord(ctx context.Context, vid, wid uuid.UUID) (*entity.VocabWordData, error) {
+	vocab, err := s.repoVocab.GetVocab(ctx, vid)
+	if err != nil {
+		return nil, fmt.Errorf("word.Service.GetWord - get vocab: %w", err)
+	}
+
+	vocabWordData, err := s.repoVocab.GetWord(ctx, wid, vocab.NativeLang, vocab.TranslateLang)
 	if err != nil {
 		return nil, fmt.Errorf("word.Service.GetWord: %w", err)
 	}
