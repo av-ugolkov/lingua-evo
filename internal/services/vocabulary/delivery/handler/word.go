@@ -209,14 +209,22 @@ func (h *Handler) deleteWord(c *gin.Context) {
 
 func (h *Handler) getWord(c *gin.Context) {
 	ctx := c.Request.Context()
-	wordID, err := ginExt.GetQueryUUID(c, paramsID)
+
+	vid, err := ginExt.GetQueryUUID(c, paramsID)
 	if err != nil {
 		ginExt.SendError(c, http.StatusInternalServerError,
-			fmt.Errorf("word.delivery.Handler.getWords: %w", err))
+			fmt.Errorf("word.delivery.Handler.getWords - get vocab id: %w", err))
 		return
 	}
 
-	vocabWord, err := h.vocabSvc.GetWord(ctx, wordID)
+	wordID, err := ginExt.GetQueryUUID(c, paramsWordID)
+	if err != nil {
+		ginExt.SendError(c, http.StatusInternalServerError,
+			fmt.Errorf("word.delivery.Handler.getWords - get word id: %w", err))
+		return
+	}
+
+	vocabWord, err := h.vocabSvc.GetWord(ctx, vid, wordID)
 	if err != nil {
 		ginExt.SendError(c, http.StatusInternalServerError,
 			fmt.Errorf("word.delivery.Handler.getWords: %w", err))
@@ -255,7 +263,7 @@ func (h *Handler) getWords(c *gin.Context) {
 	vid, err := ginExt.GetQueryUUID(c, paramsID)
 	if err != nil {
 		ginExt.SendError(c, http.StatusInternalServerError,
-			fmt.Errorf("word.delivery.Handler.getWords - get dict id: %w", err))
+			fmt.Errorf("word.delivery.Handler.getWords - get vocab id: %w", err))
 		return
 	}
 
@@ -310,14 +318,14 @@ func (h *Handler) getPronunciation(c *gin.Context) {
 	text, err := ginExt.GetQuery(c, paramsText)
 	if err != nil {
 		ginExt.SendError(c, http.StatusInternalServerError,
-			fmt.Errorf("word.delivery.Handler.getPronunciation - get word id: %w", err))
+			fmt.Errorf("word.delivery.Handler.getPronunciation - get text: %w", err))
 		return
 	}
 
 	vid, err := ginExt.GetQueryUUID(c, paramsID)
 	if err != nil {
 		ginExt.SendError(c, http.StatusInternalServerError,
-			fmt.Errorf("word.delivery.Handler.getPronunciation - get word id: %w", err))
+			fmt.Errorf("word.delivery.Handler.getPronunciation - get vocab id: %w", err))
 		return
 	}
 
