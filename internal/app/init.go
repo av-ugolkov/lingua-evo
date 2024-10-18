@@ -21,6 +21,7 @@ import (
 	pg "github.com/av-ugolkov/lingua-evo/internal/db/postgres"
 	"github.com/av-ugolkov/lingua-evo/internal/db/redis"
 	"github.com/av-ugolkov/lingua-evo/internal/db/transactor"
+	ginExt "github.com/av-ugolkov/lingua-evo/internal/delivery/handler/gin"
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/kafka"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/analytic"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/log"
@@ -100,14 +101,14 @@ func ServerStart(cfg *config.Config) {
 	})
 
 	gin.SetMode(gin.ReleaseMode)
-	router := gin.Default()
+	router := gin.New()
 	router.UseH2C = true
 	router.Use(cors.New(cors.Config{
 		AllowOrigins:     cfg.Service.AllowedOrigins,
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"},
 		AllowCredentials: true,
 		AllowHeaders:     []string{"Authorization", "Content-Type", "Fingerprint"},
-	}))
+	}), ginExt.Logger())
 	initServer(cfg, router, pgxPool, redisDB)
 
 	address := fmt.Sprintf(":%d", cfg.Service.Port)

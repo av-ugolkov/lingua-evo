@@ -3,6 +3,7 @@ package handler
 import (
 	"errors"
 	"fmt"
+	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
 	"net/http"
 	"time"
 
@@ -45,8 +46,8 @@ type (
 		Native     *VocabWord `json:"native,omitempty"`
 		Translates []string   `json:"translates,omitempty"`
 		Examples   []string   `json:"examples,omitempty"`
-		Created    *time.Time `json:"created,omitempty"`
-		Updated    *time.Time `json:"updated,omitempty"`
+		Created    int64      `json:"created,omitempty"`
+		Updated    int64      `json:"updated,omitempty"`
 	}
 )
 
@@ -102,7 +103,7 @@ func (h *Handler) addWord(c *gin.Context) {
 		switch {
 		case errors.Is(err, entity.ErrDuplicate):
 			ginExt.SendError(c, http.StatusConflict,
-				fmt.Errorf("word.delivery.Handler.addWord: %v", err))
+				handler.NewError(fmt.Errorf("word.delivery.Handler.addWord: %v", err), "This word is already exists"))
 			return
 		default:
 			ginExt.SendError(c, http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.addWord: %v", err))
@@ -115,8 +116,8 @@ func (h *Handler) addWord(c *gin.Context) {
 		Native: &VocabWord{
 			ID: &vocabWord.NativeID,
 		},
-		Created: &vocabWord.CreatedAt,
-		Updated: &vocabWord.UpdatedAt,
+		Created: vocabWord.CreatedAt.UnixMilli(),
+		Updated: vocabWord.UpdatedAt.UnixMilli(),
 	}
 
 	c.JSON(http.StatusCreated, wordRs)
@@ -180,7 +181,7 @@ func (h *Handler) updateWord(c *gin.Context) {
 		Native: &VocabWord{
 			ID: &vocabWord.NativeID,
 		},
-		Updated: &vocabWord.UpdatedAt,
+		Updated: vocabWord.UpdatedAt.UnixMilli(),
 	}
 
 	c.JSON(http.StatusOK, wordRs)
@@ -208,14 +209,22 @@ func (h *Handler) deleteWord(c *gin.Context) {
 
 func (h *Handler) getWord(c *gin.Context) {
 	ctx := c.Request.Context()
-	wordID, err := ginExt.GetQueryUUID(c, paramsID)
+
+	vid, err := ginExt.GetQueryUUID(c, paramsID)
 	if err != nil {
 		ginExt.SendError(c, http.StatusInternalServerError,
-			fmt.Errorf("word.delivery.Handler.getWords: %w", err))
+			fmt.Errorf("word.delivery.Handler.getWords - get vocab id: %w", err))
 		return
 	}
 
-	vocabWord, err := h.vocabSvc.GetWord(ctx, wordID)
+	wordID, err := ginExt.GetQueryUUID(c, paramsWordID)
+	if err != nil {
+		ginExt.SendError(c, http.StatusInternalServerError,
+			fmt.Errorf("word.delivery.Handler.getWords - get word id: %w", err))
+		return
+	}
+
+	vocabWord, err := h.vocabSvc.GetWord(ctx, vid, wordID)
 	if err != nil {
 		ginExt.SendError(c, http.StatusInternalServerError,
 			fmt.Errorf("word.delivery.Handler.getWords: %w", err))
@@ -254,7 +263,7 @@ func (h *Handler) getWords(c *gin.Context) {
 	vid, err := ginExt.GetQueryUUID(c, paramsID)
 	if err != nil {
 		ginExt.SendError(c, http.StatusInternalServerError,
-			fmt.Errorf("word.delivery.Handler.getWords - get dict id: %w", err))
+			fmt.Errorf("word.delivery.Handler.getWords - get vocab id: %w", err))
 		return
 	}
 
@@ -286,8 +295,8 @@ func (h *Handler) getWords(c *gin.Context) {
 			},
 			Translates: translates,
 			Examples:   examples,
-			Created:    &vocabWord.CreatedAt,
-			Updated:    &vocabWord.UpdatedAt,
+			Created:    vocabWord.CreatedAt.UnixMilli(),
+			Updated:    vocabWord.UpdatedAt.UnixMilli(),
 		}
 
 		wordsRs = append(wordsRs, wordRs)
@@ -309,14 +318,14 @@ func (h *Handler) getPronunciation(c *gin.Context) {
 	text, err := ginExt.GetQuery(c, paramsText)
 	if err != nil {
 		ginExt.SendError(c, http.StatusInternalServerError,
-			fmt.Errorf("word.delivery.Handler.getPronunciation - get word id: %w", err))
+			fmt.Errorf("word.delivery.Handler.getPronunciation - get text: %w", err))
 		return
 	}
 
 	vid, err := ginExt.GetQueryUUID(c, paramsID)
 	if err != nil {
 		ginExt.SendError(c, http.StatusInternalServerError,
-			fmt.Errorf("word.delivery.Handler.getPronunciation - get word id: %w", err))
+			fmt.Errorf("word.delivery.Handler.getPronunciation - get vocab id: %w", err))
 		return
 	}
 

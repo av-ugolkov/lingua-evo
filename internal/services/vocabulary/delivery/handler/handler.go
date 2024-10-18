@@ -11,12 +11,14 @@ import (
 	vocabulary "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary/service"
 	"github.com/av-ugolkov/lingua-evo/runtime"
 	"github.com/av-ugolkov/lingua-evo/runtime/access"
+
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
 
 const (
 	paramsID            string = "id"
+	paramsWordID        string = "word_id"
 	paramsVocabName     string = "name"
 	paramsPage          string = "page"
 	paramsPerPage       string = "per_page"
@@ -56,6 +58,20 @@ type (
 		UpdatedAt     time.Time `json:"updated_at,omitempty"`
 	}
 
+	VocabByUserRs struct {
+		ID            uuid.UUID `json:"id,omitempty"`
+		UserID        uuid.UUID `json:"user_id,omitempty"`
+		Name          string    `json:"name,omitempty"`
+		AccessID      *uint8    `json:"access_id,omitempty"`
+		NativeLang    string    `json:"native_lang,omitempty"`
+		TranslateLang string    `json:"translate_lang,omitempty"`
+		Description   string    `json:"description,omitempty"`
+		UserName      string    `json:"user_name,omitempty"`
+		WordsCount    *uint     `json:"words_count,omitempty"`
+		Editable      bool      `json:"editable,omitempty"`
+		Notification  bool      `json:"notification,omitempty"`
+	}
+
 	VocabularyWithWords struct {
 		VocabularyRs
 		Words []string `json:"words,omitempty"`
@@ -82,7 +98,7 @@ func (h *Handler) register(r *gin.Engine) {
 	r.DELETE(handler.Vocabulary, middleware.Auth(h.userDeleteVocabulary))
 	r.PUT(handler.Vocabulary, middleware.Auth(h.userEditVocabulary))
 	r.GET(handler.UserVocabularies, middleware.Auth(h.userGetVocabularies))
-	r.GET(handler.Vocabularies, middleware.OptionalAuth(h.getVocabularies))
+	r.GET(handler.Vocabularies, h.getVocabularies)
 	r.GET(handler.VocabulariesByUser, middleware.OptionalAuth(h.getVocabulariesByUser))
 	r.GET(handler.VocabularyInfo, middleware.OptionalAuth(h.getVocabularyInfo))
 	r.POST(handler.VocabularyCopy, middleware.Auth(h.copyVocabulary))
@@ -202,39 +218,36 @@ func (h *Handler) getVocabularies(c *gin.Context) {
 func (h *Handler) getVocabulariesByUser(c *gin.Context) {
 	ctx := c.Request.Context()
 
-	uid, err := ginExt.GetQueryUUID(c, paramsUserID)
+	uid, _ := runtime.UserIDFromContext(ctx)
+
+	owner, err := ginExt.GetQueryUUID(c, paramsUserID)
 	if err != nil {
 		ginExt.SendError(c, http.StatusInternalServerError,
 			fmt.Errorf("vocabulary.delivery.Handler.getVocabulariesByUser - get query [user_id]: %v", err))
 		return
 	}
 
-	vocabs, err := h.vocabSvc.GetVocabulariesByUser(ctx, uid, []access.Type{access.Public, access.Subscribers})
+	vocabs, err := h.vocabSvc.GetVocabulariesByUser(ctx, uid, owner, []access.Type{access.Public, access.Subscribers})
 	if err != nil {
 		ginExt.SendError(c, http.StatusInternalServerError,
 			fmt.Errorf("vocabulary.delivery.Handler.getVocabulariesByUser: %v", err))
 		return
 	}
 
-	vocabulariesRs := make([]VocabularyRs, 0, len(vocabs))
+	vocabulariesRs := make([]VocabByUserRs, 0, len(vocabs))
 	for _, vocab := range vocabs {
-		tags := make([]string, 0, len(vocab.Tags))
-		for _, tag := range vocab.Tags {
-			tags = append(tags, tag.Text)
-		}
-
-		vocabulariesRs = append(vocabulariesRs, VocabularyRs{
+		vocabulariesRs = append(vocabulariesRs, VocabByUserRs{
 			ID:            vocab.ID,
-			UserID:        vocab.UserID,
 			Name:          vocab.Name,
+			UserID:        vocab.UserID,
+			UserName:      vocab.UserName,
 			AccessID:      &vocab.Access,
 			NativeLang:    vocab.NativeLang,
 			TranslateLang: vocab.TranslateLang,
 			Description:   vocab.Description,
 			WordsCount:    &vocab.WordsCount,
-			Tags:          tags,
-			CreatedAt:     vocab.CreatedAt,
-			UpdatedAt:     vocab.UpdatedAt,
+			Editable:      vocab.Editable,
+			Notification:  vocab.Notification,
 		})
 	}
 
