@@ -18,6 +18,7 @@ import (
 
 const (
 	paramsID            string = "id"
+	paramsWordID        string = "word_id"
 	paramsVocabName     string = "name"
 	paramsPage          string = "page"
 	paramsPerPage       string = "per_page"

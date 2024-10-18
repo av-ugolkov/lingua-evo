@@ -488,3 +488,19 @@ func getEqualLanguage(field, lang string) string {
 		return fmt.Sprintf("AND %s='%s'", field, lang)
 	}
 }
+
+func getDictTable(langCode string) string {
+	table := "dictionary"
+	if len(langCode) != 0 {
+		table = fmt.Sprintf(`%s_%s`, table, langCode)
+	}
+	return table
+}
+
+func getExamTable(langCode string) string {
+	table := "example"
+	if len(langCode) != 0 {
+		table = fmt.Sprintf(`%s_%s`, table, langCode)
+	}
+	return table
+}
