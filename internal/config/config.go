@@ -107,6 +107,12 @@ type DbRedis struct {
 type Email struct {
 	Address  string `yaml:"address"`
 	Password string `yaml:"password,omitempty"`
+	Host     string `yaml:"host"`
+	Port     int    `yaml:"port"`
+}
+
+func (e Email) AddrSvc() string {
+	return fmt.Sprintf("%s:%d", e.Host, e.Port)
 }
 
 type Kafka struct {
