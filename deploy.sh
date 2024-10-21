@@ -21,6 +21,9 @@ dev() {
 database() {
   BRANCH="$(git rev-parse --abbrev-ref HEAD)"
   
+  pg_psw="$(cat .env | grep PG_PSW | cut -d "=" -f2)"
+
+  PG_PSW=${pg_psw} \
   BRANCH=${BRANCH} \
   docker compose -p lingua-evo-dev -f deploy/docker-compose.dev.yml up redis postgres migration --build --force-recreat    
 }
@@ -28,6 +31,9 @@ database() {
 database_down() {
   BRANCH="$(git rev-parse --abbrev-ref HEAD)"
   
+  pg_psw="$(cat .env | grep PG_PSW | cut -d "=" -f2)"
+
+  PG_PSW=${pg_psw} \
   BRANCH=${BRANCH} \
   CMD=down \
   docker compose -p lingua-evo-dev -f deploy/docker-compose.dev.yml up redis postgres migration --build --force-recreate    
