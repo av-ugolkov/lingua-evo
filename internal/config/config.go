@@ -107,6 +107,12 @@ type DbRedis struct {
 type Email struct {
 	Address  string `yaml:"address"`
 	Password string `yaml:"password,omitempty"`
+	Host     string `yaml:"host"`
+	Port     int    `yaml:"port"`
+}
+
+func (e Email) AddrSvc() string {
+	return fmt.Sprintf("%s:%d", e.Host, e.Port)
 }
 
 type Kafka struct {
@@ -126,7 +132,7 @@ func InitConfig(pathConfig string) *Config {
 	slog.Info("read application config")
 	instance = &Config{}
 	if err := cleanenv.ReadConfig(pathConfig, instance); err != nil {
-		slog.Error(fmt.Errorf("Fail read config: %v", err).Error())
+		slog.Error(fmt.Errorf("fail read config: %v", err).Error())
 		return nil
 	}
 

@@ -40,4 +40,6 @@ const (
 	Unsubscribe     = "/user/unsubscribe" //post
 
 	NotificationVocab = "/notifications/vocabulary"
+
+	SupportRequest = "/support/request"
 )

@@ -103,6 +103,11 @@ func SendError(c *gin.Context, httpStatus int, err error) {
 	}
 }
 
+func SendErrorWithMsg(c *gin.Context, httpStatus int, err error, msg string) {
+	slog.Error(err.Error())
+	c.JSON(httpStatus, msg)
+}
+
 func GetCookieLanguageOrDefault(c *gin.Context) string {
 	cookie, err := c.Cookie(Language)
 	switch {

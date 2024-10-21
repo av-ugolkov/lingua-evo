@@ -34,6 +34,7 @@ import (
 	dictService "github.com/av-ugolkov/lingua-evo/internal/services/dictionary"
 	dictHandler "github.com/av-ugolkov/lingua-evo/internal/services/dictionary/delivery/handler"
 	dictRepository "github.com/av-ugolkov/lingua-evo/internal/services/dictionary/delivery/repository"
+	emailService "github.com/av-ugolkov/lingua-evo/internal/services/email"
 	exampleService "github.com/av-ugolkov/lingua-evo/internal/services/example"
 	exampleRepository "github.com/av-ugolkov/lingua-evo/internal/services/example/delivery/repository"
 	langService "github.com/av-ugolkov/lingua-evo/internal/services/language"
@@ -45,6 +46,8 @@ import (
 	subscribersService "github.com/av-ugolkov/lingua-evo/internal/services/subscribers"
 	subscribersHandler "github.com/av-ugolkov/lingua-evo/internal/services/subscribers/delivery/handler"
 	subscribersRepository "github.com/av-ugolkov/lingua-evo/internal/services/subscribers/delivery/repository"
+	supportService "github.com/av-ugolkov/lingua-evo/internal/services/support"
+	supportHandler "github.com/av-ugolkov/lingua-evo/internal/services/support/delivery/handler"
 	tagService "github.com/av-ugolkov/lingua-evo/internal/services/tag"
 	tagHandler "github.com/av-ugolkov/lingua-evo/internal/services/tag/delivery/handler"
 	tagRepository "github.com/av-ugolkov/lingua-evo/internal/services/tag/delivery/repository"
@@ -168,6 +171,7 @@ func ServerStart(cfg *config.Config) {
 func initServer(cfg *config.Config, r *gin.Engine, pgxPool *pgxpool.Pool, redis *redis.Redis) {
 	tr := transactor.NewTransactor(pgxPool)
 	slog.Info("create services")
+	emailSvc := emailService.NewService(cfg.Email)
 	userRepo := userRepository.NewRepo(tr)
 	userSvc := userService.NewService(userRepo, redis, tr)
 	accessRepo := accessRepository.NewRepo(tr)
@@ -185,9 +189,10 @@ func initServer(cfg *config.Config, r *gin.Engine, pgxPool *pgxpool.Pool, redis 
 	vocabRepo := vocabRepository.NewRepo(tr)
 	vocabSvc := vocabService.NewService(tr, vocabRepo, userSvc, exampleSvc, dictSvc, tagSvc, subscribersSvc)
 	authRepo := authRepository.NewRepo(redis)
-	authSvc := authService.NewService(cfg.Email, authRepo, userSvc)
+	authSvc := authService.NewService(authRepo, userSvc, emailSvc)
 	notificationRepo := notificationRepository.NewRepo(tr)
 	notificationSvc := notificationService.NewService(notificationRepo)
+	supportSvc := supportService.NewService(emailSvc)
 
 	slog.Info("create handlers")
 	userHandler.Create(r, userSvc)
@@ -199,6 +204,7 @@ func initServer(cfg *config.Config, r *gin.Engine, pgxPool *pgxpool.Pool, redis 
 	accessHandler.Create(r, accessSvc)
 	subscribersHandler.Create(r, subscribersSvc)
 	notificationHandler.Create(r, notificationSvc)
+	supportHandler.Create(r, supportSvc)
 
 	slog.Info("end init services")
 }
