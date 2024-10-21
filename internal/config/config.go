@@ -52,9 +52,9 @@ func (s SSL) GetPrivate() string {
 }
 
 type JWT struct {
-	Secret        string `yaml:"secret" env-required:"true"`
-	ExpireAccess  int    `yaml:"expire_access" env-default:"300"`
-	ExpireRefresh int    `yaml:"expire_refresh" env-default:"2592000"`
+	Secret        string
+	ExpireAccess  int `yaml:"expire_access" env-default:"300"`
+	ExpireRefresh int `yaml:"expire_refresh" env-default:"2592000"`
 }
 
 type Service struct {
@@ -65,7 +65,7 @@ type Service struct {
 type DbSQL struct {
 	Name              string `yaml:"name"`
 	User              string `yaml:"user"`
-	Password          string `yaml:"password"`
+	Password          string
 	Host              string `yaml:"host"`
 	Port              uint16 `yaml:"port"`
 	MaxConns          uint16 `yaml:"max_conns"`
@@ -98,7 +98,7 @@ func (db *DbSQL) GetConnStr() string {
 
 type DbRedis struct {
 	Name     string `yaml:"name"`
-	Password string `yaml:"password"`
+	Password string
 	Host     string `yaml:"host"`
 	Port     string `yaml:"port"`
 	DB       uint16 `yaml:"db"`
@@ -106,7 +106,7 @@ type DbRedis struct {
 
 type Email struct {
 	Address  string `yaml:"address"`
-	Password string `yaml:"password,omitempty"`
+	Password string
 	Host     string `yaml:"host"`
 	Port     int    `yaml:"port"`
 }
@@ -141,6 +141,18 @@ func InitConfig(pathConfig string) *Config {
 
 func SetEmailPassword(emailPsw string) {
 	instance.Email.Password = emailPsw
+}
+
+func SetJWTSecret(secret string) {
+	instance.JWT.Secret = secret
+}
+
+func SetDBPassword(psw string) {
+	instance.DbSQL.Password = psw
+}
+
+func SetRedisPassword(psw string) {
+	instance.DbRedis.Password = psw
 }
 
 func GetConfig() *Config {

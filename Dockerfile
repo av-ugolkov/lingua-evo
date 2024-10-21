@@ -13,6 +13,9 @@ ARG config_dir
 ARG public_cert
 ARG private_cert
 ARG epsw
+ARG jwts
+ARG pg_psw
+ARG redis_psw
 ARG branch
 ARG commit
 
@@ -31,6 +34,9 @@ COPY --from=root ${private_cert} ./cert/
 EXPOSE 5000
 
 ENV env_epsw=${epsw}
+ENV env_jwts=${jwts}
+ENV env_pg_psw=${pg_psw}
+ENV env_redis_psw=${redis_psw}
 
 WORKDIR /lingua-evo/
-ENTRYPOINT ./main -epsw=$(echo ${env_epsw})
+ENTRYPOINT ./main -epsw=$(echo ${env_epsw}) -jwts=$(echo ${env_jwts}) -pg_psw=$(echo ${env_pg_psw}) -redis_psw=$(echo ${env_redis_psw})
