@@ -39,7 +39,9 @@ redis:
     password: itBg40drEvZsw2gbHyp0
     db: 0
 email:
-    address: ugolkov.prog@gmail.com
+    address: linguaevo@gmail.com
+    host: smtp.gmail.com
+    port: 587
 kafka:
     enable: false
     host: lingua-kafka
