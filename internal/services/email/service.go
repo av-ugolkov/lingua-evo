@@ -29,8 +29,7 @@ type (
 )
 
 type Service struct {
-	email  config.Email
-	client *smtp.Client
+	email config.Email
 }
 
 func NewService(email config.Email) *Service {
