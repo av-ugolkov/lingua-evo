@@ -43,6 +43,9 @@ services:
         public_cert: ${CERT:-/home/alex/cert/linguaevo.twc1.net/fullchain.pem}
         private_cert: ${CERT:-/home/alex/cert/linguaevo.twc1.net/privkey.pem}
         epsw: ${EPSW}
+        jwts: ${JWTS}
+        pg_psw: ${PG_PSW}
+        redis_psw: ${REDIS_PSW}
         branch: ${BRANCH}
         commit: ${COMMIT}
       additional_contexts:
