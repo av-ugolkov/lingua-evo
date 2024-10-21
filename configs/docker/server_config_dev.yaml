@@ -12,7 +12,6 @@ ssl:
     public: fullchain.pem
     private: privkey.pem
 jwt:
-    secret: 
     expire_access: 300 #5 min
     expire_refresh: 3600 #1 hours
 service:
@@ -23,12 +22,11 @@ service:
 postgres:
     name: pg-lingua-evo
     user: lingua
-    password: 
     host: postgres-base-dev
     port: 5432
-    max_conns: 100
+    max_conns: 10
     min_conns: 0
-    max_conn_lifetime: 3600
+    max_conn_life_time: 3600
     max_conn_idle_time: 1800
     health_check_period: 60
     connect_timeout: 5
@@ -37,10 +35,11 @@ redis:
     host: redis
     port: 6379
     user: lingua
-    password: 
     db: 0
 email:
-    address: ugolkov.prog@gmail.com
+    address: linguaevo@gmail.com
+    host: smtp.gmail.com
+    port: 587
 kafka:
     enable: false
     host: lingua-kafka

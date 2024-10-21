@@ -12,9 +12,9 @@ import (
 )
 
 type Logger struct {
-	file        *os.File
-	Log         *slog.Logger
-	ServerLoger *log.Logger
+	file         *os.File
+	Log          *slog.Logger
+	ServerLogger *log.Logger
 }
 
 func CustomLogger(cfgLog *cfgLog.Logger) *Logger {
@@ -38,7 +38,7 @@ func CustomLogger(cfgLog *cfgLog.Logger) *Logger {
 		case "console":
 			writers = append(writers, os.Stdout)
 		default:
-			slog.Warn("pgk.log.CustomLogger: unknonw writer")
+			slog.Warn("pgk.log.CustomLogger: unknown writer")
 		}
 	}
 	multiWriter := io.MultiWriter(writers...)
@@ -48,14 +48,17 @@ func CustomLogger(cfgLog *cfgLog.Logger) *Logger {
 	})
 
 	return &Logger{
-		file:        file,
-		Log:         slog.New(logHandler),
-		ServerLoger: slog.NewLogLogger(logHandler, getLevel(cfgLog.Level)),
+		file:         file,
+		Log:          slog.New(logHandler),
+		ServerLogger: slog.NewLogLogger(logHandler, getLevel(cfgLog.Level)),
 	}
 }
 
 func (l *Logger) Close() {
-	l.file.Close()
+	err := l.file.Close()
+	if err != nil {
+		slog.Error(fmt.Sprintf("pgk.Logger.Close: %v", err))
+	}
 }
 
 func getLevel(level string) slog.Level {

@@ -11,14 +11,14 @@ services:
     entrypoint:
       - '/bin/sh'
       - '-ecx'
-      - 'redis-server --requirepass '
+      - 'redis-server --requirepass ${REDIS_PSW}'
 
   postgres:
     container_name: postgres-base-dev
     image: postgres:16.1-alpine3.19
     environment:
       - POSTGRES_DB=pg-lingua-evo
-      - POSTGRES_PASSWORD=
+      - POSTGRES_PASSWORD=${PG_PSW}
       - POSTGRES_USER=lingua
     volumes:
       - /var/lib/postgresql/lingua-evo-dev/data:/var/lib/postgresql/data
@@ -43,6 +43,9 @@ services:
         public_cert: ${CERT:-/home/alex/cert/linguaevo.twc1.net/fullchain.pem}
         private_cert: ${CERT:-/home/alex/cert/linguaevo.twc1.net/privkey.pem}
         epsw: ${EPSW}
+        jwts: ${JWTS}
+        pg_psw: ${PG_PSW}
+        redis_psw: ${REDIS_PSW}
         branch: ${BRANCH}
         commit: ${COMMIT}
       additional_contexts:
@@ -76,7 +79,7 @@ services:
     entrypoint:
       - '/bin/sh'
       - '-ecx'
-      - './migration -cmd ${CMD:-up} -url lingua:@postgres-base-dev:5432/pg-lingua-evo?sslmode=disable'
+      - './migration -cmd ${CMD:-up} -url lingua:${PG_PSW}@postgres-base-dev:5432/pg-lingua-evo?sslmode=disable'
 
 networks:
   lingua-dev:

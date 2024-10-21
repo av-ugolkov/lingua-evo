@@ -288,23 +288,32 @@ func (r *VocabRepo) CopyVocab(ctx context.Context, uid, vid uuid.UUID) (uuid.UUI
 	return vid, nil
 }
 
-func (r *VocabRepo) GetVocabsWithCountWords(ctx context.Context, uid uuid.UUID, access []uint8) ([]entity.VocabWithUser, error) {
+func (r *VocabRepo) GetVocabsWithCountWords(ctx context.Context, uid, owner uuid.UUID, access []uint8) ([]entity.VocabWithUser, error) {
 	var limit int
 	err := r.tr.QueryRow(ctx, `
 		SELECT count(v.id) FROM vocabulary v
-		WHERE v.user_id = $1 AND "access" = any($2)`, uid, access).Scan(&limit)
+		WHERE v.user_id = $1 AND "access" = any($2)`, owner, access).Scan(&limit)
 	if err != nil {
 		return nil, fmt.Errorf("vocabulary.delivery.repository.VocabRepo.GetVocabsWithCountWords - get limit: %w", err)
 	}
 
 	query := `
-		SELECT v.id, name, native_lang, translate_lang, access, count(w.id) FROM vocabulary v
+		SELECT 
+		    v.id, 
+		    name, 
+		    native_lang, 
+		    translate_lang, 
+		    access, 
+		    count(w.id), 
+		    count(vn.user_id)!=0 notification 
+		FROM vocabulary v
 		LEFT JOIN word w ON w.vocabulary_id = v.id
+		LEFT JOIN vocabulary_notifications vn ON vn.user_id=$3 AND vn.vocab_id=v.id
 		WHERE v.user_id = $1 AND "access" = any($2)
 		GROUP BY v.id
-		LIMIT $3;`
+		LIMIT $4;`
 
-	rows, err := r.tr.Query(ctx, query, uid, access, limit)
+	rows, err := r.tr.Query(ctx, query, owner, access, uid, limit)
 	if err != nil {
 		return nil, fmt.Errorf("vocabulary.delivery.repository.VocabRepo.GetWithCountWords: %w", err)
 	}
@@ -312,7 +321,7 @@ func (r *VocabRepo) GetVocabsWithCountWords(ctx context.Context, uid uuid.UUID, 
 	vocabs := make([]entity.VocabWithUser, 0, limit)
 	var vocab entity.VocabWithUser
 	for rows.Next() {
-		err := rows.Scan(&vocab.ID, &vocab.Name, &vocab.NativeLang, &vocab.TranslateLang, &vocab.Access, &vocab.WordsCount)
+		err := rows.Scan(&vocab.ID, &vocab.Name, &vocab.NativeLang, &vocab.TranslateLang, &vocab.Access, &vocab.WordsCount, &vocab.Notification)
 		if err != nil {
 			return nil, fmt.Errorf("vocabulary.delivery.repository.VocabRepo.GetWithCountWords - scan: %w", err)
 		}
@@ -478,4 +487,20 @@ func getEqualLanguage(field, lang string) string {
 	default:
 		return fmt.Sprintf("AND %s='%s'", field, lang)
 	}
+}
+
+func getDictTable(langCode string) string {
+	table := "dictionary"
+	if len(langCode) != 0 {
+		table = fmt.Sprintf(`%s_%s`, table, langCode)
+	}
+	return table
+}
+
+func getExamTable(langCode string) string {
+	table := "example"
+	if len(langCode) != 0 {
+		table = fmt.Sprintf(`%s_%s`, table, langCode)
+	}
+	return table
 }

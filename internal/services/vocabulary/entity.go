@@ -37,9 +37,15 @@ type (
 
 	VocabWithUser struct {
 		Vocab
-		UserName   string
-		Editable   bool
-		WordsCount uint
+		UserName     string
+		Editable     bool
+		Notification bool
+		WordsCount   uint
+	}
+
+	VocabWithUserAndWords struct {
+		VocabWithUser
+		Words []string
 	}
 
 	VocabWord struct {
