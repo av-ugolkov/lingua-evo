@@ -23,7 +23,8 @@ type (
 	}
 
 	supportData struct {
-		Msg string
+		UserName string
+		Msg      string
 	}
 )
 
@@ -68,16 +69,23 @@ func (s *Service) SendAuthCode(toEmail string, code int) error {
 
 func (s *Service) SendEmailForSupport(toEmail string, params ...string) error {
 	to := fmt.Sprintf("To: %s\r\n", toEmail)
-	subject := fmt.Sprintf("Subject: Re: %s\r\n", params[1])
+	subject := fmt.Sprintf("Subject: %s\r\n", params[1])
 
 	fs, err := template.ParseFS(templ, "templ/support.html")
 	if err != nil {
 		return fmt.Errorf("email.Service.SendEmailForSupport - parse template: %v", err)
 	}
 
+	userName := params[0]
+	if len(userName) == 0 {
+		userName = "Sir/Madam"
+	}
+	params[0] = userName
+
 	w := &bytes.Buffer{}
 	err = fs.Execute(w, supportData{
-		Msg: params[2],
+		UserName: userName,
+		Msg:      params[2],
 	})
 	if err != nil {
 		return fmt.Errorf("email.Service.SendEmailForSupport - execute template: %v", err)
@@ -86,7 +94,7 @@ func (s *Service) SendEmailForSupport(toEmail string, params ...string) error {
 	message := []byte(to + subject + contentType + w.String())
 
 	authEmail := smtp.PlainAuth("", s.email.Address, s.email.Password, s.email.Host)
-	err = smtp.SendMail(s.email.AddrSvc(), authEmail, s.email.Address, []string{toEmail}, message)
+	err = smtp.SendMail(s.email.AddrSvc(), authEmail, s.email.Address, []string{toEmail, s.email.Address}, message)
 	if err != nil {
 		return fmt.Errorf("email.Service.SendEmailForSupport - send mail: %v", err)
 	}
