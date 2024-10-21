@@ -56,6 +56,17 @@ func (h *Handler) sendRequest(c *gin.Context) {
 		return
 	}
 
+	if utf8.RuneCountInString(data.Name) > 100 {
+		data.Name = fmt.Sprintf("%s...", data.Name[:100])
+	}
+
+	if len(data.Message) == 0 {
+		ginExt.SendErrorWithMsg(c, http.StatusBadRequest,
+			fmt.Errorf("support.delivery.Handler.sendRequest - message is too long"),
+			"Message is empty")
+		return
+	}
+
 	if utf8.RuneCountInString(data.Message) > 500 {
 		ginExt.SendErrorWithMsg(c, http.StatusBadRequest,
 			fmt.Errorf("support.delivery.Handler.sendRequest - message is too long"),
@@ -77,6 +88,6 @@ func (h *Handler) sendRequest(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, gin.H{
-		"msg": "Check your email",
+		"msg": "Thank you for your message! We will try to respond as soon as possible.",
 	})
 }
