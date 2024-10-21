@@ -94,12 +94,18 @@ func GetHeaderAuthorization(c *gin.Context, typeAuth string) (string, error) {
 
 func SendError(c *gin.Context, httpStatus int, err error) {
 	slog.Error(err.Error())
-	switch e := err.(type) {
-	case handler.Error:
-		c.JSON(e.Code(), e.Msg())
+	var e handler.Error
+	switch {
+	case errors.As(err, &e):
+		c.JSON(httpStatus, e.Msg())
 	default:
 		c.JSON(httpStatus, err.Error())
 	}
+}
+
+func SendErrorWithMsg(c *gin.Context, httpStatus int, err error, msg string) {
+	slog.Error(err.Error())
+	c.JSON(httpStatus, msg)
 }
 
 func GetCookieLanguageOrDefault(c *gin.Context) string {

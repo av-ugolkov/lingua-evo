@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
-	"net/smtp"
 	"time"
 
 	"github.com/av-ugolkov/lingua-evo/internal/config"
@@ -34,19 +33,23 @@ type (
 		GetUserByEmail(ctx context.Context, email string) (*entityUser.User, error)
 		UpdateLastVisited(ctx context.Context, uid uuid.UUID) error
 	}
+
+	emailSvc interface {
+		SendAuthCode(toEmail string, code int) error
+	}
 )
 
 type Service struct {
-	email   config.Email
 	repo    sessionRepo
 	userSvc userSvc
+	email   emailSvc
 }
 
-func NewService(email config.Email, repo sessionRepo, userSvc userSvc) *Service {
+func NewService(repo sessionRepo, userSvc userSvc, email emailSvc) *Service {
 	return &Service{
-		email:   email,
 		repo:    repo,
 		userSvc: userSvc,
+		email:   email,
 	}
 }
 
@@ -174,25 +177,9 @@ func (s *Service) CreateCode(ctx context.Context, email string) error {
 
 	creatingCode := rand.Intn(999999-100000) + 100000
 
-	from := s.email.Address
-	password := s.email.Password
-
-	toEmailAddress := email
-	to := []string{toEmailAddress}
-
-	host := "smtp.gmail.com"
-	port := "587"
-	address := host + ":" + port
-
-	subject := "Subject: Create account on Lingua Evo\r\n\r\n"
-	body := fmt.Sprintf("Аccount creation code: %d", creatingCode)
-	message := []byte(subject + body)
-
-	authEmail := smtp.PlainAuth("", from, password, host)
-
-	err = smtp.SendMail(address, authEmail, from, to, message)
+	err = s.email.SendAuthCode(email, creatingCode)
 	if err != nil {
-		return fmt.Errorf("auth.Service.CreateCode - send mail: %v", err)
+		return fmt.Errorf("user.delivery.Handler.createAccount - send auth code: %v", err)
 	}
 
 	err = s.repo.SetAccountCode(ctx, email, creatingCode, time.Duration(10)*time.Minute)

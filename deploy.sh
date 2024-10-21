@@ -1,30 +1,42 @@
 #!/bin/bash
 
 dev() {
-    BRANCH="$(cut -d "/" -f2 <<< "$(git rev-parse --abbrev-ref HEAD)")"
-    COMMIT="$(git $dir rev-parse HEAD)"
-    echo $(
-        BRANCH=${BRANCH} \
-        COMMIT=${COMMIT} \
-        docker compose -p lingua-evo-dev -f deploy/docker-compose.dev.yml up --build --force-recreate
-    )    
+  BRANCH="$(cut -d "/" -f2 <<< "$(git rev-parse --abbrev-ref HEAD)")"
+  COMMIT="$(git $dir rev-parse HEAD)"
+
+  epsw="$(cat .env | grep EPSW | cut -d "=" -f2)"
+  jwts="$(cat .env | grep JWTS | cut -d "=" -f2)"
+  pg_psw="$(cat .env | grep PG_PSW | cut -d "=" -f2)"
+  redis_psw="$(cat .env | grep REDIS_PSW | cut -d "=" -f2)"
+
+  BRANCH=${BRANCH} \
+  COMMIT=${COMMIT} \
+  EPSW=${epsw} \
+  JWTS=${jwts} \
+  PG_PSW=${pg_psw} \
+  REDIS_PSW=${redis_psw} \
+  docker compose -p lingua-evo-dev -f deploy/docker-compose.dev.yml up --build --force-recreate    
 }
 
 database() {
-    BRANCH="$(git rev-parse --abbrev-ref HEAD)"
-    echo $(
-        BRANCH=${BRANCH} \
-        docker compose -p lingua-evo-dev -f deploy/docker-compose.dev.yml up redis postgres migration --build --force-recreate
-    )    
+  BRANCH="$(git rev-parse --abbrev-ref HEAD)"
+  
+  pg_psw="$(cat .env | grep PG_PSW | cut -d "=" -f2)"
+
+  PG_PSW=${pg_psw} \
+  BRANCH=${BRANCH} \
+  docker compose -p lingua-evo-dev -f deploy/docker-compose.dev.yml up redis postgres migration --build --force-recreat    
 }
 
 database_down() {
-    BRANCH="$(git rev-parse --abbrev-ref HEAD)"
-    echo $(
-        BRANCH=${BRANCH} \
-        CMD=down \
-        docker compose -p lingua-evo-dev -f deploy/docker-compose.dev.yml up redis postgres migration --build --force-recreate
-    )    
+  BRANCH="$(git rev-parse --abbrev-ref HEAD)"
+  
+  pg_psw="$(cat .env | grep PG_PSW | cut -d "=" -f2)"
+
+  PG_PSW=${pg_psw} \
+  BRANCH=${BRANCH} \
+  CMD=down \
+  docker compose -p lingua-evo-dev -f deploy/docker-compose.dev.yml up redis postgres migration --build --force-recreate    
 }
 
 release() {
@@ -61,14 +73,20 @@ release() {
     echo "$(git checkout $BRANCH)"
   fi
 
-  EPSW="$(cat .env | xargs)"
-
   echo "$(git fetch)"
   echo "$(git pull)"
 
   COMMIT="$(git $dir rev-parse HEAD)"
 
-  EPSW=${EPSW} \
+  epsw="$(cat .env | grep EPSW | cut -d "=" -f2)"
+  jwts="$(cat .env | grep JWTS | cut -d "=" -f2)"
+  pg_psw="$(cat .env | grep PG_PSW | cut -d "=" -f2)"
+  redis_psw="$(cat .env | grep REDIS_PSW | cut -d "=" -f2)"
+
+  EPSW=${epsw} \
+  JWTS=${jwts} \
+  PG_PSW=${pg_psw} \
+  REDIS_PSW=${redis_psw} \
   BRANCH=${BRANCH} \
   COMMIT=${COMMIT} \
   docker compose -p lingua-evo -f deploy/docker-compose.yml up --build --force-recreate
