@@ -7,6 +7,7 @@ import (
 
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
 	ginExt "github.com/av-ugolkov/lingua-evo/internal/delivery/handler/gin"
+	msgerror "github.com/av-ugolkov/lingua-evo/internal/pkg/msg-error"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/utils"
 	"github.com/av-ugolkov/lingua-evo/internal/services/support"
 
@@ -43,16 +44,16 @@ func (h *Handler) sendRequest(c *gin.Context) {
 	var data SupportRq
 	err := c.Bind(&data)
 	if err != nil {
-		ginExt.SendErrorWithMsg(c, http.StatusBadRequest,
-			fmt.Errorf("support.delivery.Handler.sendRequest - check body: %w", err),
-			"You doesn't fill one or several fields.")
+		ginExt.SendError(c, http.StatusBadRequest,
+			msgerror.NewError(fmt.Errorf("support.delivery.Handler.sendRequest - check body: %w", err),
+				"You doesn't fill one or several fields."))
 		return
 	}
 
 	if !utils.IsEmailValid(data.Email) {
-		ginExt.SendErrorWithMsg(c, http.StatusBadRequest,
-			fmt.Errorf("support.delivery.Handler.sendRequest - email format is invalid"),
-			"Email format is invalid")
+		ginExt.SendError(c, http.StatusBadRequest,
+			msgerror.NewError(fmt.Errorf("support.delivery.Handler.sendRequest - email format is invalid"),
+				"Email format is invalid"))
 		return
 	}
 
@@ -61,16 +62,16 @@ func (h *Handler) sendRequest(c *gin.Context) {
 	}
 
 	if len(data.Message) == 0 {
-		ginExt.SendErrorWithMsg(c, http.StatusBadRequest,
-			fmt.Errorf("support.delivery.Handler.sendRequest - message is too long"),
-			"Message is empty")
+		ginExt.SendError(c, http.StatusBadRequest,
+			msgerror.NewError(fmt.Errorf("support.delivery.Handler.sendRequest - message is too long"),
+				"Message is empty"))
 		return
 	}
 
 	if utf8.RuneCountInString(data.Message) > 500 {
-		ginExt.SendErrorWithMsg(c, http.StatusBadRequest,
-			fmt.Errorf("support.delivery.Handler.sendRequest - message is too long"),
-			"Message is too long")
+		ginExt.SendError(c, http.StatusBadRequest,
+			msgerror.NewError(fmt.Errorf("support.delivery.Handler.sendRequest - message is too long"),
+				"Message is too long"))
 		return
 	}
 
@@ -81,9 +82,9 @@ func (h *Handler) sendRequest(c *gin.Context) {
 		Message: data.Message,
 	})
 	if err != nil {
-		ginExt.SendErrorWithMsg(c, http.StatusBadRequest,
-			fmt.Errorf("support.delivery.Handler.sendRequest - check body: %w", err),
-			"Something went wrong. Try a bit later!")
+		ginExt.SendError(c, http.StatusBadRequest,
+			msgerror.NewError(fmt.Errorf("support.delivery.Handler.sendRequest - check body: %w", err),
+				"Something went wrong. Try a bit later!"))
 		return
 	}
 

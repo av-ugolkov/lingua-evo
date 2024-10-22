@@ -7,8 +7,8 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
 	ginExt "github.com/av-ugolkov/lingua-evo/internal/delivery/handler/gin"
+	msgerror "github.com/av-ugolkov/lingua-evo/internal/pkg/msg-error"
 	entityDict "github.com/av-ugolkov/lingua-evo/internal/services/dictionary"
 	entityExample "github.com/av-ugolkov/lingua-evo/internal/services/example"
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary"
@@ -20,6 +20,11 @@ import (
 
 const (
 	paramsText string = "text"
+)
+
+const (
+	ErrDescriptionTooLong = "Description length should be less than 100 characters"
+	ErrWordIsExists       = "This word is already exists"
 )
 
 type (
@@ -73,9 +78,9 @@ func (h *Handler) addWord(c *gin.Context) {
 	}
 
 	if utf8.RuneCountInString(data.Description) > 100 {
-		ginExt.SendErrorWithMsg(c, http.StatusBadRequest,
-			fmt.Errorf("word.delivery.Handler.addWord - description is too long"),
-			"Description length should be less than 100 characters")
+		ginExt.SendError(c, http.StatusBadRequest,
+			msgerror.NewError(fmt.Errorf("word.delivery.Handler.addWord - description is too long"),
+				ErrDescriptionTooLong))
 		return
 	}
 
@@ -114,7 +119,7 @@ func (h *Handler) addWord(c *gin.Context) {
 		switch {
 		case errors.Is(err, entity.ErrDuplicate):
 			ginExt.SendError(c, http.StatusConflict,
-				handler.NewError(fmt.Errorf("word.delivery.Handler.addWord: %v", err), "This word is already exists"))
+				msgerror.NewError(fmt.Errorf("word.delivery.Handler.addWord: %v", err), ErrWordIsExists))
 			return
 		default:
 			ginExt.SendError(c, http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.addWord: %v", err))

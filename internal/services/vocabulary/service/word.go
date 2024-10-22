@@ -4,11 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
+
+	msgerror "github.com/av-ugolkov/lingua-evo/internal/pkg/msg-error"
 	entityDict "github.com/av-ugolkov/lingua-evo/internal/services/dictionary"
 	entityExample "github.com/av-ugolkov/lingua-evo/internal/services/example"
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary"
 	"github.com/av-ugolkov/lingua-evo/runtime"
+
 	"github.com/google/uuid"
 )
 
@@ -43,21 +45,21 @@ type (
 func (s *Service) AddWord(ctx context.Context, uid uuid.UUID, vocabWordData entity.VocabWordData) (entity.VocabWord, error) {
 	userCountWord, err := s.userSvc.UserCountWord(ctx, uid)
 	if err != nil {
-		return entity.VocabWord{}, handler.NewError(fmt.Errorf("word.Service.AddWord - get count words: %w", err), handler.ErrInternal)
+		return entity.VocabWord{}, msgerror.NewError(fmt.Errorf("word.Service.AddWord - get count words: %w", err), msgerror.ErrInternal)
 	}
 
 	count, err := s.repoVocab.GetCountWords(ctx, uid)
 	if err != nil {
-		return entity.VocabWord{}, handler.NewError(fmt.Errorf("word.Service.AddWord - get count words: %v", err), handler.ErrInternal)
+		return entity.VocabWord{}, msgerror.NewError(fmt.Errorf("word.Service.AddWord - get count words: %v", err), msgerror.ErrInternal)
 	}
 
 	if count >= userCountWord {
-		return entity.VocabWord{}, handler.NewError(fmt.Errorf("word.Service.AddWord: %v", entity.ErrUserWordLimit), "You reached word limit")
+		return entity.VocabWord{}, msgerror.NewError(fmt.Errorf("word.Service.AddWord: %v", entity.ErrUserWordLimit), "You reached word limit")
 	}
 
 	vocab, err := s.GetVocabulary(ctx, uid, vocabWordData.VocabID)
 	if err != nil {
-		return entity.VocabWord{}, handler.NewError(fmt.Errorf("word.Service.AddWord - get dictionary: %v", err), handler.ErrInternal)
+		return entity.VocabWord{}, msgerror.NewError(fmt.Errorf("word.Service.AddWord - get dictionary: %v", err), msgerror.ErrInternal)
 	}
 
 	vocabWordData.Native.LangCode = vocab.NativeLang
@@ -253,12 +255,12 @@ func (s *Service) GetPronunciation(ctx context.Context, uid, vid uuid.UUID, text
 	}
 	if len(words) == 0 {
 		return runtime.EmptyString,
-			handler.NewError(fmt.Errorf("word.Service.GetPronunciation - word not found"), entity.ErrWordPronunciation.Error())
+			msgerror.NewError(fmt.Errorf("word.Service.GetPronunciation - word not found"), entity.ErrWordPronunciation.Error())
 	}
 	word := words[0]
 	if word.Pronunciation == runtime.EmptyString {
 		return runtime.EmptyString,
-			handler.NewError(fmt.Errorf("word.Service.GetPronunciation: %w", entity.ErrWordPronunciation), entity.ErrWordPronunciation.Error())
+			msgerror.NewError(fmt.Errorf("word.Service.GetPronunciation: %w", entity.ErrWordPronunciation), entity.ErrWordPronunciation.Error())
 	}
 	return word.Pronunciation, nil
 }

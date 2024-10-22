@@ -12,7 +12,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
-	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
+	msgerror "github.com/av-ugolkov/lingua-evo/internal/pkg/msg-error"
 	"github.com/av-ugolkov/lingua-evo/runtime"
 )
 
@@ -94,18 +94,13 @@ func GetHeaderAuthorization(c *gin.Context, typeAuth string) (string, error) {
 
 func SendError(c *gin.Context, httpStatus int, err error) {
 	slog.Error(err.Error())
-	var e handler.Error
+	var e msgerror.Error
 	switch {
 	case errors.As(err, &e):
 		c.JSON(httpStatus, e.Msg())
 	default:
 		c.JSON(httpStatus, err.Error())
 	}
-}
-
-func SendErrorWithMsg(c *gin.Context, httpStatus int, err error, msg string) {
-	slog.Error(err.Error())
-	c.JSON(httpStatus, msg)
 }
 
 func GetCookieLanguageOrDefault(c *gin.Context) string {
