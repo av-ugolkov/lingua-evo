@@ -53,6 +53,7 @@ type (
 		VocabID       uuid.UUID
 		NativeID      uuid.UUID
 		Pronunciation string
+		Description   string
 		TranslateIDs  []uuid.UUID
 		ExampleIDs    []uuid.UUID
 		UpdatedAt     time.Time
@@ -60,13 +61,14 @@ type (
 	}
 
 	VocabWordData struct {
-		ID         uuid.UUID
-		VocabID    uuid.UUID
-		Native     entityDict.DictWord
-		Translates []entityDict.DictWord
-		Examples   []entityExample.Example
-		UpdatedAt  time.Time
-		CreatedAt  time.Time
+		ID          uuid.UUID
+		VocabID     uuid.UUID
+		Native      entityDict.DictWord
+		Description string
+		Translates  []entityDict.DictWord
+		Examples    []entityExample.Example
+		UpdatedAt   time.Time
+		CreatedAt   time.Time
 	}
 
 	Access struct {

@@ -26,6 +26,7 @@ func (r *VocabRepo) GetWord(ctx context.Context, id uuid.UUID, nativeLang, trans
 			w.id,
 			n."text", 
 			coalesce(w.pronunciation, '') as pronunciation, 
+			description,
 			array_agg(distinct t."text") FILTER (WHERE t."text" IS NOT NULL) translates, 
 			array_agg(distinct e."text") FILTER (WHERE e."text" IS NOT NULL) examples
 		FROM word w
@@ -45,6 +46,7 @@ func (r *VocabRepo) GetWord(ctx context.Context, id uuid.UUID, nativeLang, trans
 		&vocabWordData.ID,
 		&vocabWordData.Native.Text,
 		&vocabWordData.Native.Pronunciation,
+		&vocabWordData.Description,
 		&translates,
 		&examples)
 	if err != nil {
@@ -68,14 +70,15 @@ func (r *VocabRepo) AddWord(ctx context.Context, word entity.VocabWord) (uuid.UU
 		id,
 		vocabulary_id,
 		native_id, 
-		pronunciation, 
+		pronunciation,
+		description, 
 		translate_ids, 
 		example_ids, 
 		updated_at, 
 		created_at) 
-	VALUES($1, $2, $3, $4, $5, $6, $7, $7);`
+	VALUES($1, $2, $3, $4, $5, $6, $7, $8, $8);`
 	vocabWordID := uuid.New()
-	_, err := r.tr.Exec(ctx, query, vocabWordID, word.VocabID, word.NativeID, word.Pronunciation, word.TranslateIDs, word.ExampleIDs, time.Now().UTC())
+	_, err := r.tr.Exec(ctx, query, vocabWordID, word.VocabID, word.NativeID, word.Pronunciation, word.Description, word.TranslateIDs, word.ExampleIDs, time.Now().UTC())
 	if err != nil {
 		var pgErr *pgconn.PgError
 		switch {
@@ -242,6 +245,7 @@ func (r *VocabRepo) GetVocabWords(ctx context.Context, vocabID uuid.UUID) ([]ent
 			n.id as native_id,
 			n."text",
 			coalesce(w.pronunciation, '') as pronunciation,
+			description,
 			array_agg(distinct t."text") FILTER (WHERE t."text" IS NOT NULL) translates,
 			array_agg(distinct e."text") FILTER (WHERE e."text" IS NOT NULL) examples,
 			w.updated_at,
@@ -270,6 +274,7 @@ func (r *VocabRepo) GetVocabWords(ctx context.Context, vocabID uuid.UUID) ([]ent
 			&wordData.Native.ID,
 			&wordData.Native.Text,
 			&wordData.Native.Pronunciation,
+			&wordData.Description,
 			&translates,
 			&examples,
 			&wordData.UpdatedAt,
@@ -358,9 +363,17 @@ func (r *VocabRepo) GetVocabSeveralWords(ctx context.Context, vocabID uuid.UUID,
 }
 
 func (r *VocabRepo) UpdateWord(ctx context.Context, vocabWord entity.VocabWord) error {
-	query := `UPDATE word SET native_id=$1, pronunciation=$2, translate_ids=$3, example_ids=$4, updated_at=$5 WHERE id=$6;`
+	query := `
+		UPDATE word 
+		SET native_id=$1, 
+			pronunciation=$2, 
+			description=$3, 
+			translate_ids=$4, 
+			example_ids=$5, 
+			updated_at=$6 
+		WHERE id=$7;`
 
-	result, err := r.tr.Exec(ctx, query, vocabWord.NativeID, vocabWord.Pronunciation, vocabWord.TranslateIDs, vocabWord.ExampleIDs, vocabWord.UpdatedAt.Format(time.RFC3339), vocabWord.ID)
+	result, err := r.tr.Exec(ctx, query, vocabWord.NativeID, vocabWord.Pronunciation, vocabWord.Description, vocabWord.TranslateIDs, vocabWord.ExampleIDs, vocabWord.UpdatedAt.Format(time.RFC3339), vocabWord.ID)
 	if err != nil {
 		return fmt.Errorf("word.repository.WordRepo.UpdateWord - exec: %w", err)
 	}
