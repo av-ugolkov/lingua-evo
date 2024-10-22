@@ -6,10 +6,9 @@ tools/banch/*
 tools/fill_db/*
 tools/user/*
 
-
 .DS_Store
 .vs/
 .vscode/
-.env
+*.env
 # Ignore Rider IDE folder
 .idea/

@@ -4,10 +4,10 @@ dev() {
   BRANCH="$(cut -d "/" -f2 <<< "$(git rev-parse --abbrev-ref HEAD)")"
   COMMIT="$(git $dir rev-parse HEAD)"
 
-  epsw="$(cat .env | grep EPSW | cut -d "=" -f2)"
-  jwts="$(cat .env | grep JWTS | cut -d "=" -f2)"
-  pg_psw="$(cat .env | grep PG_PSW | cut -d "=" -f2)"
-  redis_psw="$(cat .env | grep REDIS_PSW | cut -d "=" -f2)"
+  epsw="$(cat email.env | grep EPSW | cut -d "=" -f2)"
+  jwts="$(cat jwt.env | grep JWTS | cut -d "=" -f2)"
+  pg_psw="$(cat db.env | grep PG_PSW | cut -d "=" -f2)"
+  redis_psw="$(cat db.env | grep REDIS_PSW | cut -d "=" -f2)"
 
   BRANCH=${BRANCH} \
   COMMIT=${COMMIT} \
@@ -21,19 +21,23 @@ dev() {
 database() {
   BRANCH="$(git rev-parse --abbrev-ref HEAD)"
   
-  pg_psw="$(cat .env | grep PG_PSW | cut -d "=" -f2)"
+  pg_psw="$(cat db.env | grep PG_PSW | cut -d "=" -f2)"
+  redis_psw="$(cat db.env | grep REDIS_PSW | cut -d "=" -f2)"
 
   PG_PSW=${pg_psw} \
+  REDIS_PSW=${redis_psw} \
   BRANCH=${BRANCH} \
-  docker compose -p lingua-evo-dev -f deploy/docker-compose.dev.yml up redis postgres migration --build --force-recreat    
+  docker compose -p lingua-evo-dev -f deploy/docker-compose.dev.yml up redis postgres migration --build --force-recreate    
 }
 
 database_down() {
   BRANCH="$(git rev-parse --abbrev-ref HEAD)"
   
-  pg_psw="$(cat .env | grep PG_PSW | cut -d "=" -f2)"
+  pg_psw="$(cat db.env | grep PG_PSW | cut -d "=" -f2)"
+  redis_psw="$(cat db.env | grep REDIS_PSW | cut -d "=" -f2)"
 
   PG_PSW=${pg_psw} \
+  REDIS_PSW=${redis_psw} \
   BRANCH=${BRANCH} \
   CMD=down \
   docker compose -p lingua-evo-dev -f deploy/docker-compose.dev.yml up redis postgres migration --build --force-recreate    
@@ -78,10 +82,10 @@ release() {
 
   COMMIT="$(git $dir rev-parse HEAD)"
 
-  epsw="$(cat .env | grep EPSW | cut -d "=" -f2)"
-  jwts="$(cat .env | grep JWTS | cut -d "=" -f2)"
-  pg_psw="$(cat .env | grep PG_PSW | cut -d "=" -f2)"
-  redis_psw="$(cat .env | grep REDIS_PSW | cut -d "=" -f2)"
+  epsw="$(cat email.env | grep EPSW | cut -d "=" -f2)"
+  jwts="$(cat jwt.env | grep JWTS | cut -d "=" -f2)"
+  pg_psw="$(cat db.env | grep PG_PSW | cut -d "=" -f2)"
+  redis_psw="$(cat db.env | grep REDIS_PSW | cut -d "=" -f2)"
 
   EPSW=${epsw} \
   JWTS=${jwts} \
