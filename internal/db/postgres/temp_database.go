@@ -3,12 +3,12 @@ package postgres
 import (
 	"context"
 	"fmt"
-	"github.com/jackc/pgx/v5"
 	"log/slog"
 	"path"
 	"sync"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
@@ -47,7 +47,8 @@ func NewTempPostgres(ctx context.Context, root string) *TempPostgres {
 			path.Join(root, "migration/migrations/005_edit_column.up.sql"),
 			path.Join(root, "migration/migrations/006_access_vocabulary.up.sql"),
 			path.Join(root, "migration/migrations/007_drop_goose.up.sql"),
-			path.Join(root, "migration/migrations/008_notifications.up.sql")),
+			path.Join(root, "migration/migrations/008_notifications.up.sql"),
+			path.Join(root, "migration/migrations/009_word_desc.up.sql")),
 		postgres.WithDatabase("test_db"),
 		postgres.WithUsername("user"),
 		postgres.WithPassword("password"),

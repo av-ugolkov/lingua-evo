@@ -382,7 +382,7 @@ func (r *VocabRepo) GetVocabulariesWithMaxWords(ctx context.Context, access []ui
 			translate_lang, 
 			access, 
 			count(w.id) cw, 
-			description 
+			v.description 
 		FROM vocabulary v
 		LEFT JOIN word w ON w.vocabulary_id = v.id 
 		WHERE v.access = ANY($2)
@@ -428,7 +428,7 @@ func (r *VocabRepo) GetVocabulariesRecommended(ctx context.Context, uid uuid.UUI
 			translate_lang,
 			access,
 			count(w.id) cw,
-			description
+			v.description
 		FROM vocabulary v
 		LEFT JOIN word w ON w.vocabulary_id = v.id 
 		WHERE v.access = ANY($2) 

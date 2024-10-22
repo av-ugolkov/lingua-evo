@@ -3,10 +3,11 @@ package handler
 import (
 	"errors"
 	"fmt"
-	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
 	"net/http"
 	"time"
+	"unicode/utf8"
 
+	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
 	ginExt "github.com/av-ugolkov/lingua-evo/internal/delivery/handler/gin"
 	entityDict "github.com/av-ugolkov/lingua-evo/internal/services/dictionary"
 	entityExample "github.com/av-ugolkov/lingua-evo/internal/services/example"
@@ -29,11 +30,12 @@ type (
 	}
 
 	VocabWordRq struct {
-		ID         *uuid.UUID `json:"id,omitempty"`
-		VocabID    uuid.UUID  `json:"vocab_id"`
-		Native     VocabWord  `json:"native"`
-		Translates []string   `json:"translates,omitempty"`
-		Examples   []string   `json:"examples,omitempty"`
+		ID          *uuid.UUID `json:"id,omitempty"`
+		VocabID     uuid.UUID  `json:"vocab_id"`
+		Native      VocabWord  `json:"native"`
+		Description string     `json:"description,omitempty"`
+		Translates  []string   `json:"translates,omitempty"`
+		Examples    []string   `json:"examples,omitempty"`
 	}
 
 	RemoveVocabWordRq struct {
@@ -42,12 +44,13 @@ type (
 	}
 
 	VocabWordRs struct {
-		ID         *uuid.UUID `json:"id,omitempty"`
-		Native     *VocabWord `json:"native,omitempty"`
-		Translates []string   `json:"translates,omitempty"`
-		Examples   []string   `json:"examples,omitempty"`
-		Created    int64      `json:"created,omitempty"`
-		Updated    int64      `json:"updated,omitempty"`
+		ID          *uuid.UUID `json:"id,omitempty"`
+		Native      *VocabWord `json:"native,omitempty"`
+		Description string     `json:"description,omitempty"`
+		Translates  []string   `json:"translates,omitempty"`
+		Examples    []string   `json:"examples,omitempty"`
+		Created     int64      `json:"created,omitempty"`
+		Updated     int64      `json:"updated,omitempty"`
 	}
 )
 
@@ -66,6 +69,13 @@ func (h *Handler) addWord(c *gin.Context) {
 	if err != nil {
 		ginExt.SendError(c, http.StatusInternalServerError,
 			fmt.Errorf("word.delivery.Handler.addWord - check body: %v", err))
+		return
+	}
+
+	if utf8.RuneCountInString(data.Description) > 100 {
+		ginExt.SendErrorWithMsg(c, http.StatusBadRequest,
+			fmt.Errorf("word.delivery.Handler.addWord - description is too long"),
+			"Description length should be less than 100 characters")
 		return
 	}
 
@@ -94,10 +104,11 @@ func (h *Handler) addWord(c *gin.Context) {
 			CreatedAt:     time.Now().UTC(),
 			UpdatedAt:     time.Now().UTC(),
 		},
-		Translates: translateWords,
-		Examples:   examples,
-		CreatedAt:  time.Now().UTC(),
-		UpdatedAt:  time.Now().UTC(),
+		Description: data.Description,
+		Translates:  translateWords,
+		Examples:    examples,
+		CreatedAt:   time.Now().UTC(),
+		UpdatedAt:   time.Now().UTC(),
 	})
 	if err != nil {
 		switch {
@@ -166,9 +177,10 @@ func (h *Handler) updateWord(c *gin.Context) {
 			Pronunciation: data.Native.Pronunciation,
 			UpdatedAt:     time.Now().UTC(),
 		},
-		Translates: translates,
-		Examples:   examples,
-		UpdatedAt:  time.Now().UTC(),
+		Description: data.Description,
+		Translates:  translates,
+		Examples:    examples,
+		UpdatedAt:   time.Now().UTC(),
 	})
 	if err != nil {
 		ginExt.SendError(c, http.StatusInternalServerError,
@@ -248,8 +260,9 @@ func (h *Handler) getWord(c *gin.Context) {
 			Text:          vocabWord.Native.Text,
 			Pronunciation: vocabWord.Native.Pronunciation,
 		},
-		Translates: translates,
-		Examples:   examples,
+		Description: vocabWord.Description,
+		Translates:  translates,
+		Examples:    examples,
 	}
 
 	c.JSON(http.StatusOK, wordRs)
@@ -293,10 +306,11 @@ func (h *Handler) getWords(c *gin.Context) {
 				Text:          vocabWord.Native.Text,
 				Pronunciation: vocabWord.Native.Pronunciation,
 			},
-			Translates: translates,
-			Examples:   examples,
-			Created:    vocabWord.CreatedAt.UnixMilli(),
-			Updated:    vocabWord.UpdatedAt.UnixMilli(),
+			Description: vocabWord.Description,
+			Translates:  translates,
+			Examples:    examples,
+			Created:     vocabWord.CreatedAt.UnixMilli(),
+			Updated:     vocabWord.UpdatedAt.UnixMilli(),
 		}
 
 		wordsRs = append(wordsRs, wordRs)

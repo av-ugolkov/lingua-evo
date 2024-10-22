@@ -45,6 +45,7 @@ func (s *Service) AddWord(ctx context.Context, uid uuid.UUID, vocabWordData enti
 	if err != nil {
 		return entity.VocabWord{}, handler.NewError(fmt.Errorf("word.Service.AddWord - get count words: %w", err), handler.ErrInternal)
 	}
+
 	count, err := s.repoVocab.GetCountWords(ctx, uid)
 	if err != nil {
 		return entity.VocabWord{}, handler.NewError(fmt.Errorf("word.Service.AddWord - get count words: %v", err), handler.ErrInternal)
@@ -92,6 +93,7 @@ func (s *Service) AddWord(ctx context.Context, uid uuid.UUID, vocabWordData enti
 			VocabID:       vocabWordData.VocabID,
 			NativeID:      nativeWordID,
 			Pronunciation: vocabWordData.Native.Pronunciation,
+			Description:   vocabWordData.Description,
 			TranslateIDs:  translateWordIDs,
 			ExampleIDs:    exampleIDs,
 		})
@@ -158,6 +160,7 @@ func (s *Service) UpdateWord(ctx context.Context, uid uuid.UUID, vocabWordData e
 		VocabID:       vocabWordData.VocabID,
 		NativeID:      nativeWordID,
 		Pronunciation: vocabWordData.Native.Pronunciation,
+		Description:   vocabWordData.Description,
 		TranslateIDs:  translateWordIDs,
 		ExampleIDs:    exampleIDs,
 		UpdatedAt:     vocabWordData.UpdatedAt,
