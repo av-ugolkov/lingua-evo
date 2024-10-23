@@ -52,7 +52,7 @@ func TestService_UserGetVocabularies(t *testing.T) {
 			itemsPerPage  = 5
 			typeSort      = 1
 			order         = 0
-			search        = ""
+			search        = runtime.EmptyString
 			nativeLang    = "en"
 			translateLang = "ru"
 		)
@@ -79,7 +79,7 @@ func TestService_UserGetVocabularies(t *testing.T) {
 			itemsPerPage  = 5
 			typeSort      = 1
 			order         = 0
-			search        = ""
+			search        = runtime.EmptyString
 			nativeLang    = "en"
 			translateLang = "ru"
 		)
@@ -117,7 +117,7 @@ func TestService_UserGetVocabularies(t *testing.T) {
 			itemsPerPage  = 5
 			typeSort      = 1
 			order         = 0
-			search        = ""
+			search        = runtime.EmptyString
 			nativeLang    = "en"
 			translateLang = "ru"
 		)

@@ -8,6 +8,7 @@ import (
 	"net/smtp"
 
 	"github.com/av-ugolkov/lingua-evo/internal/config"
+	"github.com/av-ugolkov/lingua-evo/runtime"
 )
 
 //go:embed templ/*
@@ -57,7 +58,7 @@ func (s *Service) SendAuthCode(toEmail string, code int) error {
 
 	message := []byte(to + subject + contentType + w.String())
 
-	authEmail := smtp.PlainAuth("", s.email.Address, s.email.Password, s.email.Host)
+	authEmail := smtp.PlainAuth(runtime.EmptyString, s.email.Address, s.email.Password, s.email.Host)
 	err = smtp.SendMail(s.email.AddrSvc(), authEmail, s.email.Address, []string{toEmail}, message)
 	if err != nil {
 		return fmt.Errorf("email.Service.SendAuthCode - send mail: %v", err)
@@ -92,7 +93,7 @@ func (s *Service) SendEmailForSupport(toEmail string, params ...string) error {
 
 	message := []byte(to + subject + contentType + w.String())
 
-	authEmail := smtp.PlainAuth("", s.email.Address, s.email.Password, s.email.Host)
+	authEmail := smtp.PlainAuth(runtime.EmptyString, s.email.Address, s.email.Password, s.email.Host)
 	err = smtp.SendMail(s.email.AddrSvc(), authEmail, s.email.Address, []string{toEmail, s.email.Address}, message)
 	if err != nil {
 		return fmt.Errorf("email.Service.SendEmailForSupport - send mail: %v", err)

@@ -10,6 +10,7 @@ import (
 	sorted "github.com/av-ugolkov/lingua-evo/internal/pkg/utils"
 	entityTag "github.com/av-ugolkov/lingua-evo/internal/services/tag"
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary"
+	"github.com/av-ugolkov/lingua-evo/runtime"
 	"github.com/av-ugolkov/lingua-evo/runtime/access"
 
 	"github.com/google/uuid"
@@ -476,14 +477,14 @@ func getSorted(typeSorted int, order sorted.TypeOrder) string {
 	case sorted.ABC:
 		return fmt.Sprintf("ORDER BY v.name %s", order)
 	default:
-		return ""
+		return runtime.EmptyString
 	}
 }
 
 func getEqualLanguage(field, lang string) string {
 	switch lang {
 	case "any":
-		return ""
+		return runtime.EmptyString
 	default:
 		return fmt.Sprintf("AND %s='%s'", field, lang)
 	}

@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/av-ugolkov/lingua-evo/runtime"
+
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
@@ -25,7 +27,7 @@ func main() {
 	log.Printf("migration start")
 
 	cmd := flag.String("cmd", "status", "migration command")
-	connString := flag.String("url", "", "connection postgres URL")
+	connString := flag.String("url", runtime.EmptyString, "connection postgres URL")
 	flag.Parse()
 
 	*connString = prepareConnString(*connString)

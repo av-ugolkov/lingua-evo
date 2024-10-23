@@ -8,6 +8,7 @@ import (
 	"github.com/av-ugolkov/lingua-evo/internal/db/transactor"
 	sorted "github.com/av-ugolkov/lingua-evo/internal/pkg/utils"
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/user"
+	"github.com/av-ugolkov/lingua-evo/runtime"
 
 	"github.com/google/uuid"
 )
@@ -207,6 +208,6 @@ func getSorted(typeSorted int, order sorted.TypeOrder) string {
 	case sorted.ABC:
 		return fmt.Sprintf("ORDER BY u.name %s", order)
 	default:
-		return ""
+		return runtime.EmptyString
 	}
 }

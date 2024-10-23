@@ -6,6 +6,7 @@ import (
 
 	"github.com/av-ugolkov/lingua-evo/internal/db/transactor"
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/language"
+	"github.com/av-ugolkov/lingua-evo/runtime"
 )
 
 type LangRepo struct {
@@ -23,7 +24,7 @@ func (r *LangRepo) GetLanguage(ctx context.Context, langCode string) (string, er
 	var language string
 	err := r.tr.QueryRow(ctx, query, langCode).Scan(&language)
 	if err != nil {
-		return "", fmt.Errorf("language.repository.LangRepo.GetLanguage: %v", err)
+		return runtime.EmptyString, fmt.Errorf("language.repository.LangRepo.GetLanguage: %v", err)
 	}
 
 	return language, nil

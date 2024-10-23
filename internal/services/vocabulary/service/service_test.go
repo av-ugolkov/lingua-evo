@@ -58,7 +58,7 @@ func TestService_GetVocabularies(t *testing.T) {
 			itemsPerPage  = 5
 			typeSort      = 1
 			order         = 0
-			search        = ""
+			search        = runtime.EmptyString
 			nativeLang    = "en"
 			translateLang = "ru"
 			maxWords      = 5
@@ -86,7 +86,7 @@ func TestService_GetVocabularies(t *testing.T) {
 			itemsPerPage  = 5
 			typeSort      = 1
 			order         = 0
-			search        = ""
+			search        = runtime.EmptyString
 			nativeLang    = "en"
 			translateLang = "ru"
 			maxWords      = 5
@@ -139,7 +139,7 @@ func TestService_GetVocabularies(t *testing.T) {
 			itemsPerPage  = 5
 			typeSort      = 1
 			order         = 0
-			search        = ""
+			search        = runtime.EmptyString
 			nativeLang    = "en"
 			translateLang = "ru"
 			maxWords      = 5
@@ -193,7 +193,7 @@ func TestService_GetVocabularies(t *testing.T) {
 			itemsPerPage  = 5
 			typeSort      = 1
 			order         = 0
-			search        = ""
+			search        = runtime.EmptyString
 			nativeLang    = "en"
 			translateLang = "ru"
 			maxWords      = 5
@@ -271,7 +271,7 @@ func TestService_GetVocabularies(t *testing.T) {
 			itemsPerPage  = 5
 			typeSort      = 1
 			order         = 0
-			search        = ""
+			search        = runtime.EmptyString
 			nativeLang    = "en"
 			translateLang = "ru"
 			maxWords      = 5

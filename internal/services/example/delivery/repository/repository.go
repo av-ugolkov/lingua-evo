@@ -11,6 +11,7 @@ import (
 	"github.com/av-ugolkov/lingua-evo/internal/db/transactor"
 	"github.com/av-ugolkov/lingua-evo/internal/services/example"
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/example"
+	"github.com/av-ugolkov/lingua-evo/runtime"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -93,7 +94,7 @@ func (r *ExampleRepo) GetExampleById(ctx context.Context, id uuid.UUID, langCode
 	query := fmt.Sprintf(`SELECT text FROM example_%s WHERE id=$1`, langCode)
 	err := r.tr.QueryRow(ctx, query, id).Scan(&text)
 	if err != nil {
-		return "", fmt.Errorf("example.repository.ExampleRepo.AddExample: %w", err)
+		return runtime.EmptyString, fmt.Errorf("example.repository.ExampleRepo.AddExample: %w", err)
 	}
 
 	return text, nil
