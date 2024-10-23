@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	ginExt "github.com/av-ugolkov/lingua-evo/internal/delivery/handler/gin"
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/gin-ext"
 	"github.com/av-ugolkov/lingua-evo/internal/services/vocabulary"
 	"github.com/av-ugolkov/lingua-evo/runtime"
 	"github.com/av-ugolkov/lingua-evo/runtime/access"
@@ -22,44 +22,40 @@ type (
 	}
 )
 
-func (h *Handler) getAccessForUser(c *gin.Context) {
+func (h *Handler) getAccessForUser(c *ginext.Context) (int, any, error) {
 	ctx := c.Request.Context()
 
 	uid, err := runtime.UserIDFromContext(ctx)
 	if err != nil {
-		ginExt.SendError(c, http.StatusUnauthorized,
-			fmt.Errorf("vocabulary.delivery.Handler.getAccessForUser - unauthorized: %v", err))
-		return
+		return http.StatusUnauthorized, nil,
+			fmt.Errorf("vocabulary.delivery.Handler.getAccessForUser: %v", err)
 	}
 
-	vid, err := ginExt.GetQueryUUID(c, paramsID)
+	vid, err := c.GetQueryUUID(paramsID)
 	if err != nil {
-		ginExt.SendError(c, http.StatusBadRequest,
-			fmt.Errorf("vocabulary.delivery.Handler.getAccessForUser - check query [vocab_id]: %v", err))
-		return
+		return http.StatusBadRequest, nil,
+			fmt.Errorf("vocabulary.delivery.Handler.getAccessForUser: %v", err)
 	}
 
-	access, err := h.vocabSvc.GetAccessForUser(ctx, uid, vid)
+	accessVocab, err := h.vocabSvc.GetAccessForUser(ctx, uid, vid)
 	if err != nil {
-		ginExt.SendError(c, http.StatusInternalServerError,
-			fmt.Errorf("vocabulary.delivery.Handler.getAccessForUser: %v", err))
-		return
+		return http.StatusInternalServerError, nil,
+			fmt.Errorf("vocabulary.delivery.Handler.getAccessForUser: %v", err)
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"access": access,
-	})
+	return http.StatusOK, gin.H{
+		"access": accessVocab,
+	}, nil
 }
 
-func (h *Handler) addAccessForUser(c *gin.Context) {
+func (h *Handler) addAccessForUser(c *ginext.Context) (int, any, error) {
 	ctx := c.Request.Context()
 
 	var vocabAccessRq VocabularyAccessRq
 	err := c.Bind(&vocabAccessRq)
 	if err != nil {
-		ginExt.SendError(c, http.StatusBadRequest,
-			fmt.Errorf("vocabulary.delivery.Handler.addAccessForUser - check body: %v", err))
-		return
+		return http.StatusBadRequest, nil,
+			fmt.Errorf("vocabulary.delivery.Handler.addAccessForUser: %v", err)
 	}
 
 	err = h.vocabSvc.AddAccessForUser(ctx, vocabulary.Access{
@@ -68,23 +64,21 @@ func (h *Handler) addAccessForUser(c *gin.Context) {
 		Status:  vocabAccessRq.Status,
 	})
 	if err != nil {
-		ginExt.SendError(c, http.StatusInternalServerError,
-			fmt.Errorf("vocabulary.delivery.Handler.addAccessForUser: %v", err))
-		return
+		return http.StatusInternalServerError, nil,
+			fmt.Errorf("vocabulary.delivery.Handler.addAccessForUser: %v", err)
 	}
 
-	c.JSON(http.StatusOK, gin.H{})
+	return http.StatusOK, gin.H{}, nil
 }
 
-func (h *Handler) removeAccessForUser(c *gin.Context) {
+func (h *Handler) removeAccessForUser(c *ginext.Context) (int, any, error) {
 	ctx := c.Request.Context()
 
 	var vocabAccessRq VocabularyAccessRq
 	err := c.Bind(&vocabAccessRq)
 	if err != nil {
-		ginExt.SendError(c, http.StatusBadRequest,
-			fmt.Errorf("vocabulary.delivery.Handler.removeAccessForUser - check body: %v", err))
-		return
+		return http.StatusBadRequest, nil,
+			fmt.Errorf("vocabulary.delivery.Handler.removeAccessForUser: %v", err)
 	}
 
 	err = h.vocabSvc.RemoveAccessForUser(ctx, vocabulary.Access{
@@ -92,23 +86,21 @@ func (h *Handler) removeAccessForUser(c *gin.Context) {
 		UserID:  vocabAccessRq.UserID,
 	})
 	if err != nil {
-		ginExt.SendError(c, http.StatusInternalServerError,
-			fmt.Errorf("vocabulary.delivery.Handler.removeAccessForUser: %v", err))
-		return
+		return http.StatusInternalServerError, nil,
+			fmt.Errorf("vocabulary.delivery.Handler.removeAccessForUser: %v", err)
 	}
 
-	c.JSON(http.StatusOK, gin.H{})
+	return http.StatusOK, gin.H{}, nil
 }
 
-func (h *Handler) updateAccessForUser(c *gin.Context) {
+func (h *Handler) updateAccessForUser(c *ginext.Context) (int, any, error) {
 	ctx := c.Request.Context()
 
 	var vocabAccessRq VocabularyAccessRq
 	err := c.Bind(&vocabAccessRq)
 	if err != nil {
-		ginExt.SendError(c, http.StatusBadRequest,
-			fmt.Errorf("vocabulary.delivery.Handler.updateAccessForUser - check body: %v", err))
-		return
+		return http.StatusBadRequest, nil,
+			fmt.Errorf("vocabulary.delivery.Handler.updateAccessForUser: %v", err)
 	}
 
 	err = h.vocabSvc.UpdateAccessForUser(ctx, vocabulary.Access{
@@ -117,10 +109,9 @@ func (h *Handler) updateAccessForUser(c *gin.Context) {
 		Status:  vocabAccessRq.Status,
 	})
 	if err != nil {
-		ginExt.SendError(c, http.StatusInternalServerError,
-			fmt.Errorf("vocabulary.delivery.Handler.updateAccessForUser: %v", err))
-		return
+		return http.StatusInternalServerError, nil,
+			fmt.Errorf("vocabulary.delivery.Handler.updateAccessForUser: %v", err)
 	}
 
-	c.JSON(http.StatusOK, gin.H{})
+	return http.StatusOK, gin.H{}, nil
 }

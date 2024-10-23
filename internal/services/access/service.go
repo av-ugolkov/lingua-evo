@@ -3,7 +3,8 @@ package access
 import (
 	"context"
 	"fmt"
-	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
+
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/msg-error"
 )
 
 type (
@@ -25,7 +26,7 @@ func NewService(repo repoAccess) *Service {
 func (s *Service) GetAccesses(ctx context.Context) ([]Access, error) {
 	accesses, err := s.repo.GetAccesses(ctx)
 	if err != nil {
-		return nil, handler.NewError(fmt.Errorf("access.Service.GetAccesses: %v", err), handler.ErrInternal)
+		return nil, msgerr.New(fmt.Errorf("access.Service.GetAccesses: %v", err), msgerr.ErrMsgInternal)
 	}
 
 	return accesses, nil

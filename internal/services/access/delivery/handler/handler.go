@@ -1,13 +1,12 @@
 package handler
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
-	ginExt "github.com/av-ugolkov/lingua-evo/internal/delivery/handler/gin"
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/gin-ext"
 	"github.com/av-ugolkov/lingua-evo/internal/services/access"
-
-	"github.com/gin-gonic/gin"
 )
 
 type (
@@ -26,9 +25,10 @@ type Handler struct {
 	accessSvc *access.Service
 }
 
-func Create(r *gin.Engine, accessSvc *access.Service) {
+func Create(r *ginext.Engine, accessSvc *access.Service) {
 	h := newHandler(accessSvc)
-	h.register(r)
+
+	r.GET(handler.Accesses, h.getAccesses)
 }
 
 func newHandler(accessSvc *access.Service) *Handler {
@@ -37,17 +37,12 @@ func newHandler(accessSvc *access.Service) *Handler {
 	}
 }
 
-func (h *Handler) register(r *gin.Engine) {
-	r.GET(handler.Accesses, h.getAccesses)
-}
-
-func (h *Handler) getAccesses(c *gin.Context) {
+func (h *Handler) getAccesses(c *ginext.Context) (int, any, error) {
 	ctx := c.Request.Context()
 
 	accesses, err := h.accessSvc.GetAccesses(ctx)
 	if err != nil {
-		ginExt.SendError(c, http.StatusInternalServerError, err)
-		return
+		return http.StatusInternalServerError, nil, fmt.Errorf("access.delivery.Handler.getAccesses: %v", err)
 	}
 
 	accessesRs := make([]Access, 0, len(accesses))
@@ -59,5 +54,5 @@ func (h *Handler) getAccesses(c *gin.Context) {
 		})
 	}
 
-	c.JSON(http.StatusOK, accessesRs)
+	return http.StatusOK, accessesRs, nil
 }

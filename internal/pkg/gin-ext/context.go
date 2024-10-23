@@ -1,4 +1,4 @@
-package gin
+package ginext
 
 import (
 	"errors"
@@ -9,11 +9,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/msg-error"
+	"github.com/av-ugolkov/lingua-evo/runtime"
+
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-
-	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
-	"github.com/av-ugolkov/lingua-evo/runtime"
 )
 
 const (
@@ -22,20 +22,32 @@ const (
 )
 
 var (
+	e = msgerr.ApiError{}
+
 	errNotFound = errors.New("not found query param")
 )
 
-func GetQuery(c *gin.Context, key string) (string, error) {
-	value, ok := c.GetQuery(key)
+type Context struct {
+	*gin.Context
+}
+
+func NewContext(c *gin.Context) *Context {
+	return &Context{
+		Context: c,
+	}
+}
+
+func (c *Context) GetQuery(key string) (string, error) {
+	value, ok := c.Context.GetQuery(key)
 	if !ok {
-		return "", fmt.Errorf("gin_extension.GetQuery - %w [%s]", errNotFound, key)
+		return "", fmt.Errorf("gin-ext.Context.GetQuery - %w [%s]", errNotFound, key)
 	}
 
 	return value, nil
 }
 
-func GetQueryUUID(c *gin.Context, key string) (uuid.UUID, error) {
-	value, ok := c.GetQuery(key)
+func (c *Context) GetQueryUUID(key string) (uuid.UUID, error) {
+	value, ok := c.Context.GetQuery(key)
 	if !ok {
 		return uuid.Nil, fmt.Errorf("gin_extension.GetQueryUUID - %w [%s]", errNotFound, key)
 	}
@@ -47,8 +59,8 @@ func GetQueryUUID(c *gin.Context, key string) (uuid.UUID, error) {
 	return id, nil
 }
 
-func GetQueryInt(c *gin.Context, key string) (int, error) {
-	value, ok := c.GetQuery(key)
+func (c *Context) GetQueryInt(key string) (int, error) {
+	value, ok := c.Context.GetQuery(key)
 	if !ok {
 		return 0, fmt.Errorf("gin_extension.GetQueryInt - %w [%s]", errNotFound, key)
 	}
@@ -60,8 +72,8 @@ func GetQueryInt(c *gin.Context, key string) (int, error) {
 	return v, nil
 }
 
-func SetCookieRefreshToken(c *gin.Context, token uuid.UUID, maxAge time.Duration) {
-	c.SetCookie(RefreshToken,
+func (c *Context) SetCookieRefreshToken(token uuid.UUID, maxAge time.Duration) {
+	c.Context.SetCookie(RefreshToken,
 		token.String(),
 		int(maxAge.Seconds()),
 		cookiePathAuth,
@@ -70,12 +82,12 @@ func SetCookieRefreshToken(c *gin.Context, token uuid.UUID, maxAge time.Duration
 		true)
 }
 
-func DeleteCookie(c *gin.Context, name string) {
-	c.SetCookie(name, runtime.EmptyString, -1, "", "", true, true)
+func (c *Context) DeleteCookie(name string) {
+	c.Context.SetCookie(name, runtime.EmptyString, -1, "", "", true, true)
 }
 
-func GetHeaderAuthorization(c *gin.Context, typeAuth string) (string, error) {
-	token := c.GetHeader("Authorization")
+func (c *Context) GetHeaderAuthorization(typeAuth string) (string, error) {
+	token := c.Context.GetHeader("Authorization")
 	if token == runtime.EmptyString {
 		return runtime.EmptyString, fmt.Errorf("gin_extension.GetHeaderAuthorization: not found Authorization token")
 	}
@@ -92,24 +104,18 @@ func GetHeaderAuthorization(c *gin.Context, typeAuth string) (string, error) {
 	return tokenData[1], nil
 }
 
-func SendError(c *gin.Context, httpStatus int, err error) {
+func (c *Context) SendError(httpStatus int, err error) {
 	slog.Error(err.Error())
-	var e handler.Error
 	switch {
-	case errors.As(err, &e):
-		c.JSON(httpStatus, e.Msg())
+	case errors.Is(err, &e):
+		c.Context.JSON(httpStatus, e.Msg)
 	default:
-		c.JSON(httpStatus, err.Error())
+		c.Context.JSON(httpStatus, err.Error())
 	}
 }
 
-func SendErrorWithMsg(c *gin.Context, httpStatus int, err error, msg string) {
-	slog.Error(err.Error())
-	c.JSON(httpStatus, msg)
-}
-
-func GetCookieLanguageOrDefault(c *gin.Context) string {
-	cookie, err := c.Cookie(Language)
+func (c *Context) GetCookieLanguageOrDefault() string {
+	cookie, err := c.Context.Cookie(Language)
 	switch {
 	case errors.Is(err, http.ErrNoCookie):
 		return runtime.GetLanguage("en")

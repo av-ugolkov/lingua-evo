@@ -6,8 +6,9 @@ import (
 	"time"
 
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
-	ginExt "github.com/av-ugolkov/lingua-evo/internal/delivery/handler/gin"
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler/middleware"
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/gin-ext"
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/msg-error"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/utils"
 	"github.com/av-ugolkov/lingua-evo/internal/services/user"
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/user"
@@ -54,9 +55,12 @@ type Handler struct {
 	userSvc *user.Service
 }
 
-func Create(g *gin.Engine, userSvc *user.Service) {
+func Create(g *ginext.Engine, userSvc *user.Service) {
 	h := newHandler(userSvc)
-	h.register(g)
+
+	g.POST(handler.SignUp, h.signUp)
+	g.GET(handler.UserByID, middleware.Auth(h.getUserByID))
+	g.GET(handler.Users, h.getUsers)
 }
 
 func newHandler(userSvc *user.Service) *Handler {
@@ -65,40 +69,33 @@ func newHandler(userSvc *user.Service) *Handler {
 	}
 }
 
-func (h *Handler) register(g *gin.Engine) {
-	g.POST(handler.SignUp, h.signUp)
-	g.GET(handler.UserByID, middleware.Auth(h.getUserByID))
-	g.GET(handler.Users, h.getUsers)
-}
-
-func (h *Handler) signUp(c *gin.Context) {
+func (h *Handler) signUp(c *ginext.Context) (int, any, error) {
 	var data CreateUserRq
 	err := c.Bind(&data)
 	if err != nil {
-		ginExt.SendError(c, http.StatusBadRequest,
-			fmt.Errorf("user.delivery.Handler.createAccount - check body: %v", err))
-		return
+		return http.StatusBadRequest, nil,
+			msgerr.New(
+				fmt.Errorf("user.delivery.Handler.createAccount: %v", err),
+				msgerr.ErrMsgBadRequest)
+
 	}
 
 	if !utils.IsUsernameValid(data.Username) {
-		ginExt.SendError(c, http.StatusBadRequest,
-			fmt.Errorf("user.delivery.Handler.createAccount - invalid user name"),
-		)
-		return
+		return http.StatusBadRequest, nil,
+			msgerr.New(fmt.Errorf("user.delivery.Handler.createAccount - invalid user name"),
+				"Invalid user name")
 	}
 
 	if !utils.IsPasswordValid(data.Password) {
-		ginExt.SendError(c, http.StatusBadRequest,
-			fmt.Errorf("user.delivery.Handler.createAccount - invalid password"),
-		)
-		return
+		return http.StatusBadRequest, nil,
+			msgerr.New(fmt.Errorf("user.delivery.Handler.createAccount - invalid password"),
+				"Invalid password")
 	}
 
 	if !utils.IsEmailValid(data.Email) {
-		ginExt.SendError(c, http.StatusBadRequest,
-			fmt.Errorf("user.delivery.Handler.createAccount - invalid email"),
-		)
-		return
+		return http.StatusBadRequest, nil,
+			msgerr.New(fmt.Errorf("user.delivery.Handler.createAccount - invalid email"),
+				msgerr.ErrMsgBadEmail)
 	}
 
 	uid, err := h.userSvc.SignUp(c.Request.Context(), entity.UserCreate{
@@ -109,33 +106,26 @@ func (h *Handler) signUp(c *gin.Context) {
 		Code:     data.Code,
 	})
 	if err != nil {
-		ginExt.SendError(c, http.StatusInternalServerError,
-			fmt.Errorf("user.delivery.Handler.createAccount - create user: %v", err),
-		)
-		return
+		return http.StatusInternalServerError, nil,
+			fmt.Errorf("user.delivery.Handler.createAccount - create user: %v", err)
 	}
 
 	createUserRs := &CreateUserRs{
 		UserID: uid,
 	}
-	c.JSON(http.StatusCreated, createUserRs)
+
+	return http.StatusCreated, createUserRs, nil
 }
 
-func (h *Handler) getUserByID(c *gin.Context) {
+func (h *Handler) getUserByID(c *ginext.Context) (int, any, error) {
 	ctx := c.Request.Context()
 	userID, err := runtime.UserIDFromContext(ctx)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"error": fmt.Errorf("user.delivery.Handler.getUserByID - unauthorized: %v", err),
-		})
-		return
+		return http.StatusUnauthorized, nil, fmt.Errorf("user.delivery.Handler.getUserByID - unauthorized: %v", err)
 	}
 	userData, err := h.userSvc.GetUserByID(ctx, userID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": fmt.Errorf("user.delivery.Handler.getUserByID: %v", err),
-		})
-		return
+		return http.StatusInternalServerError, nil, fmt.Errorf("user.delivery.Handler.getUserByID: %v", err)
 	}
 
 	userRs := &UserRs{
@@ -145,55 +135,47 @@ func (h *Handler) getUserByID(c *gin.Context) {
 		Role:  userData.Role,
 	}
 
-	c.JSON(http.StatusOK, userRs)
+	return http.StatusOK, userRs, nil
 }
 
-func (h *Handler) getUsers(c *gin.Context) {
+func (h *Handler) getUsers(c *ginext.Context) (int, any, error) {
 	ctx := c.Request.Context()
 
 	uid, _ := runtime.UserIDFromContext(ctx)
 
-	page, err := ginExt.GetQueryInt(c, paramsPage)
+	page, err := c.GetQueryInt(paramsPage)
 	if err != nil {
-		ginExt.SendError(c, http.StatusBadRequest,
-			fmt.Errorf("user.delivery.Handler.getUsers - get query [page]: %v", err))
-		return
+		return http.StatusBadRequest, nil,
+			fmt.Errorf("user.delivery.Handler.getUsers - get query [page]: %v", err)
 	}
 
-	perPage, err := ginExt.GetQueryInt(c, paramsPerPage)
+	perPage, err := c.GetQueryInt(paramsPerPage)
 	if err != nil {
-		ginExt.SendError(c, http.StatusBadRequest,
-			fmt.Errorf("user.delivery.Handler.getUsers - get query [per_page]: %v", err))
-		return
+		return http.StatusBadRequest, nil,
+			fmt.Errorf("user.delivery.Handler.getUsers - get query [per_page]: %v", err)
 	}
 
-	search, err := ginExt.GetQuery(c, paramsSearch)
+	search, err := c.GetQuery(paramsSearch)
 	if err != nil {
-		ginExt.SendError(c, http.StatusBadRequest,
-			fmt.Errorf("user.delivery.Handler.getUsers - get query [search]: %v", err))
-		return
+		return http.StatusBadRequest, nil,
+			fmt.Errorf("user.delivery.Handler.getUsers - get query [search]: %v", err)
 	}
 
-	sort, err := ginExt.GetQueryInt(c, paramsSort)
+	sort, err := c.GetQueryInt(paramsSort)
 	if err != nil {
-		ginExt.SendError(c, http.StatusBadRequest,
-			fmt.Errorf("user.delivery.Handler.getUsers - get query [sort]: %v", err))
-		return
+		return http.StatusBadRequest, nil,
+			fmt.Errorf("user.delivery.Handler.getUsers - get query [sort]: %v", err)
 	}
 
-	order, err := ginExt.GetQueryInt(c, paramsOrder)
+	order, err := c.GetQueryInt(paramsOrder)
 	if err != nil {
-		ginExt.SendError(c, http.StatusBadRequest,
-			fmt.Errorf("user.delivery.Handler.getUsers - get query [order]: %v", err))
-		return
+		return http.StatusBadRequest, nil,
+			fmt.Errorf("user.delivery.Handler.getUsers - get query [order]: %v", err)
 	}
 
 	users, countUsers, err := h.userSvc.GetUsers(ctx, uid, page, perPage, sort, order, search)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": fmt.Errorf("user.delivery.Handler.getUsers: %v", err),
-		})
-		return
+		return http.StatusInternalServerError, nil, fmt.Errorf("user.delivery.Handler.getUsers: %v", err)
 	}
 
 	usersRs := make([]UserRs, 0, len(users))
@@ -206,8 +188,8 @@ func (h *Handler) getUsers(c *gin.Context) {
 		})
 	}
 
-	c.JSON(http.StatusOK, gin.H{
+	return http.StatusOK, gin.H{
 		"users":       usersRs,
 		"count_users": countUsers,
-	})
+	}, nil
 }
