@@ -26,7 +26,7 @@ func NewService(repo repoAccess) *Service {
 func (s *Service) GetAccesses(ctx context.Context) ([]Access, error) {
 	accesses, err := s.repo.GetAccesses(ctx)
 	if err != nil {
-		return nil, msgerror.New(fmt.Errorf("access.Service.GetAccesses: %v", err), msgerror.ErrMsgInternal)
+		return nil, msgerr.New(fmt.Errorf("access.Service.GetAccesses: %v", err), msgerr.ErrMsgInternal)
 	}
 
 	return accesses, nil

@@ -45,21 +45,21 @@ type (
 func (s *Service) AddWord(ctx context.Context, uid uuid.UUID, vocabWordData entity.VocabWordData) (entity.VocabWord, error) {
 	userCountWord, err := s.userSvc.UserCountWord(ctx, uid)
 	if err != nil {
-		return entity.VocabWord{}, msgerror.New(fmt.Errorf("word.Service.AddWord - get count words: %w", err), msgerror.ErrMsgInternal)
+		return entity.VocabWord{}, msgerr.New(fmt.Errorf("word.Service.AddWord - get count words: %w", err), msgerr.ErrMsgInternal)
 	}
 
 	count, err := s.repoVocab.GetCountWords(ctx, uid)
 	if err != nil {
-		return entity.VocabWord{}, msgerror.New(fmt.Errorf("word.Service.AddWord - get count words: %v", err), msgerror.ErrMsgInternal)
+		return entity.VocabWord{}, msgerr.New(fmt.Errorf("word.Service.AddWord - get count words: %v", err), msgerr.ErrMsgInternal)
 	}
 
 	if count >= userCountWord {
-		return entity.VocabWord{}, msgerror.New(fmt.Errorf("word.Service.AddWord: %v", entity.ErrUserWordLimit), "You reached word limit")
+		return entity.VocabWord{}, msgerr.New(fmt.Errorf("word.Service.AddWord: %v", entity.ErrUserWordLimit), "You reached word limit")
 	}
 
 	vocab, err := s.GetVocabulary(ctx, uid, vocabWordData.VocabID)
 	if err != nil {
-		return entity.VocabWord{}, msgerror.New(fmt.Errorf("word.Service.AddWord - get dictionary: %v", err), msgerror.ErrMsgInternal)
+		return entity.VocabWord{}, msgerr.New(fmt.Errorf("word.Service.AddWord - get dictionary: %v", err), msgerr.ErrMsgInternal)
 	}
 
 	vocabWordData.Native.LangCode = vocab.NativeLang
@@ -247,20 +247,20 @@ func (s *Service) GetSeveralWords(ctx context.Context, uid, vid uuid.UUID, count
 func (s *Service) GetPronunciation(ctx context.Context, uid, vid uuid.UUID, text string) (string, error) {
 	vocab, err := s.GetVocabulary(ctx, uid, vid)
 	if err != nil {
-		return runtime.EmptyString, fmt.Errorf("word.Service.GetPronunciation - get vocabulary: %w", err)
+		return runtime.EmptyString, fmt.Errorf("word.Service.GetPronunciation: %w", err)
 	}
 	words, err := s.dictSvc.GetWordsByText(ctx, []entityDict.DictWord{{Text: text, LangCode: vocab.NativeLang}})
 	if err != nil {
-		return runtime.EmptyString, fmt.Errorf("word.Service.GetPronunciation - get word: %w", err)
+		return runtime.EmptyString, fmt.Errorf("word.Service.GetPronunciation: %w", err)
 	}
 	if len(words) == 0 {
 		return runtime.EmptyString,
-			msgerror.New(fmt.Errorf("word.Service.GetPronunciation - word not found"), entity.ErrWordPronunciation.Error())
+			msgerr.New(fmt.Errorf("word.Service.GetPronunciation: word not found"), entity.ErrWordPronunciation.Error())
 	}
 	word := words[0]
 	if word.Pronunciation == runtime.EmptyString {
 		return runtime.EmptyString,
-			msgerror.New(fmt.Errorf("word.Service.GetPronunciation: %w", entity.ErrWordPronunciation), entity.ErrWordPronunciation.Error())
+			msgerr.New(fmt.Errorf("word.Service.GetPronunciation: %w", entity.ErrWordPronunciation), entity.ErrWordPronunciation.Error())
 	}
 	return word.Pronunciation, nil
 }
@@ -268,7 +268,7 @@ func (s *Service) GetPronunciation(ctx context.Context, uid, vid uuid.UUID, text
 func (s *Service) CopyWords(ctx context.Context, vid, copyVid uuid.UUID) error {
 	vocabWordsData, err := s.repoVocab.GetVocabWords(ctx, vid)
 	if err != nil {
-		return fmt.Errorf("word.Service.GetWords - get words: %w", err)
+		return fmt.Errorf("word.Service.GetWords: %w", err)
 	}
 
 	for _, word := range vocabWordsData {

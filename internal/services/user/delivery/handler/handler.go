@@ -74,28 +74,28 @@ func (h *Handler) signUp(c *ginext.Context) (int, any, error) {
 	err := c.Bind(&data)
 	if err != nil {
 		return http.StatusBadRequest, nil,
-			msgerror.New(
+			msgerr.New(
 				fmt.Errorf("user.delivery.Handler.createAccount: %v", err),
-				msgerror.ErrMsgBadRequest)
+				msgerr.ErrMsgBadRequest)
 
 	}
 
 	if !utils.IsUsernameValid(data.Username) {
 		return http.StatusBadRequest, nil,
-			msgerror.New(fmt.Errorf("user.delivery.Handler.createAccount - invalid user name"),
+			msgerr.New(fmt.Errorf("user.delivery.Handler.createAccount - invalid user name"),
 				"Invalid user name")
 	}
 
 	if !utils.IsPasswordValid(data.Password) {
 		return http.StatusBadRequest, nil,
-			msgerror.New(fmt.Errorf("user.delivery.Handler.createAccount - invalid password"),
+			msgerr.New(fmt.Errorf("user.delivery.Handler.createAccount - invalid password"),
 				"Invalid password")
 	}
 
 	if !utils.IsEmailValid(data.Email) {
 		return http.StatusBadRequest, nil,
-			msgerror.New(fmt.Errorf("user.delivery.Handler.createAccount - invalid email"),
-				msgerror.ErrMsgBadEmail)
+			msgerr.New(fmt.Errorf("user.delivery.Handler.createAccount - invalid email"),
+				msgerr.ErrMsgBadEmail)
 	}
 
 	uid, err := h.userSvc.SignUp(c.Request.Context(), entity.UserCreate{

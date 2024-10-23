@@ -22,7 +22,7 @@ const (
 )
 
 var (
-	e = msgerror.ApiError{}
+	e = msgerr.ApiError{}
 
 	errNotFound = errors.New("not found query param")
 )

@@ -166,21 +166,21 @@ func (h *Handler) sendCode(c *ginext.Context) (int, any, error) {
 	err := c.Bind(&data)
 	if err != nil {
 		return http.StatusBadRequest, nil,
-			msgerror.New(fmt.Errorf("auth.delivery.handler.Handler.sendCode: %v", err),
-				msgerror.ErrMsgBadRequest)
+			msgerr.New(fmt.Errorf("auth.delivery.handler.Handler.sendCode: %v", err),
+				msgerr.ErrMsgBadRequest)
 	}
 
 	if !utils.IsEmailValid(data.Email) {
 		return http.StatusBadRequest, nil,
-			msgerror.New(fmt.Errorf("auth.delivery.handler.Handler.sendCode - email format is invalid"),
-				msgerror.ErrMsgBadEmail)
+			msgerr.New(fmt.Errorf("auth.delivery.handler.Handler.sendCode - email format is invalid"),
+				msgerr.ErrMsgBadEmail)
 	}
 
 	err = h.authSvc.CreateCode(ctx, data.Email)
 	if err != nil {
 		return http.StatusInternalServerError, nil,
-			msgerror.New(fmt.Errorf("auth.delivery.Handler.sendCode: %v", err),
-				msgerror.ErrMsgInternal)
+			msgerr.New(fmt.Errorf("auth.delivery.Handler.sendCode: %v", err),
+				msgerr.ErrMsgInternal)
 	}
 
 	return http.StatusOK, gin.H{}, nil

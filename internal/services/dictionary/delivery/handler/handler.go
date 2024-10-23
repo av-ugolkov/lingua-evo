@@ -17,6 +17,10 @@ import (
 )
 
 const (
+	ErrMsgNotFoundWord = "Word not found"
+)
+
+const (
 	QueryParamText     = "text"
 	QueryParamLangCode = "lang_code"
 )
@@ -67,8 +71,8 @@ func (h *Handler) addWord(c *ginext.Context) (int, any, error) {
 	var data WordRq
 	if err := c.Bind(&data); err != nil {
 		return http.StatusBadRequest, nil,
-			msgerror.New(fmt.Errorf("dictionary.delivery.Handler.addWord: %v", err),
-				msgerror.ErrMsgBadRequest)
+			msgerr.New(fmt.Errorf("dictionary.delivery.Handler.addWord: %v", err),
+				msgerr.ErrMsgBadRequest)
 	}
 
 	words, err := h.dictSvc.GetOrAddWords(ctx, []entity.DictWord{
@@ -82,8 +86,8 @@ func (h *Handler) addWord(c *ginext.Context) (int, any, error) {
 	})
 	if err != nil {
 		return http.StatusInternalServerError, nil,
-			msgerror.New(fmt.Errorf("dictionary.delivery.Handler.addWord: %v", err),
-				msgerror.ErrMsgInternal)
+			msgerr.New(fmt.Errorf("dictionary.delivery.Handler.addWord: %v", err),
+				msgerr.ErrMsgInternal)
 	}
 
 	wordRs := &WordRs{
@@ -126,6 +130,12 @@ func (h *Handler) getWord(c *ginext.Context) (int, any, error) {
 	if err != nil {
 		return http.StatusInternalServerError, nil,
 			fmt.Errorf("dictionary.delivery.Handler.getWord: %v", err)
+	}
+
+	if len(wordIDs) == 0 {
+		return http.StatusNotFound, nil,
+			msgerr.New(fmt.Errorf("dictionary.delivery.Handler.getWord: word not found"),
+				ErrMsgNotFoundWord)
 	}
 
 	return http.StatusOK, &WordRs{

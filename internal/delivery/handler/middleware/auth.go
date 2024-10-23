@@ -18,14 +18,14 @@ func Auth(next ginext.HandlerFunc) ginext.HandlerFunc {
 		bearerToken, err := c.GetHeaderAuthorization(ginext.AuthTypeBearer)
 		if err != nil {
 			return http.StatusUnauthorized, nil,
-				msgerror.New(fmt.Errorf("middleware.Auth: bearer token not found"),
-					msgerror.ErrMsgUnauthorized)
+				msgerr.New(fmt.Errorf("middleware.Auth: bearer token not found"),
+					msgerr.ErrMsgUnauthorized)
 		}
 		claims, err := token.ValidateJWT(bearerToken, config.GetConfig().JWT.Secret)
 		if err != nil {
 			return http.StatusUnauthorized, nil,
-				msgerror.New(fmt.Errorf("middleware.Auth: %v", err),
-					msgerror.ErrMsgUnauthorized)
+				msgerr.New(fmt.Errorf("middleware.Auth: %v", err),
+					msgerr.ErrMsgUnauthorized)
 		}
 		c.Request = c.Request.WithContext(runtime.SetUserIDInContext(c.Request.Context(), claims.UserID))
 

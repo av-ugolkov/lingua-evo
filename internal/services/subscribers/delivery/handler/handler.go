@@ -56,15 +56,15 @@ func (h *Handler) subscribe(c *ginext.Context) (int, any, error) {
 	err = c.Bind(&data)
 	if err != nil {
 		return http.StatusBadRequest, nil,
-			msgerror.New(fmt.Errorf("subscribers.delivery.handler.Handler.subscribe: %v", err),
-				msgerror.ErrMsgInternal)
+			msgerr.New(fmt.Errorf("subscribers.delivery.handler.Handler.subscribe: %v", err),
+				msgerr.ErrMsgInternal)
 	}
 
 	err = h.subscribersSvc.Subscribe(ctx, uid, data.ID)
 	if err != nil {
 		return http.StatusBadRequest, nil,
-			msgerror.New(fmt.Errorf("subscribers.delivery.handler.Handler.subscribe: %v", err),
-				msgerror.ErrMsgInternal)
+			msgerr.New(fmt.Errorf("subscribers.delivery.handler.Handler.subscribe: %v", err),
+				msgerr.ErrMsgInternal)
 	}
 
 	return http.StatusOK, gin.H{}, nil
@@ -76,23 +76,23 @@ func (h *Handler) unsubscribe(c *ginext.Context) (int, any, error) {
 	uid, err := runtime.UserIDFromContext(ctx)
 	if err != nil {
 		return http.StatusUnauthorized, nil,
-			msgerror.New(fmt.Errorf("subscribers.delivery.handler.Handler.unsubscribe: %v", err),
-				msgerror.ErrMsgUnauthorized)
+			msgerr.New(fmt.Errorf("subscribers.delivery.handler.Handler.unsubscribe: %v", err),
+				msgerr.ErrMsgUnauthorized)
 	}
 
 	var data SubscribeRs
 	err = c.Bind(&data)
 	if err != nil {
 		return http.StatusBadRequest, nil,
-			msgerror.New(fmt.Errorf("subscribers.delivery.handler.Handler.unsubscribe: %v", err),
-				msgerror.ErrMsgInternal)
+			msgerr.New(fmt.Errorf("subscribers.delivery.handler.Handler.unsubscribe: %v", err),
+				msgerr.ErrMsgInternal)
 	}
 
 	err = h.subscribersSvc.Unsubscribe(ctx, uid, data.ID)
 	if err != nil {
 		return http.StatusBadRequest, nil,
-			msgerror.New(fmt.Errorf("subscribers.delivery.handler.Handler.unsubscribe: %v", err),
-				msgerror.ErrMsgInternal)
+			msgerr.New(fmt.Errorf("subscribers.delivery.handler.Handler.unsubscribe: %v", err),
+				msgerr.ErrMsgInternal)
 	}
 
 	return http.StatusOK, gin.H{}, nil

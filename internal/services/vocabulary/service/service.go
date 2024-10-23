@@ -115,14 +115,14 @@ func (s *Service) GetVocabulary(ctx context.Context, uid, vid uuid.UUID) (entity
 	accessStatus, err := s.GetAccessForUser(ctx, uid, vid)
 	if err != nil {
 		return entity.Vocab{},
-			msgerror.New(fmt.Errorf("vocabulary.Service.GetVocabulary - %w: %w", entity.ErrAccessDenied, err),
-				msgerror.ErrMsgForbidden)
+			msgerr.New(fmt.Errorf("vocabulary.Service.GetVocabulary - %w: %w", entity.ErrAccessDenied, err),
+				msgerr.ErrMsgForbidden)
 	}
 
 	if accessStatus == access.Forbidden {
 		return entity.Vocab{},
-			msgerror.New(fmt.Errorf("vocabulary.Service.GetVocabulary - %w", entity.ErrAccessDenied),
-				msgerror.ErrMsgForbidden)
+			msgerr.New(fmt.Errorf("vocabulary.Service.GetVocabulary - %w", entity.ErrAccessDenied),
+				msgerr.ErrMsgForbidden)
 	}
 
 	vocab, err := s.repoVocab.GetVocab(ctx, vid)

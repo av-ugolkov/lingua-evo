@@ -42,14 +42,14 @@ func (h *Handler) sendRequest(c *ginext.Context) (int, any, error) {
 	err := c.Bind(&data)
 	if err != nil {
 		return http.StatusBadRequest, nil,
-			msgerror.New(fmt.Errorf("support.delivery.Handler.sendRequest: %v", err),
-				msgerror.ErrMsgBadRequest)
+			msgerr.New(fmt.Errorf("support.delivery.Handler.sendRequest: %v", err),
+				msgerr.ErrMsgBadRequest)
 	}
 
 	if !utils.IsEmailValid(data.Email) {
 		return http.StatusBadRequest, nil,
-			msgerror.New(fmt.Errorf("support.delivery.Handler.sendRequest - email format is invalid"),
-				msgerror.ErrMsgBadEmail)
+			msgerr.New(fmt.Errorf("support.delivery.Handler.sendRequest - email format is invalid"),
+				msgerr.ErrMsgBadEmail)
 	}
 
 	if utf8.RuneCountInString(data.Name) > 100 {
@@ -58,13 +58,13 @@ func (h *Handler) sendRequest(c *ginext.Context) (int, any, error) {
 
 	if len(data.Message) == 0 {
 		return http.StatusBadRequest, nil,
-			msgerror.New(fmt.Errorf("support.delivery.Handler.sendRequest - message is too long"),
+			msgerr.New(fmt.Errorf("support.delivery.Handler.sendRequest - message is too long"),
 				"Message is empty")
 	}
 
 	if utf8.RuneCountInString(data.Message) > 500 {
 		return http.StatusBadRequest, nil,
-			msgerror.New(fmt.Errorf("support.delivery.Handler.sendRequest - message is too long"),
+			msgerr.New(fmt.Errorf("support.delivery.Handler.sendRequest - message is too long"),
 				"Message is too long")
 	}
 
@@ -76,7 +76,7 @@ func (h *Handler) sendRequest(c *ginext.Context) (int, any, error) {
 	})
 	if err != nil {
 		return http.StatusBadRequest, nil,
-			msgerror.New(fmt.Errorf("support.delivery.Handler.sendRequest - check body: %w", err),
+			msgerr.New(fmt.Errorf("support.delivery.Handler.sendRequest - check body: %w", err),
 				"Something went wrong. Try a bit later!")
 	}
 

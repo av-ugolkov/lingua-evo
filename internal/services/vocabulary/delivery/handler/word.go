@@ -23,8 +23,12 @@ const (
 )
 
 const (
-	ErrDescriptionTooLong = "Description length should be less than 100 characters"
-	ErrWordIsExists       = "This word is already exists"
+	ErrWordTooLong          = "Word or phrase length should be less than 100 characters"
+	ErrPronunciationTooLong = "Pronunciation length should be less than 100 characters"
+	ErrDescriptionTooLong   = "Description length should be less than 100 characters"
+	ErrCountTranslates      = "Count of translates should be less than 10"
+	ErrCountExamples        = "Count of examples should be less than 5"
+	ErrWordIsExists         = "This word is already exists"
 )
 
 type (
@@ -72,13 +76,38 @@ func (h *Handler) addWord(c *ginext.Context) (int, any, error) {
 	err = c.Bind(&data)
 	if err != nil {
 		return http.StatusInternalServerError, nil,
-			fmt.Errorf("word.delivery.Handler.addWord: %v", err)
+			msgerr.New(fmt.Errorf("word.delivery.Handler.addWord: %v", err),
+				msgerr.ErrMsgBadRequest)
+	}
+
+	if utf8.RuneCountInString(data.Native.Text) > 100 {
+		return http.StatusBadRequest, nil,
+			msgerr.New(fmt.Errorf("word.delivery.Handler.addWord: word is too long"),
+				ErrWordTooLong)
+	}
+
+	if utf8.RuneCountInString(data.Native.Pronunciation) > 100 {
+		return http.StatusBadRequest, nil,
+			msgerr.New(fmt.Errorf("word.delivery.Handler.addWord: pronunciation is too long"),
+				ErrPronunciationTooLong)
 	}
 
 	if utf8.RuneCountInString(data.Description) > 100 {
 		return http.StatusBadRequest, nil,
-			msgerror.New(fmt.Errorf("word.delivery.Handler.addWord - description is too long"),
+			msgerr.New(fmt.Errorf("word.delivery.Handler.addWord: description is too long"),
 				ErrDescriptionTooLong)
+	}
+
+	if len(data.Translates) > 10 {
+		return http.StatusBadRequest, nil,
+			msgerr.New(fmt.Errorf("word.delivery.Handler.addWord: translates more than 10"),
+				ErrCountTranslates)
+	}
+
+	if len(data.Examples) > 5 {
+		return http.StatusBadRequest, nil,
+			msgerr.New(fmt.Errorf("word.delivery.Handler.addWord: translates more than 5"),
+				ErrCountExamples)
 	}
 
 	translateWords := make([]entityDict.DictWord, 0, len(data.Translates))
@@ -116,9 +145,12 @@ func (h *Handler) addWord(c *ginext.Context) (int, any, error) {
 		switch {
 		case errors.Is(err, entity.ErrDuplicate):
 			return http.StatusConflict, nil,
-				msgerror.New(fmt.Errorf("word.delivery.Handler.addWord: %v", err), ErrWordIsExists)
+				msgerr.New(fmt.Errorf("word.delivery.Handler.addWord: %v", err),
+					ErrWordIsExists)
 		default:
-			return http.StatusInternalServerError, nil, fmt.Errorf("word.delivery.Handler.addWord: %v", err)
+			return http.StatusInternalServerError, nil,
+				msgerr.New(fmt.Errorf("word.delivery.Handler.addWord: %v", err),
+					msgerr.ErrMsgInternal)
 		}
 	}
 
@@ -146,7 +178,38 @@ func (h *Handler) updateWord(c *ginext.Context) (int, any, error) {
 	err = c.Bind(&data)
 	if err != nil {
 		return http.StatusInternalServerError, nil,
-			fmt.Errorf("word.delivery.Handler.updateWord: %v", err)
+			msgerr.New(fmt.Errorf("word.delivery.Handler.updateWord: %v", err),
+				msgerr.ErrMsgBadRequest)
+	}
+
+	if utf8.RuneCountInString(data.Native.Text) > 100 {
+		return http.StatusBadRequest, nil,
+			msgerr.New(fmt.Errorf("word.delivery.Handler.updateWord: word is too long"),
+				ErrWordTooLong)
+	}
+
+	if utf8.RuneCountInString(data.Native.Pronunciation) > 100 {
+		return http.StatusBadRequest, nil,
+			msgerr.New(fmt.Errorf("word.delivery.Handler.updateWord: pronunciation is too long"),
+				ErrPronunciationTooLong)
+	}
+
+	if utf8.RuneCountInString(data.Description) > 100 {
+		return http.StatusBadRequest, nil,
+			msgerr.New(fmt.Errorf("word.delivery.Handler.updateWord: description is too long"),
+				ErrDescriptionTooLong)
+	}
+
+	if len(data.Translates) > 10 {
+		return http.StatusBadRequest, nil,
+			msgerr.New(fmt.Errorf("word.delivery.Handler.updateWord: translates more than 10"),
+				ErrCountTranslates)
+	}
+
+	if len(data.Examples) > 5 {
+		return http.StatusBadRequest, nil,
+			msgerr.New(fmt.Errorf("word.delivery.Handler.updateWord: translates more than 5"),
+				ErrCountExamples)
 	}
 
 	translates := make([]entityDict.DictWord, 0, len(data.Translates))

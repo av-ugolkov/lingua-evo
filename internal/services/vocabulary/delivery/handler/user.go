@@ -4,13 +4,21 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"unicode/utf8"
 
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/gin-ext"
+	msgerr "github.com/av-ugolkov/lingua-evo/internal/pkg/msg-error"
 	entityTag "github.com/av-ugolkov/lingua-evo/internal/services/tag"
 	"github.com/av-ugolkov/lingua-evo/internal/services/vocabulary"
 	"github.com/av-ugolkov/lingua-evo/runtime"
 
 	"github.com/gin-gonic/gin"
+)
+
+const (
+	ErrMsgNameTooLong        = "Vocabulary name should be less than 50 characters"
+	ErrMsgDescriptionTooLong = "Description should be less than 250 characters"
+	ErrMsgCountTags          = "Count of tags should be less than 5"
 )
 
 func (h *Handler) userAddVocabulary(c *ginext.Context) (int, any, error) {
@@ -25,7 +33,26 @@ func (h *Handler) userAddVocabulary(c *ginext.Context) (int, any, error) {
 	err = c.Bind(&data)
 	if err != nil {
 		return http.StatusBadRequest, nil,
-			fmt.Errorf("vocabulary.delivery.Handler.addVocabulary: %v", err)
+			msgerr.New(fmt.Errorf("vocabulary.delivery.Handler.addVocabulary: %v", err),
+				msgerr.ErrMsgBadRequest)
+	}
+
+	if utf8.RuneCountInString(data.Name) > 50 {
+		return http.StatusBadRequest, nil,
+			msgerr.New(fmt.Errorf("vocabulary.delivery.Handler.addVocabulary: name is too long"),
+				ErrMsgNameTooLong)
+	}
+
+	if utf8.RuneCountInString(data.Description) > 250 {
+		return http.StatusBadRequest, nil,
+			msgerr.New(fmt.Errorf("vocabulary.delivery.Handler.addVocabulary: description is too long"),
+				ErrMsgDescriptionTooLong)
+	}
+
+	if len(data.Tags) > 5 {
+		return http.StatusBadRequest, nil,
+			msgerr.New(fmt.Errorf("vocabulary.delivery.Handler.addVocabulary: tags must less than 5"),
+				ErrMsgCountTags)
 	}
 
 	tags := make([]entityTag.Tag, 0, len(data.Tags))
@@ -46,7 +73,8 @@ func (h *Handler) userAddVocabulary(c *ginext.Context) (int, any, error) {
 	})
 	if err != nil {
 		return http.StatusInternalServerError, nil,
-			fmt.Errorf("vocabulary.delivery.Handler.addVocabulary: %v", err)
+			msgerr.New(fmt.Errorf("vocabulary.delivery.Handler.addVocabulary: %v", err),
+				msgerr.ErrMsgInternal)
 	}
 
 	return http.StatusOK, VocabularyRs{
@@ -165,7 +193,26 @@ func (h *Handler) userEditVocabulary(c *ginext.Context) (int, any, error) {
 	err := c.Bind(&data)
 	if err != nil {
 		return http.StatusBadRequest, nil,
-			fmt.Errorf("vocabulary.delivery.Handler.editVocabulary: %v", err)
+			msgerr.New(fmt.Errorf("vocabulary.delivery.Handler.editVocabulary: %v", err),
+				msgerr.ErrMsgBadRequest)
+	}
+
+	if utf8.RuneCountInString(data.Name) > 50 {
+		return http.StatusBadRequest, nil,
+			msgerr.New(fmt.Errorf("vocabulary.delivery.Handler.editVocabulary: name is too long"),
+				ErrMsgNameTooLong)
+	}
+
+	if utf8.RuneCountInString(data.Description) > 250 {
+		return http.StatusBadRequest, nil,
+			msgerr.New(fmt.Errorf("vocabulary.delivery.Handler.editVocabulary: description is too long"),
+				ErrMsgDescriptionTooLong)
+	}
+
+	if len(data.Tags) > 5 {
+		return http.StatusBadRequest, nil,
+			msgerr.New(fmt.Errorf("vocabulary.delivery.Handler.editVocabulary: tags must less than 5"),
+				ErrMsgCountTags)
 	}
 
 	err = h.vocabSvc.UserEditVocabulary(ctx, vocabulary.Vocab{

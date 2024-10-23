@@ -1,11 +1,9 @@
-package msgerror
+package msgerr
 
 const (
 	ErrMsgUnknown      = "You doesn't fill one or several fields."
 	ErrMsgUnauthorized = "You are not authorized."
 	ErrMsgForbidden    = "Access denied."
-	ErrMsgNotFound     = "Not found."
-	ErrMsgConflict     = "It's already exist."
 	ErrMsgInternal     = "Sorry, something went wrong."
 	ErrMsgBadRequest   = "You don't fill one or several fields."
 	ErrMsgBadEmail     = "Email format is invalid"
