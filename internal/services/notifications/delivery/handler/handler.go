@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
-	ginExt "github.com/av-ugolkov/lingua-evo/internal/delivery/handler/gin"
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/gin-ext"
 	"github.com/av-ugolkov/lingua-evo/internal/services/notifications"
 
 	"github.com/gin-gonic/gin"
@@ -20,9 +20,10 @@ type Handler struct {
 	notificationsSvc *notifications.Service
 }
 
-func Create(g *gin.Engine, notificationsSvc *notifications.Service) {
+func Create(g *ginext.Engine, notificationsSvc *notifications.Service) {
 	h := newHandler(notificationsSvc)
-	h.register(g)
+
+	g.POST(handler.NotificationVocab, h.setNotificationVocab)
 }
 
 func newHandler(notificationsSvc *notifications.Service) *Handler {
@@ -31,31 +32,24 @@ func newHandler(notificationsSvc *notifications.Service) *Handler {
 	}
 }
 
-func (h *Handler) register(g *gin.Engine) {
-	g.POST(handler.NotificationVocab, h.setNotificationVocab)
-}
-
-func (h *Handler) setNotificationVocab(c *gin.Context) {
-	uid, err := ginExt.GetQueryUUID(c, paramsUserID)
+func (h *Handler) setNotificationVocab(c *ginext.Context) (int, any, error) {
+	uid, err := c.GetQueryUUID(paramsUserID)
 	if err != nil {
-		ginExt.SendError(c, http.StatusBadRequest,
-			fmt.Errorf("notifications.delivery.Handler.setNotificationVocab - get query [user_id]: %w", err))
-		return
+		return http.StatusBadRequest, nil,
+			fmt.Errorf("notifications.delivery.Handler.setNotificationVocab: %v", err)
 	}
 
-	vid, err := ginExt.GetQueryUUID(c, paramsVocabID)
+	vid, err := c.GetQueryUUID(paramsVocabID)
 	if err != nil {
-		ginExt.SendError(c, http.StatusBadRequest,
-			fmt.Errorf("notifications.delivery.Handler.setNotificationVocab - get query [vocab_id]: %w", err))
-		return
+		return http.StatusBadRequest, nil,
+			fmt.Errorf("notifications.delivery.Handler.setNotificationVocab: %v", err)
 	}
 
 	ok, err := h.notificationsSvc.SetVocabNotification(c.Request.Context(), uid, vid)
 	if err != nil {
-		ginExt.SendError(c, http.StatusInternalServerError,
-			fmt.Errorf("notifications.delivery.Handler.setNotificationVocab - set notification: %w", err))
-		return
+		return http.StatusInternalServerError, nil,
+			fmt.Errorf("notifications.delivery.Handler.setNotificationVocab: %w", err)
 	}
 
-	c.JSON(http.StatusOK, gin.H{"notification": ok})
+	return http.StatusOK, gin.H{"notification": ok}, nil
 }

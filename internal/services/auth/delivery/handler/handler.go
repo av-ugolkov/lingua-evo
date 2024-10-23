@@ -9,8 +9,8 @@ import (
 
 	"github.com/av-ugolkov/lingua-evo/internal/config"
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
-	ginExt "github.com/av-ugolkov/lingua-evo/internal/delivery/handler/gin"
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler/middleware"
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/gin-ext"
 	"github.com/av-ugolkov/lingua-evo/internal/services/auth"
 	"github.com/av-ugolkov/lingua-evo/runtime"
 
@@ -38,9 +38,13 @@ type Handler struct {
 	authSvc *auth.Service
 }
 
-func Create(r *gin.Engine, authSvc *auth.Service) {
+func Create(r *ginext.Engine, authSvc *auth.Service) {
 	h := newHandler(authSvc)
-	h.register(r)
+
+	r.POST(handler.SignIn, h.signIn)
+	r.GET(handler.Refresh, h.refresh)
+	r.POST(handler.SignOut, middleware.Auth(h.signOut))
+	r.POST(handler.SendCode, h.sendCode)
 }
 
 func newHandler(authSvc *auth.Service) *Handler {
@@ -49,43 +53,32 @@ func newHandler(authSvc *auth.Service) *Handler {
 	}
 }
 
-func (h *Handler) register(r *gin.Engine) {
-	r.POST(handler.SignIn, h.signIn)
-	r.GET(handler.Refresh, h.refresh)
-	r.POST(handler.SignOut, middleware.Auth(h.signOut))
-	r.POST(handler.SendCode, h.sendCode)
-}
-
-func (h *Handler) signIn(c *gin.Context) {
+func (h *Handler) signIn(c *ginext.Context) (int, any, error) {
 	ctx := c.Request.Context()
-	authorization, err := ginExt.GetHeaderAuthorization(c, ginExt.AuthTypeBasic)
+	authorization, err := c.GetHeaderAuthorization(ginext.AuthTypeBasic)
 	if err != nil {
-		ginExt.SendError(c, http.StatusBadRequest,
-			fmt.Errorf("auth.delivery.Handler.signin: %w", err))
-		return
+		return http.StatusBadRequest, nil,
+			fmt.Errorf("auth.delivery.Handler.signin: %w", err)
 	}
 
 	var data CreateSessionRq
 	err = decodeBasicAuth(authorization, &data)
 	if err != nil {
-		ginExt.SendError(c, http.StatusInternalServerError,
-			fmt.Errorf("auth.delivery.Handler.signin - check body: %v", err))
-		return
+		return http.StatusInternalServerError, nil,
+			fmt.Errorf("auth.delivery.Handler.signin: %v", err)
 	}
 	var fingerprint string
-	if fingerprint = c.GetHeader(ginExt.Fingerprint); fingerprint == runtime.EmptyString {
-		ginExt.SendError(c, http.StatusBadRequest,
-			fmt.Errorf("auth.delivery.Handler.signin: fingerprint not found"))
-		return
+	if fingerprint = c.GetHeader(ginext.Fingerprint); fingerprint == runtime.EmptyString {
+		return http.StatusBadRequest, nil,
+			fmt.Errorf("auth.delivery.Handler.signin: fingerprint not found")
 	}
 	data.Fingerprint = fingerprint
 
 	refreshTokenID := uuid.New()
 	tokens, err := h.authSvc.SignIn(ctx, data.User, data.Password, data.Fingerprint, refreshTokenID)
 	if err != nil {
-		ginExt.SendError(c, http.StatusInternalServerError,
-			fmt.Errorf("auth.delivery.Handler.signin - create session: %v", err))
-		return
+		return http.StatusInternalServerError, nil,
+			fmt.Errorf("auth.delivery.Handler.signin: %v", err)
 	}
 
 	sessionRs := &CreateSessionRs{
@@ -95,41 +88,36 @@ func (h *Handler) signIn(c *gin.Context) {
 	additionalTime := config.GetConfig().JWT.ExpireRefresh
 	duration := time.Duration(additionalTime) * time.Second
 
-	ginExt.SetCookieRefreshToken(c, tokens.RefreshToken, duration)
-	c.JSON(http.StatusOK, sessionRs)
+	c.SetCookieRefreshToken(tokens.RefreshToken, duration)
+	return http.StatusOK, sessionRs, nil
 }
 
-func (h *Handler) refresh(c *gin.Context) {
+func (h *Handler) refresh(c *ginext.Context) (int, any, error) {
 	ctx := c.Request.Context()
-	refreshToken, err := c.Cookie(ginExt.RefreshToken)
+	refreshToken, err := c.Cookie(ginext.RefreshToken)
 	if err != nil {
-		ginExt.SendError(c, http.StatusBadRequest, fmt.Errorf("auth.delivery.Handler.refresh - get cookie: %v", err))
-		return
+		return http.StatusBadRequest, nil, fmt.Errorf("auth.delivery.Handler.refresh: %v", err)
 	}
 	if refreshToken == runtime.EmptyString {
-		ginExt.SendError(c, http.StatusBadRequest, fmt.Errorf("auth.delivery.Handler.refresh - refresh token not found"))
-		return
+		return http.StatusBadRequest, nil, fmt.Errorf("auth.delivery.Handler.refresh - refresh token not found")
 	}
 
 	refreshID, err := uuid.Parse(refreshToken)
 	if err != nil {
-		ginExt.SendError(c, http.StatusBadRequest,
-			fmt.Errorf("auth.delivery.Handler.refresh - parse: %v", err))
-		return
+		return http.StatusBadRequest, nil,
+			fmt.Errorf("auth.delivery.Handler.refresh: %v", err)
 	}
 	var fingerprint string
-	if fingerprint = c.GetHeader(ginExt.Fingerprint); fingerprint == runtime.EmptyString {
-		ginExt.SendError(c, http.StatusBadRequest,
-			fmt.Errorf("auth.delivery.Handler.refresh - get fingerprint: %v", err))
-		return
+	if fingerprint = c.GetHeader(ginext.Fingerprint); fingerprint == runtime.EmptyString {
+		return http.StatusBadRequest, nil,
+			fmt.Errorf("auth.delivery.Handler.refresh: fingerprint is empty")
 	}
 
 	tokenID := uuid.New()
 	tokens, err := h.authSvc.RefreshSessionToken(ctx, tokenID, refreshID, fingerprint)
 	if err != nil {
-		ginExt.SendError(c, http.StatusInternalServerError,
-			fmt.Errorf("auth.delivery.Handler.refresh - refresh token: %v", err))
-		return
+		return http.StatusInternalServerError, nil,
+			fmt.Errorf("auth.delivery.Handler.refresh: %v", err)
 	}
 
 	sessionRs := &CreateSessionRs{
@@ -138,67 +126,62 @@ func (h *Handler) refresh(c *gin.Context) {
 
 	additionalTime := config.GetConfig().JWT.ExpireRefresh
 	duration := time.Duration(additionalTime) * time.Second
-	ginExt.SetCookieRefreshToken(c, tokens.RefreshToken, duration)
-	c.JSON(http.StatusOK, sessionRs)
+	c.SetCookieRefreshToken(tokens.RefreshToken, duration)
+	return http.StatusOK, sessionRs, nil
 }
 
-func (h *Handler) signOut(c *gin.Context) {
+func (h *Handler) signOut(c *ginext.Context) (int, any, error) {
 	ctx := c.Request.Context()
-	refreshToken, err := c.Cookie(ginExt.RefreshToken)
+
+	refreshToken, err := c.Cookie(ginext.RefreshToken)
 	if err != nil {
-		ginExt.SendError(c, http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.signOut - get cookie: %v", err))
-		return
+		return http.StatusInternalServerError, nil, fmt.Errorf("auth.delivery.Handler.signOut: %v", err)
 	}
 
 	refreshID, err := uuid.Parse(refreshToken)
 	if err != nil {
-		ginExt.SendError(c, http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.signOut - parse: %v", err))
-		return
+		return http.StatusInternalServerError, nil, fmt.Errorf("auth.delivery.Handler.signOut: %v", err)
 	}
 
 	var fingerprint string
-	if fingerprint = c.GetHeader(ginExt.Fingerprint); fingerprint == runtime.EmptyString {
-		ginExt.SendError(c, http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.signOut - get fingerprint: %v", err))
-		return
+	if fingerprint = c.GetHeader(ginext.Fingerprint); fingerprint == runtime.EmptyString {
+		return http.StatusInternalServerError, nil, fmt.Errorf("auth.delivery.Handler.signOut: fingerprimt is empty")
 	}
 
 	err = h.authSvc.SignOut(ctx, refreshID, fingerprint)
 	if err != nil {
-		ginExt.SendError(c, http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.signOut - SignOut: %v", err))
-		return
+		return http.StatusInternalServerError, nil, fmt.Errorf("auth.delivery.Handler.signOut: %v", err)
 	}
 
-	ginExt.DeleteCookie(c, ginExt.RefreshToken)
-	c.JSON(http.StatusOK, gin.H{})
+	c.DeleteCookie(ginext.RefreshToken)
+	return http.StatusOK, gin.H{}, nil
 }
 
-func (h *Handler) sendCode(c *gin.Context) {
+func (h *Handler) sendCode(c *ginext.Context) (int, any, error) {
 	ctx := c.Request.Context()
 
 	var data CreateCodeRq
 	err := c.Bind(&data)
 	if err != nil {
-		ginExt.SendError(c, http.StatusBadRequest, fmt.Errorf("auth.delivery.handler.Handler.sendCode - check body: %v", err))
-		return
+		return http.StatusBadRequest, nil, fmt.Errorf("auth.delivery.handler.Handler.sendCode: %v", err)
 	}
 
 	err = h.authSvc.CreateCode(ctx, data.Email)
 	if err != nil {
-		ginExt.SendError(c, http.StatusInternalServerError, fmt.Errorf("auth.delivery.Handler.sendCode - create code: %v", err))
-		return
+		return http.StatusInternalServerError, nil, fmt.Errorf("auth.delivery.Handler.sendCode: %v", err)
 	}
 
-	c.JSON(http.StatusOK, gin.H{})
+	return http.StatusOK, gin.H{}, nil
 }
 
 func decodeBasicAuth(basicToken string, data *CreateSessionRq) error {
 	base, err := base64.StdEncoding.DecodeString(basicToken)
 	if err != nil {
-		return fmt.Errorf("auth.delivery.decodeBasicAuth - decode base64: %v", err)
+		return fmt.Errorf("auth.delivery.decodeBasicAuth: %v", err)
 	}
 	authData := strings.Split(string(base), ":")
 	if len(authData) != 2 {
-		return fmt.Errorf("auth.delivery.decodeBasicAuth - invalid auth data")
+		return fmt.Errorf("auth.delivery.decodeBasicAuth: invalid auth data")
 	}
 
 	data.User = authData[0]

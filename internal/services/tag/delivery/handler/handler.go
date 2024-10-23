@@ -5,11 +5,10 @@ import (
 	"net/http"
 
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
-	ginExt "github.com/av-ugolkov/lingua-evo/internal/delivery/handler/gin"
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler/middleware"
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/gin-ext"
 	tagSvc "github.com/av-ugolkov/lingua-evo/internal/services/tag"
 
-	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
 
@@ -28,9 +27,10 @@ type Handler struct {
 	tagSvc *tagSvc.Service
 }
 
-func Create(r *gin.Engine, tagSvc *tagSvc.Service) {
+func Create(r *ginext.Engine, tagSvc *tagSvc.Service) {
 	h := newHandler(tagSvc)
-	h.register(r)
+
+	r.GET(handler.VocabularyTags, middleware.Auth(h.getTags))
 }
 
 func newHandler(tagSvc *tagSvc.Service) *Handler {
@@ -39,31 +39,19 @@ func newHandler(tagSvc *tagSvc.Service) *Handler {
 	}
 }
 
-func (h *Handler) register(r *gin.Engine) {
-	r.GET(handler.VocabularyTags, middleware.Auth(h.getTags))
-}
-
-func (h *Handler) getTags(c *gin.Context) {
+func (h *Handler) getTags(c *ginext.Context) (int, any, error) {
 	ctx := c.Request.Context()
-	vocabIDStr, err := ginExt.GetQuery(c, paramsVocabID)
-	if err != nil {
-		ginExt.SendError(c, http.StatusBadRequest,
-			fmt.Errorf("tag.delivery.Handler.getTags - query param [%s]: %v", paramsVocabID, err))
-		return
-	}
 
-	vocabID, err := uuid.Parse(vocabIDStr)
+	vocabID, err := c.GetQueryUUID(paramsVocabID)
 	if err != nil {
-		ginExt.SendError(c, http.StatusBadRequest,
-			fmt.Errorf("tag.delivery.Handler.getTags - invalid id: %v", err))
-		return
+		return http.StatusBadRequest, nil,
+			fmt.Errorf("tag.delivery.Handler.getTags: %v", err)
 	}
 
 	tags, err := h.tagSvc.GetTagsInVocabulary(ctx, vocabID)
 	if err != nil {
-		ginExt.SendError(c, http.StatusInternalServerError,
-			fmt.Errorf("tag.delivery.Handler.getTags: %v", err))
-		return
+		return http.StatusInternalServerError, nil,
+			fmt.Errorf("tag.delivery.Handler.getTags: %v", err)
 	}
 
 	tagsRs := make([]TagRs, 0, len(tags))
@@ -74,5 +62,5 @@ func (h *Handler) getTags(c *gin.Context) {
 		})
 	}
 
-	c.JSON(http.StatusOK, tagsRs)
+	return http.StatusOK, tagsRs, nil
 }

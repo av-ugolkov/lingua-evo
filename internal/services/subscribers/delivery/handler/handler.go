@@ -5,8 +5,8 @@ import (
 	"net/http"
 
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
-	ginExt "github.com/av-ugolkov/lingua-evo/internal/delivery/handler/gin"
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler/middleware"
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/gin-ext"
 	"github.com/av-ugolkov/lingua-evo/internal/services/subscribers"
 	"github.com/av-ugolkov/lingua-evo/runtime"
 
@@ -28,9 +28,12 @@ type Handler struct {
 	subscribersSvc *subscribers.Service
 }
 
-func Create(r *gin.Engine, userSvc *subscribers.Service) {
+func Create(r *ginext.Engine, userSvc *subscribers.Service) {
 	h := newHandler(userSvc)
-	h.register(r)
+
+	r.POST(handler.Subscribe, middleware.Auth(h.subscribe))
+	r.POST(handler.Unsubscribe, middleware.Auth(h.unsubscribe))
+	r.GET(handler.CheckSubscriber, middleware.Auth(h.checkSubscriber))
 }
 
 func newHandler(subscribersSvc *subscribers.Service) *Handler {
@@ -39,93 +42,78 @@ func newHandler(subscribersSvc *subscribers.Service) *Handler {
 	}
 }
 
-func (h *Handler) register(r *gin.Engine) {
-	r.POST(handler.Subscribe, middleware.Auth(h.subscribe))
-	r.POST(handler.Unsubscribe, middleware.Auth(h.unsubscribe))
-	r.GET(handler.CheckSubscriber, middleware.Auth(h.checkSubscriber))
-}
-
-func (h *Handler) subscribe(c *gin.Context) {
+func (h *Handler) subscribe(c *ginext.Context) (int, any, error) {
 	ctx := c.Request.Context()
 
 	uid, err := runtime.UserIDFromContext(ctx)
 	if err != nil {
-		ginExt.SendError(c, http.StatusUnauthorized,
-			fmt.Errorf("subscribers.delivery.handler.Handler.subscribe - get user id: %v", err))
-		return
+		return http.StatusUnauthorized, nil,
+			fmt.Errorf("subscribers.delivery.handler.Handler.subscribe: %v", err)
 	}
 
 	var data SubscribeRs
 	err = c.Bind(&data)
 	if err != nil {
-		ginExt.SendError(c, http.StatusBadRequest,
-			fmt.Errorf("subscribers.delivery.handler.Handler.subscribe - check body: %v", err))
-		return
+		return http.StatusBadRequest, nil,
+			fmt.Errorf("subscribers.delivery.handler.Handler.subscribe: %v", err)
 	}
 
 	err = h.subscribersSvc.Subscribe(ctx, uid, data.ID)
 	if err != nil {
-		ginExt.SendError(c, http.StatusBadRequest,
-			fmt.Errorf("subscribers.delivery.handler.Handler.subscribe - subscribe: %v", err))
-		return
+		return http.StatusBadRequest, nil,
+			fmt.Errorf("subscribers.delivery.handler.Handler.subscribe: %v", err)
 	}
 
-	c.JSON(http.StatusOK, gin.H{})
+	return http.StatusOK, gin.H{}, nil
 }
 
-func (h *Handler) unsubscribe(c *gin.Context) {
+func (h *Handler) unsubscribe(c *ginext.Context) (int, any, error) {
 	ctx := c.Request.Context()
 
 	uid, err := runtime.UserIDFromContext(ctx)
 	if err != nil {
-		ginExt.SendError(c, http.StatusUnauthorized,
-			fmt.Errorf("subscribers.delivery.handler.Handler.unsubscribe - get user id: %v", err))
-		return
+		return http.StatusUnauthorized, nil,
+			fmt.Errorf("subscribers.delivery.handler.Handler.unsubscribe: %v", err)
 	}
 
 	var data SubscribeRs
 	err = c.Bind(&data)
 	if err != nil {
-		ginExt.SendError(c, http.StatusBadRequest,
-			fmt.Errorf("subscribers.delivery.handler.Handler.unsubscribe - check body: %v", err))
-		return
+		return http.StatusBadRequest, nil,
+			fmt.Errorf("subscribers.delivery.handler.Handler.unsubscribe: %v", err)
 	}
 
 	err = h.subscribersSvc.Unsubscribe(ctx, uid, data.ID)
 	if err != nil {
-		ginExt.SendError(c, http.StatusBadRequest,
-			fmt.Errorf("subscribers.delivery.handler.Handler.unsubscribe - subscribe: %v", err))
-		return
+		return http.StatusBadRequest, nil,
+			fmt.Errorf("subscribers.delivery.handler.Handler.unsubscribe: %v", err)
 	}
 
-	c.JSON(http.StatusOK, gin.H{})
+	return http.StatusOK, gin.H{}, nil
 }
 
-func (h *Handler) checkSubscriber(c *gin.Context) {
+func (h *Handler) checkSubscriber(c *ginext.Context) (int, any, error) {
 	ctx := c.Request.Context()
 
 	uid, err := runtime.UserIDFromContext(ctx)
 	if err != nil {
-		ginExt.SendError(c, http.StatusUnauthorized,
-			fmt.Errorf("subscribers.delivery.handler.Handler.checkSubscriber - get user id: %v", err))
-		return
+		return http.StatusUnauthorized, nil,
+			fmt.Errorf("subscribers.delivery.handler.Handler.checkSubscriber: %v", err)
 	}
 
-	subID, err := ginExt.GetQueryUUID(c, paramsSubscriberID)
+	subID, err := c.GetQueryUUID(paramsSubscriberID)
 	if err != nil {
-		ginExt.SendError(c, http.StatusBadRequest,
-			fmt.Errorf("subscribers.delivery.handler.Handler.checkSubscriber - get query [sub_id]: %v", err))
-		return
+		return http.StatusBadRequest, nil,
+			fmt.Errorf("subscribers.delivery.handler.Handler.checkSubscriber: %v", err)
 	}
 
 	isSubscriber, err := h.subscribersSvc.Check(ctx, uid, subID)
 	if err != nil {
-		ginExt.SendError(c, http.StatusBadRequest,
-			fmt.Errorf("subscribers.delivery.handler.Handler.checkSubscriber - check: %v", err))
-		return
+		return http.StatusBadRequest, nil,
+			fmt.Errorf("subscribers.delivery.handler.Handler.checkSubscriber: %v", err)
 	}
 
-	c.JSON(http.StatusOK, gin.H{
+	return http.StatusOK, gin.H{
 		"is_subscriber": isSubscriber,
-	})
+	}, nil
 }

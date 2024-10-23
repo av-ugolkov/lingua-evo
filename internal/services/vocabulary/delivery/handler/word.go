@@ -7,7 +7,7 @@ import (
 	"time"
 	"unicode/utf8"
 
-	ginExt "github.com/av-ugolkov/lingua-evo/internal/delivery/handler/gin"
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/gin-ext"
 	msgerror "github.com/av-ugolkov/lingua-evo/internal/pkg/msg-error"
 	entityDict "github.com/av-ugolkov/lingua-evo/internal/services/dictionary"
 	entityExample "github.com/av-ugolkov/lingua-evo/internal/services/example"
@@ -59,29 +59,26 @@ type (
 	}
 )
 
-func (h *Handler) addWord(c *gin.Context) {
+func (h *Handler) addWord(c *ginext.Context) (int, any, error) {
 	ctx := c.Request.Context()
 
 	userID, err := runtime.UserIDFromContext(ctx)
 	if err != nil {
-		ginExt.SendError(c, http.StatusUnauthorized,
-			fmt.Errorf("word.delivery.Handler.addWord - check body: %v", err))
-		return
+		return http.StatusUnauthorized, nil,
+			fmt.Errorf("word.delivery.Handler.addWord: %v", err)
 	}
 
 	var data VocabWordRq
 	err = c.Bind(&data)
 	if err != nil {
-		ginExt.SendError(c, http.StatusInternalServerError,
-			fmt.Errorf("word.delivery.Handler.addWord - check body: %v", err))
-		return
+		return http.StatusInternalServerError, nil,
+			fmt.Errorf("word.delivery.Handler.addWord: %v", err)
 	}
 
 	if utf8.RuneCountInString(data.Description) > 100 {
-		ginExt.SendError(c, http.StatusBadRequest,
+		return http.StatusBadRequest, nil,
 			msgerror.NewError(fmt.Errorf("word.delivery.Handler.addWord - description is too long"),
-				ErrDescriptionTooLong))
-		return
+				ErrDescriptionTooLong)
 	}
 
 	translateWords := make([]entityDict.DictWord, 0, len(data.Translates))
@@ -118,12 +115,10 @@ func (h *Handler) addWord(c *gin.Context) {
 	if err != nil {
 		switch {
 		case errors.Is(err, entity.ErrDuplicate):
-			ginExt.SendError(c, http.StatusConflict,
-				msgerror.NewError(fmt.Errorf("word.delivery.Handler.addWord: %v", err), ErrWordIsExists))
-			return
+			return http.StatusConflict, nil,
+				msgerror.NewError(fmt.Errorf("word.delivery.Handler.addWord: %v", err), ErrWordIsExists)
 		default:
-			ginExt.SendError(c, http.StatusInternalServerError, fmt.Errorf("word.delivery.Handler.addWord: %v", err))
-			return
+			return http.StatusInternalServerError, nil, fmt.Errorf("word.delivery.Handler.addWord: %v", err)
 		}
 	}
 
@@ -136,24 +131,22 @@ func (h *Handler) addWord(c *gin.Context) {
 		Updated: vocabWord.UpdatedAt.UnixMilli(),
 	}
 
-	c.JSON(http.StatusCreated, wordRs)
+	return http.StatusCreated, wordRs, nil
 }
 
-func (h *Handler) updateWord(c *gin.Context) {
+func (h *Handler) updateWord(c *ginext.Context) (int, any, error) {
 	ctx := c.Request.Context()
 
 	userID, err := runtime.UserIDFromContext(ctx)
 	if err != nil {
-		ginExt.SendError(c, http.StatusUnauthorized, fmt.Errorf("word.delivery.Handler.updateWord - unauthorized: %v", err))
-		return
+		return http.StatusUnauthorized, nil, fmt.Errorf("word.delivery.Handler.updateWord: %v", err)
 	}
 
 	var data VocabWordRq
 	err = c.Bind(&data)
 	if err != nil {
-		ginExt.SendError(c, http.StatusInternalServerError,
-			fmt.Errorf("word.delivery.Handler.updateWord - check body: %v", err))
-		return
+		return http.StatusInternalServerError, nil,
+			fmt.Errorf("word.delivery.Handler.updateWord: %v", err)
 	}
 
 	translates := make([]entityDict.DictWord, 0, len(data.Translates))
@@ -188,9 +181,8 @@ func (h *Handler) updateWord(c *gin.Context) {
 		UpdatedAt:   time.Now().UTC(),
 	})
 	if err != nil {
-		ginExt.SendError(c, http.StatusInternalServerError,
-			fmt.Errorf("word.delivery.Handler.updateWord: %v", err))
-		return
+		return http.StatusInternalServerError, nil,
+			fmt.Errorf("word.delivery.Handler.updateWord: %v", err)
 	}
 
 	wordRs := &VocabWordRs{
@@ -201,51 +193,47 @@ func (h *Handler) updateWord(c *gin.Context) {
 		Updated: vocabWord.UpdatedAt.UnixMilli(),
 	}
 
-	c.JSON(http.StatusOK, wordRs)
+	return http.StatusOK, wordRs, nil
 }
 
-func (h *Handler) deleteWord(c *gin.Context) {
+func (h *Handler) deleteWord(c *ginext.Context) (int, any, error) {
 	ctx := c.Request.Context()
+
 	var data RemoveVocabWordRq
 	err := c.Bind(&data)
 	if err != nil {
-		ginExt.SendError(c, http.StatusInternalServerError,
-			fmt.Errorf("word.delivery.Handler.deleteWord - check body: %v", err))
-		return
+		return http.StatusInternalServerError, nil,
+			fmt.Errorf("word.delivery.Handler.deleteWord: %v", err)
 	}
 
 	err = h.vocabSvc.DeleteWord(ctx, data.VocabID, data.WordID)
 	if err != nil {
-		ginExt.SendError(c, http.StatusInternalServerError,
-			fmt.Errorf("word.delivery.Handler.deleteWord: %v", err))
-		return
+		return http.StatusInternalServerError, nil,
+			fmt.Errorf("word.delivery.Handler.deleteWord: %v", err)
 	}
 
-	c.JSON(http.StatusOK, gin.H{})
+	return http.StatusOK, gin.H{}, nil
 }
 
-func (h *Handler) getWord(c *gin.Context) {
+func (h *Handler) getWord(c *ginext.Context) (int, any, error) {
 	ctx := c.Request.Context()
 
-	vid, err := ginExt.GetQueryUUID(c, paramsID)
+	vid, err := c.GetQueryUUID(paramsID)
 	if err != nil {
-		ginExt.SendError(c, http.StatusInternalServerError,
-			fmt.Errorf("word.delivery.Handler.getWords - get vocab id: %w", err))
-		return
+		return http.StatusInternalServerError, nil,
+			fmt.Errorf("word.delivery.Handler.getWords: %w", err)
 	}
 
-	wordID, err := ginExt.GetQueryUUID(c, paramsWordID)
+	wordID, err := c.GetQueryUUID(paramsWordID)
 	if err != nil {
-		ginExt.SendError(c, http.StatusInternalServerError,
-			fmt.Errorf("word.delivery.Handler.getWords - get word id: %w", err))
-		return
+		return http.StatusInternalServerError, nil,
+			fmt.Errorf("word.delivery.Handler.getWords: %w", err)
 	}
 
 	vocabWord, err := h.vocabSvc.GetWord(ctx, vid, wordID)
 	if err != nil {
-		ginExt.SendError(c, http.StatusInternalServerError,
-			fmt.Errorf("word.delivery.Handler.getWords: %w", err))
-		return
+		return http.StatusInternalServerError, nil,
+			fmt.Errorf("word.delivery.Handler.getWords: %w", err)
 	}
 
 	translates := make([]string, 0, len(vocabWord.Translates))
@@ -270,26 +258,24 @@ func (h *Handler) getWord(c *gin.Context) {
 		Examples:    examples,
 	}
 
-	c.JSON(http.StatusOK, wordRs)
+	return http.StatusOK, wordRs, nil
 }
 
-func (h *Handler) getWords(c *gin.Context) {
+func (h *Handler) getWords(c *ginext.Context) (int, any, error) {
 	ctx := c.Request.Context()
 
 	uid, _ := runtime.UserIDFromContext(ctx)
 
-	vid, err := ginExt.GetQueryUUID(c, paramsID)
+	vid, err := c.GetQueryUUID(paramsID)
 	if err != nil {
-		ginExt.SendError(c, http.StatusInternalServerError,
-			fmt.Errorf("word.delivery.Handler.getWords - get vocab id: %w", err))
-		return
+		return http.StatusInternalServerError, nil,
+			fmt.Errorf("word.delivery.Handler.getWords: %w", err)
 	}
 
 	vocabWords, err := h.vocabSvc.GetWords(ctx, uid, vid)
 	if err != nil {
-		ginExt.SendError(c, http.StatusInternalServerError,
-			fmt.Errorf("word.delivery.Handler.getWords: %w", err))
-		return
+		return http.StatusInternalServerError, nil,
+			fmt.Errorf("word.delivery.Handler.getWords: %w", err)
 	}
 
 	wordsRs := make([]VocabWordRs, 0, len(vocabWords))
@@ -321,44 +307,40 @@ func (h *Handler) getWords(c *gin.Context) {
 		wordsRs = append(wordsRs, wordRs)
 	}
 
-	c.JSON(http.StatusOK, wordsRs)
+	return http.StatusOK, wordsRs, nil
 }
 
-func (h *Handler) getPronunciation(c *gin.Context) {
+func (h *Handler) getPronunciation(c *ginext.Context) (int, any, error) {
 	ctx := c.Request.Context()
 
 	uid, err := runtime.UserIDFromContext(ctx)
 	if err != nil {
-		ginExt.SendError(c, http.StatusUnauthorized,
-			fmt.Errorf("word.delivery.Handler.getPronunciation - unauthorized: %w", err))
-		return
+		return http.StatusUnauthorized, nil,
+			fmt.Errorf("word.delivery.Handler.getPronunciation: %w", err)
 	}
 
-	text, err := ginExt.GetQuery(c, paramsText)
+	text, err := c.GetQuery(paramsText)
 	if err != nil {
-		ginExt.SendError(c, http.StatusInternalServerError,
-			fmt.Errorf("word.delivery.Handler.getPronunciation - get text: %w", err))
-		return
+		return http.StatusInternalServerError, nil,
+			fmt.Errorf("word.delivery.Handler.getPronunciation: %w", err)
 	}
 
-	vid, err := ginExt.GetQueryUUID(c, paramsID)
+	vid, err := c.GetQueryUUID(paramsID)
 	if err != nil {
-		ginExt.SendError(c, http.StatusInternalServerError,
-			fmt.Errorf("word.delivery.Handler.getPronunciation - get vocab id: %w", err))
-		return
+		return http.StatusInternalServerError, nil,
+			fmt.Errorf("word.delivery.Handler.getPronunciation: %w", err)
 	}
 
 	pronunciation, err := h.vocabSvc.GetPronunciation(ctx, uid, vid, text)
 	if err != nil {
-		ginExt.SendError(c, http.StatusInternalServerError, err)
-		return
+		return http.StatusInternalServerError, nil, err
 	}
 
-	vocabWrodRs := VocabWordRs{
+	vocabWordRs := VocabWordRs{
 		Native: &VocabWord{
 			Pronunciation: pronunciation,
 		},
 	}
 
-	c.JSON(http.StatusOK, vocabWrodRs)
+	return http.StatusOK, vocabWordRs, nil
 }

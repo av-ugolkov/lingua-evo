@@ -9,24 +9,15 @@ const (
 	ErrInternal     = "Internal Server Error"
 )
 
-type Error interface {
-	Error() string
-	Msg() string
-}
-
 type ApiError struct {
 	Err error
-	msg string
+	Msg string
 }
 
-func NewError(err error, msg string) Error {
-	return &ApiError{Err: err, msg: msg}
+func NewError(err error, msg string) error {
+	return &ApiError{Err: err, Msg: msg}
 }
 
 func (e *ApiError) Error() string {
 	return e.Err.Error()
-}
-
-func (e *ApiError) Msg() string {
-	return e.msg
 }
