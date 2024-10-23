@@ -1,12 +1,14 @@
 package msgerror
 
 const (
-	ErrUnknown      = "Unknown Error"
-	ErrUnauthorized = "Unauthorized"
-	ErrForbidden    = "Forbidden"
-	ErrNotFound     = "Not Found"
-	ErrConflict     = "Conflict"
-	ErrInternal     = "Internal Server Error"
+	ErrMsgUnknown      = "You doesn't fill one or several fields."
+	ErrMsgUnauthorized = "You are not authorized."
+	ErrMsgForbidden    = "Access denied."
+	ErrMsgNotFound     = "Not found."
+	ErrMsgConflict     = "It's already exist."
+	ErrMsgInternal     = "Sorry, something went wrong."
+	ErrMsgBadRequest   = "You don't fill one or several fields."
+	ErrMsgBadEmail     = "Email format is invalid"
 )
 
 type ApiError struct {
@@ -14,7 +16,7 @@ type ApiError struct {
 	Msg string
 }
 
-func NewError(err error, msg string) error {
+func New(err error, msg string) error {
 	return &ApiError{Err: err, Msg: msg}
 }
 

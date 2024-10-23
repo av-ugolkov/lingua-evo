@@ -7,7 +7,7 @@ import (
 
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/gin-ext"
-	msgerror "github.com/av-ugolkov/lingua-evo/internal/pkg/msg-error"
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/msg-error"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/utils"
 	"github.com/av-ugolkov/lingua-evo/internal/services/support"
 
@@ -42,14 +42,14 @@ func (h *Handler) sendRequest(c *ginext.Context) (int, any, error) {
 	err := c.Bind(&data)
 	if err != nil {
 		return http.StatusBadRequest, nil,
-			msgerror.NewError(fmt.Errorf("support.delivery.Handler.sendRequest: %v", err),
-				"You doesn't fill one or several fields.")
+			msgerror.New(fmt.Errorf("support.delivery.Handler.sendRequest: %v", err),
+				msgerror.ErrMsgBadRequest)
 	}
 
 	if !utils.IsEmailValid(data.Email) {
 		return http.StatusBadRequest, nil,
-			msgerror.NewError(fmt.Errorf("support.delivery.Handler.sendRequest - email format is invalid"),
-				"Email format is invalid")
+			msgerror.New(fmt.Errorf("support.delivery.Handler.sendRequest - email format is invalid"),
+				msgerror.ErrMsgBadEmail)
 	}
 
 	if utf8.RuneCountInString(data.Name) > 100 {
@@ -58,13 +58,13 @@ func (h *Handler) sendRequest(c *ginext.Context) (int, any, error) {
 
 	if len(data.Message) == 0 {
 		return http.StatusBadRequest, nil,
-			msgerror.NewError(fmt.Errorf("support.delivery.Handler.sendRequest - message is too long"),
+			msgerror.New(fmt.Errorf("support.delivery.Handler.sendRequest - message is too long"),
 				"Message is empty")
 	}
 
 	if utf8.RuneCountInString(data.Message) > 500 {
 		return http.StatusBadRequest, nil,
-			msgerror.NewError(fmt.Errorf("support.delivery.Handler.sendRequest - message is too long"),
+			msgerror.New(fmt.Errorf("support.delivery.Handler.sendRequest - message is too long"),
 				"Message is too long")
 	}
 
@@ -76,7 +76,7 @@ func (h *Handler) sendRequest(c *ginext.Context) (int, any, error) {
 	})
 	if err != nil {
 		return http.StatusBadRequest, nil,
-			msgerror.NewError(fmt.Errorf("support.delivery.Handler.sendRequest - check body: %w", err),
+			msgerror.New(fmt.Errorf("support.delivery.Handler.sendRequest - check body: %w", err),
 				"Something went wrong. Try a bit later!")
 	}
 

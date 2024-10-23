@@ -8,7 +8,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/gin-ext"
-	msgerror "github.com/av-ugolkov/lingua-evo/internal/pkg/msg-error"
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/msg-error"
 	entityDict "github.com/av-ugolkov/lingua-evo/internal/services/dictionary"
 	entityExample "github.com/av-ugolkov/lingua-evo/internal/services/example"
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary"
@@ -77,7 +77,7 @@ func (h *Handler) addWord(c *ginext.Context) (int, any, error) {
 
 	if utf8.RuneCountInString(data.Description) > 100 {
 		return http.StatusBadRequest, nil,
-			msgerror.NewError(fmt.Errorf("word.delivery.Handler.addWord - description is too long"),
+			msgerror.New(fmt.Errorf("word.delivery.Handler.addWord - description is too long"),
 				ErrDescriptionTooLong)
 	}
 
@@ -116,7 +116,7 @@ func (h *Handler) addWord(c *ginext.Context) (int, any, error) {
 		switch {
 		case errors.Is(err, entity.ErrDuplicate):
 			return http.StatusConflict, nil,
-				msgerror.NewError(fmt.Errorf("word.delivery.Handler.addWord: %v", err), ErrWordIsExists)
+				msgerror.New(fmt.Errorf("word.delivery.Handler.addWord: %v", err), ErrWordIsExists)
 		default:
 			return http.StatusInternalServerError, nil, fmt.Errorf("word.delivery.Handler.addWord: %v", err)
 		}

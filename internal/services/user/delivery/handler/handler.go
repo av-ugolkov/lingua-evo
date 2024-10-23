@@ -8,6 +8,7 @@ import (
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler/middleware"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/gin-ext"
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/msg-error"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/utils"
 	"github.com/av-ugolkov/lingua-evo/internal/services/user"
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/user"
@@ -73,22 +74,28 @@ func (h *Handler) signUp(c *ginext.Context) (int, any, error) {
 	err := c.Bind(&data)
 	if err != nil {
 		return http.StatusBadRequest, nil,
-			fmt.Errorf("user.delivery.Handler.createAccount - check body: %v", err)
+			msgerror.New(
+				fmt.Errorf("user.delivery.Handler.createAccount: %v", err),
+				msgerror.ErrMsgBadRequest)
+
 	}
 
 	if !utils.IsUsernameValid(data.Username) {
 		return http.StatusBadRequest, nil,
-			fmt.Errorf("user.delivery.Handler.createAccount - invalid user name")
+			msgerror.New(fmt.Errorf("user.delivery.Handler.createAccount - invalid user name"),
+				"Invalid user name")
 	}
 
 	if !utils.IsPasswordValid(data.Password) {
 		return http.StatusBadRequest, nil,
-			fmt.Errorf("user.delivery.Handler.createAccount - invalid password")
+			msgerror.New(fmt.Errorf("user.delivery.Handler.createAccount - invalid password"),
+				"Invalid password")
 	}
 
 	if !utils.IsEmailValid(data.Email) {
 		return http.StatusBadRequest, nil,
-			fmt.Errorf("user.delivery.Handler.createAccount - invalid email")
+			msgerror.New(fmt.Errorf("user.delivery.Handler.createAccount - invalid email"),
+				msgerror.ErrMsgBadEmail)
 	}
 
 	uid, err := h.userSvc.SignUp(c.Request.Context(), entity.UserCreate{

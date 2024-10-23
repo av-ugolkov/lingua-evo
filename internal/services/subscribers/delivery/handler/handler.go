@@ -7,6 +7,7 @@ import (
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler/middleware"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/gin-ext"
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/msg-error"
 	"github.com/av-ugolkov/lingua-evo/internal/services/subscribers"
 	"github.com/av-ugolkov/lingua-evo/runtime"
 
@@ -55,13 +56,15 @@ func (h *Handler) subscribe(c *ginext.Context) (int, any, error) {
 	err = c.Bind(&data)
 	if err != nil {
 		return http.StatusBadRequest, nil,
-			fmt.Errorf("subscribers.delivery.handler.Handler.subscribe: %v", err)
+			msgerror.New(fmt.Errorf("subscribers.delivery.handler.Handler.subscribe: %v", err),
+				msgerror.ErrMsgInternal)
 	}
 
 	err = h.subscribersSvc.Subscribe(ctx, uid, data.ID)
 	if err != nil {
 		return http.StatusBadRequest, nil,
-			fmt.Errorf("subscribers.delivery.handler.Handler.subscribe: %v", err)
+			msgerror.New(fmt.Errorf("subscribers.delivery.handler.Handler.subscribe: %v", err),
+				msgerror.ErrMsgInternal)
 	}
 
 	return http.StatusOK, gin.H{}, nil
@@ -73,20 +76,23 @@ func (h *Handler) unsubscribe(c *ginext.Context) (int, any, error) {
 	uid, err := runtime.UserIDFromContext(ctx)
 	if err != nil {
 		return http.StatusUnauthorized, nil,
-			fmt.Errorf("subscribers.delivery.handler.Handler.unsubscribe: %v", err)
+			msgerror.New(fmt.Errorf("subscribers.delivery.handler.Handler.unsubscribe: %v", err),
+				msgerror.ErrMsgUnauthorized)
 	}
 
 	var data SubscribeRs
 	err = c.Bind(&data)
 	if err != nil {
 		return http.StatusBadRequest, nil,
-			fmt.Errorf("subscribers.delivery.handler.Handler.unsubscribe: %v", err)
+			msgerror.New(fmt.Errorf("subscribers.delivery.handler.Handler.unsubscribe: %v", err),
+				msgerror.ErrMsgInternal)
 	}
 
 	err = h.subscribersSvc.Unsubscribe(ctx, uid, data.ID)
 	if err != nil {
 		return http.StatusBadRequest, nil,
-			fmt.Errorf("subscribers.delivery.handler.Handler.unsubscribe: %v", err)
+			msgerror.New(fmt.Errorf("subscribers.delivery.handler.Handler.unsubscribe: %v", err),
+				msgerror.ErrMsgInternal)
 	}
 
 	return http.StatusOK, gin.H{}, nil

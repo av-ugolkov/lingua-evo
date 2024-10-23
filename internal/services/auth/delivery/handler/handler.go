@@ -11,6 +11,8 @@ import (
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler/middleware"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/gin-ext"
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/msg-error"
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/utils"
 	"github.com/av-ugolkov/lingua-evo/internal/services/auth"
 	"github.com/av-ugolkov/lingua-evo/runtime"
 
@@ -163,12 +165,22 @@ func (h *Handler) sendCode(c *ginext.Context) (int, any, error) {
 	var data CreateCodeRq
 	err := c.Bind(&data)
 	if err != nil {
-		return http.StatusBadRequest, nil, fmt.Errorf("auth.delivery.handler.Handler.sendCode: %v", err)
+		return http.StatusBadRequest, nil,
+			msgerror.New(fmt.Errorf("auth.delivery.handler.Handler.sendCode: %v", err),
+				msgerror.ErrMsgBadRequest)
+	}
+
+	if !utils.IsEmailValid(data.Email) {
+		return http.StatusBadRequest, nil,
+			msgerror.New(fmt.Errorf("auth.delivery.handler.Handler.sendCode - email format is invalid"),
+				msgerror.ErrMsgBadEmail)
 	}
 
 	err = h.authSvc.CreateCode(ctx, data.Email)
 	if err != nil {
-		return http.StatusInternalServerError, nil, fmt.Errorf("auth.delivery.Handler.sendCode: %v", err)
+		return http.StatusInternalServerError, nil,
+			msgerror.New(fmt.Errorf("auth.delivery.Handler.sendCode: %v", err),
+				msgerror.ErrMsgInternal)
 	}
 
 	return http.StatusOK, gin.H{}, nil

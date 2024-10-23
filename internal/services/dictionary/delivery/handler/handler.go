@@ -8,6 +8,7 @@ import (
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler/middleware"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/gin-ext"
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/msg-error"
 	dictionarySvc "github.com/av-ugolkov/lingua-evo/internal/services/dictionary"
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/dictionary"
 	"github.com/av-ugolkov/lingua-evo/runtime"
@@ -66,7 +67,8 @@ func (h *Handler) addWord(c *ginext.Context) (int, any, error) {
 	var data WordRq
 	if err := c.Bind(&data); err != nil {
 		return http.StatusBadRequest, nil,
-			fmt.Errorf("dictionary.delivery.Handler.addWord - check body: %v", err)
+			msgerror.New(fmt.Errorf("dictionary.delivery.Handler.addWord: %v", err),
+				msgerror.ErrMsgBadRequest)
 	}
 
 	words, err := h.dictSvc.GetOrAddWords(ctx, []entity.DictWord{
@@ -80,7 +82,8 @@ func (h *Handler) addWord(c *ginext.Context) (int, any, error) {
 	})
 	if err != nil {
 		return http.StatusInternalServerError, nil,
-			fmt.Errorf("dictionary.delivery.Handler.addWord: %v", err)
+			msgerror.New(fmt.Errorf("dictionary.delivery.Handler.addWord: %v", err),
+				msgerror.ErrMsgInternal)
 	}
 
 	wordRs := &WordRs{

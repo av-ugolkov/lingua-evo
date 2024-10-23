@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	msgerror "github.com/av-ugolkov/lingua-evo/internal/pkg/msg-error"
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/msg-error"
 	entityDict "github.com/av-ugolkov/lingua-evo/internal/services/dictionary"
 	entityExample "github.com/av-ugolkov/lingua-evo/internal/services/example"
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary"
@@ -45,21 +45,21 @@ type (
 func (s *Service) AddWord(ctx context.Context, uid uuid.UUID, vocabWordData entity.VocabWordData) (entity.VocabWord, error) {
 	userCountWord, err := s.userSvc.UserCountWord(ctx, uid)
 	if err != nil {
-		return entity.VocabWord{}, msgerror.NewError(fmt.Errorf("word.Service.AddWord - get count words: %w", err), msgerror.ErrInternal)
+		return entity.VocabWord{}, msgerror.New(fmt.Errorf("word.Service.AddWord - get count words: %w", err), msgerror.ErrMsgInternal)
 	}
 
 	count, err := s.repoVocab.GetCountWords(ctx, uid)
 	if err != nil {
-		return entity.VocabWord{}, msgerror.NewError(fmt.Errorf("word.Service.AddWord - get count words: %v", err), msgerror.ErrInternal)
+		return entity.VocabWord{}, msgerror.New(fmt.Errorf("word.Service.AddWord - get count words: %v", err), msgerror.ErrMsgInternal)
 	}
 
 	if count >= userCountWord {
-		return entity.VocabWord{}, msgerror.NewError(fmt.Errorf("word.Service.AddWord: %v", entity.ErrUserWordLimit), "You reached word limit")
+		return entity.VocabWord{}, msgerror.New(fmt.Errorf("word.Service.AddWord: %v", entity.ErrUserWordLimit), "You reached word limit")
 	}
 
 	vocab, err := s.GetVocabulary(ctx, uid, vocabWordData.VocabID)
 	if err != nil {
-		return entity.VocabWord{}, msgerror.NewError(fmt.Errorf("word.Service.AddWord - get dictionary: %v", err), msgerror.ErrInternal)
+		return entity.VocabWord{}, msgerror.New(fmt.Errorf("word.Service.AddWord - get dictionary: %v", err), msgerror.ErrMsgInternal)
 	}
 
 	vocabWordData.Native.LangCode = vocab.NativeLang
@@ -255,12 +255,12 @@ func (s *Service) GetPronunciation(ctx context.Context, uid, vid uuid.UUID, text
 	}
 	if len(words) == 0 {
 		return runtime.EmptyString,
-			msgerror.NewError(fmt.Errorf("word.Service.GetPronunciation - word not found"), entity.ErrWordPronunciation.Error())
+			msgerror.New(fmt.Errorf("word.Service.GetPronunciation - word not found"), entity.ErrWordPronunciation.Error())
 	}
 	word := words[0]
 	if word.Pronunciation == runtime.EmptyString {
 		return runtime.EmptyString,
-			msgerror.NewError(fmt.Errorf("word.Service.GetPronunciation: %w", entity.ErrWordPronunciation), entity.ErrWordPronunciation.Error())
+			msgerror.New(fmt.Errorf("word.Service.GetPronunciation: %w", entity.ErrWordPronunciation), entity.ErrWordPronunciation.Error())
 	}
 	return word.Pronunciation, nil
 }
