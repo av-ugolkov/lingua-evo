@@ -49,21 +49,21 @@ func (h *Handler) subscribe(c *ginext.Context) (int, any, error) {
 	uid, err := runtime.UserIDFromContext(ctx)
 	if err != nil {
 		return http.StatusUnauthorized, nil,
-			fmt.Errorf("subscribers.delivery.handler.Handler.subscribe: %v", err)
+			fmt.Errorf("subscribers.delivery.Handler.subscribe: %v", err)
 	}
 
 	var data SubscribeRs
 	err = c.Bind(&data)
 	if err != nil {
 		return http.StatusBadRequest, nil,
-			msgerr.New(fmt.Errorf("subscribers.delivery.handler.Handler.subscribe: %v", err),
+			msgerr.New(fmt.Errorf("subscribers.delivery.Handler.subscribe: %v", err),
 				msgerr.ErrMsgInternal)
 	}
 
 	err = h.subscribersSvc.Subscribe(ctx, uid, data.ID)
 	if err != nil {
 		return http.StatusBadRequest, nil,
-			msgerr.New(fmt.Errorf("subscribers.delivery.handler.Handler.subscribe: %v", err),
+			msgerr.New(fmt.Errorf("subscribers.delivery.Handler.subscribe: %v", err),
 				msgerr.ErrMsgInternal)
 	}
 
@@ -76,7 +76,7 @@ func (h *Handler) unsubscribe(c *ginext.Context) (int, any, error) {
 	uid, err := runtime.UserIDFromContext(ctx)
 	if err != nil {
 		return http.StatusUnauthorized, nil,
-			msgerr.New(fmt.Errorf("subscribers.delivery.handler.Handler.unsubscribe: %v", err),
+			msgerr.New(fmt.Errorf("subscribers.delivery.Handler.unsubscribe: %v", err),
 				msgerr.ErrMsgUnauthorized)
 	}
 
@@ -84,14 +84,14 @@ func (h *Handler) unsubscribe(c *ginext.Context) (int, any, error) {
 	err = c.Bind(&data)
 	if err != nil {
 		return http.StatusBadRequest, nil,
-			msgerr.New(fmt.Errorf("subscribers.delivery.handler.Handler.unsubscribe: %v", err),
+			msgerr.New(fmt.Errorf("subscribers.delivery.Handler.unsubscribe: %v", err),
 				msgerr.ErrMsgInternal)
 	}
 
 	err = h.subscribersSvc.Unsubscribe(ctx, uid, data.ID)
 	if err != nil {
 		return http.StatusBadRequest, nil,
-			msgerr.New(fmt.Errorf("subscribers.delivery.handler.Handler.unsubscribe: %v", err),
+			msgerr.New(fmt.Errorf("subscribers.delivery.Handler.unsubscribe: %v", err),
 				msgerr.ErrMsgInternal)
 	}
 
@@ -104,19 +104,19 @@ func (h *Handler) checkSubscriber(c *ginext.Context) (int, any, error) {
 	uid, err := runtime.UserIDFromContext(ctx)
 	if err != nil {
 		return http.StatusUnauthorized, nil,
-			fmt.Errorf("subscribers.delivery.handler.Handler.checkSubscriber: %v", err)
+			fmt.Errorf("subscribers.delivery.Handler.checkSubscriber: %v", err)
 	}
 
 	subID, err := c.GetQueryUUID(paramsSubscriberID)
 	if err != nil {
 		return http.StatusBadRequest, nil,
-			fmt.Errorf("subscribers.delivery.handler.Handler.checkSubscriber: %v", err)
+			fmt.Errorf("subscribers.delivery.Handler.checkSubscriber: %v", err)
 	}
 
 	isSubscriber, err := h.subscribersSvc.Check(ctx, uid, subID)
 	if err != nil {
 		return http.StatusBadRequest, nil,
-			fmt.Errorf("subscribers.delivery.handler.Handler.checkSubscriber: %v", err)
+			fmt.Errorf("subscribers.delivery.Handler.checkSubscriber: %v", err)
 	}
 
 	return http.StatusOK, gin.H{

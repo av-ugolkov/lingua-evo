@@ -42,4 +42,7 @@ const (
 	NotificationVocab = "/notifications/vocabulary"
 
 	SupportRequest = "/support/request"
+
+	Events      = "/events"
+	CountEvents = "/events/count"
 )

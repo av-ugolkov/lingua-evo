@@ -35,6 +35,9 @@ import (
 	dictHandler "github.com/av-ugolkov/lingua-evo/internal/services/dictionary/delivery/handler"
 	dictRepository "github.com/av-ugolkov/lingua-evo/internal/services/dictionary/delivery/repository"
 	emailService "github.com/av-ugolkov/lingua-evo/internal/services/email"
+	eventsHandler "github.com/av-ugolkov/lingua-evo/internal/services/events/delivery/handler"
+	eventRepository "github.com/av-ugolkov/lingua-evo/internal/services/events/delivery/repository"
+	eventService "github.com/av-ugolkov/lingua-evo/internal/services/events/service"
 	exampleService "github.com/av-ugolkov/lingua-evo/internal/services/example"
 	exampleRepository "github.com/av-ugolkov/lingua-evo/internal/services/example/delivery/repository"
 	langService "github.com/av-ugolkov/lingua-evo/internal/services/language"
@@ -171,6 +174,10 @@ func initServer(cfg *config.Config, r *ginext.Engine, pgxPool *pgxpool.Pool, red
 	tr := transactor.NewTransactor(pgxPool)
 	slog.Info("create services")
 	emailSvc := emailService.NewService(cfg.Email)
+	notificationRepo := notificationRepository.NewRepo(tr)
+	notificationSvc := notificationService.NewService(notificationRepo)
+	eventRepo := eventRepository.NewRepo(tr)
+	eventSvc := eventService.NewService(tr, eventRepo, notificationSvc)
 	userRepo := userRepository.NewRepo(tr)
 	userSvc := userService.NewService(userRepo, redis, tr)
 	accessRepo := accessRepository.NewRepo(tr)
@@ -189,9 +196,9 @@ func initServer(cfg *config.Config, r *ginext.Engine, pgxPool *pgxpool.Pool, red
 	vocabSvc := vocabService.NewService(tr, vocabRepo, userSvc, exampleSvc, dictSvc, tagSvc, subscribersSvc)
 	authRepo := authRepository.NewRepo(redis)
 	authSvc := authService.NewService(authRepo, userSvc, emailSvc)
-	notificationRepo := notificationRepository.NewRepo(tr)
-	notificationSvc := notificationService.NewService(notificationRepo)
 	supportSvc := supportService.NewService(emailSvc)
+
+	slog.Error(fmt.Sprintf("%v", eventSvc))
 
 	slog.Info("create handlers")
 	userHandler.Create(r, userSvc)
@@ -204,6 +211,7 @@ func initServer(cfg *config.Config, r *ginext.Engine, pgxPool *pgxpool.Pool, red
 	subscribersHandler.Create(r, subscribersSvc)
 	notificationHandler.Create(r, notificationSvc)
 	supportHandler.Create(r, supportSvc)
+	eventsHandler.Create(r, eventSvc)
 
 	slog.Info("end init services")
 }

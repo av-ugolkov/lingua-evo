@@ -166,13 +166,13 @@ func (h *Handler) sendCode(c *ginext.Context) (int, any, error) {
 	err := c.Bind(&data)
 	if err != nil {
 		return http.StatusBadRequest, nil,
-			msgerr.New(fmt.Errorf("auth.delivery.handler.Handler.sendCode: %v", err),
+			msgerr.New(fmt.Errorf("auth.delivery.Handler.sendCode: %v", err),
 				msgerr.ErrMsgBadRequest)
 	}
 
 	if !utils.IsEmailValid(data.Email) {
 		return http.StatusBadRequest, nil,
-			msgerr.New(fmt.Errorf("auth.delivery.handler.Handler.sendCode - email format is invalid"),
+			msgerr.New(fmt.Errorf("auth.delivery.Handler.sendCode - email format is invalid"),
 				msgerr.ErrMsgBadEmail)
 	}
 

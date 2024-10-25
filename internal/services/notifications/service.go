@@ -14,6 +14,7 @@ type (
 		GetVocabNotification(ctx context.Context, uid, vid uuid.UUID) (bool, error)
 		SetVocabNotification(ctx context.Context, uid, vid uuid.UUID) error
 		DeleteVocabNotification(ctx context.Context, uid, vid uuid.UUID) error
+		GetVocabNotifications(ctx context.Context, uid uuid.UUID) ([]uuid.UUID, error)
 	}
 )
 
@@ -53,4 +54,19 @@ func (s *Service) SetVocabNotification(ctx context.Context, uid, vid uuid.UUID) 
 		return false, fmt.Errorf("notifications.Service.SetVocabNotifications: %w", err)
 	}
 	return true, nil
+}
+
+func (s *Service) GetVocabNotifications(ctx context.Context, uid uuid.UUID) (_ []uuid.UUID, err error) {
+	defer func() {
+		if err != nil {
+			err = fmt.Errorf("notifications.Service.GetVocabNotifications: %w", err)
+		}
+	}()
+
+	vocabNotifications, err := s.repo.GetVocabNotifications(ctx, uid)
+	if err != nil {
+		return nil, err
+	}
+
+	return vocabNotifications, nil
 }

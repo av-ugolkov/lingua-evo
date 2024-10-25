@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS
 CREATE INDEX IF NOT EXISTS "idx_hash_event__id" ON "event" USING HASH ("id");
 
 CREATE TABLE IF NOT EXISTS
-    "event_vocab" ("vocab_id" uuid NOT NULL REFERENCES "users" ("id") ON DELETE CASCADE) INHERITS ("event");
+    "event_vocab" ("vocab_id" uuid NOT NULL REFERENCES "vocabulary" ("id") ON DELETE CASCADE) INHERITS ("event");
 
 CREATE INDEX IF NOT EXISTS "idx_hash_dictionary__word_id" ON "dictionary" USING HASH ("id");
 
