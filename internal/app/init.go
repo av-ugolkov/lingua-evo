@@ -198,8 +198,6 @@ func initServer(cfg *config.Config, r *ginext.Engine, pgxPool *pgxpool.Pool, red
 	authSvc := authService.NewService(authRepo, userSvc, emailSvc)
 	supportSvc := supportService.NewService(emailSvc)
 
-	slog.Error(fmt.Sprintf("%v", eventSvc))
-
 	slog.Info("create handlers")
 	userHandler.Create(r, userSvc)
 	languageHandler.Create(r, langSvc)
