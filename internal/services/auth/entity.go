@@ -10,6 +10,13 @@ import (
 	jsoniter "github.com/json-iterator/go"
 )
 
+var (
+	ErrEmailNotCorrect = errors.New("email is not correct")
+	ErrWrongPassword   = errors.New("wrong password")
+	ErrItIsAdmin       = errors.New("it is admin")
+	ErrEmailBusy       = errors.New("this email is busy")
+)
+
 type (
 	Session struct {
 		UserID      uuid.UUID `json:"user_id"`
@@ -36,12 +43,6 @@ type (
 		UserID    uuid.UUID
 		ExpiresAt time.Time
 	}
-)
-
-var (
-	ErrEmailNotCorrect = errors.New("email is not correct")
-	ErrItIsAdmin       = errors.New("it is admin")
-	ErrEmailBusy       = errors.New("this email is busy")
 )
 
 func (s *Session) MarshalBinary() ([]byte, error) {

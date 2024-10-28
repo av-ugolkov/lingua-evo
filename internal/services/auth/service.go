@@ -11,6 +11,7 @@ import (
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/token"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/utils"
 	entityUser "github.com/av-ugolkov/lingua-evo/internal/services/user"
+
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )
@@ -56,10 +57,10 @@ func NewService(repo sessionRepo, userSvc userSvc, email emailSvc) *Service {
 func (s *Service) SignIn(ctx context.Context, user, password, fingerprint string, refreshTokenID uuid.UUID) (*Tokens, error) {
 	u, err := s.userSvc.GetUser(ctx, user)
 	if err != nil {
-		return nil, fmt.Errorf("auth.Service.SignIn: %v", err)
+		return nil, fmt.Errorf("auth.Service.SignIn: %w", err)
 	}
 	if err := utils.CheckPasswordHash(password, u.PasswordHash); err != nil {
-		return nil, fmt.Errorf("auth.Service.SignIn: %v", err)
+		return nil, fmt.Errorf("auth.Service.SignIn - [%w]: %v", ErrWrongPassword, err)
 	}
 
 	err = s.userSvc.UpdateLastVisited(ctx, u.ID)

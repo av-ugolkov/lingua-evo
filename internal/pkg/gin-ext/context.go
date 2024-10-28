@@ -22,8 +22,6 @@ const (
 )
 
 var (
-	e = msgerr.ApiError{}
-
 	errNotFound = errors.New("not found query param")
 )
 
@@ -106,8 +104,9 @@ func (c *Context) GetHeaderAuthorization(typeAuth string) (string, error) {
 
 func (c *Context) SendError(httpStatus int, err error) {
 	slog.Error(err.Error())
+	var e *msgerr.ApiError
 	switch {
-	case errors.Is(err, &e):
+	case errors.As(err, &e):
 		c.Context.JSON(httpStatus, e.Msg)
 	default:
 		c.Context.JSON(httpStatus, err.Error())
