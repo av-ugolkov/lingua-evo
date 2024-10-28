@@ -44,7 +44,7 @@ func TestService_UserGetVocabularies(t *testing.T) {
 	}
 	tagSvc := tag.NewService(repository.NewRepo(tr))
 
-	vocabSvc := NewService(tr, vocabRepo, userSvc, nil, nil, tagSvc, subscribersSvc)
+	vocabSvc := NewService(tr, vocabRepo, userSvc, nil, nil, tagSvc, subscribersSvc, nil)
 
 	t.Run("empty vocab", func(t *testing.T) {
 		var (

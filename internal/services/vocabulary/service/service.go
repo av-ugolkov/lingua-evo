@@ -57,6 +57,7 @@ type Service struct {
 	dictSvc        dictSvc
 	tagSvc         tagSvc
 	subscribersSvc subscribersSvc
+	eventsSvc      eventsSvc
 }
 
 func NewService(
@@ -67,6 +68,7 @@ func NewService(
 	dictSvc dictSvc,
 	tagSvc tagSvc,
 	subscribersSvc subscribersSvc,
+	eventsSvc eventsSvc,
 ) *Service {
 	return &Service{
 		tr:             tr,
@@ -76,6 +78,7 @@ func NewService(
 		dictSvc:        dictSvc,
 		tagSvc:         tagSvc,
 		subscribersSvc: subscribersSvc,
+		eventsSvc:      eventsSvc,
 	}
 }
 

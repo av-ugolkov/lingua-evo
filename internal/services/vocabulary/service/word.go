@@ -4,9 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/msg-error"
 	entityDict "github.com/av-ugolkov/lingua-evo/internal/services/dictionary"
+	entityEvents "github.com/av-ugolkov/lingua-evo/internal/services/events"
 	entityExample "github.com/av-ugolkov/lingua-evo/internal/services/example"
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary"
 	"github.com/av-ugolkov/lingua-evo/runtime"
@@ -40,17 +42,21 @@ type (
 		GetWordsByID(ctx context.Context, wordIDs []uuid.UUID) ([]entityDict.DictWord, error)
 		GetWordsByText(ctx context.Context, words []entityDict.DictWord) ([]entityDict.DictWord, error)
 	}
+
+	eventsSvc interface {
+		AddEvent(ctx context.Context, uid uuid.UUID, payload entityEvents.Payload) error
+	}
 )
 
 func (s *Service) AddWord(ctx context.Context, uid uuid.UUID, vocabWordData entity.VocabWordData) (entity.VocabWord, error) {
 	userCountWord, err := s.userSvc.UserCountWord(ctx, uid)
 	if err != nil {
-		return entity.VocabWord{}, msgerr.New(fmt.Errorf("word.Service.AddWord - get count words: %w", err), msgerr.ErrMsgInternal)
+		return entity.VocabWord{}, msgerr.New(fmt.Errorf("word.Service.AddWord: %w", err), msgerr.ErrMsgInternal)
 	}
 
 	count, err := s.repoVocab.GetCountWords(ctx, uid)
 	if err != nil {
-		return entity.VocabWord{}, msgerr.New(fmt.Errorf("word.Service.AddWord - get count words: %v", err), msgerr.ErrMsgInternal)
+		return entity.VocabWord{}, msgerr.New(fmt.Errorf("word.Service.AddWord: %v", err), msgerr.ErrMsgInternal)
 	}
 
 	if count >= userCountWord {
@@ -59,7 +65,7 @@ func (s *Service) AddWord(ctx context.Context, uid uuid.UUID, vocabWordData enti
 
 	vocab, err := s.GetVocabulary(ctx, uid, vocabWordData.VocabID)
 	if err != nil {
-		return entity.VocabWord{}, msgerr.New(fmt.Errorf("word.Service.AddWord - get dictionary: %v", err), msgerr.ErrMsgInternal)
+		return entity.VocabWord{}, msgerr.New(fmt.Errorf("word.Service.AddWord: %v", err), msgerr.ErrMsgInternal)
 	}
 
 	vocabWordData.Native.LangCode = vocab.NativeLang
@@ -116,10 +122,20 @@ func (s *Service) AddWord(ctx context.Context, uid uuid.UUID, vocabWordData enti
 
 	vocabularyWord := entity.VocabWord{
 		ID:        vocabWordData.ID,
+		VocabID:   vocabWordData.VocabID,
 		NativeID:  nativeWordID,
 		CreatedAt: vocabWordData.CreatedAt,
 		UpdatedAt: vocabWordData.UpdatedAt,
 	}
+
+	go func() {
+		if err := s.eventsSvc.AddEvent(context.Background(), uid, entityEvents.Payload{
+			Type: entityEvents.VocabWordCreated,
+			Data: vocabularyWord,
+		}); err != nil {
+			slog.Error(fmt.Sprintf("word.Service.AddWord: %v", err))
+		}
+	}()
 
 	return vocabularyWord, nil
 }

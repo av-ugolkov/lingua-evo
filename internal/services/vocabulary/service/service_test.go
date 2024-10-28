@@ -50,7 +50,7 @@ func TestService_GetVocabularies(t *testing.T) {
 	langSvc := language.NewService(repository.NewRepo(tr))
 	dictSvc := entityDict.NewService(dictRepo.NewRepo(tr), langSvc)
 	exampleSvc := example.NewService(exampleRepo.NewRepo(tr))
-	vocabSvc := NewService(tr, vocabRepo, userSvc, exampleSvc, dictSvc, tagSvc, nil)
+	vocabSvc := NewService(tr, vocabRepo, userSvc, exampleSvc, dictSvc, tagSvc, nil, nil)
 
 	t.Run("empty vocab", func(t *testing.T) {
 		var (
