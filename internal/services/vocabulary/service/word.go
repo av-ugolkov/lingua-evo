@@ -44,7 +44,7 @@ type (
 	}
 
 	eventsSvc interface {
-		AddEvent(ctx context.Context, uid uuid.UUID, payload entityEvents.Payload) error
+		AsyncAddEvent(uid uuid.UUID, payload entityEvents.Payload) error
 	}
 )
 
@@ -129,7 +129,7 @@ func (s *Service) AddWord(ctx context.Context, uid uuid.UUID, vocabWordData enti
 	}
 
 	go func() {
-		if err := s.eventsSvc.AddEvent(context.Background(), uid, entityEvents.Payload{
+		if err := s.eventsSvc.AsyncAddEvent(uid, entityEvents.Payload{
 			Type: entityEvents.VocabWordCreated,
 			Data: vocabularyWord,
 		}); err != nil {

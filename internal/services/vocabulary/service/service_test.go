@@ -24,6 +24,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestService_GetVocabularies(t *testing.T) {
@@ -50,7 +51,9 @@ func TestService_GetVocabularies(t *testing.T) {
 	langSvc := language.NewService(repository.NewRepo(tr))
 	dictSvc := entityDict.NewService(dictRepo.NewRepo(tr), langSvc)
 	exampleSvc := example.NewService(exampleRepo.NewRepo(tr))
-	vocabSvc := NewService(tr, vocabRepo, userSvc, exampleSvc, dictSvc, tagSvc, nil, nil)
+	mockEventsSvc := new(mockEventsSvc)
+	mockEventsSvc.On("AsyncAddEvent", mock.Anything, mock.Anything).Return(nil)
+	vocabSvc := NewService(tr, vocabRepo, userSvc, exampleSvc, dictSvc, tagSvc, nil, mockEventsSvc)
 
 	t.Run("empty vocab", func(t *testing.T) {
 		var (

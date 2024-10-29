@@ -1,19 +1,21 @@
-package events
+package service
 
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/av-ugolkov/lingua-evo/internal/db/transactor"
+	entity "github.com/av-ugolkov/lingua-evo/internal/services/events"
 
 	"github.com/google/uuid"
 )
 
 type (
-	repoEvent interface {
+	repoEvents interface {
 		GetCountVocabEvents(ctx context.Context, subscriberIDs []uuid.UUID) (int, error)
-		GetVocabEvents(ctx context.Context, subscriberIDs []uuid.UUID) ([]Event, error)
-		AddEvent(ctx context.Context, uid uuid.UUID, payload Payload) error
+		GetVocabEvents(ctx context.Context, subscriberIDs []uuid.UUID) ([]entity.Event, error)
+		AddEvent(ctx context.Context, uid uuid.UUID, payload entity.Payload) error
 	}
 
 	notificationsSvc interface {
@@ -25,18 +27,18 @@ type (
 
 type Service struct {
 	tr               *transactor.Transactor
-	repoEvent        repoEvent
+	repoEvents       repoEvents
 	notificationsSvc notificationsSvc
 }
 
 func NewService(
 	tr *transactor.Transactor,
-	repoEvent repoEvent,
+	repoEvents repoEvents,
 	notificationsSvc notificationsSvc,
 ) *Service {
 	return &Service{
 		tr:               tr,
-		repoEvent:        repoEvent,
+		repoEvents:       repoEvents,
 		notificationsSvc: notificationsSvc,
 	}
 }
@@ -57,7 +59,7 @@ func (s *Service) GetCountEvents(ctx context.Context, uid uuid.UUID) (_ int, err
 		return 0, nil
 	}
 
-	count, err := s.repoEvent.GetCountVocabEvents(ctx, vocabIDs)
+	count, err := s.repoEvents.GetCountVocabEvents(ctx, vocabIDs)
 	if err != nil {
 		return count, err
 	}
@@ -65,7 +67,7 @@ func (s *Service) GetCountEvents(ctx context.Context, uid uuid.UUID) (_ int, err
 	return count, nil
 }
 
-func (s *Service) GetEvents(ctx context.Context, uid uuid.UUID) (_ []Event, err error) {
+func (s *Service) GetEvents(ctx context.Context, uid uuid.UUID) (_ []entity.Event, err error) {
 	defer func() {
 		if err != nil {
 			err = fmt.Errorf("events.Service.GetEvents: %w", err)
@@ -77,7 +79,7 @@ func (s *Service) GetEvents(ctx context.Context, uid uuid.UUID) (_ []Event, err 
 		return nil, err
 	}
 
-	events, err := s.repoEvent.GetVocabEvents(ctx, vocabIDs)
+	events, err := s.repoEvents.GetVocabEvents(ctx, vocabIDs)
 	if err != nil {
 		return nil, err
 	}
@@ -85,12 +87,19 @@ func (s *Service) GetEvents(ctx context.Context, uid uuid.UUID) (_ []Event, err 
 	return events, nil
 }
 
-func (s *Service) AddEvent(ctx context.Context, uid uuid.UUID, payload Payload) error {
-	err := s.repoEvent.AddEvent(ctx, uid, payload)
+func (s *Service) AddEvent(ctx context.Context, uid uuid.UUID, payload entity.Payload) error {
+	err := s.repoEvents.AddEvent(ctx, uid, payload)
 	if err != nil {
 		return fmt.Errorf("events.Service.AddEvent: %w", err)
 	}
 	return nil
+}
+
+func (s *Service) AsyncAddEvent(uid uuid.UUID, payload entity.Payload) error {
+	timeoutCtx, cancelFn := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancelFn()
+
+	return s.AddEvent(timeoutCtx, uid, payload)
 }
 
 func (s *Service) ReadEvent(ctx context.Context, uid uuid.UUID, eventID uuid.UUID) error {

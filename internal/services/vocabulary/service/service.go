@@ -49,6 +49,8 @@ type (
 	}
 )
 
+//go:generate mockery --inpackage --outpkg vocabulary --testonly --name "repoVocab|userSvc|exampleSvc|dictSvc|tagSvc|subscribersSvc|eventsSvc"
+
 type Service struct {
 	tr             *transactor.Transactor
 	repoVocab      repoVocab

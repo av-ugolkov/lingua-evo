@@ -8,7 +8,8 @@ import (
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler/middleware"
 	ginext "github.com/av-ugolkov/lingua-evo/internal/pkg/gin-ext"
 	msgerr "github.com/av-ugolkov/lingua-evo/internal/pkg/msg-error"
-	"github.com/av-ugolkov/lingua-evo/internal/services/events"
+	entity "github.com/av-ugolkov/lingua-evo/internal/services/events"
+	"github.com/av-ugolkov/lingua-evo/internal/services/events/service"
 	"github.com/av-ugolkov/lingua-evo/runtime"
 )
 
@@ -17,15 +18,15 @@ type (
 		Count int `json:"count"`
 	}
 	EventsRs struct {
-		Events []events.Event `json:"events"`
+		Events []entity.Event `json:"events"`
 	}
 )
 
 type Handler struct {
-	eventsSvc *events.Service
+	eventsSvc *service.Service
 }
 
-func Create(r *ginext.Engine, eventsSvc *events.Service) {
+func Create(r *ginext.Engine, eventsSvc *service.Service) {
 	h := &Handler{
 		eventsSvc: eventsSvc,
 	}
