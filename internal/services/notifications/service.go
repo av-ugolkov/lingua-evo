@@ -31,7 +31,7 @@ func NewService(repo repoNotification) *Service {
 func (s *Service) GetVocabNotification(ctx context.Context, uid, vid uuid.UUID) (bool, error) {
 	ok, err := s.repo.GetVocabNotification(ctx, uid, vid)
 	if err != nil {
-		return false, fmt.Errorf("notifications.Service.GetVocabNotifications: %w", err)
+		return false, fmt.Errorf("notifications.Service.GetVocabNotification: %w", err)
 	}
 
 	return ok, nil

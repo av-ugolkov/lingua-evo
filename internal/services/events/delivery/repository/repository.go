@@ -50,7 +50,7 @@ func (r *EventRepo) GetVocabEvents(ctx context.Context, vocabIDs []uuid.UUID) ([
 	}
 
 	events := make([]entity.Event, 0, 10)
-	if rows.Next() {
+	for rows.Next() {
 		var event entity.Event
 		if err := rows.Scan(&event.ID, &event.UserID, &event.Payload, &event.CreatedAt); err != nil {
 			return nil, fmt.Errorf("events.delivery.repository.UserRepo.GetEventsVocab: %w", err)
@@ -61,14 +61,60 @@ func (r *EventRepo) GetVocabEvents(ctx context.Context, vocabIDs []uuid.UUID) ([
 	return events, nil
 }
 
-func (r *EventRepo) AddEvent(ctx context.Context, uid uuid.UUID, payload entity.Payload) error {
+func (r *EventRepo) AddEvent(ctx context.Context, uid uuid.UUID, payload entity.Payload) (uuid.UUID, error) {
 	const query = `
 		INSERT INTO events (id, user_id, payload, created_at) 
-		VALUES ($1, $2, $3, $4) ON CONFLICT (user_id, payload) DO UPDATE SET created_at = $4;`
+		VALUES ($1, $2, $3, $4) ON CONFLICT (user_id, payload) DO UPDATE SET created_at = $4 RETURNING id;`
 
-	_, err := r.tr.Exec(ctx, query, uuid.New(), uid, payload, time.Now().UTC())
+	var eid uuid.UUID
+	err := r.tr.QueryRow(ctx, query, uuid.New(), uid, payload, time.Now().UTC()).Scan(&eid)
 	if err != nil {
-		return fmt.Errorf("events.delivery.repository.UserRepo.AddEvent: %w", err)
+		return uuid.Nil, fmt.Errorf("events.delivery.repository.UserRepo.AddEvent: %w", err)
+	}
+
+	return eid, nil
+}
+
+func (r *EventRepo) ReadEvent(ctx context.Context, uid uuid.UUID, eventID uuid.UUID) (err error) {
+	defer func() {
+		if err != nil {
+			err = fmt.Errorf("events.delivery.repository.UserRepo.ReadEvent: %w", err)
+		}
+	}()
+
+	const query = `
+		INSERT INTO events_watched (event_id, user_id, created_at)
+		VALUES ($1, $2, $3)
+		ON CONFLICT (event_id, user_id) DO NOTHING;`
+
+	result, err := r.tr.Exec(ctx, query, eventID, uid, time.Now().UTC())
+	if err != nil {
+		return err
+	}
+	if result.RowsAffected() == 0 {
+		return fmt.Errorf("change 0 or more than 1 rows")
+	}
+
+	return nil
+}
+
+func (r *EventRepo) DeleteWatchedEvent(ctx context.Context, uid uuid.UUID, eventID uuid.UUID) (err error) {
+	defer func() {
+		if err != nil {
+			err = fmt.Errorf("events.delivery.repository.UserRepo.DeleteWatchedEvent: %w", err)
+		}
+	}()
+
+	const query = `
+		DELETE FROM events_watched WHERE event_id = $1 AND user_id = $2;`
+
+	result, err := r.tr.Exec(ctx, query, eventID, uid)
+	if err != nil {
+		return err
+	}
+
+	if result.RowsAffected() == 0 {
+		return fmt.Errorf("change 0 or more than 1 rows")
 	}
 
 	return nil

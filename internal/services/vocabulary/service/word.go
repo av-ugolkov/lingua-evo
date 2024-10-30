@@ -4,8 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log/slog"
-
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/msg-error"
 	entityDict "github.com/av-ugolkov/lingua-evo/internal/services/dictionary"
 	entityEvents "github.com/av-ugolkov/lingua-evo/internal/services/events"
@@ -44,7 +42,7 @@ type (
 	}
 
 	eventsSvc interface {
-		AsyncAddEvent(uid uuid.UUID, payload entityEvents.Payload) error
+		AsyncAddEvent(uid uuid.UUID, payload entityEvents.Payload)
 	}
 )
 
@@ -128,14 +126,10 @@ func (s *Service) AddWord(ctx context.Context, uid uuid.UUID, vocabWordData enti
 		UpdatedAt: vocabWordData.UpdatedAt,
 	}
 
-	go func() {
-		if err := s.eventsSvc.AsyncAddEvent(uid, entityEvents.Payload{
-			Type: entityEvents.VocabWordCreated,
-			Data: vocabularyWord,
-		}); err != nil {
-			slog.Error(fmt.Sprintf("word.Service.AddWord: %v", err))
-		}
-	}()
+	s.eventsSvc.AsyncAddEvent(uid, entityEvents.Payload{
+		Type: entityEvents.VocabWordCreated,
+		Data: vocabularyWord,
+	})
 
 	return vocabularyWord, nil
 }
@@ -189,10 +183,15 @@ func (s *Service) UpdateWord(ctx context.Context, uid uuid.UUID, vocabWordData e
 		return entity.VocabWord{}, fmt.Errorf("word.Service.UpdateWord - update vocabulary: %w", err)
 	}
 
+	s.eventsSvc.AsyncAddEvent(uid, entityEvents.Payload{
+		Type: entityEvents.VocabWordUpdated,
+		Data: vocabWord,
+	})
+
 	return vocabWord, nil
 }
 
-func (s *Service) DeleteWord(ctx context.Context, vid, wid uuid.UUID) error {
+func (s *Service) DeleteWord(ctx context.Context, uid, vid, wid uuid.UUID) error {
 	vocabWord := entity.VocabWord{
 		ID:      wid,
 		VocabID: vid,
@@ -202,6 +201,12 @@ func (s *Service) DeleteWord(ctx context.Context, vid, wid uuid.UUID) error {
 	if err != nil {
 		return fmt.Errorf("word.Service.DeleteWord - delete word: %w", err)
 	}
+
+	s.eventsSvc.AsyncAddEvent(uid, entityEvents.Payload{
+		Type: entityEvents.VocabWordDeleted,
+		Data: vocabWord,
+	})
+
 	return nil
 }
 

@@ -2,6 +2,7 @@ package handler
 
 import (
 	"fmt"
+	"github.com/gin-gonic/gin"
 	"net/http"
 
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
@@ -33,6 +34,7 @@ func Create(r *ginext.Engine, eventsSvc *service.Service) {
 
 	r.GET(handler.CountEvents, middleware.Auth(h.getCountEvents))
 	r.GET(handler.Events, middleware.Auth(h.getEvents))
+	r.POST(handler.MarkWatched, middleware.Auth(h.markEventAsWatched))
 }
 
 func (h *Handler) getCountEvents(c *ginext.Context) (int, any, error) {
@@ -73,4 +75,31 @@ func (h *Handler) getEvents(c *ginext.Context) (int, any, error) {
 	}
 
 	return http.StatusOK, EventsRs{Events: events}, nil
+}
+
+func (h *Handler) markEventAsWatched(c *ginext.Context) (int, any, error) {
+	ctx := c.Request.Context()
+
+	uid, err := runtime.UserIDFromContext(ctx)
+	if err != nil {
+		return http.StatusUnauthorized, nil,
+			msgerr.New(fmt.Errorf("events.delivery.Handler.markEventAsWatched: %w", err),
+				msgerr.ErrMsgUnauthorized)
+	}
+
+	eid, err := c.GetQueryUUID("event_id")
+	if err != nil {
+		return http.StatusBadRequest, nil,
+			msgerr.New(fmt.Errorf("events.delivery.Handler.markEventAsWatched: %w", err),
+				msgerr.ErrMsgInternal)
+	}
+
+	err = h.eventsSvc.ReadEvent(ctx, uid, eid)
+	if err != nil {
+		return http.StatusInternalServerError, nil,
+			msgerr.New(fmt.Errorf("events.delivery.Handler.markEventAsWatched: %w", err),
+				msgerr.ErrMsgInternal)
+	}
+
+	return http.StatusOK, gin.H{}, nil
 }

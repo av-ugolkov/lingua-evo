@@ -21,7 +21,7 @@ func (r *Repo) GetVocabNotification(ctx context.Context, uid, vid uuid.UUID) (bo
 
 	result, err := r.tr.Exec(ctx, query, uid, vid)
 	if err != nil {
-		return false, fmt.Errorf("notifications.delivery.repository.GetVocabNotifications: %w", err)
+		return false, fmt.Errorf("notifications.delivery.repository.GetVocabNotification: %w", err)
 	}
 
 	return result.RowsAffected() == 1, nil

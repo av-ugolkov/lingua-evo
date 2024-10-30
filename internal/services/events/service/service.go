@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/av-ugolkov/lingua-evo/internal/db/transactor"
@@ -15,7 +16,8 @@ type (
 	repoEvents interface {
 		GetCountVocabEvents(ctx context.Context, subscriberIDs []uuid.UUID) (int, error)
 		GetVocabEvents(ctx context.Context, subscriberIDs []uuid.UUID) ([]entity.Event, error)
-		AddEvent(ctx context.Context, uid uuid.UUID, payload entity.Payload) error
+		AddEvent(ctx context.Context, uid uuid.UUID, payload entity.Payload) (uuid.UUID, error)
+		ReadEvent(ctx context.Context, uid uuid.UUID, eventID uuid.UUID) error
 	}
 
 	notificationsSvc interface {
@@ -87,25 +89,31 @@ func (s *Service) GetEvents(ctx context.Context, uid uuid.UUID) (_ []entity.Even
 	return events, nil
 }
 
-func (s *Service) AddEvent(ctx context.Context, uid uuid.UUID, payload entity.Payload) error {
-	err := s.repoEvents.AddEvent(ctx, uid, payload)
+func (s *Service) AddEvent(ctx context.Context, uid uuid.UUID, payload entity.Payload) (uuid.UUID, error) {
+	eid, err := s.repoEvents.AddEvent(ctx, uid, payload)
 	if err != nil {
-		return fmt.Errorf("events.Service.AddEvent: %w", err)
+		return uuid.Nil, fmt.Errorf("events.Service.AddEvent: %w", err)
 	}
-	return nil
+	return eid, nil
 }
 
-func (s *Service) AsyncAddEvent(uid uuid.UUID, payload entity.Payload) error {
-	timeoutCtx, cancelFn := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancelFn()
+func (s *Service) AsyncAddEvent(uid uuid.UUID, payload entity.Payload) {
+	go func() {
+		timeoutCtx, cancelFn := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancelFn()
 
-	return s.AddEvent(timeoutCtx, uid, payload)
+		_, err := s.AddEvent(timeoutCtx, uid, payload)
+		if err != nil {
+			slog.Error(fmt.Sprintf("events.Service.AsyncAddEvent: %v", err))
+		}
+	}()
 }
 
 func (s *Service) ReadEvent(ctx context.Context, uid uuid.UUID, eventID uuid.UUID) error {
-	return nil
-}
+	err := s.repoEvents.ReadEvent(ctx, uid, eventID)
+	if err != nil {
+		return fmt.Errorf("events.Service.ReadEvent: %w", err)
+	}
 
-func (s *Service) UpdateEvent(ctx context.Context, uid uuid.UUID, eventID uuid.UUID) error {
 	return nil
 }

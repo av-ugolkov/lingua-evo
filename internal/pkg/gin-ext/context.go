@@ -90,13 +90,13 @@ func (c *Context) GetHeaderAuthorization(typeAuth string) (string, error) {
 		return runtime.EmptyString, fmt.Errorf("ginext.Context.GetHeaderAuthorization: not found Authorization token")
 	}
 
-	if !strings.HasPrefix(token, string(typeAuth)) {
-		return runtime.EmptyString, fmt.Errorf("ginext.Context.GetHeaderAuthorization - invalid type auth [%s]: %s", typeAuth, token)
+	if !strings.HasPrefix(token, typeAuth) {
+		return runtime.EmptyString, fmt.Errorf("ginext.Context.GetHeaderAuthorization: invalid type auth [%s] for token [%s]", typeAuth, token)
 	}
 
 	tokenData := strings.Split(token, " ")
 	if len(tokenData) != 2 {
-		return runtime.EmptyString, fmt.Errorf("ginext.Context.GetHeaderAuthorization - invalid token: %s", token)
+		return runtime.EmptyString, fmt.Errorf("ginext.Context.GetHeaderAuthorization: invalid token [%s]", token)
 	}
 
 	return tokenData[1], nil

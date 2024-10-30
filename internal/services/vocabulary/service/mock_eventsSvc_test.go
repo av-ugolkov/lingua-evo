@@ -15,17 +15,8 @@ type mockEventsSvc struct {
 }
 
 // AsyncAddEvent provides a mock function with given fields: uid, payload
-func (_m *mockEventsSvc) AsyncAddEvent(uid uuid.UUID, payload events.Payload) error {
-	ret := _m.Called(uid, payload)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(uuid.UUID, events.Payload) error); ok {
-		r0 = rf(uid, payload)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
+func (_m *mockEventsSvc) AsyncAddEvent(uid uuid.UUID, payload events.Payload) {
+	_m.Called(uid, payload)
 }
 
 // newMockEventsSvc creates a new instance of mockEventsSvc. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
