@@ -1,16 +1,26 @@
 CREATE TABLE IF NOT EXISTS
+    "events_type" ("id" serial PRIMARY KEY, "name" text UNIQUE NOT NULL);
+
+INSERT INTO
+    "events_type" ("name")
+VALUES
+    ('vocab_created'),
+    ('vocab_deleted'),
+    ('vocab_updated'),
+    ('vocab_word_created'),
+    ('vocab_word_deleted'),
+    ('vocab_word_updated');
+
+CREATE TABLE IF NOT EXISTS
     "events" (
         "id" uuid PRIMARY KEY,
         "user_id" uuid REFERENCES "users" ("id") ON DELETE CASCADE,
+        "type" bigint REFERENCES "events_type" ("id") ON DELETE CASCADE,
         "payload" jsonb NOT NULL,
         "created_at" timestamp NOT NULL
     );
 
 CREATE UNIQUE INDEX IF NOT EXISTS "idx_unique_events__user_id_payload" ON "events" ("user_id", "payload");
-
-CREATE INDEX IF NOT EXISTS "idx_hash_events__id" ON "events" USING HASH ("id");
-
-CREATE INDEX IF NOT EXISTS "idx_hash_dictionary__word_id" ON "dictionary" USING HASH ("id");
 
 CREATE TABLE IF NOT EXISTS
     "events_watched" (
@@ -19,4 +29,4 @@ CREATE TABLE IF NOT EXISTS
         "watched_at" timestamp NOT NULL
     );
 
-CREATE UNIQUE INDEX IF NOT EXISTS "idx_events_watched__event_id_user_id" ON "events_watched"("event_id","user_id")
+CREATE UNIQUE INDEX IF NOT EXISTS "idx_events_watched__event_id_user_id" ON "events_watched" ("event_id", "user_id")
