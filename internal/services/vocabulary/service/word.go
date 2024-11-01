@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/msg-error"
 	entityDict "github.com/av-ugolkov/lingua-evo/internal/services/dictionary"
 	entityEvents "github.com/av-ugolkov/lingua-evo/internal/services/events"
@@ -42,7 +43,8 @@ type (
 	}
 
 	eventsSvc interface {
-		AsyncAddEvent(uid uuid.UUID, payload entityEvents.Payload)
+		AddEvent(ctx context.Context, event entityEvents.Event) (uuid.UUID, error)
+		AsyncAddEvent(event entityEvents.Event)
 	}
 )
 
@@ -126,9 +128,15 @@ func (s *Service) AddWord(ctx context.Context, uid uuid.UUID, vocabWordData enti
 		UpdatedAt: vocabWordData.UpdatedAt,
 	}
 
-	s.eventsSvc.AsyncAddEvent(uid, entityEvents.Payload{
-		Type: entityEvents.VocabWordCreated,
-		Data: vocabularyWord,
+	s.eventsSvc.AsyncAddEvent(entityEvents.Event{
+		User: entityEvents.UserData{ID: uid},
+		Payload: entityEvents.Payload{
+			Type: entityEvents.VocabWordCreated,
+			Data: entityEvents.PayloadDataVocab{
+				DictWordID: &nativeWordID,
+				VocabID:    &vocabWordData.VocabID,
+			},
+		},
 	})
 
 	return vocabularyWord, nil
@@ -183,9 +191,15 @@ func (s *Service) UpdateWord(ctx context.Context, uid uuid.UUID, vocabWordData e
 		return entity.VocabWord{}, fmt.Errorf("word.Service.UpdateWord - update vocabulary: %w", err)
 	}
 
-	s.eventsSvc.AsyncAddEvent(uid, entityEvents.Payload{
-		Type: entityEvents.VocabWordUpdated,
-		Data: vocabWord,
+	s.eventsSvc.AsyncAddEvent(entityEvents.Event{
+		User: entityEvents.UserData{ID: uid},
+		Payload: entityEvents.Payload{
+			Type: entityEvents.VocabWordUpdated,
+			Data: entityEvents.PayloadDataVocab{
+				DictWordID: &vocabWordData.Native.ID,
+				VocabID:    &vocabWordData.VocabID,
+			},
+		},
 	})
 
 	return vocabWord, nil
@@ -197,14 +211,25 @@ func (s *Service) DeleteWord(ctx context.Context, uid, vid, wid uuid.UUID) error
 		VocabID: vid,
 	}
 
-	err := s.repoVocab.DeleteWord(ctx, vocabWord)
+	vocabWordTemp, err := s.GetWord(ctx, vid, wid)
+	if err != nil {
+		return fmt.Errorf("word.Service.DeleteWord: %w", err)
+	}
+
+	err = s.repoVocab.DeleteWord(ctx, vocabWord)
 	if err != nil {
 		return fmt.Errorf("word.Service.DeleteWord - delete word: %w", err)
 	}
 
-	s.eventsSvc.AsyncAddEvent(uid, entityEvents.Payload{
-		Type: entityEvents.VocabWordDeleted,
-		Data: vocabWord,
+	s.eventsSvc.AsyncAddEvent(entityEvents.Event{
+		User: entityEvents.UserData{ID: uid},
+		Payload: entityEvents.Payload{
+			Type: entityEvents.VocabWordDeleted,
+			Data: entityEvents.PayloadDataVocab{
+				VocabID:    &vid,
+				DictWordID: &vocabWordTemp.Native.ID,
+			},
+		},
 	})
 
 	return nil

@@ -3,6 +3,8 @@
 package service
 
 import (
+	context "context"
+
 	events "github.com/av-ugolkov/lingua-evo/internal/services/events"
 	mock "github.com/stretchr/testify/mock"
 
@@ -14,9 +16,35 @@ type mockEventsSvc struct {
 	mock.Mock
 }
 
-// AsyncAddEvent provides a mock function with given fields: uid, payload
-func (_m *mockEventsSvc) AsyncAddEvent(uid uuid.UUID, payload events.Payload) {
-	_m.Called(uid, payload)
+// AddEvent provides a mock function with given fields: ctx, event
+func (_m *mockEventsSvc) AddEvent(ctx context.Context, event events.Event) (uuid.UUID, error) {
+	ret := _m.Called(ctx, event)
+
+	var r0 uuid.UUID
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, events.Event) (uuid.UUID, error)); ok {
+		return rf(ctx, event)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, events.Event) uuid.UUID); ok {
+		r0 = rf(ctx, event)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(uuid.UUID)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, events.Event) error); ok {
+		r1 = rf(ctx, event)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// AsyncAddEvent provides a mock function with given fields: event
+func (_m *mockEventsSvc) AsyncAddEvent(event events.Event) {
+	_m.Called(event)
 }
 
 // newMockEventsSvc creates a new instance of mockEventsSvc. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

@@ -24,8 +24,8 @@ func NewRepo(tr *transactor.Transactor) *EventRepo {
 func (r *EventRepo) GetCountVocabEvents(ctx context.Context, vocabIDs []uuid.UUID) (int, error) {
 	const query = `
 		SELECT COUNT(id) FROM events e
-		LEFT JOIN vocabulary_notifications vn ON vn.vocab_id::text = e.payload->'data'->>'VocabID'
-		WHERE payload->'data'->>'VocabID'=ANY($1)
+		LEFT JOIN vocabulary_notifications vn ON vn.vocab_id::text = e.payload->>'vocab_id'
+		WHERE payload->>'vocab_id'=ANY($1)
 		AND e.created_at >= vn.created_at;`
 
 	var count int
@@ -40,8 +40,8 @@ func (r *EventRepo) GetCountVocabEvents(ctx context.Context, vocabIDs []uuid.UUI
 func (r *EventRepo) GetVocabEvents(ctx context.Context, vocabIDs []uuid.UUID) ([]entity.Event, error) {
 	const query = `
 		SELECT e.id, e.user_id, e.payload, e.created_at FROM events e
-		LEFT JOIN vocabulary_notifications vn ON vn.vocab_id::text = e.payload->'data'->>'VocabID'
-		WHERE payload->'data'->>'VocabID'=ANY($1)
+		LEFT JOIN vocabulary_notifications vn ON vn.vocab_id::text = e.payload->>'vocab_id'
+		WHERE payload->>'vocab_id'=ANY($1)
 		AND e.created_at >= vn.created_at;`
 
 	rows, err := r.tr.Query(ctx, query, vocabIDs)
@@ -52,7 +52,7 @@ func (r *EventRepo) GetVocabEvents(ctx context.Context, vocabIDs []uuid.UUID) ([
 	events := make([]entity.Event, 0, 10)
 	for rows.Next() {
 		var event entity.Event
-		if err := rows.Scan(&event.ID, &event.UserID, &event.Payload, &event.CreatedAt); err != nil {
+		if err := rows.Scan(&event.ID, &event.User.ID, &event.Payload, &event.CreatedAt); err != nil {
 			return nil, fmt.Errorf("events.delivery.repository.UserRepo.GetEventsVocab: %w", err)
 		}
 		events = append(events, event)
@@ -61,13 +61,16 @@ func (r *EventRepo) GetVocabEvents(ctx context.Context, vocabIDs []uuid.UUID) ([
 	return events, nil
 }
 
-func (r *EventRepo) AddEvent(ctx context.Context, uid uuid.UUID, payload entity.Payload) (uuid.UUID, error) {
+func (r *EventRepo) AddEvent(ctx context.Context, uid uuid.UUID, typeEvent entity.PayloadType, payload []byte) (uuid.UUID, error) {
 	const query = `
-		INSERT INTO events (id, user_id, payload, created_at) 
-		VALUES ($1, $2, $3, $4) ON CONFLICT (user_id, payload) DO UPDATE SET created_at = $4 RETURNING id;`
+		INSERT INTO events (id, user_id, type, payload, created_at) 
+		VALUES ($1, $2, (SELECT id FROM events_type WHERE "name"=$3), $4, $5) 
+		ON CONFLICT (user_id, type, payload) 
+		DO UPDATE SET created_at = $5 
+		RETURNING id;`
 
 	var eid uuid.UUID
-	err := r.tr.QueryRow(ctx, query, uuid.New(), uid, payload, time.Now().UTC()).Scan(&eid)
+	err := r.tr.QueryRow(ctx, query, uuid.New(), uid, typeEvent, payload, time.Now().UTC()).Scan(&eid)
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("events.delivery.repository.UserRepo.AddEvent: %w", err)
 	}
@@ -83,7 +86,7 @@ func (r *EventRepo) ReadEvent(ctx context.Context, uid uuid.UUID, eventID uuid.U
 	}()
 
 	const query = `
-		INSERT INTO events_watched (event_id, user_id, created_at)
+		INSERT INTO events_watched (event_id, user_id, watched_at)
 		VALUES ($1, $2, $3)
 		ON CONFLICT (event_id, user_id) DO NOTHING;`
 

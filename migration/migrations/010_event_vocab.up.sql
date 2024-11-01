@@ -9,7 +9,8 @@ VALUES
     ('vocab_updated'),
     ('vocab_word_created'),
     ('vocab_word_deleted'),
-    ('vocab_word_updated');
+    ('vocab_word_updated') ON CONFLICT
+DO NOTHING;
 
 CREATE TABLE IF NOT EXISTS
     "events" (
@@ -20,7 +21,7 @@ CREATE TABLE IF NOT EXISTS
         "created_at" timestamp NOT NULL
     );
 
-CREATE UNIQUE INDEX IF NOT EXISTS "idx_unique_events__user_id_payload" ON "events" ("user_id", "payload");
+CREATE UNIQUE INDEX IF NOT EXISTS "idx_unique_events__user_id_type_payload" ON "events" ("user_id", "type", "payload");
 
 CREATE TABLE IF NOT EXISTS
     "events_watched" (

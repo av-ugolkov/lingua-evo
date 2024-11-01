@@ -2,14 +2,16 @@ package handler
 
 import (
 	"fmt"
-	"github.com/gin-gonic/gin"
 	"net/http"
+	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler/middleware"
 	ginext "github.com/av-ugolkov/lingua-evo/internal/pkg/gin-ext"
 	msgerr "github.com/av-ugolkov/lingua-evo/internal/pkg/msg-error"
-	entity "github.com/av-ugolkov/lingua-evo/internal/services/events"
 	"github.com/av-ugolkov/lingua-evo/internal/services/events/service"
 	"github.com/av-ugolkov/lingua-evo/runtime"
 )
@@ -18,8 +20,20 @@ type (
 	CountEventsRs struct {
 		Count int `json:"count"`
 	}
+
+	userData struct {
+		ID          uuid.UUID `json:"id"`
+		Name        string    `json:"name"`
+		Role        string    `json:"role"`
+		LastVisitAt time.Time `json:"last_visit_at"`
+	}
+
 	EventsRs struct {
-		Events []entity.Event `json:"events"`
+		ID        uuid.UUID `json:"id"`
+		User      userData  `json:"user"`
+		Msg       string    `json:"msg"`
+		CreatedAt time.Time `json:"created_at"`
+		Watched   bool      `json:"watched"`
 	}
 )
 
@@ -74,7 +88,23 @@ func (h *Handler) getEvents(c *ginext.Context) (int, any, error) {
 				msgerr.ErrMsgInternal)
 	}
 
-	return http.StatusOK, EventsRs{Events: events}, nil
+	eventsRs := make([]EventsRs, 0, len(events))
+	for _, event := range events {
+		eventsRs = append(eventsRs, EventsRs{
+			ID: event.ID,
+			User: userData{
+				ID:          event.User.ID,
+				Name:        event.User.Name,
+				Role:        event.User.Role,
+				LastVisitAt: event.User.LastVisitAt,
+			},
+			Msg:       event.Payload.String(),
+			CreatedAt: event.CreatedAt,
+			Watched:   event.Watched,
+		})
+	}
+
+	return http.StatusOK, eventsRs, nil
 }
 
 func (h *Handler) markEventAsWatched(c *ginext.Context) (int, any, error) {

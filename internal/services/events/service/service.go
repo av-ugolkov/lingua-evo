@@ -8,6 +8,7 @@ import (
 
 	"github.com/av-ugolkov/lingua-evo/internal/db/transactor"
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/events"
+	jsoniter "github.com/json-iterator/go"
 
 	"github.com/google/uuid"
 )
@@ -16,7 +17,7 @@ type (
 	repoEvents interface {
 		GetCountVocabEvents(ctx context.Context, subscriberIDs []uuid.UUID) (int, error)
 		GetVocabEvents(ctx context.Context, subscriberIDs []uuid.UUID) ([]entity.Event, error)
-		AddEvent(ctx context.Context, uid uuid.UUID, payload entity.Payload) (uuid.UUID, error)
+		AddEvent(ctx context.Context, uid uuid.UUID, typeEvent entity.PayloadType, payload []byte) (uuid.UUID, error)
 		ReadEvent(ctx context.Context, uid uuid.UUID, eventID uuid.UUID) error
 	}
 
@@ -89,20 +90,25 @@ func (s *Service) GetEvents(ctx context.Context, uid uuid.UUID) (_ []entity.Even
 	return events, nil
 }
 
-func (s *Service) AddEvent(ctx context.Context, uid uuid.UUID, payload entity.Payload) (uuid.UUID, error) {
-	eid, err := s.repoEvents.AddEvent(ctx, uid, payload)
+func (s *Service) AddEvent(ctx context.Context, event entity.Event) (uuid.UUID, error) {
+	data, err := jsoniter.Marshal(event.Payload.Data)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("events.Service.AddEvent: %w", err)
+	}
+
+	eid, err := s.repoEvents.AddEvent(ctx, event.User.ID, event.Payload.Type, data)
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("events.Service.AddEvent: %w", err)
 	}
 	return eid, nil
 }
 
-func (s *Service) AsyncAddEvent(uid uuid.UUID, payload entity.Payload) {
+func (s *Service) AsyncAddEvent(event entity.Event) {
 	go func() {
 		timeoutCtx, cancelFn := context.WithTimeout(context.Background(), 3*time.Second)
 		defer cancelFn()
 
-		_, err := s.AddEvent(timeoutCtx, uid, payload)
+		_, err := s.AddEvent(timeoutCtx, event)
 		if err != nil {
 			slog.Error(fmt.Sprintf("events.Service.AsyncAddEvent: %v", err))
 		}
