@@ -130,12 +130,12 @@ func (s *Service) AddWord(ctx context.Context, uid uuid.UUID, vocabWordData enti
 
 	s.eventsSvc.AsyncAddEvent(entityEvents.Event{
 		User: entityEvents.UserData{ID: uid},
-		Payload: entityEvents.Payload{
-			Type: entityEvents.VocabWordCreated,
-			Data: entityEvents.PayloadDataVocab{
-				DictWordID: &nativeWordID,
-				VocabID:    &vocabWordData.VocabID,
-			},
+		Type: entityEvents.VocabWordCreated,
+		Payload: entityEvents.PayloadDataVocab{
+			DictWordID: &nativeWordID,
+			DictWord:   vocabWordData.Native.Text,
+			VocabID:    &vocabWordData.VocabID,
+			VocabTitle: vocab.Name,
 		},
 	})
 
@@ -193,12 +193,12 @@ func (s *Service) UpdateWord(ctx context.Context, uid uuid.UUID, vocabWordData e
 
 	s.eventsSvc.AsyncAddEvent(entityEvents.Event{
 		User: entityEvents.UserData{ID: uid},
-		Payload: entityEvents.Payload{
-			Type: entityEvents.VocabWordUpdated,
-			Data: entityEvents.PayloadDataVocab{
-				DictWordID: &vocabWordData.Native.ID,
-				VocabID:    &vocabWordData.VocabID,
-			},
+		Type: entityEvents.VocabWordUpdated,
+		Payload: entityEvents.PayloadDataVocab{
+			DictWordID: &vocabWordData.Native.ID,
+			DictWord:   vocabWordData.Native.Text,
+			VocabID:    &vocabWordData.VocabID,
+			VocabTitle: vocab.Name,
 		},
 	})
 
@@ -216,6 +216,11 @@ func (s *Service) DeleteWord(ctx context.Context, uid, vid, wid uuid.UUID) error
 		return fmt.Errorf("word.Service.DeleteWord: %w", err)
 	}
 
+	vocab, err := s.GetVocabulary(ctx, uid, vid)
+	if err != nil {
+		return fmt.Errorf("word.Service.DeleteWord: %w", err)
+	}
+
 	err = s.repoVocab.DeleteWord(ctx, vocabWord)
 	if err != nil {
 		return fmt.Errorf("word.Service.DeleteWord - delete word: %w", err)
@@ -223,12 +228,12 @@ func (s *Service) DeleteWord(ctx context.Context, uid, vid, wid uuid.UUID) error
 
 	s.eventsSvc.AsyncAddEvent(entityEvents.Event{
 		User: entityEvents.UserData{ID: uid},
-		Payload: entityEvents.Payload{
-			Type: entityEvents.VocabWordDeleted,
-			Data: entityEvents.PayloadDataVocab{
-				VocabID:    &vid,
-				DictWordID: &vocabWordTemp.Native.ID,
-			},
+		Type: entityEvents.VocabWordDeleted,
+		Payload: entityEvents.PayloadDataVocab{
+			DictWordID: &vocabWordTemp.Native.ID,
+			DictWord:   vocabWordTemp.Native.Text,
+			VocabID:    &vid,
+			VocabTitle: vocab.Name,
 		},
 	})
 

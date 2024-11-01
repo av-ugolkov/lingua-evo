@@ -411,12 +411,10 @@ func TestReadEvent(t *testing.T) {
 		err := tr.CreateTransaction(ctx, func(ctx context.Context) error {
 			eid, err := eventsSvc.AddEvent(ctx, entity.Event{
 				User: entity.UserData{ID: usr.ID},
-				Payload: entity.Payload{
-					Type: entity.VocabWordCreated,
-					Data: entity.PayloadDataVocab{
-						VocabID:    new(uuid.UUID),
-						VocabTitle: "vocab_temp",
-					},
+				Type: entity.VocabWordCreated,
+				Payload: entity.PayloadDataVocab{
+					VocabID:    new(uuid.UUID),
+					VocabTitle: "vocab_temp",
 				},
 			})
 			if err != nil {

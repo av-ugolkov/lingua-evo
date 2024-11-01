@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	jsoniter "github.com/json-iterator/go"
 )
 
 type PayloadType string
@@ -23,6 +24,7 @@ type (
 		VocabID    *uuid.UUID `json:"vocab_id,omitempty"`
 		VocabTitle string     `json:"vocab_title,omitempty"`
 		DictWordID *uuid.UUID `json:"dict_word_id,omitempty"`
+		DictWord   string     `json:"dict_word,omitempty"`
 	}
 )
 
@@ -36,31 +38,37 @@ type UserData struct {
 type Event struct {
 	ID        uuid.UUID
 	User      UserData
-	Payload   Payload
+	Type      PayloadType
+	Payload   any
 	CreatedAt time.Time
 	Watched   bool
 }
 
-type Payload struct {
-	Type PayloadType
-	Data any
+func (p Event) PayloadToMap() map[string]any {
+	switch p.Type {
+	case VocabWordCreated, VocabWordDeleted, VocabWordUpdated:
+		data := p.Payload.(PayloadDataVocab)
+		mp := make(map[string]any, 4)
+		mp["vocab_id"] = data.VocabID
+		mp["vocab_title"] = data.VocabTitle
+		mp["dict_word_id"] = data.DictWordID
+		mp["dict_word"] = data.DictWord
+		return mp
+	default:
+		return map[string]any{}
+	}
 }
 
-func (p Payload) String() string {
-	switch p.Type {
-	case VocabCreated:
-		return fmt.Sprintf("VocabCreated: %v", p.Data)
-	case VocabDeleted:
-		return fmt.Sprintf("VocabDeleted: %v", p.Data)
-	case VocabUpdated:
-		return fmt.Sprintf("VocabUpdated: %v", p.Data)
-	case VocabWordCreated:
-		return fmt.Sprintf("VocabWordCreated: %v", p.Data)
-	case VocabWordDeleted:
-		return fmt.Sprintf("VocabWordDeleted: %v", p.Data)
-	case VocabWordUpdated:
-		return fmt.Sprintf("VocabWordUpdated: %v", p.Data)
+func Unmarshal(typePayload PayloadType, dataJSON []byte) (any, error) {
+	switch typePayload {
+	case VocabWordCreated, VocabWordDeleted, VocabWordUpdated:
+		var data PayloadDataVocab
+		err := jsoniter.Unmarshal(dataJSON, &data)
+		if err != nil {
+			return nil, err
+		}
+		return data, err
 	default:
-		return fmt.Sprintf("Unknown payload type: %v", p.Type)
+		return nil, fmt.Errorf("unknown payload type: %v", typePayload)
 	}
 }

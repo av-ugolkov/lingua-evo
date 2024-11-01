@@ -29,11 +29,12 @@ type (
 	}
 
 	EventsRs struct {
-		ID        uuid.UUID `json:"id"`
-		User      userData  `json:"user"`
-		Msg       string    `json:"msg"`
-		CreatedAt time.Time `json:"created_at"`
-		Watched   bool      `json:"watched"`
+		ID        uuid.UUID      `json:"id"`
+		User      userData       `json:"user"`
+		Type      string         `json:"type"`
+		Payload   map[string]any `json:"payload"`
+		CreatedAt time.Time      `json:"created_at"`
+		Watched   bool           `json:"watched"`
 	}
 )
 
@@ -98,7 +99,8 @@ func (h *Handler) getEvents(c *ginext.Context) (int, any, error) {
 				Role:        event.User.Role,
 				LastVisitAt: event.User.LastVisitAt,
 			},
-			Msg:       event.Payload.String(),
+			Type:      string(event.Type),
+			Payload:   event.PayloadToMap(),
 			CreatedAt: event.CreatedAt,
 			Watched:   event.Watched,
 		})

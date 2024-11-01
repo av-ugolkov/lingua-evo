@@ -91,12 +91,12 @@ func (s *Service) GetEvents(ctx context.Context, uid uuid.UUID) (_ []entity.Even
 }
 
 func (s *Service) AddEvent(ctx context.Context, event entity.Event) (uuid.UUID, error) {
-	data, err := jsoniter.Marshal(event.Payload.Data)
+	data, err := jsoniter.Marshal(event.Payload)
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("events.Service.AddEvent: %w", err)
 	}
 
-	eid, err := s.repoEvents.AddEvent(ctx, event.User.ID, event.Payload.Type, data)
+	eid, err := s.repoEvents.AddEvent(ctx, event.User.ID, event.Type, data)
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("events.Service.AddEvent: %w", err)
 	}

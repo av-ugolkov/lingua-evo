@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/av-ugolkov/lingua-evo/internal/db/transactor"
@@ -39,8 +40,9 @@ func (r *EventRepo) GetCountVocabEvents(ctx context.Context, vocabIDs []uuid.UUI
 
 func (r *EventRepo) GetVocabEvents(ctx context.Context, vocabIDs []uuid.UUID) ([]entity.Event, error) {
 	const query = `
-		SELECT e.id, e.user_id, e.payload, e.created_at FROM events e
+		SELECT e.id, e.user_id, et.name, e.payload, e.created_at FROM events e
 		LEFT JOIN vocabulary_notifications vn ON vn.vocab_id::text = e.payload->>'vocab_id'
+		LEFT JOIN events_type et ON et.id = e.type
 		WHERE payload->>'vocab_id'=ANY($1)
 		AND e.created_at >= vn.created_at;`
 
@@ -52,9 +54,16 @@ func (r *EventRepo) GetVocabEvents(ctx context.Context, vocabIDs []uuid.UUID) ([
 	events := make([]entity.Event, 0, 10)
 	for rows.Next() {
 		var event entity.Event
-		if err := rows.Scan(&event.ID, &event.User.ID, &event.Payload, &event.CreatedAt); err != nil {
+		var jsonData []byte
+		if err := rows.Scan(&event.ID, &event.User.ID, &event.Type, &jsonData, &event.CreatedAt); err != nil {
 			return nil, fmt.Errorf("events.delivery.repository.UserRepo.GetEventsVocab: %w", err)
 		}
+
+		event.Payload, err = entity.Unmarshal(event.Type, jsonData)
+		if err != nil {
+			slog.Error(fmt.Sprintf("events.delivery.repository.UserRepo.GetEventsVocab: %v", err))
+		}
+
 		events = append(events, event)
 	}
 
