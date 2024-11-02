@@ -191,13 +191,17 @@ func (s *Service) UpdateWord(ctx context.Context, uid uuid.UUID, vocabWordData e
 		return entity.VocabWord{}, fmt.Errorf("word.Service.UpdateWord - update vocabulary: %w", err)
 	}
 
+	eventType := entityEvents.VocabWordUpdated
+	if vocabWordData.Native.ID != nativeWordID {
+		eventType = entityEvents.VocabWordRenamed
+	}
 	s.eventsSvc.AsyncAddEvent(entityEvents.Event{
 		User: entityEvents.UserData{ID: uid},
-		Type: entityEvents.VocabWordUpdated,
+		Type: eventType,
 		Payload: entityEvents.PayloadDataVocab{
-			DictWordID: &vocabWordData.Native.ID,
+			DictWordID: &nativeWordID,
 			DictWord:   vocabWordData.Native.Text,
-			VocabID:    &vocabWordData.VocabID,
+			VocabID:    &vocabWord.VocabID,
 			VocabTitle: vocab.Name,
 		},
 	})

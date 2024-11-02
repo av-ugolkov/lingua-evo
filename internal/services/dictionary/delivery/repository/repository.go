@@ -81,11 +81,21 @@ func (r *DictionaryRepo) GetWordsByText(ctx context.Context, inWords []entity.Di
 		texts = append(texts, word.Text)
 	}
 	table := getTable(inWords[0].LangCode)
-	query := fmt.Sprintf(`SELECT id, text, pronunciation, lang_code, creator, updated_at, created_at FROM "%s" WHERE text = ANY($1::text[]);`, table)
+	query := fmt.Sprintf(`
+		SELECT 
+			id, 
+			text, 
+			pronunciation, 
+			lang_code, 
+			creator, 
+			updated_at, 
+			created_at 
+		FROM "%s" 
+		WHERE text = ANY($1::text[]);`, table)
 
 	rows, err := r.tr.Query(ctx, query, texts)
 	if err != nil {
-		return nil, fmt.Errorf("dictionary.repository.DictionaryRepo.GetWordByText: %w", err)
+		return nil, fmt.Errorf("dictionary.repository.DictionaryRepo.GetWordsByText: %w", err)
 	}
 	defer rows.Close()
 
@@ -93,8 +103,16 @@ func (r *DictionaryRepo) GetWordsByText(ctx context.Context, inWords []entity.Di
 	var pron *string
 	for rows.Next() {
 		var word entity.DictWord
-		if err := rows.Scan(&word.ID, &word.Text, &pron, &word.LangCode, &word.Creator, &word.UpdatedAt, &word.CreatedAt); err != nil {
-			return nil, fmt.Errorf("dictionary.repository.DictionaryRepo.GetWordsByText - scan: %w", err)
+		if err := rows.Scan(
+			&word.ID,
+			&word.Text,
+			&pron,
+			&word.LangCode,
+			&word.Creator,
+			&word.UpdatedAt,
+			&word.CreatedAt,
+		); err != nil {
+			return nil, fmt.Errorf("dictionary.repository.DictionaryRepo.GetWordsByText: %w", err)
 		}
 		if pron != nil {
 			word.Pronunciation = *pron
@@ -106,7 +124,17 @@ func (r *DictionaryRepo) GetWordsByText(ctx context.Context, inWords []entity.Di
 }
 
 func (r *DictionaryRepo) GetWords(ctx context.Context, ids []uuid.UUID) ([]entity.DictWord, error) {
-	query := `SELECT id, text, pronunciation, created_at, updated_at FROM dictionary WHERE id=ANY($1);`
+	query := `
+		SELECT 
+			id, 
+			text, 
+			pronunciation, 
+			lang_code, 
+			creator, 
+			updated_at, 
+			created_at 
+		FROM dictionary 
+		WHERE id=ANY($1);`
 	rows, err := r.tr.Query(ctx, query, ids)
 	if err != nil {
 		return nil, fmt.Errorf("dictionary.repository.DictionaryRepo.GetWords - query: %w", err)
@@ -114,12 +142,26 @@ func (r *DictionaryRepo) GetWords(ctx context.Context, ids []uuid.UUID) ([]entit
 	defer rows.Close()
 
 	words := make([]entity.DictWord, 0, len(ids))
+	var pron *string
 	for rows.Next() {
 		var word entity.DictWord
-		err = rows.Scan(&word.ID, &word.Text, &word.Pronunciation, &word.CreatedAt, &word.UpdatedAt)
+		err = rows.Scan(
+			&word.ID,
+			&word.Text,
+			&pron,
+			&word.LangCode,
+			&word.Creator,
+			&word.UpdatedAt,
+			&word.CreatedAt,
+		)
 		if err != nil {
 			return nil, fmt.Errorf("dictionary.repository.DictionaryRepo.GetWords - scan: %w", err)
 		}
+
+		if pron != nil {
+			word.Pronunciation = *pron
+		}
+
 		words = append(words, word)
 	}
 	return words, nil

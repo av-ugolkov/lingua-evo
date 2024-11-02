@@ -7,9 +7,11 @@ VALUES
     ('vocab_created'),
     ('vocab_deleted'),
     ('vocab_updated'),
+    ('vocab_renamed'),
     ('vocab_word_created'),
     ('vocab_word_deleted'),
-    ('vocab_word_updated') ON CONFLICT
+    ('vocab_word_updated'),
+    ('vocab_word_renamed') ON CONFLICT
 DO NOTHING;
 
 CREATE TABLE IF NOT EXISTS

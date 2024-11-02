@@ -44,7 +44,8 @@ func (r *EventRepo) GetVocabEvents(ctx context.Context, vocabIDs []uuid.UUID) ([
 		LEFT JOIN vocabulary_notifications vn ON vn.vocab_id::text = e.payload->>'vocab_id'
 		LEFT JOIN events_type et ON et.id = e.type
 		WHERE payload->>'vocab_id'=ANY($1)
-		AND e.created_at >= vn.created_at;`
+		AND e.created_at >= vn.created_at
+		ORDER BY e.created_at DESC;`
 
 	rows, err := r.tr.Query(ctx, query, vocabIDs)
 	if err != nil {
