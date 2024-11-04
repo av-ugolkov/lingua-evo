@@ -46,6 +46,12 @@ type Event struct {
 	Watched   bool
 }
 
+type EventWatched struct {
+	EventID   uuid.UUID
+	UserID    uuid.UUID
+	WatchedAt time.Time
+}
+
 func (p Event) PayloadToMap() map[string]any {
 	switch p.Type {
 	case VocabWordCreated, VocabWordDeleted, VocabWordUpdated, VocabWordRenamed:

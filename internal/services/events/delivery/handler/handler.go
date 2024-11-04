@@ -24,8 +24,8 @@ type (
 	userData struct {
 		ID          uuid.UUID `json:"id"`
 		Name        string    `json:"name"`
-		Role        string    `json:"role"`
-		LastVisitAt time.Time `json:"last_visit_at"`
+		Role        string    `json:"role,omitempty"`
+		LastVisitAt time.Time `json:"last_visit_at,omitempty"`
 	}
 
 	EventsRs struct {
@@ -94,10 +94,8 @@ func (h *Handler) getEvents(c *ginext.Context) (int, any, error) {
 		eventsRs = append(eventsRs, EventsRs{
 			ID: event.ID,
 			User: userData{
-				ID:          event.User.ID,
-				Name:        event.User.Name,
-				Role:        event.User.Role,
-				LastVisitAt: event.User.LastVisitAt,
+				ID:   event.User.ID,
+				Name: event.User.Name,
 			},
 			Type:      string(event.Type),
 			Payload:   event.PayloadToMap(),

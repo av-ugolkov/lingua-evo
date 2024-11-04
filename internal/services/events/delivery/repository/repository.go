@@ -24,8 +24,9 @@ func NewRepo(tr *transactor.Transactor) *EventRepo {
 
 func (r *EventRepo) GetCountVocabEvents(ctx context.Context, vocabIDs []uuid.UUID) (int, error) {
 	const query = `
-		SELECT COUNT(id) FROM events e
+		SELECT COUNT(e.id)-COUNT(ew.event_id) FROM events e
 		LEFT JOIN vocabulary_notifications vn ON vn.vocab_id::text = e.payload->>'vocab_id'
+		LEFT JOIN events_watched ew ON ew.event_id = e.id
 		WHERE payload->>'vocab_id'=ANY($1)
 		AND e.created_at >= vn.created_at;`
 
@@ -40,9 +41,11 @@ func (r *EventRepo) GetCountVocabEvents(ctx context.Context, vocabIDs []uuid.UUI
 
 func (r *EventRepo) GetVocabEvents(ctx context.Context, vocabIDs []uuid.UUID) ([]entity.Event, error) {
 	const query = `
-		SELECT e.id, e.user_id, et.name, e.payload, e.created_at FROM events e
+		SELECT e.id, e.user_id, u.name, et.name, e.payload, COALESCE(e.id=ew.event_id, false), e.created_at FROM events e
 		LEFT JOIN vocabulary_notifications vn ON vn.vocab_id::text = e.payload->>'vocab_id'
 		LEFT JOIN events_type et ON et.id = e.type
+		LEFT JOIN users u ON u.id = e.user_id
+		LEFT JOIN events_watched ew ON ew.event_id = e.id
 		WHERE payload->>'vocab_id'=ANY($1)
 		AND e.created_at >= vn.created_at
 		ORDER BY e.created_at DESC;`
@@ -56,7 +59,7 @@ func (r *EventRepo) GetVocabEvents(ctx context.Context, vocabIDs []uuid.UUID) ([
 	for rows.Next() {
 		var event entity.Event
 		var jsonData []byte
-		if err := rows.Scan(&event.ID, &event.User.ID, &event.Type, &jsonData, &event.CreatedAt); err != nil {
+		if err := rows.Scan(&event.ID, &event.User.ID, &event.User.Name, &event.Type, &jsonData, &event.Watched, &event.CreatedAt); err != nil {
 			return nil, fmt.Errorf("events.delivery.repository.UserRepo.GetEventsVocab: %w", err)
 		}
 
@@ -109,6 +112,29 @@ func (r *EventRepo) ReadEvent(ctx context.Context, uid uuid.UUID, eventID uuid.U
 	}
 
 	return nil
+}
+
+func (r *EventRepo) GetWatchedEvents(ctx context.Context, uid uuid.UUID) ([]entity.EventWatched, error) {
+	const query = `
+		SELECT w.event_id, w.user_id, w.watched_at 
+		FROM events_watched w
+		WHERE w.user_id = $1;`
+
+	rows, err := r.tr.Query(ctx, query, uid)
+	if err != nil {
+		return nil, fmt.Errorf("events.delivery.repository.UserRepo.GetWatchedEvents: %w", err)
+	}
+
+	eventsWatched := make([]entity.EventWatched, 0, 10)
+	for rows.Next() {
+		var event entity.EventWatched
+		if err := rows.Scan(&event.EventID, &event.UserID, &event.WatchedAt); err != nil {
+			return nil, fmt.Errorf("events.delivery.repository.UserRepo.GetWatchedEvents: %w", err)
+		}
+		eventsWatched = append(eventsWatched, event)
+	}
+
+	return eventsWatched, nil
 }
 
 func (r *EventRepo) DeleteWatchedEvent(ctx context.Context, uid uuid.UUID, eventID uuid.UUID) (err error) {

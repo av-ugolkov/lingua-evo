@@ -19,6 +19,8 @@ type (
 		GetVocabEvents(ctx context.Context, subscriberIDs []uuid.UUID) ([]entity.Event, error)
 		AddEvent(ctx context.Context, uid uuid.UUID, typeEvent entity.PayloadType, payload []byte) (uuid.UUID, error)
 		ReadEvent(ctx context.Context, uid uuid.UUID, eventID uuid.UUID) error
+		GetWatchedEvents(ctx context.Context, uid uuid.UUID) ([]entity.EventWatched, error)
+		DeleteWatchedEvent(ctx context.Context, uid uuid.UUID, eventID uuid.UUID) error
 	}
 
 	notificationsSvc interface {
