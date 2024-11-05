@@ -9,7 +9,7 @@ import (
 	"github.com/av-ugolkov/lingua-evo/internal/db/postgres"
 	"github.com/av-ugolkov/lingua-evo/internal/db/transactor"
 	entityUser "github.com/av-ugolkov/lingua-evo/internal/services/user"
-	"github.com/av-ugolkov/lingua-evo/internal/services/user/delivery/repository"
+	"github.com/av-ugolkov/lingua-evo/internal/services/user/repository"
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary"
 	"github.com/av-ugolkov/lingua-evo/runtime"
 	"github.com/av-ugolkov/lingua-evo/runtime/access"
@@ -21,7 +21,7 @@ import (
 func TestGetVocabulariesWithMaxWords(t *testing.T) {
 	ctx := context.Background()
 
-	tp := postgres.NewTempPostgres(ctx, "../../../../..")
+	tp := postgres.NewTempPostgres(ctx, "../../../..")
 	defer tp.DropDB(ctx)
 
 	if tp == nil {

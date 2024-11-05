@@ -8,7 +8,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
@@ -90,13 +89,4 @@ func (t *TempPostgres) DropDB(ctx context.Context) {
 
 		Instance = nil
 	}()
-}
-
-func (t *TempPostgres) Query(ctx context.Context, query string, args ...any) (pgx.Rows, error) {
-	rows, err := t.PgxPool.Query(ctx, query)
-	if err != nil {
-		return nil, fmt.Errorf("failed to execute query: %w", err)
-	}
-
-	return rows, nil
 }
