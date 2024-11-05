@@ -162,10 +162,10 @@ func (r *UserRepo) GetUsers(ctx context.Context, page, perPage, sort, order int,
 	query := fmt.Sprintf(`
 	SELECT u.id, u.name, role, u.last_visit_at
 	FROM users u
-	WHERE POSITION($1 in u."name")>0
-	%s
+	WHERE u.name LIKE '%[1]s' || $1 || '%[1]s'
+	%[2]s
 	LIMIT $2
-	OFFSET $3;`, getSorted(sort, sorted.TypeOrder(order)))
+	OFFSET $3;`, "%", getSorted(sort, sorted.TypeOrder(order)))
 
 	rows, err := r.tr.Query(ctx, query, search, perPage, (page-1)*perPage)
 	if err != nil {

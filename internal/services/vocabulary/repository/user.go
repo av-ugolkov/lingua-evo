@@ -65,7 +65,8 @@ func (r *VocabRepo) GetVocabulariesCountByUser(ctx context.Context, uid uuid.UUI
 	LEFT JOIN subscribers s ON s.user_id = $1
 	WHERE v.user_id =s.subscribers_id AND v."access" = ANY($2))) AS count FROM vocabulary v
 	WHERE v.user_id=$1
-		AND (POSITION($3 in v."name")>0 OR POSITION($3 in v."description")>0) %s %s;`,
+		AND (v."name" LIKE '%[1]s' || $3 || '%[1]s' OR v."description" LIKE '%[1]s' || $3 || '%[1]s') %[2]s %[3]s;`,
+		"%",
 		getEqualLanguage("native_lang", nativeLang),
 		getEqualLanguage("translate_lang", translateLang))
 
@@ -105,11 +106,14 @@ func (r *VocabRepo) GetSortedVocabulariesByUser(ctx context.Context, userID uuid
     GROUP BY v.id, u."name")
 	SELECT *
 	FROM vocabulary_data v
-	WHERE (POSITION($3 in v."name")>0 OR POSITION($3 in v."description")>0) %s %s
-	%s
+	WHERE (v."name" LIKE '%[1]s' || $3 || '%[1]s' OR v."description" LIKE '%[1]s' || $3 || '%[1]s') %[2]s %[3]s
+	%[4]s
 	LIMIT $4
 	OFFSET $5;`,
-		getEqualLanguage("v.native_lang", nativeLang), getEqualLanguage("v.translate_lang", translateLang), getSorted(typeSort, sorted.TypeOrder(order)))
+		"%",
+		getEqualLanguage("v.native_lang", nativeLang),
+		getEqualLanguage("v.translate_lang", translateLang),
+		getSorted(typeSort, sorted.TypeOrder(order)))
 	rows, err := r.tr.Query(ctx, query, userID, accessTypes, search, itemsPerPage, (page-1)*itemsPerPage)
 	if err != nil {
 		return nil, fmt.Errorf("vocabulary.delivery.repository.VocabRepo.GetSortedVocabulariesByUser: %w", err)
