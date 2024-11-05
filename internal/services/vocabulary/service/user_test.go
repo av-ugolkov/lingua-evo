@@ -3,6 +3,8 @@ package service
 import (
 	"context"
 	"fmt"
+	"log/slog"
+	"os"
 	"testing"
 
 	"github.com/av-ugolkov/lingua-evo/internal/db/postgres"
@@ -22,27 +24,38 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestService_UserGetVocabularies(t *testing.T) {
+var (
+	tr             *transactor.Transactor
+	userTestSvc    *user.Service
+	subscrbTestSvc *subscribers.Service
+	vocabSvc       *Service
+
+	usr *entityUser.User
+)
+
+func TestMain(m *testing.M) {
 	ctx := context.Background()
 
 	tp := postgres.NewTempPostgres(ctx, "../../../..")
 	defer tp.DropDB(ctx)
 
-	if tp == nil {
-		t.Fatal("can't init container for DB")
-	}
-
 	tr := transactor.NewTransactor(tp.PgxPool)
-	userSvc := user.NewService(userRepo.NewRepo(tr), nil, tr)
-	subscribersSvc := subscribers.NewService(subscribersRepo.NewRepo(tr))
+	userTestSvc = user.NewService(userRepo.NewRepo(tr), nil, tr)
+	subscrbTestSvc = subscribers.NewService(subscribersRepo.NewRepo(tr))
 
-	usr, err := userSvc.GetUserByName(ctx, "admin")
+	var err error
+	usr, err = userTestSvc.GetUserByName(ctx, "admin")
 	if err != nil {
-		t.Fatal(err)
+		slog.Error(fmt.Sprintf("%s", err))
+		os.Exit(1)
 	}
 	tagSvc := tag.NewService(repository.NewRepo(tr))
 
-	vocabSvc := NewService(tr, vocabRepo.NewRepo(tr), userSvc, nil, nil, tagSvc, subscribersSvc, nil)
+	vocabSvc = NewService(tr, vocabRepo.NewRepo(tr), userTestSvc, nil, nil, tagSvc, subscrbTestSvc, nil)
+}
+
+func TestService_UserGetVocabularies(t *testing.T) {
+	ctx := context.Background()
 
 	t.Run("empty vocab", func(t *testing.T) {
 		var (
@@ -82,8 +95,8 @@ func TestService_UserGetVocabularies(t *testing.T) {
 			translateLang = "ru"
 		)
 
-		err = tr.CreateTransaction(ctx, func(ctx context.Context) error {
-			_, err := AddVocabs(ctx, vocabSvc, usr.ID, expectCount)
+		err := tr.CreateTransaction(ctx, func(ctx context.Context) error {
+			_, err := addVocabs(ctx, vocabSvc, usr.ID, expectCount)
 			if err != nil {
 				return err
 			}
@@ -120,14 +133,14 @@ func TestService_UserGetVocabularies(t *testing.T) {
 			translateLang = "ru"
 		)
 
-		err = tr.CreateTransaction(ctx, func(ctx context.Context) error {
-			_, err := AddVocabs(ctx, vocabSvc, usr.ID, 5)
+		err := tr.CreateTransaction(ctx, func(ctx context.Context) error {
+			_, err := addVocabs(ctx, vocabSvc, usr.ID, 5)
 			if err != nil {
 				return err
 			}
 
 			for i := 0; i < 3; i++ {
-				uid, err := userSvc.AddUser(ctx, entityUser.UserCreate{
+				uid, err := userTestSvc.AddUser(ctx, entityUser.UserCreate{
 					ID:       uuid.New(),
 					Name:     fmt.Sprintf("user_%d", i),
 					Password: fmt.Sprintf("password_%d", i),
@@ -139,12 +152,12 @@ func TestService_UserGetVocabularies(t *testing.T) {
 					return err
 				}
 
-				_, err = AddVocabs(ctx, vocabSvc, uid, 3)
+				_, err = addVocabs(ctx, vocabSvc, uid, 3)
 				if err != nil {
 					return err
 				}
 
-				err = subscribersSvc.Subscribe(ctx, usr.ID, uid)
+				err = subscrbTestSvc.Subscribe(ctx, usr.ID, uid)
 				if err != nil {
 					return err
 				}
@@ -168,7 +181,7 @@ func TestService_UserGetVocabularies(t *testing.T) {
 	})
 }
 
-func AddVocabs(ctx context.Context, vocabSvc *Service, uid uuid.UUID, count int) ([]entity.Vocab, error) {
+func addVocabs(ctx context.Context, vocabSvc *Service, uid uuid.UUID, count int) ([]entity.Vocab, error) {
 	vocabs := make([]entity.Vocab, 0, count)
 	for j := 0; j < count; j++ {
 		vocab, err := vocabSvc.UserAddVocabulary(ctx, entity.Vocab{
