@@ -8,14 +8,14 @@ import (
 	"github.com/av-ugolkov/lingua-evo/internal/db/postgres"
 	"github.com/av-ugolkov/lingua-evo/internal/db/transactor"
 	"github.com/av-ugolkov/lingua-evo/internal/services/subscribers"
-	subscribersRepository "github.com/av-ugolkov/lingua-evo/internal/services/subscribers/repository"
+	subscribersRepo "github.com/av-ugolkov/lingua-evo/internal/services/subscribers/repository"
 	"github.com/av-ugolkov/lingua-evo/internal/services/tag"
 	"github.com/av-ugolkov/lingua-evo/internal/services/tag/repository"
 	"github.com/av-ugolkov/lingua-evo/internal/services/user"
 	entityUser "github.com/av-ugolkov/lingua-evo/internal/services/user"
-	userRepository "github.com/av-ugolkov/lingua-evo/internal/services/user/repository"
+	userRepo "github.com/av-ugolkov/lingua-evo/internal/services/user/repository"
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary"
-	vocabRepository "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary/repository"
+	vocabRepo "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary/repository"
 	"github.com/av-ugolkov/lingua-evo/runtime"
 
 	"github.com/google/uuid"
@@ -33,10 +33,8 @@ func TestService_UserGetVocabularies(t *testing.T) {
 	}
 
 	tr := transactor.NewTransactor(tp.PgxPool)
-	vocabRepo := vocabRepository.NewRepo(tr)
-	userRepo := userRepository.NewRepo(tr)
-	userSvc := user.NewService(userRepo, nil, tr)
-	subscribersSvc := subscribers.NewService(subscribersRepository.NewRepo(tr))
+	userSvc := user.NewService(userRepo.NewRepo(tr), nil, tr)
+	subscribersSvc := subscribers.NewService(subscribersRepo.NewRepo(tr))
 
 	usr, err := userSvc.GetUserByName(ctx, "admin")
 	if err != nil {
@@ -44,7 +42,7 @@ func TestService_UserGetVocabularies(t *testing.T) {
 	}
 	tagSvc := tag.NewService(repository.NewRepo(tr))
 
-	vocabSvc := NewService(tr, vocabRepo, userSvc, nil, nil, tagSvc, subscribersSvc, nil)
+	vocabSvc := NewService(tr, vocabRepo.NewRepo(tr), userSvc, nil, nil, tagSvc, subscribersSvc, nil)
 
 	t.Run("empty vocab", func(t *testing.T) {
 		var (

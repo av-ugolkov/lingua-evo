@@ -17,9 +17,9 @@ import (
 	tagRepo "github.com/av-ugolkov/lingua-evo/internal/services/tag/repository"
 	"github.com/av-ugolkov/lingua-evo/internal/services/user"
 	entityUser "github.com/av-ugolkov/lingua-evo/internal/services/user"
-	userRepository "github.com/av-ugolkov/lingua-evo/internal/services/user/repository"
+	userRepo "github.com/av-ugolkov/lingua-evo/internal/services/user/repository"
 	vocabEntity "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary"
-	vocabRepository "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary/repository"
+	vocabRepo "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary/repository"
 	"github.com/av-ugolkov/lingua-evo/runtime"
 
 	"github.com/google/uuid"
@@ -38,9 +38,7 @@ func TestService_GetVocabularies(t *testing.T) {
 	}
 
 	tr := transactor.NewTransactor(tp.PgxPool)
-	vocabRepo := vocabRepository.NewRepo(tr)
-	userRepo := userRepository.NewRepo(tr)
-	userSvc := user.NewService(userRepo, nil, tr)
+	userSvc := user.NewService(userRepo.NewRepo(tr), nil, tr)
 
 	usr, err := userSvc.GetUserByName(ctx, "admin")
 	if err != nil {
@@ -53,7 +51,7 @@ func TestService_GetVocabularies(t *testing.T) {
 	exampleSvc := example.NewService(exampleRepo.NewRepo(tr))
 	mockEventsSvc := new(mockEventsSvc)
 	mockEventsSvc.On("AsyncAddEvent", mock.Anything, mock.Anything).Return(nil)
-	vocabSvc := NewService(tr, vocabRepo, userSvc, exampleSvc, dictSvc, tagSvc, nil, mockEventsSvc)
+	vocabSvc := NewService(tr, vocabRepo.NewRepo(tr), userSvc, exampleSvc, dictSvc, tagSvc, nil, mockEventsSvc)
 
 	t.Run("empty vocab", func(t *testing.T) {
 		var (

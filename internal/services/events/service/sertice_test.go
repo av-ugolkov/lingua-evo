@@ -12,21 +12,21 @@ import (
 	"github.com/av-ugolkov/lingua-evo/internal/db/postgres"
 	"github.com/av-ugolkov/lingua-evo/internal/db/transactor"
 	"github.com/av-ugolkov/lingua-evo/internal/services/dictionary"
-	dictRepository "github.com/av-ugolkov/lingua-evo/internal/services/dictionary/repository"
-	eventsRepository "github.com/av-ugolkov/lingua-evo/internal/services/events/repository"
+	dictRepo "github.com/av-ugolkov/lingua-evo/internal/services/dictionary/repository"
+	eventsRepo "github.com/av-ugolkov/lingua-evo/internal/services/events/repository"
 	"github.com/av-ugolkov/lingua-evo/internal/services/example"
 	exampleRepo "github.com/av-ugolkov/lingua-evo/internal/services/example/repository"
 	"github.com/av-ugolkov/lingua-evo/internal/services/language"
-	langRepository "github.com/av-ugolkov/lingua-evo/internal/services/language/repository"
+	langRepo "github.com/av-ugolkov/lingua-evo/internal/services/language/repository"
 	"github.com/av-ugolkov/lingua-evo/internal/services/notifications"
 	repoNotif "github.com/av-ugolkov/lingua-evo/internal/services/notifications/repository"
 	"github.com/av-ugolkov/lingua-evo/internal/services/tag"
 	tagRepo "github.com/av-ugolkov/lingua-evo/internal/services/tag/repository"
 	"github.com/av-ugolkov/lingua-evo/internal/services/user"
 	entityUser "github.com/av-ugolkov/lingua-evo/internal/services/user"
-	userRepository "github.com/av-ugolkov/lingua-evo/internal/services/user/repository"
+	userRepo "github.com/av-ugolkov/lingua-evo/internal/services/user/repository"
 	entityVocab "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary"
-	vocabRepository "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary/repository"
+	vocabRepo "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary/repository"
 	vocabService "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary/service"
 	"github.com/av-ugolkov/lingua-evo/runtime"
 
@@ -54,14 +54,14 @@ func TestMain(m *testing.M) {
 
 	tr = transactor.NewTransactor(tp.PgxPool)
 
-	langSvc = language.NewService(langRepository.NewRepo(tr))
-	dictSvc = dictionary.NewService(dictRepository.NewRepo(tr), langSvc)
+	langSvc = language.NewService(langRepo.NewRepo(tr))
+	dictSvc = dictionary.NewService(dictRepo.NewRepo(tr), langSvc)
 	notifSvc = notifications.NewService(repoNotif.NewRepo(tr))
 	tagSvc = tag.NewService(tagRepo.NewRepo(tr))
-	eventsSvc = NewService(tr, eventsRepository.NewRepo(tr), notifSvc)
-	userSvc = user.NewService(userRepository.NewRepo(tr), nil, tr)
+	eventsSvc = NewService(tr, eventsRepo.NewRepo(tr), notifSvc)
+	userSvc = user.NewService(userRepo.NewRepo(tr), nil, tr)
 	exampleSvc = example.NewService(exampleRepo.NewRepo(tr))
-	vocabularySvc = vocabService.NewService(tr, vocabRepository.NewRepo(tr), userSvc, exampleSvc, dictSvc, tagSvc, nil, eventsSvc)
+	vocabularySvc = vocabService.NewService(tr, vocabRepo.NewRepo(tr), userSvc, exampleSvc, dictSvc, tagSvc, nil, eventsSvc)
 
 	var err error
 	usr, err = userSvc.GetUserByName(ctx, "admin")
