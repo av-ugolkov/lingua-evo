@@ -8,9 +8,9 @@ import (
 
 	"github.com/av-ugolkov/lingua-evo/internal/db/transactor"
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/events"
-	jsoniter "github.com/json-iterator/go"
 
 	"github.com/google/uuid"
+	jsoniter "github.com/json-iterator/go"
 )
 
 type (
