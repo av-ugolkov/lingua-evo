@@ -3,6 +3,9 @@ package example
 import (
 	"context"
 	"fmt"
+
+	"github.com/av-ugolkov/lingua-evo/runtime"
+
 	"github.com/google/uuid"
 )
 
@@ -39,7 +42,7 @@ func (s *Service) AddExamples(ctx context.Context, examples []Example, langCode 
 func (s *Service) GetExampleById(ctx context.Context, id uuid.UUID, langCode string) (string, error) {
 	text, err := s.repo.GetExampleById(ctx, id, langCode)
 	if err != nil {
-		return "", err
+		return runtime.EmptyString, err
 	}
 
 	return text, nil

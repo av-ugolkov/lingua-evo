@@ -1,5 +1,7 @@
 package ginext
 
+import "github.com/av-ugolkov/lingua-evo/runtime"
+
 const (
 	Language     = "language"
 	RefreshToken = "refresh_token"
@@ -10,7 +12,7 @@ const (
 )
 
 const (
-	AuthTypeNone   = ""
+	AuthTypeNone   = runtime.EmptyString
 	AuthTypeBearer = "Bearer"
 	AuthTypeBasic  = "Basic"
 )

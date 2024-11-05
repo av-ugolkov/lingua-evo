@@ -262,17 +262,26 @@ func (h *Handler) updateWord(c *ginext.Context) (int, any, error) {
 func (h *Handler) deleteWord(c *ginext.Context) (int, any, error) {
 	ctx := c.Request.Context()
 
-	var data RemoveVocabWordRq
-	err := c.Bind(&data)
+	uid, err := runtime.UserIDFromContext(ctx)
 	if err != nil {
-		return http.StatusInternalServerError, nil,
-			fmt.Errorf("word.delivery.Handler.deleteWord: %v", err)
+		return http.StatusUnauthorized, nil,
+			msgerr.New(fmt.Errorf("word.delivery.Handler.deleteWord: %v", err),
+				msgerr.ErrMsgInternal)
 	}
 
-	err = h.vocabSvc.DeleteWord(ctx, data.VocabID, data.WordID)
+	var data RemoveVocabWordRq
+	err = c.Bind(&data)
 	if err != nil {
 		return http.StatusInternalServerError, nil,
-			fmt.Errorf("word.delivery.Handler.deleteWord: %v", err)
+			msgerr.New(fmt.Errorf("word.delivery.Handler.deleteWord: %v", err),
+				msgerr.ErrMsgInternal)
+	}
+
+	err = h.vocabSvc.DeleteWord(ctx, uid, data.VocabID, data.WordID)
+	if err != nil {
+		return http.StatusInternalServerError, nil,
+			msgerr.New(fmt.Errorf("word.delivery.Handler.deleteWord: %v", err),
+				msgerr.ErrMsgInternal)
 	}
 
 	return http.StatusOK, gin.H{}, nil

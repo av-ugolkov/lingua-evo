@@ -49,6 +49,8 @@ type (
 	}
 )
 
+//go:generate mockery --inpackage --outpkg vocabulary --testonly --name "repoVocab|userSvc|exampleSvc|dictSvc|tagSvc|subscribersSvc|eventsSvc"
+
 type Service struct {
 	tr             *transactor.Transactor
 	repoVocab      repoVocab
@@ -57,6 +59,7 @@ type Service struct {
 	dictSvc        dictSvc
 	tagSvc         tagSvc
 	subscribersSvc subscribersSvc
+	eventsSvc      eventsSvc
 }
 
 func NewService(
@@ -67,6 +70,7 @@ func NewService(
 	dictSvc dictSvc,
 	tagSvc tagSvc,
 	subscribersSvc subscribersSvc,
+	eventsSvc eventsSvc,
 ) *Service {
 	return &Service{
 		tr:             tr,
@@ -76,6 +80,7 @@ func NewService(
 		dictSvc:        dictSvc,
 		tagSvc:         tagSvc,
 		subscribersSvc: subscribersSvc,
+		eventsSvc:      eventsSvc,
 	}
 }
 

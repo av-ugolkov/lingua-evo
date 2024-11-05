@@ -2,7 +2,7 @@ package msgerr
 
 const (
 	ErrMsgUnknown      = "You doesn't fill one or several fields."
-	ErrMsgUnauthorized = "You are not authorized."
+	ErrMsgUnauthorized = "You are not authorized. Update the page."
 	ErrMsgForbidden    = "Access denied."
 	ErrMsgInternal     = "Sorry, something went wrong."
 	ErrMsgBadRequest   = "You don't fill one or several fields."

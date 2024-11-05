@@ -20,10 +20,11 @@ const (
 	UniqueViolation = "23505"
 )
 
-func (r *VocabRepo) GetWord(ctx context.Context, id uuid.UUID, nativeLang, translateLang string) (entity.VocabWordData, error) {
+func (r *VocabRepo) GetWord(ctx context.Context, wid uuid.UUID, nativeLang, translateLang string) (entity.VocabWordData, error) {
 	query := fmt.Sprintf(`
 		SELECT 
 			w.id,
+			n.id as native_id,
 			n."text", 
 			coalesce(w.pronunciation, '') as pronunciation, 
 			description,
@@ -42,8 +43,9 @@ func (r *VocabRepo) GetWord(ctx context.Context, id uuid.UUID, nativeLang, trans
 	var vocabWordData entity.VocabWordData
 	var translates []string
 	var examples []string
-	err := r.tr.QueryRow(ctx, query, id).Scan(
+	err := r.tr.QueryRow(ctx, query, wid).Scan(
 		&vocabWordData.ID,
+		&vocabWordData.Native.ID,
 		&vocabWordData.Native.Text,
 		&vocabWordData.Native.Pronunciation,
 		&vocabWordData.Description,

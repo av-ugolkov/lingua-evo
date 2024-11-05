@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -14,6 +15,7 @@ import (
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/msg-error"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/utils"
 	"github.com/av-ugolkov/lingua-evo/internal/services/auth"
+	entityUser "github.com/av-ugolkov/lingua-evo/internal/services/user"
 	"github.com/av-ugolkov/lingua-evo/runtime"
 
 	"github.com/gin-gonic/gin"
@@ -60,27 +62,32 @@ func (h *Handler) signIn(c *ginext.Context) (int, any, error) {
 	authorization, err := c.GetHeaderAuthorization(ginext.AuthTypeBasic)
 	if err != nil {
 		return http.StatusBadRequest, nil,
-			fmt.Errorf("auth.delivery.Handler.signin: %w", err)
+			fmt.Errorf("auth.delivery.Handler.signIn: %w", err)
 	}
 
 	var data CreateSessionRq
 	err = decodeBasicAuth(authorization, &data)
 	if err != nil {
 		return http.StatusInternalServerError, nil,
-			fmt.Errorf("auth.delivery.Handler.signin: %v", err)
+			fmt.Errorf("auth.delivery.Handler.signIn: %v", err)
 	}
 	var fingerprint string
 	if fingerprint = c.GetHeader(ginext.Fingerprint); fingerprint == runtime.EmptyString {
 		return http.StatusBadRequest, nil,
-			fmt.Errorf("auth.delivery.Handler.signin: fingerprint not found")
+			fmt.Errorf("auth.delivery.Handler.signIn: fingerprint not found")
 	}
 	data.Fingerprint = fingerprint
 
 	refreshTokenID := uuid.New()
 	tokens, err := h.authSvc.SignIn(ctx, data.User, data.Password, data.Fingerprint, refreshTokenID)
 	if err != nil {
-		return http.StatusInternalServerError, nil,
-			fmt.Errorf("auth.delivery.Handler.signin: %v", err)
+		switch {
+		case errors.Is(err, entityUser.ErrNotFoundUser) ||
+			errors.Is(err, auth.ErrWrongPassword):
+			return http.StatusBadRequest, nil, msgerr.New(err, "User doesn't exist or password is wrong")
+		default:
+			return http.StatusInternalServerError, nil, msgerr.New(fmt.Errorf("auth.delivery.Handler.signIn: %v", err), msgerr.ErrMsgInternal)
+		}
 	}
 
 	sessionRs := &CreateSessionRs{
@@ -166,13 +173,13 @@ func (h *Handler) sendCode(c *ginext.Context) (int, any, error) {
 	err := c.Bind(&data)
 	if err != nil {
 		return http.StatusBadRequest, nil,
-			msgerr.New(fmt.Errorf("auth.delivery.handler.Handler.sendCode: %v", err),
+			msgerr.New(fmt.Errorf("auth.delivery.Handler.sendCode: %v", err),
 				msgerr.ErrMsgBadRequest)
 	}
 
 	if !utils.IsEmailValid(data.Email) {
 		return http.StatusBadRequest, nil,
-			msgerr.New(fmt.Errorf("auth.delivery.handler.Handler.sendCode - email format is invalid"),
+			msgerr.New(fmt.Errorf("auth.delivery.Handler.sendCode - email format is invalid"),
 				msgerr.ErrMsgBadEmail)
 	}
 

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/av-ugolkov/lingua-evo/internal/config"
+	"github.com/av-ugolkov/lingua-evo/runtime"
 
 	rClient "github.com/redis/go-redis/v9"
 )
@@ -34,7 +35,7 @@ func (r *Redis) Close() error {
 func (r *Redis) Get(ctx context.Context, key string) (string, error) {
 	value, err := r.client.Get(ctx, key).Result()
 	if err != nil {
-		return "", fmt.Errorf("redis.Get - key [%s]: %w", key, err)
+		return runtime.EmptyString, fmt.Errorf("redis.Get - key [%s]: %w", key, err)
 	}
 	return value, nil
 }

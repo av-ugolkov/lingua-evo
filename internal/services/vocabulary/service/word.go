@@ -7,6 +7,7 @@ import (
 
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/msg-error"
 	entityDict "github.com/av-ugolkov/lingua-evo/internal/services/dictionary"
+	entityEvents "github.com/av-ugolkov/lingua-evo/internal/services/events"
 	entityExample "github.com/av-ugolkov/lingua-evo/internal/services/example"
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary"
 	"github.com/av-ugolkov/lingua-evo/runtime"
@@ -40,17 +41,22 @@ type (
 		GetWordsByID(ctx context.Context, wordIDs []uuid.UUID) ([]entityDict.DictWord, error)
 		GetWordsByText(ctx context.Context, words []entityDict.DictWord) ([]entityDict.DictWord, error)
 	}
+
+	eventsSvc interface {
+		AddEvent(ctx context.Context, event entityEvents.Event) (uuid.UUID, error)
+		AsyncAddEvent(event entityEvents.Event)
+	}
 )
 
 func (s *Service) AddWord(ctx context.Context, uid uuid.UUID, vocabWordData entity.VocabWordData) (entity.VocabWord, error) {
 	userCountWord, err := s.userSvc.UserCountWord(ctx, uid)
 	if err != nil {
-		return entity.VocabWord{}, msgerr.New(fmt.Errorf("word.Service.AddWord - get count words: %w", err), msgerr.ErrMsgInternal)
+		return entity.VocabWord{}, msgerr.New(fmt.Errorf("word.Service.AddWord: %w", err), msgerr.ErrMsgInternal)
 	}
 
 	count, err := s.repoVocab.GetCountWords(ctx, uid)
 	if err != nil {
-		return entity.VocabWord{}, msgerr.New(fmt.Errorf("word.Service.AddWord - get count words: %v", err), msgerr.ErrMsgInternal)
+		return entity.VocabWord{}, msgerr.New(fmt.Errorf("word.Service.AddWord: %v", err), msgerr.ErrMsgInternal)
 	}
 
 	if count >= userCountWord {
@@ -59,7 +65,7 @@ func (s *Service) AddWord(ctx context.Context, uid uuid.UUID, vocabWordData enti
 
 	vocab, err := s.GetVocabulary(ctx, uid, vocabWordData.VocabID)
 	if err != nil {
-		return entity.VocabWord{}, msgerr.New(fmt.Errorf("word.Service.AddWord - get dictionary: %v", err), msgerr.ErrMsgInternal)
+		return entity.VocabWord{}, msgerr.New(fmt.Errorf("word.Service.AddWord: %v", err), msgerr.ErrMsgInternal)
 	}
 
 	vocabWordData.Native.LangCode = vocab.NativeLang
@@ -116,10 +122,22 @@ func (s *Service) AddWord(ctx context.Context, uid uuid.UUID, vocabWordData enti
 
 	vocabularyWord := entity.VocabWord{
 		ID:        vocabWordData.ID,
+		VocabID:   vocabWordData.VocabID,
 		NativeID:  nativeWordID,
 		CreatedAt: vocabWordData.CreatedAt,
 		UpdatedAt: vocabWordData.UpdatedAt,
 	}
+
+	s.eventsSvc.AsyncAddEvent(entityEvents.Event{
+		User: entityEvents.UserData{ID: uid},
+		Type: entityEvents.VocabWordCreated,
+		Payload: entityEvents.PayloadDataVocab{
+			DictWordID: &nativeWordID,
+			DictWord:   vocabWordData.Native.Text,
+			VocabID:    &vocabWordData.VocabID,
+			VocabTitle: vocab.Name,
+		},
+	})
 
 	return vocabularyWord, nil
 }
@@ -173,19 +191,56 @@ func (s *Service) UpdateWord(ctx context.Context, uid uuid.UUID, vocabWordData e
 		return entity.VocabWord{}, fmt.Errorf("word.Service.UpdateWord - update vocabulary: %w", err)
 	}
 
+	eventType := entityEvents.VocabWordUpdated
+	if vocabWordData.Native.ID != nativeWordID {
+		eventType = entityEvents.VocabWordRenamed
+	}
+	s.eventsSvc.AsyncAddEvent(entityEvents.Event{
+		User: entityEvents.UserData{ID: uid},
+		Type: eventType,
+		Payload: entityEvents.PayloadDataVocab{
+			DictWordID: &nativeWordID,
+			DictWord:   vocabWordData.Native.Text,
+			VocabID:    &vocabWord.VocabID,
+			VocabTitle: vocab.Name,
+		},
+	})
+
 	return vocabWord, nil
 }
 
-func (s *Service) DeleteWord(ctx context.Context, vid, wid uuid.UUID) error {
+func (s *Service) DeleteWord(ctx context.Context, uid, vid, wid uuid.UUID) error {
 	vocabWord := entity.VocabWord{
 		ID:      wid,
 		VocabID: vid,
 	}
 
-	err := s.repoVocab.DeleteWord(ctx, vocabWord)
+	vocabWordTemp, err := s.GetWord(ctx, vid, wid)
+	if err != nil {
+		return fmt.Errorf("word.Service.DeleteWord: %w", err)
+	}
+
+	vocab, err := s.GetVocabulary(ctx, uid, vid)
+	if err != nil {
+		return fmt.Errorf("word.Service.DeleteWord: %w", err)
+	}
+
+	err = s.repoVocab.DeleteWord(ctx, vocabWord)
 	if err != nil {
 		return fmt.Errorf("word.Service.DeleteWord - delete word: %w", err)
 	}
+
+	s.eventsSvc.AsyncAddEvent(entityEvents.Event{
+		User: entityEvents.UserData{ID: uid},
+		Type: entityEvents.VocabWordDeleted,
+		Payload: entityEvents.PayloadDataVocab{
+			DictWordID: &vocabWordTemp.Native.ID,
+			DictWord:   vocabWordTemp.Native.Text,
+			VocabID:    &vid,
+			VocabTitle: vocab.Name,
+		},
+	})
+
 	return nil
 }
 

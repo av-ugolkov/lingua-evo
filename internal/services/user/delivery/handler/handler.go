@@ -3,6 +3,7 @@ package handler
 import (
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
@@ -28,7 +29,6 @@ const (
 
 type (
 	CreateUserRq struct {
-		Username string `json:"username"`
 		Password string `json:"password"`
 		Email    string `json:"email"`
 		Code     int    `json:"code"`
@@ -75,31 +75,25 @@ func (h *Handler) signUp(c *ginext.Context) (int, any, error) {
 	if err != nil {
 		return http.StatusBadRequest, nil,
 			msgerr.New(
-				fmt.Errorf("user.delivery.Handler.createAccount: %v", err),
+				fmt.Errorf("user.delivery.Handler.signUp: %v", err),
 				msgerr.ErrMsgBadRequest)
 
 	}
 
-	if !utils.IsUsernameValid(data.Username) {
-		return http.StatusBadRequest, nil,
-			msgerr.New(fmt.Errorf("user.delivery.Handler.createAccount - invalid user name"),
-				"Invalid user name")
-	}
-
 	if !utils.IsPasswordValid(data.Password) {
 		return http.StatusBadRequest, nil,
-			msgerr.New(fmt.Errorf("user.delivery.Handler.createAccount - invalid password"),
+			msgerr.New(fmt.Errorf("user.delivery.Handler.signUp: invalid password"),
 				"Invalid password")
 	}
 
 	if !utils.IsEmailValid(data.Email) {
 		return http.StatusBadRequest, nil,
-			msgerr.New(fmt.Errorf("user.delivery.Handler.createAccount - invalid email"),
+			msgerr.New(fmt.Errorf("user.delivery.Handler.signUp: invalid email"),
 				msgerr.ErrMsgBadEmail)
 	}
 
 	uid, err := h.userSvc.SignUp(c.Request.Context(), entity.UserCreate{
-		Name:     data.Username,
+		Name:     strings.Split(data.Email, "@")[0],
 		Password: data.Password,
 		Email:    data.Email,
 		Role:     runtime.User,
@@ -107,7 +101,7 @@ func (h *Handler) signUp(c *ginext.Context) (int, any, error) {
 	})
 	if err != nil {
 		return http.StatusInternalServerError, nil,
-			fmt.Errorf("user.delivery.Handler.createAccount - create user: %v", err)
+			fmt.Errorf("user.delivery.Handler.signUp: %v", err)
 	}
 
 	createUserRs := &CreateUserRs{
@@ -121,7 +115,7 @@ func (h *Handler) getUserByID(c *ginext.Context) (int, any, error) {
 	ctx := c.Request.Context()
 	userID, err := runtime.UserIDFromContext(ctx)
 	if err != nil {
-		return http.StatusUnauthorized, nil, fmt.Errorf("user.delivery.Handler.getUserByID - unauthorized: %v", err)
+		return http.StatusUnauthorized, nil, fmt.Errorf("user.delivery.Handler.getUserByID: %v", err)
 	}
 	userData, err := h.userSvc.GetUserByID(ctx, userID)
 	if err != nil {
@@ -146,31 +140,31 @@ func (h *Handler) getUsers(c *ginext.Context) (int, any, error) {
 	page, err := c.GetQueryInt(paramsPage)
 	if err != nil {
 		return http.StatusBadRequest, nil,
-			fmt.Errorf("user.delivery.Handler.getUsers - get query [page]: %v", err)
+			fmt.Errorf("user.delivery.Handler.getUsers: %v", err)
 	}
 
 	perPage, err := c.GetQueryInt(paramsPerPage)
 	if err != nil {
 		return http.StatusBadRequest, nil,
-			fmt.Errorf("user.delivery.Handler.getUsers - get query [per_page]: %v", err)
+			fmt.Errorf("user.delivery.Handler.getUsers: %v", err)
 	}
 
 	search, err := c.GetQuery(paramsSearch)
 	if err != nil {
 		return http.StatusBadRequest, nil,
-			fmt.Errorf("user.delivery.Handler.getUsers - get query [search]: %v", err)
+			fmt.Errorf("user.delivery.Handler.getUsers: %v", err)
 	}
 
 	sort, err := c.GetQueryInt(paramsSort)
 	if err != nil {
 		return http.StatusBadRequest, nil,
-			fmt.Errorf("user.delivery.Handler.getUsers - get query [sort]: %v", err)
+			fmt.Errorf("user.delivery.Handler.getUsers: %v", err)
 	}
 
 	order, err := c.GetQueryInt(paramsOrder)
 	if err != nil {
 		return http.StatusBadRequest, nil,
-			fmt.Errorf("user.delivery.Handler.getUsers - get query [order]: %v", err)
+			fmt.Errorf("user.delivery.Handler.getUsers: %v", err)
 	}
 
 	users, countUsers, err := h.userSvc.GetUsers(ctx, uid, page, perPage, sort, order, search)

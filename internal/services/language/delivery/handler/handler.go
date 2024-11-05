@@ -42,7 +42,7 @@ func (h *Handler) getCurrentLanguage(c *ginext.Context) (int, any, error) {
 		Code: langCode,
 	}
 
-	c.SetCookie(ginext.Language, languageRs.Code, 0, "/", "", false, true)
+	c.SetCookie(ginext.Language, languageRs.Code, 0, "/", runtime.EmptyString, false, true)
 	return http.StatusOK, languageRs, nil
 }
 

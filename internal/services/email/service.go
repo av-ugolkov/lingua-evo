@@ -8,6 +8,7 @@ import (
 	"net/smtp"
 
 	"github.com/av-ugolkov/lingua-evo/internal/config"
+	"github.com/av-ugolkov/lingua-evo/runtime"
 )
 
 //go:embed templ/*
@@ -40,11 +41,11 @@ func NewService(email config.Email) *Service {
 
 func (s *Service) SendAuthCode(toEmail string, code int) error {
 	to := fmt.Sprintf("To: %s\r\n", toEmail)
-	subject := "Subject: Create account on Lingua Evo\r\n\r\n"
+	subject := "Subject: Create account on Lingua Evo\r\n"
 
 	fs, err := template.ParseFS(templ, "templ/auth_code.html")
 	if err != nil {
-		return fmt.Errorf("email.Service.SendAuthCode - parse template: %v", err)
+		return fmt.Errorf("email.Service.SendAuthCode: %v", err)
 	}
 
 	w := &bytes.Buffer{}
@@ -52,15 +53,15 @@ func (s *Service) SendAuthCode(toEmail string, code int) error {
 		Code: code,
 	})
 	if err != nil {
-		return fmt.Errorf("email.Service.SendAuthCode - execute template: %v", err)
+		return fmt.Errorf("email.Service.SendAuthCode: %v", err)
 	}
 
 	message := []byte(to + subject + contentType + w.String())
 
-	authEmail := smtp.PlainAuth("", s.email.Address, s.email.Password, s.email.Host)
+	authEmail := smtp.PlainAuth(runtime.EmptyString, s.email.Address, s.email.Password, s.email.Host)
 	err = smtp.SendMail(s.email.AddrSvc(), authEmail, s.email.Address, []string{toEmail}, message)
 	if err != nil {
-		return fmt.Errorf("email.Service.SendAuthCode - send mail: %v", err)
+		return fmt.Errorf("email.Service.SendAuthCode: %v", err)
 	}
 
 	return nil
@@ -72,7 +73,7 @@ func (s *Service) SendEmailForSupport(toEmail string, params ...string) error {
 
 	fs, err := template.ParseFS(templ, "templ/support.html")
 	if err != nil {
-		return fmt.Errorf("email.Service.SendEmailForSupport - parse template: %v", err)
+		return fmt.Errorf("email.Service.SendEmailForSupport: %v", err)
 	}
 
 	userName := params[0]
@@ -87,15 +88,15 @@ func (s *Service) SendEmailForSupport(toEmail string, params ...string) error {
 		Msg:      params[2],
 	})
 	if err != nil {
-		return fmt.Errorf("email.Service.SendEmailForSupport - execute template: %v", err)
+		return fmt.Errorf("email.Service.SendEmailForSupport: %v", err)
 	}
 
 	message := []byte(to + subject + contentType + w.String())
 
-	authEmail := smtp.PlainAuth("", s.email.Address, s.email.Password, s.email.Host)
+	authEmail := smtp.PlainAuth(runtime.EmptyString, s.email.Address, s.email.Password, s.email.Host)
 	err = smtp.SendMail(s.email.AddrSvc(), authEmail, s.email.Address, []string{toEmail, s.email.Address}, message)
 	if err != nil {
-		return fmt.Errorf("email.Service.SendEmailForSupport - send mail: %v", err)
+		return fmt.Errorf("email.Service.SendEmailForSupport: %v", err)
 	}
 
 	return nil

@@ -24,6 +24,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestService_GetVocabularies(t *testing.T) {
@@ -50,7 +51,9 @@ func TestService_GetVocabularies(t *testing.T) {
 	langSvc := language.NewService(repository.NewRepo(tr))
 	dictSvc := entityDict.NewService(dictRepo.NewRepo(tr), langSvc)
 	exampleSvc := example.NewService(exampleRepo.NewRepo(tr))
-	vocabSvc := NewService(tr, vocabRepo, userSvc, exampleSvc, dictSvc, tagSvc, nil)
+	mockEventsSvc := new(mockEventsSvc)
+	mockEventsSvc.On("AsyncAddEvent", mock.Anything, mock.Anything).Return(nil)
+	vocabSvc := NewService(tr, vocabRepo, userSvc, exampleSvc, dictSvc, tagSvc, nil, mockEventsSvc)
 
 	t.Run("empty vocab", func(t *testing.T) {
 		var (
@@ -58,7 +61,7 @@ func TestService_GetVocabularies(t *testing.T) {
 			itemsPerPage  = 5
 			typeSort      = 1
 			order         = 0
-			search        = ""
+			search        = runtime.EmptyString
 			nativeLang    = "en"
 			translateLang = "ru"
 			maxWords      = 5
@@ -86,7 +89,7 @@ func TestService_GetVocabularies(t *testing.T) {
 			itemsPerPage  = 5
 			typeSort      = 1
 			order         = 0
-			search        = ""
+			search        = runtime.EmptyString
 			nativeLang    = "en"
 			translateLang = "ru"
 			maxWords      = 5
@@ -139,7 +142,7 @@ func TestService_GetVocabularies(t *testing.T) {
 			itemsPerPage  = 5
 			typeSort      = 1
 			order         = 0
-			search        = ""
+			search        = runtime.EmptyString
 			nativeLang    = "en"
 			translateLang = "ru"
 			maxWords      = 5
@@ -193,7 +196,7 @@ func TestService_GetVocabularies(t *testing.T) {
 			itemsPerPage  = 5
 			typeSort      = 1
 			order         = 0
-			search        = ""
+			search        = runtime.EmptyString
 			nativeLang    = "en"
 			translateLang = "ru"
 			maxWords      = 5
@@ -271,7 +274,7 @@ func TestService_GetVocabularies(t *testing.T) {
 			itemsPerPage  = 5
 			typeSort      = 1
 			order         = 0
-			search        = ""
+			search        = runtime.EmptyString
 			nativeLang    = "en"
 			translateLang = "ru"
 			maxWords      = 5
