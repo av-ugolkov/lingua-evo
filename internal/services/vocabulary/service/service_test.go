@@ -107,7 +107,7 @@ func TestService_GetVocabularies(t *testing.T) {
 					return err
 				}
 
-				_, err = AddVocabs(ctx, vocabSvc, uid, 2)
+				_, err = addVocabs(ctx, vocabSvc, uid, 2)
 				if err != nil {
 					return err
 				}
@@ -160,7 +160,7 @@ func TestService_GetVocabularies(t *testing.T) {
 					return err
 				}
 
-				_, err = AddVocabs(ctx, vocabSvc, uid, 3)
+				_, err = addVocabs(ctx, vocabSvc, uid, 3)
 				if err != nil {
 					return err
 				}
@@ -214,7 +214,7 @@ func TestService_GetVocabularies(t *testing.T) {
 					return err
 				}
 
-				vocabs, err := AddVocabs(ctx, vocabSvc, uid, 3)
+				vocabs, err := addVocabs(ctx, vocabSvc, uid, 3)
 				if err != nil {
 					return err
 				}
@@ -292,7 +292,7 @@ func TestService_GetVocabularies(t *testing.T) {
 					return err
 				}
 
-				vocabs, err := AddVocabs(ctx, vocabSvc, uid, 3)
+				vocabs, err := addVocabs(ctx, vocabSvc, uid, 3)
 				if err != nil {
 					return err
 				}

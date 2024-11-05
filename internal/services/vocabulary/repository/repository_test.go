@@ -9,7 +9,7 @@ import (
 	"github.com/av-ugolkov/lingua-evo/internal/db/postgres"
 	"github.com/av-ugolkov/lingua-evo/internal/db/transactor"
 	entityUser "github.com/av-ugolkov/lingua-evo/internal/services/user"
-	"github.com/av-ugolkov/lingua-evo/internal/services/user/repository"
+	userRepository "github.com/av-ugolkov/lingua-evo/internal/services/user/repository"
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary"
 	"github.com/av-ugolkov/lingua-evo/runtime"
 	"github.com/av-ugolkov/lingua-evo/runtime/access"
@@ -18,22 +18,28 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestGetVocabulariesWithMaxWords(t *testing.T) {
+var (
+	tr        *transactor.Transactor
+	vocabRepo *VocabRepo
+	userRepo  *userRepository.UserRepo
+)
+
+func TestMain(m *testing.M) {
 	ctx := context.Background()
 
 	tp := postgres.NewTempPostgres(ctx, "../../../..")
 	defer tp.DropDB(ctx)
 
-	if tp == nil {
-		t.Fatal("can't init container for DB")
-	}
-
 	tr := transactor.NewTransactor(tp.PgxPool)
-	repo := NewRepo(tr)
-	userRepo := repository.NewRepo(tr)
+	vocabRepo = NewRepo(tr)
+	userRepo = userRepository.NewRepo(tr)
+}
+
+func TestGetVocabulariesWithMaxWords(t *testing.T) {
+	ctx := context.Background()
 
 	t.Run("empty vocabularies", func(t *testing.T) {
-		vocabs, err := repo.GetVocabulariesWithMaxWords(ctx, []uint8{uint8(access.Public), uint8(access.Subscribers)}, 3)
+		vocabs, err := vocabRepo.GetVocabulariesWithMaxWords(ctx, []uint8{uint8(access.Public), uint8(access.Subscribers)}, 3)
 		if err != nil {
 			assert.Error(t, err)
 			return
@@ -54,7 +60,7 @@ func TestGetVocabulariesWithMaxWords(t *testing.T) {
 			}
 
 			for i := 0; i < 10; i++ {
-				_, err := repo.AddVocab(ctx, entity.Vocab{
+				_, err := vocabRepo.AddVocab(ctx, entity.Vocab{
 					ID:            uuid.New(),
 					UserID:        uid,
 					Name:          fmt.Sprintf("test_%d", i),
@@ -71,7 +77,7 @@ func TestGetVocabulariesWithMaxWords(t *testing.T) {
 				}
 			}
 
-			vocabs, err := repo.GetVocabulariesWithMaxWords(ctx, []uint8{uint8(access.Public), uint8(access.Subscribers)}, 3)
+			vocabs, err := vocabRepo.GetVocabulariesWithMaxWords(ctx, []uint8{uint8(access.Public), uint8(access.Subscribers)}, 3)
 			if err != nil {
 				return err
 			}
@@ -97,7 +103,7 @@ func TestGetVocabulariesWithMaxWords(t *testing.T) {
 			}
 
 			for i := 0; i < 10; i++ {
-				vid, err := repo.AddVocab(ctx, entity.Vocab{
+				vid, err := vocabRepo.AddVocab(ctx, entity.Vocab{
 					ID:            uuid.New(),
 					UserID:        uid,
 					Name:          fmt.Sprintf("test_%d", i),
@@ -114,7 +120,7 @@ func TestGetVocabulariesWithMaxWords(t *testing.T) {
 				}
 
 				for j := 0; j < 10-i; j++ {
-					_, err := repo.AddWord(ctx, entity.VocabWord{
+					_, err := vocabRepo.AddWord(ctx, entity.VocabWord{
 						VocabID:       vid,
 						ID:            uuid.New(),
 						NativeID:      uuid.New(),
@@ -127,7 +133,7 @@ func TestGetVocabulariesWithMaxWords(t *testing.T) {
 				}
 			}
 
-			vocabs, err := repo.GetVocabulariesWithMaxWords(ctx, []uint8{uint8(access.Public), uint8(access.Subscribers)}, 3)
+			vocabs, err := vocabRepo.GetVocabulariesWithMaxWords(ctx, []uint8{uint8(access.Public), uint8(access.Subscribers)}, 3)
 			if err != nil {
 				return err
 			}
@@ -146,17 +152,6 @@ func TestGetVocabulariesWithMaxWords(t *testing.T) {
 
 func TestGetVocabsWithCountWords(t *testing.T) {
 	ctx := context.Background()
-
-	tp := postgres.NewTempPostgres(ctx, "../../../../..")
-	defer tp.DropDB(ctx)
-
-	if tp == nil {
-		t.Fatal("can't init container for DB")
-	}
-
-	tr := transactor.NewTransactor(tp.PgxPool)
-	repo := NewRepo(tr)
-	userRepo := repository.NewRepo(tr)
 
 	owner, err := userRepo.AddUser(ctx, &entityUser.User{
 		ID:           uuid.New(),
@@ -177,7 +172,7 @@ func TestGetVocabsWithCountWords(t *testing.T) {
 	})
 
 	t.Run("empty vocabularies", func(t *testing.T) {
-		vocabs, err := repo.GetVocabsWithCountWords(ctx, uuid.Nil, owner, []uint8{uint8(access.Public), uint8(access.Subscribers)})
+		vocabs, err := vocabRepo.GetVocabsWithCountWords(ctx, uuid.Nil, owner, []uint8{uint8(access.Public), uint8(access.Subscribers)})
 		if err != nil {
 			assert.Error(t, err)
 		}
@@ -186,7 +181,7 @@ func TestGetVocabsWithCountWords(t *testing.T) {
 	t.Run("get user vocabs", func(t *testing.T) {
 		err := tr.CreateTransaction(ctx, func(ctx context.Context) error {
 			for i := 0; i < 10; i++ {
-				_, err := repo.AddVocab(ctx, entity.Vocab{
+				_, err := vocabRepo.AddVocab(ctx, entity.Vocab{
 					ID:            uuid.New(),
 					UserID:        owner,
 					Name:          fmt.Sprintf("test_%d", i),
@@ -202,7 +197,7 @@ func TestGetVocabsWithCountWords(t *testing.T) {
 					return err
 				}
 			}
-			vocabs, err := repo.GetVocabsWithCountWords(ctx, uuid.Nil, owner, []uint8{uint8(access.Public), uint8(access.Subscribers)})
+			vocabs, err := vocabRepo.GetVocabsWithCountWords(ctx, uuid.Nil, owner, []uint8{uint8(access.Public), uint8(access.Subscribers)})
 			if err != nil {
 				return err
 			}
@@ -218,17 +213,6 @@ func TestGetVocabsWithCountWords(t *testing.T) {
 
 func TestGetVocabulariesRecommended(t *testing.T) {
 	ctx := context.Background()
-
-	tp := postgres.NewTempPostgres(ctx, "../../../../..")
-	defer tp.DropDB(ctx)
-
-	if tp == nil {
-		t.Fatal("can't init container for DB")
-	}
-
-	tr := transactor.NewTransactor(tp.PgxPool)
-	repo := NewRepo(tr)
-	userRepo := repository.NewRepo(tr)
 
 	uid, err := userRepo.AddUser(ctx, &entityUser.User{
 		ID:           uuid.New(),
@@ -249,7 +233,7 @@ func TestGetVocabulariesRecommended(t *testing.T) {
 	})
 
 	t.Run("empty vocabularies", func(t *testing.T) {
-		recommendedVocabs, err := repo.GetVocabulariesRecommended(ctx, uid, []uint8{uint8(access.Public), uint8(access.Subscribers)}, 3)
+		recommendedVocabs, err := vocabRepo.GetVocabulariesRecommended(ctx, uid, []uint8{uint8(access.Public), uint8(access.Subscribers)}, 3)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -270,7 +254,7 @@ func TestGetVocabulariesRecommended(t *testing.T) {
 					t.Fatal(err)
 				}
 				for i := 0; i < 10; i++ {
-					_, err := repo.AddVocab(ctx, entity.Vocab{
+					_, err := vocabRepo.AddVocab(ctx, entity.Vocab{
 						ID:            uuid.New(),
 						UserID:        nuid,
 						Name:          fmt.Sprintf("test_%d", i),
@@ -287,7 +271,7 @@ func TestGetVocabulariesRecommended(t *testing.T) {
 					}
 				}
 			}
-			vocabs, err := repo.GetVocabulariesRecommended(ctx, uid, []uint8{uint8(access.Public), uint8(access.Subscribers)}, 3)
+			vocabs, err := vocabRepo.GetVocabulariesRecommended(ctx, uid, []uint8{uint8(access.Public), uint8(access.Subscribers)}, 3)
 			if err != nil {
 				return err
 			}
@@ -301,7 +285,7 @@ func TestGetVocabulariesRecommended(t *testing.T) {
 	})
 	t.Run("get recommended vocabularies when user have vocabs with different language", func(t *testing.T) {
 		err := tr.CreateTransaction(ctx, func(ctx context.Context) error {
-			_, err := repo.AddVocab(ctx, entity.Vocab{
+			_, err := vocabRepo.AddVocab(ctx, entity.Vocab{
 				ID:            uuid.New(),
 				UserID:        uid,
 				Name:          "test",
@@ -328,7 +312,7 @@ func TestGetVocabulariesRecommended(t *testing.T) {
 					t.Fatal(err)
 				}
 				for i := 0; i < 10; i++ {
-					_, err := repo.AddVocab(ctx, entity.Vocab{
+					_, err := vocabRepo.AddVocab(ctx, entity.Vocab{
 						ID:            uuid.New(),
 						UserID:        nuid,
 						Name:          fmt.Sprintf("test_%d", i),
@@ -345,7 +329,7 @@ func TestGetVocabulariesRecommended(t *testing.T) {
 					}
 				}
 			}
-			vocabs, err := repo.GetVocabulariesRecommended(ctx, uid, []uint8{uint8(access.Public), uint8(access.Subscribers)}, 3)
+			vocabs, err := vocabRepo.GetVocabulariesRecommended(ctx, uid, []uint8{uint8(access.Public), uint8(access.Subscribers)}, 3)
 			if err != nil {
 				return err
 			}
@@ -359,7 +343,7 @@ func TestGetVocabulariesRecommended(t *testing.T) {
 	})
 	t.Run("get recommended vocabularies", func(t *testing.T) {
 		err := tr.CreateTransaction(ctx, func(ctx context.Context) error {
-			_, err := repo.AddVocab(ctx, entity.Vocab{
+			_, err := vocabRepo.AddVocab(ctx, entity.Vocab{
 				ID:            uuid.New(),
 				UserID:        uid,
 				Name:          "test",
@@ -385,7 +369,7 @@ func TestGetVocabulariesRecommended(t *testing.T) {
 				if err != nil {
 					return err
 				}
-				vid, err := repo.AddVocab(ctx, entity.Vocab{
+				vid, err := vocabRepo.AddVocab(ctx, entity.Vocab{
 					ID:            uuid.New(),
 					UserID:        nuid,
 					Name:          fmt.Sprintf("test_%d", k),
@@ -402,7 +386,7 @@ func TestGetVocabulariesRecommended(t *testing.T) {
 				}
 
 				for j := 0; j < 10-k; j++ {
-					_, err := repo.AddWord(ctx, entity.VocabWord{
+					_, err := vocabRepo.AddWord(ctx, entity.VocabWord{
 						VocabID:       vid,
 						ID:            uuid.New(),
 						NativeID:      uuid.New(),
@@ -414,7 +398,7 @@ func TestGetVocabulariesRecommended(t *testing.T) {
 					}
 				}
 			}
-			vocabs, err := repo.GetVocabulariesRecommended(ctx, uid, []uint8{uint8(access.Public), uint8(access.Subscribers)}, 3)
+			vocabs, err := vocabRepo.GetVocabulariesRecommended(ctx, uid, []uint8{uint8(access.Public), uint8(access.Subscribers)}, 3)
 			if err != nil {
 				return err
 			}
