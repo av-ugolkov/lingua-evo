@@ -41,6 +41,10 @@ lint:
 test: 
 	go test ./... -count=1 -cover
 
+.PHONY: gosec
+gosec:
+	gosec ./...
+
 .PHONY: count line
 count line:
 	find . -name '*.go' | xargs wc -l

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	_ "net/http/pprof"
 	"os"
 	"os/signal"
 	"syscall"
@@ -72,14 +71,8 @@ func ServerStart(cfg *config.Config) {
 		logger.Close()
 		return nil
 	})
-	var pprofSrv *http.Server
 	if cfg.PprofDebug.Enable {
-		go func() {
-			pprofSrv = &http.Server{
-				Addr: cfg.PprofDebug.Addr(),
-			}
-			slog.Error(pprofSrv.ListenAndServe().Error())
-		}()
+		initPprof(&cfg.PprofDebug)
 	}
 
 	pgxPool, err := pg.NewDB(cfg.DbSQL.PgxPoolConfig())
@@ -153,11 +146,8 @@ func ServerStart(cfg *config.Config) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	if pprofSrv != nil {
-		if err := pprofSrv.Shutdown(ctx); err != nil {
-			slog.Error(fmt.Sprintf("server pprof shutdown returned an err: %v\n", err))
-		}
-	}
+	shutdownPprof(ctx)
+
 	if err := server.Shutdown(ctx); err != nil {
 		slog.Error(fmt.Sprintf("server shutdown returned an err: %v\n", err))
 	}
