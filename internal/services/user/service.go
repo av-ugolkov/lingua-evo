@@ -36,6 +36,10 @@ type (
 	}
 )
 
+const (
+	DEFAULT_COUNT_WORDS = 300
+)
+
 type Service struct {
 	repo  userRepo
 	redis redis
@@ -102,7 +106,7 @@ func (s *Service) AddUser(ctx context.Context, usr UserCreate) (uuid.UUID, error
 			return err
 		}
 
-		err = s.repo.AddUserData(ctx, uid, 300, true)
+		err = s.repo.AddUserData(ctx, uid, DEFAULT_COUNT_WORDS, true)
 		if err != nil {
 			return err
 		}
