@@ -13,9 +13,9 @@ import (
 	subscribersRepo "github.com/av-ugolkov/lingua-evo/internal/services/subscribers/repository"
 	"github.com/av-ugolkov/lingua-evo/internal/services/tag"
 	"github.com/av-ugolkov/lingua-evo/internal/services/tag/repository"
-	"github.com/av-ugolkov/lingua-evo/internal/services/user"
 	entityUser "github.com/av-ugolkov/lingua-evo/internal/services/user"
 	userRepo "github.com/av-ugolkov/lingua-evo/internal/services/user/repository"
+	user "github.com/av-ugolkov/lingua-evo/internal/services/user/service"
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary"
 	vocabRepo "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary/repository"
 	"github.com/av-ugolkov/lingua-evo/runtime"
@@ -40,7 +40,7 @@ func TestMain(m *testing.M) {
 	defer tp.DropDB(ctx)
 
 	tr := transactor.NewTransactor(tp.PgxPool)
-	userTestSvc = user.NewService(userRepo.NewRepo(tr), nil, tr)
+	userTestSvc = user.NewService(tr, userRepo.NewRepo(tr), nil, nil)
 	subscrbTestSvc = subscribers.NewService(subscribersRepo.NewRepo(tr))
 
 	var err error

@@ -1,13 +1,14 @@
-package user
+package service
 
 import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/av-ugolkov/lingua-evo/internal/db/transactor"
 	"time"
 
+	"github.com/av-ugolkov/lingua-evo/internal/db/transactor"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/utils"
+	entity "github.com/av-ugolkov/lingua-evo/internal/services/user"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -16,23 +17,28 @@ import (
 
 type (
 	userRepo interface {
-		AddUser(ctx context.Context, u *User) (uuid.UUID, error)
-		EditUser(ctx context.Context, u *User) error
-		GetUserByID(ctx context.Context, uid uuid.UUID) (*User, error)
-		GetUserByName(ctx context.Context, name string) (*User, error)
-		GetUserByEmail(ctx context.Context, email string) (*User, error)
-		GetUserByToken(ctx context.Context, token uuid.UUID) (*User, error)
+		AddUser(ctx context.Context, u *entity.User) (uuid.UUID, error)
+		EditUser(ctx context.Context, u *entity.User) error
+		GetUserByID(ctx context.Context, uid uuid.UUID) (*entity.User, error)
+		GetUserByName(ctx context.Context, name string) (*entity.User, error)
+		GetUserByEmail(ctx context.Context, email string) (*entity.User, error)
+		GetUserByToken(ctx context.Context, token uuid.UUID) (*entity.User, error)
 		RemoveUser(ctx context.Context, u uuid.UUID) error
-		GetUserData(ctx context.Context, uid uuid.UUID) (*Data, error)
+		GetUserData(ctx context.Context, uid uuid.UUID) (*entity.Data, error)
 		AddUserData(ctx context.Context, userID uuid.UUID, maxCountWords int, newsletter bool) error
-		GetUserSubscriptions(ctx context.Context, uid uuid.UUID) ([]Subscriptions, error)
-		GetUsers(ctx context.Context, page, perPage, sort, order int, search string) ([]UserData, int, error)
+		GetUserSubscriptions(ctx context.Context, uid uuid.UUID) ([]entity.Subscriptions, error)
+		GetUsers(ctx context.Context, page, perPage, sort, order int, search string) ([]entity.UserData, int, error)
 		UpdateLastVisited(ctx context.Context, uid uuid.UUID) error
 	}
 
 	redis interface {
 		Get(ctx context.Context, key string) (string, error)
 		GetAccountCode(ctx context.Context, email string) (int, error)
+		SetNX(ctx context.Context, key string, value any, expiration time.Duration) (bool, error)
+	}
+
+	emailSvc interface {
+		SendEmailForUpdatePassword(toEmail, userName string, code int) error
 	}
 )
 
@@ -41,20 +47,22 @@ const (
 )
 
 type Service struct {
-	repo  userRepo
-	redis redis
-	tr    *transactor.Transactor
+	tr       *transactor.Transactor
+	repo     userRepo
+	redis    redis
+	emailSvc emailSvc
 }
 
-func NewService(repo userRepo, redis redis, tr *transactor.Transactor) *Service {
+func NewService(tr *transactor.Transactor, repo userRepo, redis redis, emailSvc emailSvc) *Service {
 	return &Service{
-		repo:  repo,
-		redis: redis,
-		tr:    tr,
+		tr:       tr,
+		repo:     repo,
+		redis:    redis,
+		emailSvc: emailSvc,
 	}
 }
 
-func (s *Service) SignUp(ctx context.Context, userCreate UserCreate) (uuid.UUID, error) {
+func (s *Service) SignUp(ctx context.Context, userCreate entity.UserCreate) (uuid.UUID, error) {
 	if err := s.validateEmail(ctx, userCreate.Email); err != nil {
 		return uuid.Nil, fmt.Errorf("auth.Service.SignUp - validateEmail: %v", err)
 	}
@@ -76,7 +84,7 @@ func (s *Service) SignUp(ctx context.Context, userCreate UserCreate) (uuid.UUID,
 	return uid, nil
 }
 
-func (s *Service) AddUser(ctx context.Context, usr UserCreate) (uuid.UUID, error) {
+func (s *Service) AddUser(ctx context.Context, usr entity.UserCreate) (uuid.UUID, error) {
 	if err := s.validateUsername(ctx, usr.Name); err != nil {
 		return uuid.Nil, fmt.Errorf("auth.Service.AddUser - validateUsername: %v", err)
 	}
@@ -90,7 +98,7 @@ func (s *Service) AddUser(ctx context.Context, usr UserCreate) (uuid.UUID, error
 		return uuid.Nil, fmt.Errorf("auth.Service.AddUser - hashPassword: %v", err)
 	}
 
-	user := &User{
+	user := &entity.User{
 		Name:         usr.Name,
 		PasswordHash: hashPassword,
 		Email:        usr.Email,
@@ -121,11 +129,7 @@ func (s *Service) AddUser(ctx context.Context, usr UserCreate) (uuid.UUID, error
 	return uid, nil
 }
 
-func (s *Service) EditUser(ctx context.Context, user *User) error {
-	return nil
-}
-
-func (s *Service) GetUser(ctx context.Context, login string) (*User, error) {
+func (s *Service) GetUser(ctx context.Context, login string) (*entity.User, error) {
 	user, err := s.repo.GetUserByName(ctx, login)
 	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 		return nil, fmt.Errorf("user.Service.GetUser - by name: %w", err)
@@ -136,13 +140,13 @@ func (s *Service) GetUser(ctx context.Context, login string) (*User, error) {
 		}
 	}
 	if errors.Is(err, pgx.ErrNoRows) {
-		return nil, fmt.Errorf("user.Service.GetUser - by [%s]: %w", login, ErrNotFoundUser)
+		return nil, fmt.Errorf("user.Service.GetUser - by [%s]: %w", login, entity.ErrNotFoundUser)
 	}
 
 	return user, nil
 }
 
-func (s *Service) GetUserByID(ctx context.Context, uid uuid.UUID) (*User, error) {
+func (s *Service) GetUserByID(ctx context.Context, uid uuid.UUID) (*entity.User, error) {
 	user, err := s.repo.GetUserByID(ctx, uid)
 	if err != nil {
 		return nil, fmt.Errorf("user.Service.GetUserByID: %w", err)
@@ -151,21 +155,21 @@ func (s *Service) GetUserByID(ctx context.Context, uid uuid.UUID) (*User, error)
 	return user, nil
 }
 
-func (s *Service) GetUserByName(ctx context.Context, name string) (*User, error) {
+func (s *Service) GetUserByName(ctx context.Context, name string) (*entity.User, error) {
 	return s.repo.GetUserByName(ctx, name)
 }
 
-func (s *Service) GetUserByEmail(ctx context.Context, email string) (*User, error) {
+func (s *Service) GetUserByEmail(ctx context.Context, email string) (*entity.User, error) {
 	return s.repo.GetUserByEmail(ctx, email)
 }
 
-func (s *Service) GetUserByRefreshToken(ctx context.Context, token uuid.UUID) (*User, error) {
+func (s *Service) GetUserByRefreshToken(ctx context.Context, token uuid.UUID) (*entity.User, error) {
 	sessionJson, err := s.redis.Get(ctx, token.String())
 	if err != nil {
 		return nil, fmt.Errorf("user.Service.GetUserByRefreshToken: %w", err)
 	}
 
-	var session Session
+	var session entity.Session
 
 	err = jsoniter.Unmarshal([]byte(sessionJson), &session)
 	if err != nil {
@@ -175,7 +179,7 @@ func (s *Service) GetUserByRefreshToken(ctx context.Context, token uuid.UUID) (*
 	return s.repo.GetUserByToken(ctx, session.UserID)
 }
 
-func (s *Service) RemoveUser(ctx context.Context, user *User) error {
+func (s *Service) RemoveUser(ctx context.Context, user *entity.User) error {
 	return nil
 }
 
@@ -198,7 +202,7 @@ func (s *Service) UserCountWord(ctx context.Context, userID uuid.UUID) (int, err
 	return maxWords, nil
 }
 
-func (s *Service) GetUsers(ctx context.Context, uid uuid.UUID, page, perPage, sort, order int, search string) ([]UserData, int, error) {
+func (s *Service) GetUsers(ctx context.Context, uid uuid.UUID, page, perPage, sort, order int, search string) ([]entity.UserData, int, error) {
 	users, countUsers, err := s.repo.GetUsers(ctx, page, perPage, sort, order, search)
 	if err != nil {
 		return nil, 0, fmt.Errorf("user.Service.GetUsers: %w", err)
@@ -218,7 +222,7 @@ func (s *Service) UpdateLastVisited(ctx context.Context, uid uuid.UUID) error {
 
 func (s *Service) validateEmail(ctx context.Context, email string) error {
 	if !utils.IsEmailValid(email) {
-		return ErrEmailNotCorrect
+		return entity.ErrEmailNotCorrect
 	}
 
 	userData, err := s.GetUserByEmail(ctx, email)
@@ -227,17 +231,17 @@ func (s *Service) validateEmail(ctx context.Context, email string) error {
 	} else if errors.Is(err, pgx.ErrNoRows) {
 		return nil
 	} else if userData != nil && userData.ID == uuid.Nil && err == nil {
-		return ErrItIsAdmin
+		return entity.ErrItIsAdmin
 	} else if userData != nil && userData.ID != uuid.Nil {
-		return ErrEmailBusy
+		return entity.ErrEmailBusy
 	}
 
 	return nil
 }
 
 func (s *Service) validateUsername(ctx context.Context, username string) error {
-	if len(username) <= UsernameLen {
-		return ErrUsernameLen
+	if len(username) <= entity.UsernameLen {
+		return entity.ErrUsernameLen
 	}
 
 	userData, err := s.GetUserByName(ctx, username)
@@ -246,21 +250,21 @@ func (s *Service) validateUsername(ctx context.Context, username string) error {
 	} else if errors.Is(err, pgx.ErrNoRows) {
 		return nil
 	} else if userData.ID == uuid.Nil && err == nil {
-		return ErrItIsAdmin
+		return entity.ErrItIsAdmin
 	} else if userData.ID != uuid.Nil {
-		return ErrUsernameBusy
+		return entity.ErrUsernameBusy
 	}
 
 	return nil
 }
 
 func validatePassword(password string) error {
-	if len(password) < MinPasswordLen {
-		return ErrPasswordLen
+	if len(password) < entity.MinPasswordLen {
+		return entity.ErrPasswordLen
 	}
 
 	if !utils.IsPasswordValid(password) {
-		return ErrPasswordDifficult
+		return entity.ErrPasswordDifficult
 	}
 
 	return nil

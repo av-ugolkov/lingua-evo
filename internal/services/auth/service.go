@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"math/rand/v2"
 	"time"
 
 	"github.com/av-ugolkov/lingua-evo/internal/config"
@@ -176,7 +175,7 @@ func (s *Service) CreateCode(ctx context.Context, email string) error {
 		return fmt.Errorf("auth.Service.CreateCode: %v", err)
 	}
 
-	creatingCode := rand.IntN(999999-100000) + 100000
+	creatingCode := utils.GenerateCode()
 
 	err = s.email.SendAuthCode(email, creatingCode)
 	if err != nil {

@@ -53,9 +53,9 @@ import (
 	tagService "github.com/av-ugolkov/lingua-evo/internal/services/tag"
 	tagHandler "github.com/av-ugolkov/lingua-evo/internal/services/tag/handler"
 	tagRepository "github.com/av-ugolkov/lingua-evo/internal/services/tag/repository"
-	userService "github.com/av-ugolkov/lingua-evo/internal/services/user"
 	userHandler "github.com/av-ugolkov/lingua-evo/internal/services/user/handler"
 	userRepository "github.com/av-ugolkov/lingua-evo/internal/services/user/repository"
+	userService "github.com/av-ugolkov/lingua-evo/internal/services/user/service"
 	vocabHandler "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary/handler"
 	vocabRepository "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary/repository"
 	vocabService "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary/service"
@@ -169,7 +169,7 @@ func initServer(cfg *config.Config, r *ginext.Engine, pgxPool *pgxpool.Pool, red
 	eventsRepo := eventRepository.NewRepo(tr)
 	eventsSvc := eventService.NewService(tr, eventsRepo, notificationSvc)
 	userRepo := userRepository.NewRepo(tr)
-	userSvc := userService.NewService(userRepo, redis, tr)
+	userSvc := userService.NewService(tr, userRepo, redis, emailSvc)
 	accessRepo := accessRepository.NewRepo(tr)
 	accessSvc := accessService.NewService(accessRepo)
 	langRepo := langRepository.NewRepo(tr)

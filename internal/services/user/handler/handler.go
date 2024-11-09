@@ -11,8 +11,8 @@ import (
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/gin-ext"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/msg-error"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/utils"
-	"github.com/av-ugolkov/lingua-evo/internal/services/user"
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/user"
+	user "github.com/av-ugolkov/lingua-evo/internal/services/user/service"
 	"github.com/av-ugolkov/lingua-evo/runtime"
 
 	"github.com/gin-gonic/gin"
@@ -61,6 +61,8 @@ func Create(g *ginext.Engine, userSvc *user.Service) {
 	g.POST(handler.SignUp, h.signUp)
 	g.GET(handler.UserByID, middleware.Auth(h.getUserByID))
 	g.GET(handler.Users, h.getUsers)
+
+	h.initSettingsHandler(g)
 }
 
 func newHandler(userSvc *user.Service) *Handler {

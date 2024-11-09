@@ -42,7 +42,15 @@ func (r *UserRepo) EditUser(ctx context.Context, u *entity.User) error {
 func (r *UserRepo) GetUserByID(ctx context.Context, uid uuid.UUID) (*entity.User, error) {
 	query := `SELECT id, name, email, password_hash, role, last_visit_at, created_at FROM users where id=$1`
 	var u entity.User
-	err := r.tr.QueryRow(ctx, query, uid).Scan(&u.ID, &u.Name, &u.Email, &u.PasswordHash, &u.Role, &u.LastVisitAt, &u.CreatedAt)
+	err := r.tr.QueryRow(ctx, query, uid).Scan(
+		&u.ID,
+		&u.Name,
+		&u.Email,
+		&u.PasswordHash,
+		&u.Role,
+		&u.LastVisitAt,
+		&u.CreatedAt,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("user.repository.UserRepo.GetUserByID: %w", err)
 	}

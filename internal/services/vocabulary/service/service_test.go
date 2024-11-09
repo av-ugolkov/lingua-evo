@@ -15,9 +15,9 @@ import (
 	"github.com/av-ugolkov/lingua-evo/internal/services/language/repository"
 	"github.com/av-ugolkov/lingua-evo/internal/services/tag"
 	tagRepo "github.com/av-ugolkov/lingua-evo/internal/services/tag/repository"
-	"github.com/av-ugolkov/lingua-evo/internal/services/user"
 	entityUser "github.com/av-ugolkov/lingua-evo/internal/services/user"
 	userRepo "github.com/av-ugolkov/lingua-evo/internal/services/user/repository"
+	user "github.com/av-ugolkov/lingua-evo/internal/services/user/service"
 	vocabEntity "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary"
 	vocabRepo "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary/repository"
 	"github.com/av-ugolkov/lingua-evo/runtime"
@@ -38,7 +38,7 @@ func TestService_GetVocabularies(t *testing.T) {
 	}
 
 	tr := transactor.NewTransactor(tp.PgxPool)
-	userSvc := user.NewService(userRepo.NewRepo(tr), nil, tr)
+	userSvc := user.NewService(tr, userRepo.NewRepo(tr), nil, nil)
 
 	usr, err := userSvc.GetUserByName(ctx, "admin")
 	if err != nil {
