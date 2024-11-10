@@ -29,6 +29,8 @@ type (
 		GetUserSubscriptions(ctx context.Context, uid uuid.UUID) ([]entity.Subscriptions, error)
 		GetUsers(ctx context.Context, page, perPage, sort, order int, search string) ([]entity.UserData, int, error)
 		UpdateLastVisited(ctx context.Context, uid uuid.UUID) error
+
+		repoSettings
 	}
 
 	redis interface {

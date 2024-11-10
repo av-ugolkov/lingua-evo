@@ -13,7 +13,8 @@ const (
 	UserByID = "/user/id"      //get
 	Users    = "/users"        //get
 
-	UserSecurityCode = "/account/settings/security_code" //post
+	UserUpdatePswCode = "/account/settings/update_psw_code" //post
+	UserUpdatePsw     = "/account/settings/update_psw"      //post
 
 	DictionaryWord = "/dictionary/word"        //get post
 	GetRandomWord  = "/dictionary/word/random" //get
