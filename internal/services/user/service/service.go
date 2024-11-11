@@ -18,7 +18,6 @@ import (
 type (
 	userRepo interface {
 		AddUser(ctx context.Context, u *entity.User) (uuid.UUID, error)
-		EditUser(ctx context.Context, u *entity.User) error
 		GetUserByID(ctx context.Context, uid uuid.UUID) (*entity.User, error)
 		GetUserByName(ctx context.Context, name string) (*entity.User, error)
 		GetUserByEmail(ctx context.Context, email string) (*entity.User, error)
@@ -37,10 +36,6 @@ type (
 		Get(ctx context.Context, key string) (string, error)
 		GetAccountCode(ctx context.Context, email string) (int, error)
 		SetNX(ctx context.Context, key string, value any, expiration time.Duration) (bool, error)
-	}
-
-	emailSvc interface {
-		SendEmailForUpdatePassword(toEmail, userName string, code int) error
 	}
 )
 

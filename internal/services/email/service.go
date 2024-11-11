@@ -28,9 +28,10 @@ type (
 		Msg      string
 	}
 
-	updatePsw struct {
+	sendCode struct {
 		UserName string
 		Code     int
+		Msg      string
 	}
 )
 
@@ -106,21 +107,44 @@ func (s *Service) SendEmailForSupport(toEmail string, userName, subject, msg str
 }
 
 func (s *Service) SendEmailForUpdatePassword(toEmail, userName string, code int) error {
-	to := fmt.Sprintf("To: %s\r\n", toEmail)
-	subject := fmt.Sprintf("Subject: Update password\r\n")
+	const msg = "You wanted to update password for your Lingua Evo account."
 
-	fs, err := template.ParseFS(templ, "templ/update_psw.html")
+	err := s.sendCodeForChangeUser(toEmail, "Change password", userName, msg, code)
+	if err != nil {
+		return fmt.Errorf("email.Service.SendEmailForUpdatePassword: %v", err)
+	}
+
+	return nil
+}
+
+func (s *Service) SendEmailForUpdateEmail(toEmail, userName string, code int) error {
+	const msg = "You wanted to update email for your Lingua Evo account."
+
+	err := s.sendCodeForChangeUser(toEmail, "Change email", userName, msg, code)
 	if err != nil {
 		return fmt.Errorf("email.Service.SendEmailForSupport: %v", err)
 	}
 
+	return nil
+}
+
+func (s *Service) sendCodeForChangeUser(toEmail, subject, userName, msg string, code int) error {
+	to := fmt.Sprintf("To: %s\r\n", toEmail)
+	subject = fmt.Sprintf("Subject: %s\r\n", subject)
+
+	fs, err := template.ParseFS(templ, "templ/send_code.html")
+	if err != nil {
+		return fmt.Errorf("email.Service.sendCodeForChangeUser: %v", err)
+	}
+
 	w := &bytes.Buffer{}
-	err = fs.Execute(w, updatePsw{
+	err = fs.Execute(w, sendCode{
 		UserName: userName,
 		Code:     code,
+		Msg:      msg,
 	})
 	if err != nil {
-		return fmt.Errorf("email.Service.SendEmailForSupport: %v", err)
+		return fmt.Errorf("email.Service.sendCodeForChangeUser: %v", err)
 	}
 
 	message := []byte(to + subject + contentType + w.String())
@@ -128,7 +152,7 @@ func (s *Service) SendEmailForUpdatePassword(toEmail, userName string, code int)
 	authEmail := smtp.PlainAuth(runtime.EmptyString, s.email.Address, s.email.Password, s.email.Host)
 	err = smtp.SendMail(s.email.AddrSvc(), authEmail, s.email.Address, []string{toEmail}, message)
 	if err != nil {
-		return fmt.Errorf("email.Service.SendEmailForSupport: %v", err)
+		return fmt.Errorf("email.Service.sendCodeForChangeUser: %v", err)
 	}
 
 	return nil

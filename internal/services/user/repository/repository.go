@@ -35,10 +35,6 @@ func (r *UserRepo) AddUser(ctx context.Context, u *entity.User) (uuid.UUID, erro
 	return uid, nil
 }
 
-func (r *UserRepo) EditUser(ctx context.Context, u *entity.User) error {
-	return nil
-}
-
 func (r *UserRepo) GetUserByID(ctx context.Context, uid uuid.UUID) (*entity.User, error) {
 	query := `SELECT id, name, email, password_hash, role, last_visit_at, created_at FROM users where id=$1`
 	var u entity.User

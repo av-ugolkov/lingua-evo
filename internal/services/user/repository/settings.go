@@ -17,3 +17,14 @@ func (r *UserRepo) UpdatePsw(ctx context.Context, uid uuid.UUID, hashPsw string)
 
 	return nil
 }
+
+func (r *UserRepo) UpdateEmail(ctx context.Context, uid uuid.UUID, newEmail string) (err error) {
+	query := `UPDATE users SET email = $1 WHERE id = $2`
+
+	_, err = r.tr.Exec(ctx, query, newEmail, uid)
+	if err != nil {
+		return fmt.Errorf("user.repository.UserRepo.UpdateEmail: %w", err)
+	}
+
+	return nil
+}
