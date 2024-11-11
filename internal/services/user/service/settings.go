@@ -17,6 +17,7 @@ const (
 	ErrMsgSamePsw        = "The same password"
 	ErrMsgIncorrectEmail = "Incorrect email"
 	ErrMsgSameEmail      = "The same email"
+	ErrMsgInvalidEmail   = "Invalid email"
 )
 
 const (
@@ -105,14 +106,10 @@ func (s *Service) UpdatePsw(ctx context.Context, uid uuid.UUID, oldPsw, newPsw, 
 	return nil
 }
 
-func (s *Service) SendSecurityCodeForUpdateEmail(ctx context.Context, uid uuid.UUID, oldEmail string) error {
+func (s *Service) SendSecurityCodeForUpdateEmail(ctx context.Context, uid uuid.UUID) error {
 	usr, err := s.repo.GetUserByID(ctx, uid)
 	if err != nil {
 		return msgerr.New(fmt.Errorf("auth.Service.SendSecurityCodeForUpdateEmail: %w", err), ErrMsgUserNotFound)
-	}
-
-	if oldEmail == usr.Email {
-		return msgerr.New(fmt.Errorf("auth.Service.SendSecurityCodeForUpdateEmail: incorrect email"), ErrMsgIncorrectEmail)
 	}
 
 	code := utils.GenerateCode()
@@ -132,18 +129,18 @@ func (s *Service) SendSecurityCodeForUpdateEmail(ctx context.Context, uid uuid.U
 	return nil
 }
 
-func (s *Service) UpdateEmail(ctx context.Context, uid uuid.UUID, oldEmail, newEmail, code string) error {
+func (s *Service) UpdateEmail(ctx context.Context, uid uuid.UUID, newEmail, code string) error {
 	usr, err := s.repo.GetUserByID(ctx, uid)
 	if err != nil {
 		return msgerr.New(fmt.Errorf("auth.Service.UpdateEmail: %w", err), ErrMsgUserNotFound)
 	}
 
-	if oldEmail != usr.Email {
-		return msgerr.New(fmt.Errorf("auth.Service.UpdateEmail: incorrect email"), ErrMsgIncorrectEmail)
-	}
-
 	if newEmail == usr.Email {
 		return msgerr.New(fmt.Errorf("auth.Service.UpdateEmail: the same email"), ErrMsgSameEmail)
+	}
+
+	if !utils.IsEmailValid(newEmail) {
+		return msgerr.New(fmt.Errorf("auth.Service.UpdateEmail: invalid email"), ErrMsgInvalidEmail)
 	}
 
 	redisCode, err := s.redis.Get(ctx, fmt.Sprintf("%s:%s", uid, RedisUpdateEmail))

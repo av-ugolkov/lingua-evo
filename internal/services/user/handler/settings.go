@@ -21,6 +21,11 @@ type (
 		NewPsw string `json:"new_psw"`
 		Code   string `json:"code"`
 	}
+
+	UpdateEmailRq struct {
+		NewEmail string `json:"new_email"`
+		Code     string `json:"code"`
+	}
 )
 
 func (h *Handler) initSettingsHandler(g *ginext.Engine) {
@@ -94,15 +99,7 @@ func (h *Handler) updateEmailSendCode(c *ginext.Context) (int, any, error) {
 				msgerr.ErrMsgUnauthorized)
 	}
 
-	var data SecurityCodeRq
-	err = c.Bind(&data)
-	if err != nil {
-		return http.StatusBadRequest, nil,
-			msgerr.New(fmt.Errorf("user.delivery.Handler.updateEmailSendCode: %v", err),
-				msgerr.ErrMsgBadRequest)
-	}
-
-	err = h.userSvc.SendSecurityCodeForUpdateEmail(ctx, uid, data.Data)
+	err = h.userSvc.SendSecurityCodeForUpdateEmail(ctx, uid)
 	if err != nil {
 		return http.StatusInternalServerError, nil,
 			fmt.Errorf("user.delivery.Handler.updateEmailSendCode: %v", err)
@@ -117,22 +114,22 @@ func (h *Handler) updateEmail(c *ginext.Context) (int, any, error) {
 	uid, err := runtime.UserIDFromContext(ctx)
 	if err != nil {
 		return http.StatusUnauthorized, nil,
-			msgerr.New(fmt.Errorf("user.delivery.Handler.updatePsw: %v", err),
+			msgerr.New(fmt.Errorf("user.delivery.Handler.updateEmail: %v", err),
 				msgerr.ErrMsgUnauthorized)
 	}
 
-	var data UpdatePswRq
+	var data UpdateEmailRq
 	err = c.Bind(&data)
 	if err != nil {
 		return http.StatusBadRequest, nil,
-			msgerr.New(fmt.Errorf("user.delivery.Handler.updatePsw: %v", err),
+			msgerr.New(fmt.Errorf("user.delivery.Handler.updateEmail: %v", err),
 				msgerr.ErrMsgBadRequest)
 	}
 
-	err = h.userSvc.UpdatePsw(ctx, uid, data.OldPsw, data.NewPsw, data.Code)
+	err = h.userSvc.UpdateEmail(ctx, uid, data.NewEmail, data.Code)
 	if err != nil {
 		return http.StatusInternalServerError, nil,
-			fmt.Errorf("user.delivery.Handler.updatePsw: %v", err)
+			fmt.Errorf("user.delivery.Handler.updateEmail: %v", err)
 	}
 
 	return http.StatusOK, nil, nil
