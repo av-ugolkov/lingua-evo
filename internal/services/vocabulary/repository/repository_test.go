@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"fmt"
+	"os"
 	"testing"
 	"time"
 
@@ -30,9 +31,12 @@ func TestMain(m *testing.M) {
 	tp := postgres.NewTempPostgres(ctx, "../../../..")
 	defer tp.DropDB(ctx)
 
-	tr := transactor.NewTransactor(tp.PgxPool)
+	tr = transactor.NewTransactor(tp.PgxPool)
 	vocabRepo = NewRepo(tr)
 	userRepo = userRepository.NewRepo(tr)
+
+	code := m.Run()
+	os.Exit(code)
 }
 
 func TestGetVocabulariesWithMaxWords(t *testing.T) {

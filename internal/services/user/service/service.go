@@ -39,6 +39,8 @@ type (
 	}
 )
 
+//go:generate mockery --inpackage --outpkg service --testonly --name "userRepo|redis|emailSvc"
+
 const (
 	DEFAULT_COUNT_WORDS = 300
 )

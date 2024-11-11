@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	ErrMsgUserNotFound   = "Sorry,user not found"
+	ErrMsgUserNotFound   = "Sorry, user not found"
 	ErrMsgIncorrectPsw   = "Incorrect password"
 	ErrMsgSamePsw        = "The same password"
 	ErrMsgIncorrectEmail = "Incorrect email"
