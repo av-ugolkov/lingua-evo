@@ -22,13 +22,13 @@ func (r *VocabRepo) GetVocabulariesByUser(ctx context.Context, userID uuid.UUID)
 		v.description,
 		v.access,
 		v.created_at,
-		u.name,
+		u.nickname,
 		count(w.id) cw
 	FROM vocabulary v
 	LEFT JOIN users u ON u.id = v.user_id 
 	LEFT JOIN word w ON w.vocabulary_id = v.id 
 	WHERE user_id=$1
-	GROUP BY v.id, u.name;`
+	GROUP BY v.id, u.nickname;`
 	rows, err := r.tr.Query(ctx, query, userID)
 	if err != nil {
 		return nil, fmt.Errorf("vocabulary.delivery.repository.VocabRepo.GetVocabulariesByUser: %w", err)

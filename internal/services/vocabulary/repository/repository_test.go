@@ -53,12 +53,11 @@ func TestGetVocabulariesWithMaxWords(t *testing.T) {
 	t.Run("vocabularies are empty", func(t *testing.T) {
 		err := tr.CreateTransaction(ctx, func(ctx context.Context) error {
 			uid, err := userRepo.AddUser(ctx, &entityUser.User{
-				ID:           uuid.New(),
-				Name:         "test_user",
-				Email:        "test_user@email.com",
-				Role:         runtime.User,
-				PasswordHash: "qwerty",
-			})
+				ID:       uuid.New(),
+				Nickname: "test_user",
+				Email:    "test_user@email.com",
+				Role:     runtime.User,
+			}, "qwerty")
 			if err != nil {
 				return err
 			}
@@ -96,12 +95,11 @@ func TestGetVocabulariesWithMaxWords(t *testing.T) {
 	t.Run("get vocabularies with max count words", func(t *testing.T) {
 		err := tr.CreateTransaction(ctx, func(ctx context.Context) error {
 			uid, err := userRepo.AddUser(ctx, &entityUser.User{
-				ID:           uuid.New(),
-				Name:         "test_user",
-				Email:        "test_user@email.com",
-				Role:         runtime.User,
-				PasswordHash: "qwerty",
-			})
+				ID:       uuid.New(),
+				Nickname: "test_user",
+				Email:    "test_user@email.com",
+				Role:     runtime.User,
+			}, "qwerty")
 			if err != nil {
 				return err
 			}
@@ -158,12 +156,11 @@ func TestGetVocabsWithCountWords(t *testing.T) {
 	ctx := context.Background()
 
 	owner, err := userRepo.AddUser(ctx, &entityUser.User{
-		ID:           uuid.New(),
-		Name:         "test_user",
-		Email:        "test_user@email.com",
-		Role:         runtime.User,
-		PasswordHash: "qwerty",
-	})
+		ID:       uuid.New(),
+		Nickname: "test_user",
+		Email:    "test_user@email.com",
+		Role:     runtime.User,
+	}, "qwerty")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -219,12 +216,11 @@ func TestGetVocabulariesRecommended(t *testing.T) {
 	ctx := context.Background()
 
 	uid, err := userRepo.AddUser(ctx, &entityUser.User{
-		ID:           uuid.New(),
-		Name:         "test_user",
-		Email:        "test_user@email.com",
-		Role:         runtime.User,
-		PasswordHash: "qwerty",
-	})
+		ID:       uuid.New(),
+		Nickname: "test_user",
+		Email:    "test_user@email.com",
+		Role:     runtime.User,
+	}, "qwerty")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -248,12 +244,11 @@ func TestGetVocabulariesRecommended(t *testing.T) {
 		err := tr.CreateTransaction(ctx, func(ctx context.Context) error {
 			for k := 0; k < 5; k++ {
 				nuid, err := userRepo.AddUser(ctx, &entityUser.User{
-					ID:           uuid.New(),
-					Name:         fmt.Sprintf("test_user_%d", k),
-					Email:        fmt.Sprintf("test_user_%d@email.com", k),
-					Role:         runtime.User,
-					PasswordHash: "qwerty",
-				})
+					ID:       uuid.New(),
+					Nickname: fmt.Sprintf("test_user_%d", k),
+					Email:    fmt.Sprintf("test_user_%d@email.com", k),
+					Role:     runtime.User,
+				}, "qwerty")
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -306,12 +301,11 @@ func TestGetVocabulariesRecommended(t *testing.T) {
 			}
 			for k := 0; k < 5; k++ {
 				nuid, err := userRepo.AddUser(ctx, &entityUser.User{
-					ID:           uuid.New(),
-					Name:         fmt.Sprintf("test_user_%d", k),
-					Email:        fmt.Sprintf("test_user_%d@email.com", k),
-					Role:         runtime.User,
-					PasswordHash: "qwerty",
-				})
+					ID:       uuid.New(),
+					Nickname: fmt.Sprintf("test_user_%d", k),
+					Email:    fmt.Sprintf("test_user_%d@email.com", k),
+					Role:     runtime.User,
+				}, "qwerty")
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -364,12 +358,11 @@ func TestGetVocabulariesRecommended(t *testing.T) {
 			}
 			for k := 0; k < 10; k++ {
 				nuid, err := userRepo.AddUser(ctx, &entityUser.User{
-					ID:           uuid.New(),
-					Name:         fmt.Sprintf("test_user_%d", k),
-					Email:        fmt.Sprintf("test_user_%d@email.com", k),
-					Role:         runtime.User,
-					PasswordHash: "qwerty",
-				})
+					ID:       uuid.New(),
+					Nickname: fmt.Sprintf("test_user_%d", k),
+					Email:    fmt.Sprintf("test_user_%d@email.com", k),
+					Role:     runtime.User,
+				}, "qwerty")
 				if err != nil {
 					return err
 				}

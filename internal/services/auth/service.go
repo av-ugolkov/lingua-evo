@@ -30,8 +30,9 @@ type (
 
 	userSvc interface {
 		GetUser(ctx context.Context, login string) (*entityUser.User, error)
+		GetPswHash(ctx context.Context, uid uuid.UUID) (string, error)
 		GetUserByEmail(ctx context.Context, email string) (*entityUser.User, error)
-		UpdateLastVisited(ctx context.Context, uid uuid.UUID) error
+		UpdateVisitedAt(ctx context.Context, uid uuid.UUID) error
 	}
 
 	emailSvc interface {
@@ -58,11 +59,17 @@ func (s *Service) SignIn(ctx context.Context, user, password, fingerprint string
 	if err != nil {
 		return nil, fmt.Errorf("auth.Service.SignIn: %w", err)
 	}
-	if err := utils.CheckPasswordHash(password, u.PasswordHash); err != nil {
+
+	pswHash, err := s.userSvc.GetPswHash(ctx, u.ID)
+	if err != nil {
+		return nil, fmt.Errorf("auth.Service.SignIn: %w", err)
+	}
+
+	if err := utils.CheckPasswordHash(password, pswHash); err != nil {
 		return nil, fmt.Errorf("auth.Service.SignIn - [%w]: %v", ErrWrongPassword, err)
 	}
 
-	err = s.userSvc.UpdateLastVisited(ctx, u.ID)
+	err = s.userSvc.UpdateVisitedAt(ctx, u.ID)
 	if err != nil {
 		return nil, fmt.Errorf("auth.Service.SignIn: %v", err)
 	}
@@ -126,7 +133,7 @@ func (s *Service) RefreshSessionToken(ctx context.Context, newTokenID, oldTokenI
 		return nil, fmt.Errorf("auth.Service.RefreshSessionToken: %v", err)
 	}
 
-	err = s.userSvc.UpdateLastVisited(ctx, oldRefreshSession.UserID)
+	err = s.userSvc.UpdateVisitedAt(ctx, oldRefreshSession.UserID)
 	if err != nil {
 		return nil, fmt.Errorf("auth.Service.RefreshSessionToken: %v", err)
 	}

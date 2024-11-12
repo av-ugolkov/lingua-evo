@@ -13,10 +13,13 @@ const (
 	UserByID = "/user/id"      //get
 	Users    = "/users"        //get
 
-	UserUpdatePswCode   = "/account/settings/update_psw_code"   //post
-	UserUpdatePsw       = "/account/settings/update_psw"        //post
-	UserUpdateEmailCode = "/account/settings/update_email_code" //post
-	UserUpdateEmail     = "/account/settings/update_email"
+	AccountSettingsAccount         = "/account/settings/account"           //get
+	AccountSettingsPersonalInfo    = "/account/settings/personal_info"     //get
+	AccountSettingsEmailNotif      = "/account/settings/email_notif"       //get
+	AccountSettingsUpdatePswCode   = "/account/settings/update_psw_code"   //post
+	AccountSettingsUpdatePsw       = "/account/settings/update_psw"        //post
+	AccountSettingsUpdateEmailCode = "/account/settings/update_email_code" //post
+	AccountSettingsUpdateEmail     = "/account/settings/update_email"
 
 	DictionaryWord = "/dictionary/word"        //get post
 	GetRandomWord  = "/dictionary/word/random" //get

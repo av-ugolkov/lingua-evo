@@ -16,18 +16,18 @@ var (
 
 type (
 	User struct {
-		ID           uuid.UUID
-		Name         string
-		Email        string
-		PasswordHash string
-		Role         runtime.Role
-		CreatedAt    time.Time
-		LastVisitAt  time.Time
+		ID            uuid.UUID
+		Nickname      string
+		Email         string
+		Role          runtime.Role
+		MaxCountWords int
+		CreatedAt     time.Time
+		VisitedAt     time.Time
 	}
 
 	UserCreate struct {
 		ID       uuid.UUID
-		Name     string
+		Nickname string
 		Password string
 		Email    string
 		Role     runtime.Role
@@ -40,17 +40,14 @@ type (
 	}
 
 	UserData struct {
-		ID          uuid.UUID
-		Name        string
-		Role        runtime.Role
-		CreatedAt   time.Time
-		LastVisited time.Time
+		UID     uuid.UUID
+		Name    string
+		Surname string
 	}
 
-	Data struct {
-		UserID        uuid.UUID
-		MaxCountWords int
-		Newsletters   bool
+	UserNewsletters struct {
+		UID  uuid.UUID
+		News bool
 	}
 
 	Subscriptions struct {
@@ -65,7 +62,7 @@ type (
 
 // TODO вынести в конфиги
 const (
-	UsernameLen    = 3
+	MinUsernameLen = 3
 	MinPasswordLen = 6
 )
 
@@ -73,7 +70,7 @@ var (
 	ErrEmailNotCorrect   = errors.New("email is not correct")
 	ErrItIsAdmin         = errors.New("it is admin")
 	ErrEmailBusy         = errors.New("this email is busy")
-	ErrUsernameLen       = fmt.Errorf("username must be more %d characters", UsernameLen)
+	ErrUsernameLen       = fmt.Errorf("username must be more %d characters", MinUsernameLen)
 	ErrUsernameBusy      = errors.New("this username is busy")
 	ErrPasswordLen       = fmt.Errorf("password must be more %d characters", MinPasswordLen)
 	ErrPasswordDifficult = errors.New("password must be more difficult")

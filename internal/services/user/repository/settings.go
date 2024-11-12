@@ -4,8 +4,21 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/av-ugolkov/lingua-evo/runtime"
 	"github.com/google/uuid"
 )
+
+func (r *UserRepo) GetPswHash(ctx context.Context, uid uuid.UUID) (string, error) {
+	const query = `SELECT password_hash FROM users WHERE id=$1`
+
+	var pswHash string
+	err := r.tr.QueryRow(ctx, query, uid).Scan(&pswHash)
+	if err != nil {
+		return runtime.EmptyString, fmt.Errorf("user.repository.UserRepo.GetPswHash: %w", err)
+	}
+
+	return pswHash, nil
+}
 
 func (r *UserRepo) UpdatePsw(ctx context.Context, uid uuid.UUID, hashPsw string) (err error) {
 	query := `UPDATE users SET password_hash = $1 WHERE id = $2`

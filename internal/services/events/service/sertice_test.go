@@ -64,7 +64,7 @@ func TestMain(m *testing.M) {
 	vocabularySvc = vocabService.NewService(tr, vocabRepo.NewRepo(tr), userSvc, exampleSvc, dictSvc, tagSvc, nil, eventsSvc)
 
 	var err error
-	usr, err = userSvc.GetUserByName(ctx, "admin")
+	usr, err = userSvc.GetUserByNickname(ctx, "admin")
 	if err != nil {
 		slog.Error(err.Error())
 		os.Exit(1)
@@ -83,7 +83,7 @@ func TestGetCountEvents(t *testing.T) {
 		err := tr.CreateTransaction(ctx, func(ctx context.Context) error {
 			tempUID, err := userSvc.AddUser(ctx, entityUser.UserCreate{
 				ID:       uuid.New(),
-				Name:     "user_temp",
+				Nickname: "user_temp",
 				Password: "password_temp",
 				Email:    "user_temp@user_temp.com",
 				Role:     runtime.User,
@@ -128,7 +128,7 @@ func TestGetCountEvents(t *testing.T) {
 		err := tr.CreateTransaction(ctx, func(ctx context.Context) error {
 			tempUID, err := userSvc.AddUser(ctx, entityUser.UserCreate{
 				ID:       uuid.New(),
-				Name:     "user_temp",
+				Nickname: "user_temp",
 				Password: "password_temp",
 				Email:    "user_temp@user_temp.com",
 				Role:     runtime.User,
@@ -185,7 +185,7 @@ func TestGetCountEvents(t *testing.T) {
 		err := tr.CreateTransaction(ctx, func(ctx context.Context) error {
 			tempUID, err := userSvc.AddUser(ctx, entityUser.UserCreate{
 				ID:       uuid.New(),
-				Name:     "user_temp",
+				Nickname: "user_temp",
 				Password: "password_temp",
 				Email:    "user_temp@user_temp.com",
 				Role:     runtime.User,
@@ -247,7 +247,7 @@ func TestGetEvents(t *testing.T) {
 		err := tr.CreateTransaction(ctx, func(ctx context.Context) error {
 			tempUID, err := userSvc.AddUser(ctx, entityUser.UserCreate{
 				ID:       uuid.New(),
-				Name:     "user_temp",
+				Nickname: "user_temp",
 				Password: "password_temp",
 				Email:    "user_temp@user_temp.com",
 				Role:     runtime.User,
@@ -292,7 +292,7 @@ func TestGetEvents(t *testing.T) {
 		err := tr.CreateTransaction(ctx, func(ctx context.Context) error {
 			tempUID, err := userSvc.AddUser(ctx, entityUser.UserCreate{
 				ID:       uuid.New(),
-				Name:     "user_temp",
+				Nickname: "user_temp",
 				Password: "password_temp",
 				Email:    "user_temp@user_temp.com",
 				Role:     runtime.User,
@@ -349,7 +349,7 @@ func TestGetEvents(t *testing.T) {
 		err := tr.CreateTransaction(ctx, func(ctx context.Context) error {
 			tempUID, err := userSvc.AddUser(ctx, entityUser.UserCreate{
 				ID:       uuid.New(),
-				Name:     "user_temp",
+				Nickname: "user_temp",
 				Password: "password_temp",
 				Email:    "user_temp@user_temp.com",
 				Role:     runtime.User,

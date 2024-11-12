@@ -29,10 +29,45 @@ type (
 )
 
 func (h *Handler) initSettingsHandler(g *ginext.Engine) {
-	g.POST(handler.UserUpdatePswCode, middleware.Auth(h.updatePswSendCode))
-	g.POST(handler.UserUpdatePsw, middleware.Auth(h.updatePsw))
-	g.POST(handler.UserUpdateEmailCode, middleware.Auth(h.updateEmailSendCode))
-	g.POST(handler.UserUpdateEmail, middleware.Auth(h.updateEmail))
+	g.GET(handler.AccountSettingsAccount, middleware.Auth(h.getSettingsAccount))
+	g.GET(handler.AccountSettingsPersonalInfo, middleware.Auth(h.getSettingsPersonalInfo))
+	g.GET(handler.AccountSettingsEmailNotif, middleware.Auth(h.getSettingsEmailNotif))
+	g.POST(handler.AccountSettingsUpdatePswCode, middleware.Auth(h.updatePswSendCode))
+	g.POST(handler.AccountSettingsUpdatePsw, middleware.Auth(h.updatePsw))
+	g.POST(handler.AccountSettingsUpdateEmailCode, middleware.Auth(h.updateEmailSendCode))
+	g.POST(handler.AccountSettingsUpdateEmail, middleware.Auth(h.updateEmail))
+}
+
+func (h *Handler) getSettingsAccount(c *ginext.Context) (int, any, error) {
+	ctx := c.Request.Context()
+
+	uid, err := runtime.UserIDFromContext(ctx)
+	if err != nil {
+		return http.StatusUnauthorized, nil,
+			msgerr.New(fmt.Errorf("user.delivery.Handler.getSettingsAccount: %v", err),
+				msgerr.ErrMsgUnauthorized)
+	}
+
+	usr, err := h.userSvc.GetUserByID(ctx, uid)
+	if err != nil {
+		return http.StatusInternalServerError, nil,
+			fmt.Errorf("user.handler.Handler.getSettingsAccount: %v", err)
+	}
+
+	userRs := UserRs{
+		Nickname: usr.Nickname,
+		Email:    usr.Email,
+	}
+
+	return http.StatusOK, userRs, nil
+}
+
+func (h *Handler) getSettingsPersonalInfo(c *ginext.Context) (int, any, error) {
+	return http.StatusOK, nil, nil
+}
+
+func (h *Handler) getSettingsEmailNotif(c *ginext.Context) (int, any, error) {
+	return http.StatusOK, nil, nil
 }
 
 func (h *Handler) updatePswSendCode(c *ginext.Context) (int, any, error) {

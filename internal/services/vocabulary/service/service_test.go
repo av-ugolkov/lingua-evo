@@ -40,7 +40,7 @@ func TestService_GetVocabularies(t *testing.T) {
 	tr := transactor.NewTransactor(tp.PgxPool)
 	userSvc := user.NewService(tr, userRepo.NewRepo(tr), nil, nil)
 
-	usr, err := userSvc.GetUserByName(ctx, "admin")
+	usr, err := userSvc.GetUserByNickname(ctx, "admin")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -97,7 +97,7 @@ func TestService_GetVocabularies(t *testing.T) {
 			for i := 0; i < 2; i++ {
 				uid, err := userSvc.AddUser(ctx, entityUser.UserCreate{
 					ID:       uuid.New(),
-					Name:     fmt.Sprintf("user_%d", i),
+					Nickname: fmt.Sprintf("user_%d", i),
 					Password: fmt.Sprintf("password_%d", i),
 					Email:    fmt.Sprintf("user_%d@user_%d.com", i, i),
 					Role:     runtime.User,
@@ -150,7 +150,7 @@ func TestService_GetVocabularies(t *testing.T) {
 			for i := 0; i < 3; i++ {
 				uid, err := userSvc.AddUser(ctx, entityUser.UserCreate{
 					ID:       uuid.New(),
-					Name:     fmt.Sprintf("user_%d", i),
+					Nickname: fmt.Sprintf("user_%d", i),
 					Password: fmt.Sprintf("password_%d", i),
 					Email:    fmt.Sprintf("user_%d@user_%d.com", i, i),
 					Role:     runtime.User,
@@ -204,7 +204,7 @@ func TestService_GetVocabularies(t *testing.T) {
 			for i := 0; i < 3; i++ {
 				uid, err := userSvc.AddUser(ctx, entityUser.UserCreate{
 					ID:       uuid.New(),
-					Name:     fmt.Sprintf("user_%d", i),
+					Nickname: fmt.Sprintf("user_%d", i),
 					Password: fmt.Sprintf("password_%d", i),
 					Email:    fmt.Sprintf("user_%d@user_%d.com", i, i),
 					Role:     runtime.User,
@@ -282,7 +282,7 @@ func TestService_GetVocabularies(t *testing.T) {
 			for i := 0; i < 3; i++ {
 				uid, err := userSvc.AddUser(ctx, entityUser.UserCreate{
 					ID:       uuid.New(),
-					Name:     fmt.Sprintf("user_%d", i),
+					Nickname: fmt.Sprintf("user_%d", i),
 					Password: fmt.Sprintf("password_%d", i),
 					Email:    fmt.Sprintf("user_%d@user_%d.com", i, i),
 					Role:     runtime.User,

@@ -16,25 +16,25 @@ type mockUserRepo struct {
 	mock.Mock
 }
 
-// AddUser provides a mock function with given fields: ctx, u
-func (_m *mockUserRepo) AddUser(ctx context.Context, u *user.User) (uuid.UUID, error) {
-	ret := _m.Called(ctx, u)
+// AddUser provides a mock function with given fields: ctx, u, pswHash
+func (_m *mockUserRepo) AddUser(ctx context.Context, u *user.User, pswHash string) (uuid.UUID, error) {
+	ret := _m.Called(ctx, u, pswHash)
 
 	var r0 uuid.UUID
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *user.User) (uuid.UUID, error)); ok {
-		return rf(ctx, u)
+	if rf, ok := ret.Get(0).(func(context.Context, *user.User, string) (uuid.UUID, error)); ok {
+		return rf(ctx, u, pswHash)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *user.User) uuid.UUID); ok {
-		r0 = rf(ctx, u)
+	if rf, ok := ret.Get(0).(func(context.Context, *user.User, string) uuid.UUID); ok {
+		r0 = rf(ctx, u, pswHash)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(uuid.UUID)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *user.User) error); ok {
-		r1 = rf(ctx, u)
+	if rf, ok := ret.Get(1).(func(context.Context, *user.User, string) error); ok {
+		r1 = rf(ctx, u, pswHash)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -42,18 +42,56 @@ func (_m *mockUserRepo) AddUser(ctx context.Context, u *user.User) (uuid.UUID, e
 	return r0, r1
 }
 
-// AddUserData provides a mock function with given fields: ctx, userID, maxCountWords, newsletter
-func (_m *mockUserRepo) AddUserData(ctx context.Context, userID uuid.UUID, maxCountWords int, newsletter bool) error {
-	ret := _m.Called(ctx, userID, maxCountWords, newsletter)
+// AddUserData provides a mock function with given fields: ctx, data
+func (_m *mockUserRepo) AddUserData(ctx context.Context, data user.UserData) error {
+	ret := _m.Called(ctx, data)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, int, bool) error); ok {
-		r0 = rf(ctx, userID, maxCountWords, newsletter)
+	if rf, ok := ret.Get(0).(func(context.Context, user.UserData) error); ok {
+		r0 = rf(ctx, data)
 	} else {
 		r0 = ret.Error(0)
 	}
 
 	return r0
+}
+
+// AddUserNewsletters provides a mock function with given fields: ctx, data
+func (_m *mockUserRepo) AddUserNewsletters(ctx context.Context, data user.UserNewsletters) error {
+	ret := _m.Called(ctx, data)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, user.UserNewsletters) error); ok {
+		r0 = rf(ctx, data)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// GetPswHash provides a mock function with given fields: ctx, uid
+func (_m *mockUserRepo) GetPswHash(ctx context.Context, uid uuid.UUID) (string, error) {
+	ret := _m.Called(ctx, uid)
+
+	var r0 string
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) (string, error)); ok {
+		return rf(ctx, uid)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) string); ok {
+		r0 = rf(ctx, uid)
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID) error); ok {
+		r1 = rf(ctx, uid)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // GetUserByEmail provides a mock function with given fields: ctx, email
@@ -108,8 +146,8 @@ func (_m *mockUserRepo) GetUserByID(ctx context.Context, uid uuid.UUID) (*user.U
 	return r0, r1
 }
 
-// GetUserByName provides a mock function with given fields: ctx, name
-func (_m *mockUserRepo) GetUserByName(ctx context.Context, name string) (*user.User, error) {
+// GetUserByNickname provides a mock function with given fields: ctx, name
+func (_m *mockUserRepo) GetUserByNickname(ctx context.Context, name string) (*user.User, error) {
 	ret := _m.Called(ctx, name)
 
 	var r0 *user.User
@@ -134,25 +172,25 @@ func (_m *mockUserRepo) GetUserByName(ctx context.Context, name string) (*user.U
 	return r0, r1
 }
 
-// GetUserByToken provides a mock function with given fields: ctx, token
-func (_m *mockUserRepo) GetUserByToken(ctx context.Context, token uuid.UUID) (*user.User, error) {
-	ret := _m.Called(ctx, token)
+// GetUserData provides a mock function with given fields: ctx, uid
+func (_m *mockUserRepo) GetUserData(ctx context.Context, uid uuid.UUID) (*user.UserData, error) {
+	ret := _m.Called(ctx, uid)
 
-	var r0 *user.User
+	var r0 *user.UserData
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) (*user.User, error)); ok {
-		return rf(ctx, token)
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) (*user.UserData, error)); ok {
+		return rf(ctx, uid)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) *user.User); ok {
-		r0 = rf(ctx, token)
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) *user.UserData); ok {
+		r0 = rf(ctx, uid)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*user.User)
+			r0 = ret.Get(0).(*user.UserData)
 		}
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID) error); ok {
-		r1 = rf(ctx, token)
+		r1 = rf(ctx, uid)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -160,21 +198,19 @@ func (_m *mockUserRepo) GetUserByToken(ctx context.Context, token uuid.UUID) (*u
 	return r0, r1
 }
 
-// GetUserData provides a mock function with given fields: ctx, uid
-func (_m *mockUserRepo) GetUserData(ctx context.Context, uid uuid.UUID) (*user.Data, error) {
+// GetUserMaxCountWords provides a mock function with given fields: ctx, uid
+func (_m *mockUserRepo) GetUserMaxCountWords(ctx context.Context, uid uuid.UUID) (int, error) {
 	ret := _m.Called(ctx, uid)
 
-	var r0 *user.Data
+	var r0 int
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) (*user.Data, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) (int, error)); ok {
 		return rf(ctx, uid)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) *user.Data); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) int); ok {
 		r0 = rf(ctx, uid)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*user.Data)
-		}
+		r0 = ret.Get(0).(int)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID) error); ok {
@@ -213,20 +249,20 @@ func (_m *mockUserRepo) GetUserSubscriptions(ctx context.Context, uid uuid.UUID)
 }
 
 // GetUsers provides a mock function with given fields: ctx, page, perPage, sort, order, search
-func (_m *mockUserRepo) GetUsers(ctx context.Context, page int, perPage int, sort int, order int, search string) ([]user.UserData, int, error) {
+func (_m *mockUserRepo) GetUsers(ctx context.Context, page int, perPage int, sort int, order int, search string) ([]user.User, int, error) {
 	ret := _m.Called(ctx, page, perPage, sort, order, search)
 
-	var r0 []user.UserData
+	var r0 []user.User
 	var r1 int
 	var r2 error
-	if rf, ok := ret.Get(0).(func(context.Context, int, int, int, int, string) ([]user.UserData, int, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, int, int, int, int, string) ([]user.User, int, error)); ok {
 		return rf(ctx, page, perPage, sort, order, search)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, int, int, int, int, string) []user.UserData); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, int, int, int, int, string) []user.User); ok {
 		r0 = rf(ctx, page, perPage, sort, order, search)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]user.UserData)
+			r0 = ret.Get(0).([]user.User)
 		}
 	}
 
@@ -245,13 +281,13 @@ func (_m *mockUserRepo) GetUsers(ctx context.Context, page int, perPage int, sor
 	return r0, r1, r2
 }
 
-// RemoveUser provides a mock function with given fields: ctx, u
-func (_m *mockUserRepo) RemoveUser(ctx context.Context, u uuid.UUID) error {
-	ret := _m.Called(ctx, u)
+// RemoveUser provides a mock function with given fields: ctx, uid
+func (_m *mockUserRepo) RemoveUser(ctx context.Context, uid uuid.UUID) error {
+	ret := _m.Called(ctx, uid)
 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) error); ok {
-		r0 = rf(ctx, u)
+		r0 = rf(ctx, uid)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -273,20 +309,6 @@ func (_m *mockUserRepo) UpdateEmail(ctx context.Context, uid uuid.UUID, newEmail
 	return r0
 }
 
-// UpdateLastVisited provides a mock function with given fields: ctx, uid
-func (_m *mockUserRepo) UpdateLastVisited(ctx context.Context, uid uuid.UUID) error {
-	ret := _m.Called(ctx, uid)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) error); ok {
-		r0 = rf(ctx, uid)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
 // UpdatePsw provides a mock function with given fields: ctx, uid, hashPsw
 func (_m *mockUserRepo) UpdatePsw(ctx context.Context, uid uuid.UUID, hashPsw string) error {
 	ret := _m.Called(ctx, uid, hashPsw)
@@ -294,6 +316,20 @@ func (_m *mockUserRepo) UpdatePsw(ctx context.Context, uid uuid.UUID, hashPsw st
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, string) error); ok {
 		r0 = rf(ctx, uid, hashPsw)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// UpdateVisitedAt provides a mock function with given fields: ctx, uid
+func (_m *mockUserRepo) UpdateVisitedAt(ctx context.Context, uid uuid.UUID) error {
+	ret := _m.Called(ctx, uid)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) error); ok {
+		r0 = rf(ctx, uid)
 	} else {
 		r0 = ret.Error(0)
 	}

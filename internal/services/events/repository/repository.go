@@ -41,7 +41,7 @@ func (r *EventRepo) GetCountVocabEvents(ctx context.Context, vocabIDs []uuid.UUI
 
 func (r *EventRepo) GetVocabEvents(ctx context.Context, vocabIDs []uuid.UUID) ([]entity.Event, error) {
 	const query = `
-		SELECT e.id, e.user_id, u.name, et.name, e.payload, COALESCE(e.id=ew.event_id, false), e.created_at FROM events e
+		SELECT e.id, e.user_id, u.nickname, et.name, e.payload, COALESCE(e.id=ew.event_id, false), e.created_at FROM events e
 		LEFT JOIN vocabulary_notifications vn ON vn.vocab_id::text = e.payload->>'vocab_id'
 		LEFT JOIN events_type et ON et.id = e.type
 		LEFT JOIN users u ON u.id = e.user_id

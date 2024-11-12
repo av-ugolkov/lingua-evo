@@ -17,17 +17,18 @@ import (
 
 type (
 	userRepo interface {
-		AddUser(ctx context.Context, u *entity.User) (uuid.UUID, error)
+		AddUser(ctx context.Context, u *entity.User, pswHash string) (uuid.UUID, error)
 		GetUserByID(ctx context.Context, uid uuid.UUID) (*entity.User, error)
-		GetUserByName(ctx context.Context, name string) (*entity.User, error)
+		GetUserByNickname(ctx context.Context, name string) (*entity.User, error)
 		GetUserByEmail(ctx context.Context, email string) (*entity.User, error)
-		GetUserByToken(ctx context.Context, token uuid.UUID) (*entity.User, error)
-		RemoveUser(ctx context.Context, u uuid.UUID) error
-		GetUserData(ctx context.Context, uid uuid.UUID) (*entity.Data, error)
-		AddUserData(ctx context.Context, userID uuid.UUID, maxCountWords int, newsletter bool) error
+		RemoveUser(ctx context.Context, uid uuid.UUID) error
+		GetUserData(ctx context.Context, uid uuid.UUID) (*entity.UserData, error)
+		GetUserMaxCountWords(ctx context.Context, uid uuid.UUID) (int, error)
+		AddUserData(ctx context.Context, data entity.UserData) error
+		AddUserNewsletters(ctx context.Context, data entity.UserNewsletters) error
 		GetUserSubscriptions(ctx context.Context, uid uuid.UUID) ([]entity.Subscriptions, error)
-		GetUsers(ctx context.Context, page, perPage, sort, order int, search string) ([]entity.UserData, int, error)
-		UpdateLastVisited(ctx context.Context, uid uuid.UUID) error
+		GetUsers(ctx context.Context, page, perPage, sort, order int, search string) ([]entity.User, int, error)
+		UpdateVisitedAt(ctx context.Context, uid uuid.UUID) error
 
 		repoSettings
 	}
@@ -84,7 +85,7 @@ func (s *Service) SignUp(ctx context.Context, userCreate entity.UserCreate) (uui
 }
 
 func (s *Service) AddUser(ctx context.Context, usr entity.UserCreate) (uuid.UUID, error) {
-	if err := s.validateUsername(ctx, usr.Name); err != nil {
+	if err := s.validateUsername(ctx, usr.Nickname); err != nil {
 		return uuid.Nil, fmt.Errorf("auth.Service.AddUser - validateUsername: %v", err)
 	}
 
@@ -98,22 +99,21 @@ func (s *Service) AddUser(ctx context.Context, usr entity.UserCreate) (uuid.UUID
 	}
 
 	user := &entity.User{
-		Name:         usr.Name,
-		PasswordHash: hashPassword,
-		Email:        usr.Email,
-		Role:         usr.Role,
-		CreatedAt:    time.Now().UTC(),
-		LastVisitAt:  time.Now().UTC(),
+		Nickname:  usr.Nickname,
+		Email:     usr.Email,
+		Role:      usr.Role,
+		CreatedAt: time.Now().UTC(),
+		VisitedAt: time.Now().UTC(),
 	}
 
 	uid := uuid.Nil
 	err = s.tr.CreateTransaction(ctx, func(ctx context.Context) error {
-		uid, err = s.repo.AddUser(ctx, user)
+		uid, err = s.repo.AddUser(ctx, user, hashPassword)
 		if err != nil {
 			return err
 		}
 
-		err = s.repo.AddUserData(ctx, uid, DEFAULT_COUNT_WORDS, true)
+		err = s.repo.AddUserData(ctx, entity.UserData{UID: uid})
 		if err != nil {
 			return err
 		}
@@ -129,7 +129,7 @@ func (s *Service) AddUser(ctx context.Context, usr entity.UserCreate) (uuid.UUID
 }
 
 func (s *Service) GetUser(ctx context.Context, login string) (*entity.User, error) {
-	user, err := s.repo.GetUserByName(ctx, login)
+	user, err := s.repo.GetUserByNickname(ctx, login)
 	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 		return nil, fmt.Errorf("user.Service.GetUser - by name: %w", err)
 	} else if errors.Is(err, pgx.ErrNoRows) {
@@ -154,8 +154,13 @@ func (s *Service) GetUserByID(ctx context.Context, uid uuid.UUID) (*entity.User,
 	return user, nil
 }
 
-func (s *Service) GetUserByName(ctx context.Context, name string) (*entity.User, error) {
-	return s.repo.GetUserByName(ctx, name)
+func (s *Service) GetUserByNickname(ctx context.Context, name string) (*entity.User, error) {
+	usr, err := s.repo.GetUserByNickname(ctx, name)
+	if err != nil {
+		return nil, fmt.Errorf("user.Service.GetUserByNickname: %w", err)
+	}
+
+	return usr, nil
 }
 
 func (s *Service) GetUserByEmail(ctx context.Context, email string) (*entity.User, error) {
@@ -175,33 +180,32 @@ func (s *Service) GetUserByRefreshToken(ctx context.Context, token uuid.UUID) (*
 		return nil, fmt.Errorf("user.Service.GetUserByRefreshToken: %w", err)
 	}
 
-	return s.repo.GetUserByToken(ctx, session.UserID)
+	return s.repo.GetUserByID(ctx, session.UserID)
 }
 
 func (s *Service) RemoveUser(ctx context.Context, user *entity.User) error {
 	return nil
 }
 
-func (s *Service) UserCountWord(ctx context.Context, userID uuid.UUID) (int, error) {
-	data, err := s.repo.GetUserData(ctx, userID)
+func (s *Service) UserCountWord(ctx context.Context, uid uuid.UUID) (int, error) {
+	maxCountWords, err := s.repo.GetUserMaxCountWords(ctx, uid)
 	if err != nil {
 		return 0, fmt.Errorf("user.Service.UserCountWord - get user data: %w", err)
 	}
 
-	subscriptions, err := s.repo.GetUserSubscriptions(ctx, userID)
+	subscriptions, err := s.repo.GetUserSubscriptions(ctx, uid)
 	if err != nil {
 		return 0, fmt.Errorf("user.Service.UserCountWord - get user subscriptions: %w", err)
 	}
 
-	maxWords := data.MaxCountWords
 	for _, sub := range subscriptions {
-		maxWords += sub.CountWord
+		maxCountWords += sub.CountWord
 	}
 
-	return maxWords, nil
+	return maxCountWords, nil
 }
 
-func (s *Service) GetUsers(ctx context.Context, uid uuid.UUID, page, perPage, sort, order int, search string) ([]entity.UserData, int, error) {
+func (s *Service) GetUsers(ctx context.Context, uid uuid.UUID, page, perPage, sort, order int, search string) ([]entity.User, int, error) {
 	users, countUsers, err := s.repo.GetUsers(ctx, page, perPage, sort, order, search)
 	if err != nil {
 		return nil, 0, fmt.Errorf("user.Service.GetUsers: %w", err)
@@ -210,10 +214,10 @@ func (s *Service) GetUsers(ctx context.Context, uid uuid.UUID, page, perPage, so
 	return users, countUsers, nil
 }
 
-func (s *Service) UpdateLastVisited(ctx context.Context, uid uuid.UUID) error {
-	err := s.repo.UpdateLastVisited(ctx, uid)
+func (s *Service) UpdateVisitedAt(ctx context.Context, uid uuid.UUID) error {
+	err := s.repo.UpdateVisitedAt(ctx, uid)
 	if err != nil {
-		return fmt.Errorf("user.Service.UpdateLastVisited: %w", err)
+		return fmt.Errorf("user.Service.UpdateVisitedAt: %w", err)
 	}
 
 	return nil
@@ -239,11 +243,11 @@ func (s *Service) validateEmail(ctx context.Context, email string) error {
 }
 
 func (s *Service) validateUsername(ctx context.Context, username string) error {
-	if len(username) <= entity.UsernameLen {
+	if len(username) <= entity.MinUsernameLen {
 		return entity.ErrUsernameLen
 	}
 
-	userData, err := s.GetUserByName(ctx, username)
+	userData, err := s.GetUserByNickname(ctx, username)
 	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 		return err
 	} else if errors.Is(err, pgx.ErrNoRows) {
