@@ -41,3 +41,14 @@ func (r *UserRepo) UpdateEmail(ctx context.Context, uid uuid.UUID, newEmail stri
 
 	return nil
 }
+
+func (r *UserRepo) UpdateNickname(ctx context.Context, uid uuid.UUID, newNickname string) (err error) {
+	query := `UPDATE users SET nickname = $1 WHERE id = $2`
+
+	_, err = r.tr.Exec(ctx, query, newNickname, uid)
+	if err != nil {
+		return fmt.Errorf("user.repository.UserRepo.UpdateNickname: %w", err)
+	}
+
+	return nil
+}

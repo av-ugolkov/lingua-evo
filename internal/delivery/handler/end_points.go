@@ -19,7 +19,8 @@ const (
 	AccountSettingsUpdatePswCode   = "/account/settings/update_psw_code"   //post
 	AccountSettingsUpdatePsw       = "/account/settings/update_psw"        //post
 	AccountSettingsUpdateEmailCode = "/account/settings/update_email_code" //post
-	AccountSettingsUpdateEmail     = "/account/settings/update_email"
+	AccountSettingsUpdateEmail     = "/account/settings/update_email"      //post
+	AccountSettingsUpdateNickname  = "/account/settings/update_nickname"   //post
 
 	DictionaryWord = "/dictionary/word"        //get post
 	GetRandomWord  = "/dictionary/word/random" //get

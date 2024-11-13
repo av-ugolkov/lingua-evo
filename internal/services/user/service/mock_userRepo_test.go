@@ -309,6 +309,20 @@ func (_m *mockUserRepo) UpdateEmail(ctx context.Context, uid uuid.UUID, newEmail
 	return r0
 }
 
+// UpdateNickname provides a mock function with given fields: ctx, uid, newNickname
+func (_m *mockUserRepo) UpdateNickname(ctx context.Context, uid uuid.UUID, newNickname string) error {
+	ret := _m.Called(ctx, uid, newNickname)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, string) error); ok {
+		r0 = rf(ctx, uid, newNickname)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // UpdatePsw provides a mock function with given fields: ctx, uid, hashPsw
 func (_m *mockUserRepo) UpdatePsw(ctx context.Context, uid uuid.UUID, hashPsw string) error {
 	ret := _m.Called(ctx, uid, hashPsw)

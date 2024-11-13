@@ -26,6 +26,10 @@ type (
 		NewEmail string `json:"new_email"`
 		Code     string `json:"code"`
 	}
+
+	UpdateNickname struct {
+		Nickname string `json:"nickname"`
+	}
 )
 
 func (h *Handler) initSettingsHandler(g *ginext.Engine) {
@@ -36,6 +40,7 @@ func (h *Handler) initSettingsHandler(g *ginext.Engine) {
 	g.POST(handler.AccountSettingsUpdatePsw, middleware.Auth(h.updatePsw))
 	g.POST(handler.AccountSettingsUpdateEmailCode, middleware.Auth(h.updateEmailSendCode))
 	g.POST(handler.AccountSettingsUpdateEmail, middleware.Auth(h.updateEmail))
+	g.POST(handler.AccountSettingsUpdateNickname, middleware.Auth(h.updateNickname))
 }
 
 func (h *Handler) getSettingsAccount(c *ginext.Context) (int, any, error) {
@@ -165,6 +170,33 @@ func (h *Handler) updateEmail(c *ginext.Context) (int, any, error) {
 	if err != nil {
 		return http.StatusInternalServerError, nil,
 			fmt.Errorf("user.delivery.Handler.updateEmail: %v", err)
+	}
+
+	return http.StatusOK, nil, nil
+}
+
+func (h *Handler) updateNickname(c *ginext.Context) (int, any, error) {
+	ctx := c.Request.Context()
+
+	uid, err := runtime.UserIDFromContext(ctx)
+	if err != nil {
+		return http.StatusUnauthorized, nil,
+			msgerr.New(fmt.Errorf("user.delivery.Handler.updateNickname: %v", err),
+				msgerr.ErrMsgUnauthorized)
+	}
+
+	var data UpdateNickname
+	err = c.Bind(&data)
+	if err != nil {
+		return http.StatusBadRequest, nil,
+			msgerr.New(fmt.Errorf("user.delivery.Handler.updateNickname: %v", err),
+				msgerr.ErrMsgBadRequest)
+	}
+
+	err = h.userSvc.UpdateNickname(ctx, uid, data.Nickname)
+	if err != nil {
+		return http.StatusInternalServerError, nil,
+			fmt.Errorf("user.delivery.Handler.updateNickname: %w", err)
 	}
 
 	return http.StatusOK, nil, nil

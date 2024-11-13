@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	msgerr "github.com/av-ugolkov/lingua-evo/internal/pkg/msg-error"
@@ -12,12 +13,14 @@ import (
 )
 
 const (
-	ErrMsgUserNotFound   = "Sorry, user not found"
-	ErrMsgIncorrectPsw   = "Incorrect password"
-	ErrMsgSamePsw        = "The same password"
-	ErrMsgIncorrectEmail = "Incorrect email"
-	ErrMsgSameEmail      = "The same email"
-	ErrMsgInvalidEmail   = "Invalid email"
+	ErrMsgUserNotFound    = "Sorry, user not found"
+	ErrMsgIncorrectPsw    = "Incorrect password"
+	ErrMsgSamePsw         = "The same password"
+	ErrMsgIncorrectEmail  = "Incorrect email"
+	ErrMsgSameEmail       = "The same email"
+	ErrMsgInvalidEmail    = "Invalid email"
+	ErrMsgInvalidNickname = "Invalid nickname. The nickname must be at least 3 characters long and contain only letters and numbers."
+	ErrFobiddenNickname   = "Sorry, your nickname contains forbidden words."
 )
 
 const (
@@ -30,6 +33,7 @@ type (
 		GetPswHash(ctx context.Context, uid uuid.UUID) (string, error)
 		UpdatePsw(ctx context.Context, uid uuid.UUID, hashPsw string) (err error)
 		UpdateEmail(ctx context.Context, uid uuid.UUID, newEmail string) (err error)
+		UpdateNickname(ctx context.Context, uid uuid.UUID, newNickname string) (err error)
 	}
 
 	emailSvc interface {
@@ -169,6 +173,24 @@ func (s *Service) UpdateEmail(ctx context.Context, uid uuid.UUID, newEmail, code
 	err = s.repo.UpdateEmail(ctx, uid, newEmail)
 	if err != nil {
 		return msgerr.New(fmt.Errorf("auth.Service.UpdateEmail: %w", err), msgerr.ErrMsgInternal)
+	}
+
+	return nil
+}
+
+func (s *Service) UpdateNickname(ctx context.Context, uid uuid.UUID, newNickname string) error {
+	if !utils.IsNicknameValid(newNickname) {
+		return msgerr.New(fmt.Errorf("auth.Service.UpdateNickname: invalid nickname"), ErrMsgInvalidNickname)
+	}
+
+	tempNickname := strings.ToLower(newNickname)
+	if strings.Contains(tempNickname, "admin") || strings.Contains(tempNickname, "moderator") {
+		return msgerr.New(fmt.Errorf("auth.Service.UpdateNickname: contains admin"), ErrFobiddenNickname)
+	}
+
+	err := s.repo.UpdateNickname(ctx, uid, newNickname)
+	if err != nil {
+		return msgerr.New(fmt.Errorf("auth.Service.UpdateNickname: %w", err), msgerr.ErrMsgInternal)
 	}
 
 	return nil
