@@ -59,7 +59,7 @@ func (r *EventRepo) GetVocabEvents(ctx context.Context, vocabIDs []uuid.UUID) ([
 	for rows.Next() {
 		var event entity.Event
 		var jsonData []byte
-		if err := rows.Scan(&event.ID, &event.User.ID, &event.User.Name, &event.Type, &jsonData, &event.Watched, &event.CreatedAt); err != nil {
+		if err := rows.Scan(&event.ID, &event.User.ID, &event.User.Nickname, &event.Type, &jsonData, &event.Watched, &event.CreatedAt); err != nil {
 			return nil, fmt.Errorf("events.delivery.repository.UserRepo.GetEventsVocab: %w", err)
 		}
 

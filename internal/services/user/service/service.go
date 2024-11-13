@@ -84,18 +84,24 @@ func (s *Service) SignUp(ctx context.Context, userCreate entity.UserCreate) (uui
 	return uid, nil
 }
 
-func (s *Service) AddUser(ctx context.Context, usr entity.UserCreate) (uuid.UUID, error) {
+func (s *Service) AddUser(ctx context.Context, usr entity.UserCreate) (_ uuid.UUID, err error) {
+	defer func() {
+		if err != nil {
+			err = fmt.Errorf("auth.Service.AddUser: %v", err)
+		}
+	}()
+
 	if err := s.validateUsername(ctx, usr.Nickname); err != nil {
-		return uuid.Nil, fmt.Errorf("auth.Service.AddUser - validateUsername: %v", err)
+		return uuid.Nil, err
 	}
 
 	if err := validatePassword(usr.Password); err != nil {
-		return uuid.Nil, fmt.Errorf("auth.Service.AddUser - validatePassword: %v", err)
+		return uuid.Nil, err
 	}
 
 	hashPassword, err := utils.HashPassword(usr.Password)
 	if err != nil {
-		return uuid.Nil, fmt.Errorf("auth.Service.AddUser - hashPassword: %v", err)
+		return uuid.Nil, err
 	}
 
 	user := &entity.User{
@@ -122,7 +128,7 @@ func (s *Service) AddUser(ctx context.Context, usr entity.UserCreate) (uuid.UUID
 	})
 
 	if err != nil {
-		return uuid.Nil, fmt.Errorf("user.Service.AddUser: %v", err)
+		return uuid.Nil, err
 	}
 
 	return uid, nil
