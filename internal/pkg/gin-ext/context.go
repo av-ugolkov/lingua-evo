@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/av-ugolkov/lingua-evo/internal/pkg/msg-error"
 	"github.com/av-ugolkov/lingua-evo/runtime"
 
 	"github.com/gin-gonic/gin"
@@ -100,17 +99,6 @@ func (c *Context) GetHeaderAuthorization(typeAuth string) (string, error) {
 	}
 
 	return tokenData[1], nil
-}
-
-func (c *Context) SendError(httpStatus int, err error) {
-	slog.Error(err.Error())
-	var e *msgerr.ApiError
-	switch {
-	case errors.As(err, &e):
-		c.Context.JSON(httpStatus, e.Msg)
-	default:
-		c.Context.JSON(httpStatus, err.Error())
-	}
 }
 
 func (c *Context) GetCookieLanguageOrDefault() string {

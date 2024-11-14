@@ -23,11 +23,20 @@ func NewRepo(tr *transactor.Transactor) *UserRepo {
 	}
 }
 
-func (r *UserRepo) AddUser(ctx context.Context, u *entity.User) (uuid.UUID, error) {
-	query := `INSERT INTO users (id, name, email, password_hash, role, last_visit_at, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7) ON CONFLICT DO NOTHING RETURNING id`
+func (r *UserRepo) AddUser(ctx context.Context, u *entity.User, pswHash string) (uuid.UUID, error) {
+	query := `
+		INSERT INTO users (
+			id, 
+			nickname, 
+			email, 
+			password_hash, 
+			role, 
+			visited_at, 
+			created_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7) ON CONFLICT DO NOTHING RETURNING id`
 
 	var uid uuid.UUID
-	err := r.tr.QueryRow(ctx, query, uuid.New(), u.Name, u.Email, u.PasswordHash, u.Role, u.LastVisitAt, u.CreatedAt).Scan(&uid)
+	err := r.tr.QueryRow(ctx, query, uuid.New(), u.Nickname, u.Email, pswHash, u.Role, u.VisitedAt, u.CreatedAt).Scan(&uid)
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("user.repository.UserRepo.AddUser: %w", err)
 	}
@@ -35,56 +44,88 @@ func (r *UserRepo) AddUser(ctx context.Context, u *entity.User) (uuid.UUID, erro
 	return uid, nil
 }
 
-func (r *UserRepo) EditUser(ctx context.Context, u *entity.User) error {
-	return nil
-}
-
 func (r *UserRepo) GetUserByID(ctx context.Context, uid uuid.UUID) (*entity.User, error) {
-	query := `SELECT id, name, email, password_hash, role, last_visit_at, created_at FROM users where id=$1`
+	query := `
+		SELECT 
+			id, 
+			nickname, 
+			email, 
+			role, 
+			max_count_words, 
+			visited_at, 
+			created_at 
+		FROM users WHERE id=$1`
 	var u entity.User
-	err := r.tr.QueryRow(ctx, query, uid).Scan(&u.ID, &u.Name, &u.Email, &u.PasswordHash, &u.Role, &u.LastVisitAt, &u.CreatedAt)
+	err := r.tr.QueryRow(ctx, query, uid).Scan(
+		&u.ID,
+		&u.Nickname,
+		&u.Email,
+		&u.Role,
+		&u.MaxCountWords,
+		&u.VisitedAt,
+		&u.CreatedAt,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("user.repository.UserRepo.GetUserByID: %w", err)
 	}
 	return &u, nil
 }
 
-func (r *UserRepo) GetUserByName(ctx context.Context, name string) (*entity.User, error) {
-	query := `SELECT id, name, email, password_hash, role, last_visit_at, created_at FROM users where name=$1`
+func (r *UserRepo) GetUserByNickname(ctx context.Context, nickname string) (*entity.User, error) {
+	query := `
+		SELECT 
+			id, 
+			nickname, 
+			email, 
+			role,
+			max_count_words,
+			visited_at,
+			created_at 
+		FROM users WHERE nickname=$1`
 
 	var u entity.User
-
-	err := r.tr.QueryRow(ctx, query, name).Scan(&u.ID, &u.Name, &u.Email, &u.PasswordHash, &u.Role, &u.LastVisitAt, &u.CreatedAt)
+	err := r.tr.QueryRow(ctx, query, nickname).Scan(
+		&u.ID,
+		&u.Nickname,
+		&u.Email,
+		&u.Role,
+		&u.MaxCountWords,
+		&u.VisitedAt,
+		&u.CreatedAt)
 	if err != nil {
-		return nil, fmt.Errorf("user.repository.UserRepo.GetUserByName: %w", err)
+		return nil, fmt.Errorf("user.repository.UserRepo.GetUserByNickname: %w", err)
 	}
 
 	return &u, nil
 }
 
 func (r *UserRepo) GetUserByEmail(ctx context.Context, email string) (*entity.User, error) {
-	query := `SELECT id, user, email, password_hash, role, last_visit_at, created_at FROM users where email=$1`
+	query := `
+		SELECT 
+			id,
+			nickname,
+			email,
+			role,
+			max_count_words,
+			visited_at,
+			created_at 
+		FROM users WHERE email=$1`
 
 	var u entity.User
 
-	err := r.tr.QueryRow(ctx, query, email).Scan(&u.ID, &u.Name, &u.Email, &u.PasswordHash, &u.Role, &u.LastVisitAt, &u.CreatedAt)
+	err := r.tr.QueryRow(ctx, query, email).Scan(
+		&u.ID,
+		&u.Nickname,
+		&u.Email,
+		&u.Role,
+		&u.MaxCountWords,
+		&u.VisitedAt,
+		&u.CreatedAt)
 	if err != nil {
 		return nil, fmt.Errorf("user.repository.UserRepo.GetUserByEmail: %w", err)
 	}
 
 	u.Email = email
-
-	return &u, nil
-}
-
-func (r *UserRepo) GetUserByToken(ctx context.Context, token uuid.UUID) (*entity.User, error) {
-	query := `SELECT id, name, email, password_hash, role, last_visit_at, created_at FROM users where id = $1`
-
-	var u entity.User
-	err := r.tr.QueryRow(ctx, query, token).Scan(&u.ID, &u.Name, &u.Email, &u.PasswordHash, &u.Role, &u.LastVisitAt, &u.CreatedAt)
-	if err != nil {
-		return nil, fmt.Errorf("user.repository.UserRepo.GetUserByToken: %w", err)
-	}
 
 	return &u, nil
 }
@@ -103,11 +144,11 @@ func (r *UserRepo) RemoveUser(ctx context.Context, uid uuid.UUID) error {
 	return nil
 }
 
-func (r *UserRepo) GetUserData(ctx context.Context, userID uuid.UUID) (*entity.Data, error) {
-	const query = `SELECT max_count_words, newsletter FROM user_data WHERE user_id = $1`
+func (r *UserRepo) GetUserData(ctx context.Context, uid uuid.UUID) (*entity.UserData, error) {
+	const query = `SELECT id, name, surname FROM user_data WHERE user_id = $1`
 
-	var data entity.Data
-	err := r.tr.QueryRow(ctx, query, userID).Scan(&data.MaxCountWords, &data.Newsletters)
+	var data entity.UserData
+	err := r.tr.QueryRow(ctx, query, uid).Scan(&data.UID, &data.Name, &data.Surname)
 	if err != nil {
 		return nil, fmt.Errorf("user.repository.UserRepo.GetUserData: %w", err)
 	}
@@ -115,10 +156,22 @@ func (r *UserRepo) GetUserData(ctx context.Context, userID uuid.UUID) (*entity.D
 	return &data, nil
 }
 
-func (r *UserRepo) AddUserData(ctx context.Context, userID uuid.UUID, maxCountWords int, newsletter bool) error {
-	const query = `INSERT INTO user_data(user_id, max_count_words, newsletter) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING`
+func (r *UserRepo) GetUserMaxCountWords(ctx context.Context, uid uuid.UUID) (int, error) {
+	const query = `SELECT max_count_words FROM users WHERE id=$1`
 
-	_, err := r.tr.Exec(ctx, query, userID, maxCountWords, newsletter)
+	var maxCountWords int
+	err := r.tr.QueryRow(ctx, query, uid).Scan(&maxCountWords)
+	if err != nil {
+		return 0, fmt.Errorf("user.repository.UserRepo.GetUserMaxCountWords: %w", err)
+	}
+
+	return maxCountWords, nil
+}
+
+func (r *UserRepo) AddUserData(ctx context.Context, data entity.UserData) error {
+	const query = `INSERT INTO user_data(user_id, name, surname) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING`
+
+	_, err := r.tr.Exec(ctx, query, data.UID, data.Name, data.Surname)
 	if err != nil {
 		return fmt.Errorf("user.repository.UserRepo.GetUserData: %w", err)
 	}
@@ -126,14 +179,25 @@ func (r *UserRepo) AddUserData(ctx context.Context, userID uuid.UUID, maxCountWo
 	return nil
 }
 
-func (r *UserRepo) GetUserSubscriptions(ctx context.Context, userID uuid.UUID) ([]entity.Subscriptions, error) {
+func (r *UserRepo) AddUserNewsletters(ctx context.Context, data entity.UserNewsletters) error {
+	const query = `INSERT INTO user_newsletters(user_id, news) VALUES ($1, $2) ON CONFLICT DO NOTHING`
+
+	_, err := r.tr.Exec(ctx, query, data.UID, data.News)
+	if err != nil {
+		return fmt.Errorf("user.repository.UserRepo.AddUserNewsletters: %w", err)
+	}
+
+	return nil
+}
+
+func (r *UserRepo) GetUserSubscriptions(ctx context.Context, uid uuid.UUID) ([]entity.Subscriptions, error) {
 	const query = `
 	SELECT us.id, user_id, subscription_id, s.add_words count_word, us.started_at, us.ended_at 
 	FROM user_subscription us
 	LEFT JOIN subscriptions s ON s.id = us.subscription_id
 	WHERE user_id = $1;`
 
-	rows, err := r.tr.Query(ctx, query, userID)
+	rows, err := r.tr.Query(ctx, query, uid)
 	if err != nil {
 		return nil, fmt.Errorf("user.repository.UserRepo.GetUserSubscriptions: %w", err)
 	}
@@ -143,7 +207,7 @@ func (r *UserRepo) GetUserSubscriptions(ctx context.Context, userID uuid.UUID) (
 	for rows.Next() {
 		var sub entity.Subscriptions
 		if err := rows.Scan(&sub.ID, &sub.UserID, &sub.SubscriptionID, &sub.CountWord, &sub.StartedAt, &sub.EndedAt); err != nil {
-			return nil, fmt.Errorf("user.repository.UserRepo.GetUserSubscriptions - scan: %w", err)
+			return nil, fmt.Errorf("user.repository.UserRepo.GetUserSubscriptions: %w", err)
 		}
 		subscriptions = append(subscriptions, sub)
 	}
@@ -151,7 +215,7 @@ func (r *UserRepo) GetUserSubscriptions(ctx context.Context, userID uuid.UUID) (
 	return subscriptions, nil
 }
 
-func (r *UserRepo) GetUsers(ctx context.Context, page, perPage, sort, order int, search string) ([]entity.UserData, int, error) {
+func (r *UserRepo) GetUsers(ctx context.Context, page, perPage, sort, order int, search string) ([]entity.User, int, error) {
 	const queryCountUsers = `SELECT COUNT(id) FROM users`
 	var countUser int
 	err := r.tr.QueryRow(ctx, queryCountUsers).Scan(&countUser)
@@ -160,9 +224,9 @@ func (r *UserRepo) GetUsers(ctx context.Context, page, perPage, sort, order int,
 	}
 
 	query := fmt.Sprintf(`
-	SELECT u.id, u.name, role, u.last_visit_at
+	SELECT u.id, u.nickname, role, u.visited_at
 	FROM users u
-	WHERE u.name LIKE '%[1]s' || $1 || '%[1]s'
+	WHERE u.nickname LIKE '%[1]s' || $1 || '%[1]s'
 	%[2]s
 	LIMIT $2
 	OFFSET $3;`, "%", getSorted(sort, sorted.TypeOrder(order)))
@@ -173,16 +237,16 @@ func (r *UserRepo) GetUsers(ctx context.Context, page, perPage, sort, order int,
 	}
 	defer rows.Close()
 
-	users := make([]entity.UserData, 0)
-	var user entity.UserData
+	users := make([]entity.User, 0)
+	var user entity.User
 	for rows.Next() {
 		if err := rows.Scan(
 			&user.ID,
-			&user.Name,
+			&user.Nickname,
 			&user.Role,
-			&user.LastVisited,
+			&user.VisitedAt,
 		); err != nil {
-			return nil, 0, fmt.Errorf("user.repository.UserRepo.GetUsers - scan: %w", err)
+			return nil, 0, fmt.Errorf("user.repository.UserRepo.GetUsers: %w", err)
 		}
 		users = append(users, user)
 	}
@@ -190,8 +254,8 @@ func (r *UserRepo) GetUsers(ctx context.Context, page, perPage, sort, order int,
 	return users, countUser, nil
 }
 
-func (r *UserRepo) UpdateLastVisited(ctx context.Context, uid uuid.UUID) error {
-	const query = `UPDATE users SET last_visit_at = $2 WHERE id = $1`
+func (r *UserRepo) UpdateVisitedAt(ctx context.Context, uid uuid.UUID) error {
+	const query = `UPDATE users SET visited_at = $2 WHERE id = $1`
 
 	_, err := r.tr.Exec(ctx, query, uid, time.Now().UTC())
 	if err != nil {
@@ -204,9 +268,9 @@ func (r *UserRepo) UpdateLastVisited(ctx context.Context, uid uuid.UUID) error {
 func getSorted(typeSorted int, order sorted.TypeOrder) string {
 	switch sorted.TypeSorted(typeSorted) {
 	case sorted.Visit:
-		return fmt.Sprintf("ORDER BY u.last_visit_at %s", order)
+		return fmt.Sprintf("ORDER BY u.visited_at %s", order)
 	case sorted.ABC:
-		return fmt.Sprintf("ORDER BY u.name %s", order)
+		return fmt.Sprintf("ORDER BY u.nickname %s", order)
 	default:
 		return runtime.EmptyString
 	}

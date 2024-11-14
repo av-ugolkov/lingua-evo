@@ -22,9 +22,9 @@ import (
 	repoNotif "github.com/av-ugolkov/lingua-evo/internal/services/notifications/repository"
 	"github.com/av-ugolkov/lingua-evo/internal/services/tag"
 	tagRepo "github.com/av-ugolkov/lingua-evo/internal/services/tag/repository"
-	"github.com/av-ugolkov/lingua-evo/internal/services/user"
 	entityUser "github.com/av-ugolkov/lingua-evo/internal/services/user"
 	userRepo "github.com/av-ugolkov/lingua-evo/internal/services/user/repository"
+	user "github.com/av-ugolkov/lingua-evo/internal/services/user/service"
 	entityVocab "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary"
 	vocabRepo "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary/repository"
 	vocabService "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary/service"
@@ -59,12 +59,12 @@ func TestMain(m *testing.M) {
 	notifSvc = notifications.NewService(repoNotif.NewRepo(tr))
 	tagSvc = tag.NewService(tagRepo.NewRepo(tr))
 	eventsSvc = NewService(tr, eventsRepo.NewRepo(tr), notifSvc)
-	userSvc = user.NewService(userRepo.NewRepo(tr), nil, tr)
+	userSvc = user.NewService(tr, userRepo.NewRepo(tr), nil, nil)
 	exampleSvc = example.NewService(exampleRepo.NewRepo(tr))
 	vocabularySvc = vocabService.NewService(tr, vocabRepo.NewRepo(tr), userSvc, exampleSvc, dictSvc, tagSvc, nil, eventsSvc)
 
 	var err error
-	usr, err = userSvc.GetUserByName(ctx, "admin")
+	usr, err = userSvc.GetUserByNickname(ctx, "admin")
 	if err != nil {
 		slog.Error(err.Error())
 		os.Exit(1)
@@ -83,7 +83,7 @@ func TestGetCountEvents(t *testing.T) {
 		err := tr.CreateTransaction(ctx, func(ctx context.Context) error {
 			tempUID, err := userSvc.AddUser(ctx, entityUser.UserCreate{
 				ID:       uuid.New(),
-				Name:     "user_temp",
+				Nickname: "user_temp",
 				Password: "password_temp",
 				Email:    "user_temp@user_temp.com",
 				Role:     runtime.User,
@@ -128,7 +128,7 @@ func TestGetCountEvents(t *testing.T) {
 		err := tr.CreateTransaction(ctx, func(ctx context.Context) error {
 			tempUID, err := userSvc.AddUser(ctx, entityUser.UserCreate{
 				ID:       uuid.New(),
-				Name:     "user_temp",
+				Nickname: "user_temp",
 				Password: "password_temp",
 				Email:    "user_temp@user_temp.com",
 				Role:     runtime.User,
@@ -185,7 +185,7 @@ func TestGetCountEvents(t *testing.T) {
 		err := tr.CreateTransaction(ctx, func(ctx context.Context) error {
 			tempUID, err := userSvc.AddUser(ctx, entityUser.UserCreate{
 				ID:       uuid.New(),
-				Name:     "user_temp",
+				Nickname: "user_temp",
 				Password: "password_temp",
 				Email:    "user_temp@user_temp.com",
 				Role:     runtime.User,
@@ -247,7 +247,7 @@ func TestGetEvents(t *testing.T) {
 		err := tr.CreateTransaction(ctx, func(ctx context.Context) error {
 			tempUID, err := userSvc.AddUser(ctx, entityUser.UserCreate{
 				ID:       uuid.New(),
-				Name:     "user_temp",
+				Nickname: "user_temp",
 				Password: "password_temp",
 				Email:    "user_temp@user_temp.com",
 				Role:     runtime.User,
@@ -292,7 +292,7 @@ func TestGetEvents(t *testing.T) {
 		err := tr.CreateTransaction(ctx, func(ctx context.Context) error {
 			tempUID, err := userSvc.AddUser(ctx, entityUser.UserCreate{
 				ID:       uuid.New(),
-				Name:     "user_temp",
+				Nickname: "user_temp",
 				Password: "password_temp",
 				Email:    "user_temp@user_temp.com",
 				Role:     runtime.User,
@@ -349,7 +349,7 @@ func TestGetEvents(t *testing.T) {
 		err := tr.CreateTransaction(ctx, func(ctx context.Context) error {
 			tempUID, err := userSvc.AddUser(ctx, entityUser.UserCreate{
 				ID:       uuid.New(),
-				Name:     "user_temp",
+				Nickname: "user_temp",
 				Password: "password_temp",
 				Email:    "user_temp@user_temp.com",
 				Role:     runtime.User,

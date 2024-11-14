@@ -201,7 +201,7 @@ func (r *VocabRepo) GetVocabulariesByAccess(ctx context.Context, uid uuid.UUID, 
 	SELECT 
 		v.id,
 		v.user_id,
-		u."name" "user_name",
+		u."nickname",
 		v.name,
 		v.native_lang,
 		v.translate_lang,
@@ -217,7 +217,7 @@ func (r *VocabRepo) GetVocabulariesByAccess(ctx context.Context, uid uuid.UUID, 
 	LEFT JOIN word w ON w.vocabulary_id = v.id 
 	WHERE (v.user_id=$1 OR v.access = ANY($2))
 		AND (v."name" LIKE '%[1]s' || $3 || '%[1]s' OR v."description" LIKE '%[1]s' || $3 || '%[1]s') %[2]s %[3]s
-	GROUP BY v.id, u."name"
+	GROUP BY v.id, u."nickname"
 	%[4]s
 	LIMIT $4
 	OFFSET $5;`, "%", getEqualLanguage("v.native_lang", nativeLang), getEqualLanguage("v.translate_lang", translateLang), getSorted(typeSort, sorted.TypeOrder(order)))
@@ -345,12 +345,12 @@ func (r *VocabRepo) GetWithCountWords(ctx context.Context, vid uuid.UUID) (entit
 			v.description, 
 			v.created_at, 
 			v.updated_at, 
-			u."name" 
+			u."nickname" 
 		FROM vocabulary v
 		LEFT JOIN word w ON w.vocabulary_id = v.id
 		LEFT JOIN users u ON u.id = v.user_id 
 		WHERE v.id = $1
-		GROUP BY v.id, u."name";`
+		GROUP BY v.id, u."nickname";`
 
 	var vocab entity.VocabWithUser
 	err := r.tr.QueryRow(ctx, query, vid).Scan(

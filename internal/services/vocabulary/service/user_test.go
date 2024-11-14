@@ -13,9 +13,9 @@ import (
 	subscribersRepo "github.com/av-ugolkov/lingua-evo/internal/services/subscribers/repository"
 	"github.com/av-ugolkov/lingua-evo/internal/services/tag"
 	"github.com/av-ugolkov/lingua-evo/internal/services/tag/repository"
-	"github.com/av-ugolkov/lingua-evo/internal/services/user"
 	entityUser "github.com/av-ugolkov/lingua-evo/internal/services/user"
 	userRepo "github.com/av-ugolkov/lingua-evo/internal/services/user/repository"
+	user "github.com/av-ugolkov/lingua-evo/internal/services/user/service"
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary"
 	vocabRepo "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary/repository"
 	"github.com/av-ugolkov/lingua-evo/runtime"
@@ -40,11 +40,11 @@ func TestMain(m *testing.M) {
 	defer tp.DropDB(ctx)
 
 	tr := transactor.NewTransactor(tp.PgxPool)
-	userTestSvc = user.NewService(userRepo.NewRepo(tr), nil, tr)
+	userTestSvc = user.NewService(tr, userRepo.NewRepo(tr), nil, nil)
 	subscrbTestSvc = subscribers.NewService(subscribersRepo.NewRepo(tr))
 
 	var err error
-	usr, err = userTestSvc.GetUserByName(ctx, "admin")
+	usr, err = userTestSvc.GetUserByNickname(ctx, "admin")
 	if err != nil {
 		slog.Error(fmt.Sprintf("%s", err))
 		os.Exit(1)
@@ -142,7 +142,7 @@ func TestService_UserGetVocabularies(t *testing.T) {
 			for i := 0; i < 3; i++ {
 				uid, err := userTestSvc.AddUser(ctx, entityUser.UserCreate{
 					ID:       uuid.New(),
-					Name:     fmt.Sprintf("user_%d", i),
+					Nickname: fmt.Sprintf("user_%d", i),
 					Password: fmt.Sprintf("password_%d", i),
 					Email:    fmt.Sprintf("user_%d@user_%d.com", i, i),
 					Role:     runtime.User,

@@ -11,8 +11,8 @@ import (
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/gin-ext"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/msg-error"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/utils"
-	"github.com/av-ugolkov/lingua-evo/internal/services/user"
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/user"
+	user "github.com/av-ugolkov/lingua-evo/internal/services/user/service"
 	"github.com/av-ugolkov/lingua-evo/runtime"
 
 	"github.com/gin-gonic/gin"
@@ -43,11 +43,11 @@ type (
 	}
 
 	UserRs struct {
-		ID          uuid.UUID    `json:"id"`
-		Name        string       `json:"name"`
-		Email       string       `json:"email,omitempty"`
-		Role        runtime.Role `json:"role"`
-		LastVisited time.Time    `json:"last_visited,omitempty"`
+		ID        uuid.UUID    `json:"id"`
+		Nickname  string       `json:"nickname"`
+		Email     string       `json:"email,omitempty"`
+		Role      runtime.Role `json:"role"`
+		VisitedAt time.Time    `json:"visited_at,omitempty"`
 	}
 )
 
@@ -61,6 +61,8 @@ func Create(g *ginext.Engine, userSvc *user.Service) {
 	g.POST(handler.SignUp, h.signUp)
 	g.GET(handler.UserByID, middleware.Auth(h.getUserByID))
 	g.GET(handler.Users, h.getUsers)
+
+	h.initSettingsHandler(g)
 }
 
 func newHandler(userSvc *user.Service) *Handler {
@@ -93,7 +95,7 @@ func (h *Handler) signUp(c *ginext.Context) (int, any, error) {
 	}
 
 	uid, err := h.userSvc.SignUp(c.Request.Context(), entity.UserCreate{
-		Name:     strings.Split(data.Email, "@")[0],
+		Nickname: strings.Split(data.Email, "@")[0],
 		Password: data.Password,
 		Email:    data.Email,
 		Role:     runtime.User,
@@ -117,16 +119,16 @@ func (h *Handler) getUserByID(c *ginext.Context) (int, any, error) {
 	if err != nil {
 		return http.StatusUnauthorized, nil, fmt.Errorf("user.delivery.Handler.getUserByID: %v", err)
 	}
-	userData, err := h.userSvc.GetUserByID(ctx, userID)
+	usr, err := h.userSvc.GetUserByID(ctx, userID)
 	if err != nil {
 		return http.StatusInternalServerError, nil, fmt.Errorf("user.delivery.Handler.getUserByID: %v", err)
 	}
 
 	userRs := &UserRs{
-		ID:    userData.ID,
-		Name:  userData.Name,
-		Email: userData.Email,
-		Role:  userData.Role,
+		ID:       usr.ID,
+		Nickname: usr.Nickname,
+		Email:    usr.Email,
+		Role:     usr.Role,
 	}
 
 	return http.StatusOK, userRs, nil
@@ -175,10 +177,10 @@ func (h *Handler) getUsers(c *ginext.Context) (int, any, error) {
 	usersRs := make([]UserRs, 0, len(users))
 	for _, u := range users {
 		usersRs = append(usersRs, UserRs{
-			ID:          u.ID,
-			Name:        u.Name,
-			Role:        u.Role,
-			LastVisited: u.LastVisited,
+			ID:        u.ID,
+			Nickname:  u.Nickname,
+			Role:      u.Role,
+			VisitedAt: u.VisitedAt,
 		})
 	}
 

@@ -31,10 +31,10 @@ type (
 )
 
 type UserData struct {
-	ID          uuid.UUID
-	Name        string
-	Role        string
-	LastVisitAt time.Time
+	ID        uuid.UUID
+	Nickname  string
+	Role      string
+	VisitedAt time.Time
 }
 
 type Event struct {

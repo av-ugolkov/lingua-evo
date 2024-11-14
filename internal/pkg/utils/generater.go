@@ -1,6 +1,8 @@
 package utils
 
 import (
+	"math/rand/v2"
+
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -16,4 +18,8 @@ func HashPassword(password string) (string, error) {
 func CheckPasswordHash(password, hash string) error {
 	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
 	return err
+}
+
+func GenerateCode() int {
+	return rand.IntN(999999-100000) + 100000
 }

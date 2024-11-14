@@ -7,7 +7,7 @@ import (
 
 type (
 	emailSvc interface {
-		SendEmailForSupport(email string, params ...string) error
+		SendEmailForSupport(email string, userName, subject, msg string) error
 	}
 )
 

@@ -1,6 +1,10 @@
 package ginext
 
 import (
+	"errors"
+	"log/slog"
+
+	msgerr "github.com/av-ugolkov/lingua-evo/internal/pkg/msg-error"
 	"github.com/gin-gonic/gin"
 )
 
@@ -20,11 +24,22 @@ func NewEngine(eng *gin.Engine) *Engine {
 func execHandlers(gc *gin.Context, handlers ...HandlerFunc) {
 	for _, h := range handlers {
 		c := NewContext(gc)
-		if status, resp, err := h(c); err != nil {
-			c.SendError(status, err)
-		} else {
-			c.JSON(status, resp)
+		status, resp, err := h(c)
+
+		obj := gin.H{"resp": resp}
+		if err != nil {
+			slog.Error(err.Error())
+			var e *msgerr.ApiError
+			switch {
+			case errors.As(err, &e):
+				obj["msg"] = e.Msg
+			default:
+				obj["msg"] = err.Error()
+			}
 		}
+
+		c.JSON(status, obj)
+
 	}
 }
 

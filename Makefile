@@ -4,7 +4,7 @@ build:
 
 .PHONY: run
 run:
-	./cmd/main
+	@./run.sh run
 
 .PHONY: backup
 backup:
