@@ -79,8 +79,8 @@ func (c *Context) SetCookieRefreshToken(token uuid.UUID, maxAge time.Duration) {
 		true)
 }
 
-func (c *Context) DeleteCookie(name string) {
-	c.Context.SetCookie(name, runtime.EmptyString, -1, runtime.EmptyString, runtime.EmptyString, true, true)
+func (c *Context) DeleteCookie(name, path string) {
+	c.Context.SetCookie(name, runtime.EmptyString, -1, path, runtime.EmptyString, true, true)
 }
 
 func (c *Context) GetHeaderAuthorization(typeAuth string) (string, error) {

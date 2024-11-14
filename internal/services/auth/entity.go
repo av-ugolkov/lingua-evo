@@ -7,7 +7,6 @@ import (
 	"github.com/av-ugolkov/lingua-evo/runtime"
 
 	"github.com/google/uuid"
-	jsoniter "github.com/json-iterator/go"
 )
 
 var (
@@ -18,11 +17,7 @@ var (
 )
 
 type (
-	Session struct {
-		UserID      uuid.UUID `json:"user_id"`
-		Fingerprint string    `json:"fingerprint"`
-		CreatedAt   time.Time `json:"created_at"`
-	}
+	Session uuid.UUID
 
 	User struct {
 		ID       uuid.UUID
@@ -45,6 +40,7 @@ type (
 	}
 )
 
-func (s *Session) MarshalBinary() ([]byte, error) {
-	return jsoniter.Marshal(s)
+func (s *Session) String() string {
+	u := uuid.UUID(*s)
+	return u.String()
 }

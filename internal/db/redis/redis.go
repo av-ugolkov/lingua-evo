@@ -48,10 +48,6 @@ func (r *Redis) SetNX(ctx context.Context, key string, value any, expiration tim
 	return r.client.SetNX(ctx, key, value, expiration).Result()
 }
 
-func (r *Redis) ExpireAt(ctx context.Context, key string, tm time.Time) (bool, error) {
-	return r.client.ExpireAt(ctx, key, tm).Result()
-}
-
 func (r *Redis) Delete(ctx context.Context, key string) (int64, error) {
 	return r.client.Del(ctx, key).Result()
 }
