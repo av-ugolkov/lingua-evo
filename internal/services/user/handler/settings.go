@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -8,7 +9,10 @@ import (
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler/middleware"
 	ginext "github.com/av-ugolkov/lingua-evo/internal/pkg/gin-ext"
 	msgerr "github.com/av-ugolkov/lingua-evo/internal/pkg/msg-error"
+	entity "github.com/av-ugolkov/lingua-evo/internal/services/user"
 	"github.com/av-ugolkov/lingua-evo/runtime"
+
+	"github.com/gin-gonic/gin"
 )
 
 type (
@@ -49,7 +53,7 @@ func (h *Handler) getSettingsAccount(c *ginext.Context) (int, any, error) {
 	uid, err := runtime.UserIDFromContext(ctx)
 	if err != nil {
 		return http.StatusUnauthorized, nil,
-			msgerr.New(fmt.Errorf("user.delivery.Handler.getSettingsAccount: %v", err),
+			msgerr.New(fmt.Errorf("user.handler.Handler.getSettingsAccount: %v", err),
 				msgerr.ErrMsgUnauthorized)
 	}
 
@@ -81,7 +85,7 @@ func (h *Handler) updatePswSendCode(c *ginext.Context) (int, any, error) {
 	uid, err := runtime.UserIDFromContext(ctx)
 	if err != nil {
 		return http.StatusUnauthorized, nil,
-			msgerr.New(fmt.Errorf("user.delivery.Handler.updatePswSendCode: %v", err),
+			msgerr.New(fmt.Errorf("user.handler.Handler.updatePswSendCode: %v", err),
 				msgerr.ErrMsgUnauthorized)
 	}
 
@@ -89,14 +93,14 @@ func (h *Handler) updatePswSendCode(c *ginext.Context) (int, any, error) {
 	err = c.Bind(&data)
 	if err != nil {
 		return http.StatusBadRequest, nil,
-			msgerr.New(fmt.Errorf("user.delivery.Handler.updatePswSendCode: %v", err),
+			msgerr.New(fmt.Errorf("user.handler.Handler.updatePswSendCode: %v", err),
 				msgerr.ErrMsgBadRequest)
 	}
 
 	err = h.userSvc.SendSecurityCodeForUpdatePsw(ctx, uid, data.Data)
 	if err != nil {
 		return http.StatusInternalServerError, nil,
-			fmt.Errorf("user.delivery.Handler.updatePswSendCode: %v", err)
+			fmt.Errorf("user.handler.Handler.updatePswSendCode: %v", err)
 	}
 
 	return http.StatusOK, nil, nil
@@ -108,7 +112,7 @@ func (h *Handler) updatePsw(c *ginext.Context) (int, any, error) {
 	uid, err := runtime.UserIDFromContext(ctx)
 	if err != nil {
 		return http.StatusUnauthorized, nil,
-			msgerr.New(fmt.Errorf("user.delivery.Handler.updatePsw: %v", err),
+			msgerr.New(fmt.Errorf("user.handler.Handler.updatePsw: %v", err),
 				msgerr.ErrMsgUnauthorized)
 	}
 
@@ -116,14 +120,14 @@ func (h *Handler) updatePsw(c *ginext.Context) (int, any, error) {
 	err = c.Bind(&data)
 	if err != nil {
 		return http.StatusBadRequest, nil,
-			msgerr.New(fmt.Errorf("user.delivery.Handler.updatePsw: %v", err),
+			msgerr.New(fmt.Errorf("user.handler.Handler.updatePsw: %v", err),
 				msgerr.ErrMsgBadRequest)
 	}
 
 	err = h.userSvc.UpdatePsw(ctx, uid, data.OldPsw, data.NewPsw, data.Code)
 	if err != nil {
 		return http.StatusInternalServerError, nil,
-			fmt.Errorf("user.delivery.Handler.updatePsw: %v", err)
+			fmt.Errorf("user.handler.Handler.updatePsw: %v", err)
 	}
 
 	return http.StatusOK, nil, nil
@@ -135,17 +139,20 @@ func (h *Handler) updateEmailSendCode(c *ginext.Context) (int, any, error) {
 	uid, err := runtime.UserIDFromContext(ctx)
 	if err != nil {
 		return http.StatusUnauthorized, nil,
-			msgerr.New(fmt.Errorf("user.delivery.Handler.updateEmailSendCode: %v", err),
+			msgerr.New(fmt.Errorf("user.handler.Handler.updateEmailSendCode: %v", err),
 				msgerr.ErrMsgUnauthorized)
 	}
 
-	err = h.userSvc.SendSecurityCodeForUpdateEmail(ctx, uid)
-	if err != nil {
+	ttl, err := h.userSvc.SendSecurityCodeForUpdateEmail(ctx, uid)
+	switch {
+	case errors.Is(err, entity.ErrDuplicateCode):
+		return http.StatusConflict, gin.H{"ttl": ttl}, fmt.Errorf("user.handler.Handler.updateEmailSendCode: %w", err)
+	case err != nil:
 		return http.StatusInternalServerError, nil,
-			fmt.Errorf("user.delivery.Handler.updateEmailSendCode: %v", err)
+			fmt.Errorf("user.handler.Handler.updateEmailSendCode: %w", err)
 	}
 
-	return http.StatusOK, nil, nil
+	return http.StatusOK, gin.H{"msg": "Could you check your email. We have sent you a code for updating your email"}, nil
 }
 
 func (h *Handler) updateEmail(c *ginext.Context) (int, any, error) {
@@ -154,7 +161,7 @@ func (h *Handler) updateEmail(c *ginext.Context) (int, any, error) {
 	uid, err := runtime.UserIDFromContext(ctx)
 	if err != nil {
 		return http.StatusUnauthorized, nil,
-			msgerr.New(fmt.Errorf("user.delivery.Handler.updateEmail: %v", err),
+			msgerr.New(fmt.Errorf("user.handler.Handler.updateEmail: %v", err),
 				msgerr.ErrMsgUnauthorized)
 	}
 
@@ -162,14 +169,14 @@ func (h *Handler) updateEmail(c *ginext.Context) (int, any, error) {
 	err = c.Bind(&data)
 	if err != nil {
 		return http.StatusBadRequest, nil,
-			msgerr.New(fmt.Errorf("user.delivery.Handler.updateEmail: %v", err),
+			msgerr.New(fmt.Errorf("user.handler.Handler.updateEmail: %v", err),
 				msgerr.ErrMsgBadRequest)
 	}
 
 	err = h.userSvc.UpdateEmail(ctx, uid, data.NewEmail, data.Code)
 	if err != nil {
 		return http.StatusInternalServerError, nil,
-			fmt.Errorf("user.delivery.Handler.updateEmail: %v", err)
+			fmt.Errorf("user.handler.Handler.updateEmail: %w", err)
 	}
 
 	return http.StatusOK, nil, nil
@@ -181,7 +188,7 @@ func (h *Handler) updateNickname(c *ginext.Context) (int, any, error) {
 	uid, err := runtime.UserIDFromContext(ctx)
 	if err != nil {
 		return http.StatusUnauthorized, nil,
-			msgerr.New(fmt.Errorf("user.delivery.Handler.updateNickname: %v", err),
+			msgerr.New(fmt.Errorf("user.handler.Handler.updateNickname: %v", err),
 				msgerr.ErrMsgUnauthorized)
 	}
 
@@ -189,14 +196,14 @@ func (h *Handler) updateNickname(c *ginext.Context) (int, any, error) {
 	err = c.Bind(&data)
 	if err != nil {
 		return http.StatusBadRequest, nil,
-			msgerr.New(fmt.Errorf("user.delivery.Handler.updateNickname: %v", err),
+			msgerr.New(fmt.Errorf("user.handler.Handler.updateNickname: %v", err),
 				msgerr.ErrMsgBadRequest)
 	}
 
 	err = h.userSvc.UpdateNickname(ctx, uid, data.Nickname)
 	if err != nil {
 		return http.StatusInternalServerError, nil,
-			fmt.Errorf("user.delivery.Handler.updateNickname: %w", err)
+			fmt.Errorf("user.handler.Handler.updateNickname: %w", err)
 	}
 
 	return http.StatusOK, nil, nil

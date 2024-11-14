@@ -85,7 +85,7 @@ func (r *VocabRepo) GetSortedVocabulariesByUser(ctx context.Context, userID uuid
     SELECT 
         v.id,
         v.user_id,
-        u."name" AS "user_name",
+        u."nickname",
         v.name,
         v.native_lang,
         v.translate_lang,
@@ -103,7 +103,7 @@ func (r *VocabRepo) GetSortedVocabulariesByUser(ctx context.Context, userID uuid
         AND s.user_id = $1 
     WHERE v.user_id = $1 
        OR (s.user_id IS NOT NULL AND v.access = ANY($2))
-    GROUP BY v.id, u."name")
+    GROUP BY v.id, u."nickname")
 	SELECT *
 	FROM vocabulary_data v
 	WHERE (v."name" LIKE '%[1]s' || $3 || '%[1]s' OR v."description" LIKE '%[1]s' || $3 || '%[1]s') %[2]s %[3]s

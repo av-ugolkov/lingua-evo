@@ -62,6 +62,30 @@ func (_m *mockRedis) GetAccountCode(ctx context.Context, email string) (int, err
 	return r0, r1
 }
 
+// GetTTL provides a mock function with given fields: ct, key
+func (_m *mockRedis) GetTTL(ct context.Context, key string) (time.Duration, error) {
+	ret := _m.Called(ct, key)
+
+	var r0 time.Duration
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) (time.Duration, error)); ok {
+		return rf(ct, key)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) time.Duration); ok {
+		r0 = rf(ct, key)
+	} else {
+		r0 = ret.Get(0).(time.Duration)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ct, key)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // SetNX provides a mock function with given fields: ctx, key, value, expiration
 func (_m *mockRedis) SetNX(ctx context.Context, key string, value interface{}, expiration time.Duration) (bool, error) {
 	ret := _m.Called(ctx, key, value, expiration)

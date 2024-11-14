@@ -89,7 +89,7 @@ func Create(r *ginext.Engine, vocabSvc *vocabulary.Service) {
 	r.DELETE(handler.Vocabulary, middleware.Auth(h.userDeleteVocabulary))
 	r.PUT(handler.Vocabulary, middleware.Auth(h.userEditVocabulary))
 	r.GET(handler.UserVocabularies, middleware.Auth(h.userGetVocabularies))
-	r.GET(handler.Vocabularies, h.getVocabularies)
+	r.GET(handler.Vocabularies, middleware.OptionalAuth(h.getVocabularies))
 	r.GET(handler.VocabulariesByUser, middleware.OptionalAuth(h.getVocabulariesByUser))
 	r.GET(handler.VocabularyInfo, middleware.OptionalAuth(h.getVocabularyInfo))
 	r.POST(handler.VocabularyCopy, middleware.Auth(h.copyVocabulary))
@@ -116,7 +116,7 @@ func newHandler(vocabSvc *vocabulary.Service) *Handler {
 
 func (h *Handler) getVocabularies(c *ginext.Context) (int, any, error) {
 	ctx := c.Request.Context()
-	userID, _ := runtime.UserIDFromContext(ctx)
+	uid, _ := runtime.UserIDFromContext(ctx)
 
 	page, err := c.GetQueryInt(paramsPage)
 	if err != nil {
@@ -166,7 +166,7 @@ func (h *Handler) getVocabularies(c *ginext.Context) (int, any, error) {
 			fmt.Errorf("vocabulary.delivery.Handler.getVocabularies: %v", err)
 	}
 
-	vocabularies, totalCount, err := h.vocabSvc.GetVocabularies(ctx, userID, page, itemsPerPage, typeSort, order, search, nativeLang, translateLang, limitWords)
+	vocabularies, totalCount, err := h.vocabSvc.GetVocabularies(ctx, uid, page, itemsPerPage, typeSort, order, search, nativeLang, translateLang, limitWords)
 	if err != nil {
 		return http.StatusInternalServerError, nil,
 			fmt.Errorf("vocabulary.delivery.Handler.getVocabularies: %v", err)

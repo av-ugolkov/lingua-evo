@@ -137,7 +137,7 @@ func TestService_SendSecurityCodeForUpdateEmail(t *testing.T) {
 		repo.On("GetUserByID", ctx, uid).Return(nil, fmt.Errorf("error"))
 
 		service := NewService(nil, repo, nil, nil)
-		err := service.SendSecurityCodeForUpdateEmail(ctx, uid)
+		_, err := service.SendSecurityCodeForUpdateEmail(ctx, uid)
 		assert.Error(t, err)
 	})
 
@@ -147,7 +147,7 @@ func TestService_SendSecurityCodeForUpdateEmail(t *testing.T) {
 		redisDB := new(mockRedis)
 		redisDB.On("SetNX", ctx, mock.Anything, mock.Anything, 5*time.Minute).Return(false, fmt.Errorf("error"))
 		service := NewService(nil, repo, redisDB, nil)
-		err := service.SendSecurityCodeForUpdateEmail(ctx, uid)
+		_, err := service.SendSecurityCodeForUpdateEmail(ctx, uid)
 		assert.Error(t, err)
 	})
 
@@ -157,7 +157,7 @@ func TestService_SendSecurityCodeForUpdateEmail(t *testing.T) {
 		redisDB := new(mockRedis)
 		redisDB.On("SetNX", ctx, mock.Anything, mock.Anything, 5*time.Minute).Return(false, nil)
 		service := NewService(nil, repo, redisDB, nil)
-		err := service.SendSecurityCodeForUpdateEmail(ctx, uid)
+		_, err := service.SendSecurityCodeForUpdateEmail(ctx, uid)
 		assert.Error(t, err)
 	})
 
@@ -169,7 +169,7 @@ func TestService_SendSecurityCodeForUpdateEmail(t *testing.T) {
 		emailMockSvc := new(mockEmailSvc)
 		emailMockSvc.On("SendEmailForUpdateEmail", mock.Anything, mock.Anything, mock.Anything).Return(fmt.Errorf("error"))
 		service := NewService(nil, repo, redisDB, emailMockSvc)
-		err := service.SendSecurityCodeForUpdateEmail(ctx, uid)
+		_, err := service.SendSecurityCodeForUpdateEmail(ctx, uid)
 		assert.Error(t, err)
 	})
 
@@ -181,7 +181,7 @@ func TestService_SendSecurityCodeForUpdateEmail(t *testing.T) {
 		emailMockSvc := new(mockEmailSvc)
 		emailMockSvc.On("SendEmailForUpdateEmail", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 		service := NewService(nil, repo, redisDB, emailMockSvc)
-		err := service.SendSecurityCodeForUpdateEmail(ctx, uid)
+		_, err := service.SendSecurityCodeForUpdateEmail(ctx, uid)
 		assert.NoError(t, err)
 	})
 }

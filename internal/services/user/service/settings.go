@@ -2,25 +2,17 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
 
 	msgerr "github.com/av-ugolkov/lingua-evo/internal/pkg/msg-error"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/utils"
+	entity "github.com/av-ugolkov/lingua-evo/internal/services/user"
 
 	"github.com/google/uuid"
-)
-
-const (
-	ErrMsgUserNotFound    = "Sorry, user not found"
-	ErrMsgIncorrectPsw    = "Incorrect password"
-	ErrMsgSamePsw         = "The same password"
-	ErrMsgIncorrectEmail  = "Incorrect email"
-	ErrMsgSameEmail       = "The same email"
-	ErrMsgInvalidEmail    = "Invalid email"
-	ErrMsgInvalidNickname = "Invalid nickname. The nickname must be at least 3 characters long and contain only letters and numbers."
-	ErrFobiddenNickname   = "Sorry, your nickname contains forbidden words."
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 const (
@@ -54,11 +46,11 @@ func (s *Service) GetPswHash(ctx context.Context, uid uuid.UUID) (string, error)
 func (s *Service) SendSecurityCodeForUpdatePsw(ctx context.Context, uid uuid.UUID, psw string) error {
 	pswHash, err := s.repo.GetPswHash(ctx, uid)
 	if err != nil {
-		return msgerr.New(fmt.Errorf("auth.Service.SendSecurityCodeForUpdatePsw: %w", err), ErrMsgUserNotFound)
+		return msgerr.New(fmt.Errorf("auth.Service.SendSecurityCodeForUpdatePsw: %w", err), entity.ErrMsgUserNotFound)
 	}
 
 	if utils.CheckPasswordHash(psw, pswHash) != nil {
-		return msgerr.New(fmt.Errorf("auth.Service.SendSecurityCodeForUpdatePsw: incorrect password"), ErrMsgIncorrectPsw)
+		return msgerr.New(fmt.Errorf("auth.Service.SendSecurityCodeForUpdatePsw: incorrect password"), entity.ErrMsgIncorrectPsw)
 	}
 
 	code := utils.GenerateCode()
@@ -72,7 +64,7 @@ func (s *Service) SendSecurityCodeForUpdatePsw(ctx context.Context, uid uuid.UUI
 
 	usr, err := s.repo.GetUserByID(ctx, uid)
 	if err != nil {
-		return msgerr.New(fmt.Errorf("auth.Service.SendSecurityCodeForUpdatePsw: %w", err), ErrMsgUserNotFound)
+		return msgerr.New(fmt.Errorf("auth.Service.SendSecurityCodeForUpdatePsw: %w", err), entity.ErrMsgUserNotFound)
 	}
 
 	err = s.emailSvc.SendEmailForUpdatePassword(usr.Email, usr.Nickname, code)
@@ -86,11 +78,11 @@ func (s *Service) SendSecurityCodeForUpdatePsw(ctx context.Context, uid uuid.UUI
 func (s *Service) UpdatePsw(ctx context.Context, uid uuid.UUID, oldPsw, newPsw, code string) error {
 	pswHash, err := s.repo.GetPswHash(ctx, uid)
 	if err != nil {
-		return msgerr.New(fmt.Errorf("auth.Service.SendSecurityCodeForUpdatePsw: %w", err), ErrMsgUserNotFound)
+		return msgerr.New(fmt.Errorf("auth.Service.SendSecurityCodeForUpdatePsw: %w", err), entity.ErrMsgUserNotFound)
 	}
 
 	if utils.CheckPasswordHash(oldPsw, pswHash) != nil {
-		return msgerr.New(fmt.Errorf("auth.Service.UpdatePsw: incorrect password"), ErrMsgIncorrectPsw)
+		return msgerr.New(fmt.Errorf("auth.Service.UpdatePsw: incorrect password"), entity.ErrMsgIncorrectPsw)
 	}
 
 	redisCode, err := s.redis.Get(ctx, fmt.Sprintf("%s:%s", uid, RedisUpdatePsw))
@@ -107,7 +99,7 @@ func (s *Service) UpdatePsw(ctx context.Context, uid uuid.UUID, oldPsw, newPsw, 
 	}
 
 	if utils.CheckPasswordHash(newPsw, pswHash) == nil {
-		return msgerr.New(fmt.Errorf("auth.Service.UpdatePsw: the same password"), ErrMsgSamePsw)
+		return msgerr.New(fmt.Errorf("auth.Service.UpdatePsw: the same password"), entity.ErrMsgSamePsw)
 	}
 
 	hashPassword, err := utils.HashPassword(newPsw)
@@ -125,41 +117,45 @@ func (s *Service) UpdatePsw(ctx context.Context, uid uuid.UUID, oldPsw, newPsw, 
 	return nil
 }
 
-func (s *Service) SendSecurityCodeForUpdateEmail(ctx context.Context, uid uuid.UUID) error {
+func (s *Service) SendSecurityCodeForUpdateEmail(ctx context.Context, uid uuid.UUID) (ttl int, err error) {
+	dur := time.Duration(5 * time.Minute)
 	usr, err := s.repo.GetUserByID(ctx, uid)
 	if err != nil {
-		return msgerr.New(fmt.Errorf("auth.Service.SendSecurityCodeForUpdateEmail: %w", err), ErrMsgUserNotFound)
+		return int(dur.Milliseconds()), msgerr.New(fmt.Errorf("auth.Service.SendSecurityCodeForUpdateEmail: %w", err), entity.ErrMsgUserNotFound)
 	}
 
 	code := utils.GenerateCode()
 	value, err := s.redis.SetNX(ctx, fmt.Sprintf("%s:%s", uid, RedisUpdateEmail), code, 5*time.Minute)
 	if err != nil {
-		return msgerr.New(fmt.Errorf("auth.Service.SendSecurityCodeForUpdateEmail: %w", err), msgerr.ErrMsgInternal)
+		return int(dur.Milliseconds()), msgerr.New(fmt.Errorf("auth.Service.SendSecurityCodeForUpdateEmail: %w", err), msgerr.ErrMsgInternal)
 	}
 	if !value {
-		return msgerr.New(fmt.Errorf("auth.Service.SendSecurityCodeForUpdateEmail: %w", err), "You have already sent a code. Please wait.")
+		dur, err = s.redis.GetTTL(ctx, fmt.Sprintf("%s:%s", uid, RedisUpdateEmail))
+		return int(dur.Milliseconds()),
+			msgerr.New(fmt.Errorf("auth.Service.SendSecurityCodeForUpdateEmail: %w", entity.ErrDuplicateCode),
+				fmt.Sprintf(entity.ErrMsgDuplicateCode, dur.String()))
 	}
 
 	err = s.emailSvc.SendEmailForUpdateEmail(usr.Email, usr.Nickname, code)
 	if err != nil {
-		return msgerr.New(fmt.Errorf("auth.Service.SendSecurityCodeForUpdateEmail: %w", err), msgerr.ErrMsgInternal)
+		return int(dur.Milliseconds()), msgerr.New(fmt.Errorf("auth.Service.SendSecurityCodeForUpdateEmail: %w", err), msgerr.ErrMsgInternal)
 	}
 
-	return nil
+	return int(dur.Milliseconds()), nil
 }
 
 func (s *Service) UpdateEmail(ctx context.Context, uid uuid.UUID, newEmail, code string) error {
 	usr, err := s.repo.GetUserByID(ctx, uid)
 	if err != nil {
-		return msgerr.New(fmt.Errorf("auth.Service.UpdateEmail: %w", err), ErrMsgUserNotFound)
+		return msgerr.New(fmt.Errorf("auth.Service.UpdateEmail: %w", err), entity.ErrMsgUserNotFound)
 	}
 
 	if newEmail == usr.Email {
-		return msgerr.New(fmt.Errorf("auth.Service.UpdateEmail: the same email"), ErrMsgSameEmail)
+		return msgerr.New(fmt.Errorf("auth.Service.UpdateEmail: the same email"), entity.ErrMsgSameEmail)
 	}
 
 	if !utils.IsEmailValid(newEmail) {
-		return msgerr.New(fmt.Errorf("auth.Service.UpdateEmail: invalid email"), ErrMsgInvalidEmail)
+		return msgerr.New(fmt.Errorf("auth.Service.UpdateEmail: invalid email"), entity.ErrMsgInvalidEmail)
 	}
 
 	redisCode, err := s.redis.Get(ctx, fmt.Sprintf("%s:%s", uid, RedisUpdateEmail))
@@ -171,7 +167,11 @@ func (s *Service) UpdateEmail(ctx context.Context, uid uuid.UUID, newEmail, code
 	}
 
 	err = s.repo.UpdateEmail(ctx, uid, newEmail)
-	if err != nil {
+	var pgErr *pgconn.PgError
+	switch {
+	case errors.As(err, &pgErr) && pgErr.Code == "23505":
+		return msgerr.New(fmt.Errorf("auth.Service.UpdateEmail: %w", err), entity.ErrMsgBusyEmail)
+	case err != nil:
 		return msgerr.New(fmt.Errorf("auth.Service.UpdateEmail: %w", err), msgerr.ErrMsgInternal)
 	}
 
@@ -180,12 +180,12 @@ func (s *Service) UpdateEmail(ctx context.Context, uid uuid.UUID, newEmail, code
 
 func (s *Service) UpdateNickname(ctx context.Context, uid uuid.UUID, newNickname string) error {
 	if !utils.IsNicknameValid(newNickname) {
-		return msgerr.New(fmt.Errorf("auth.Service.UpdateNickname: invalid nickname"), ErrMsgInvalidNickname)
+		return msgerr.New(fmt.Errorf("auth.Service.UpdateNickname: invalid nickname"), entity.ErrMsgInvalidNickname)
 	}
 
 	tempNickname := strings.ToLower(newNickname)
 	if strings.Contains(tempNickname, "admin") || strings.Contains(tempNickname, "moderator") {
-		return msgerr.New(fmt.Errorf("auth.Service.UpdateNickname: contains admin"), ErrFobiddenNickname)
+		return msgerr.New(fmt.Errorf("auth.Service.UpdateNickname: contains admin"), entity.ErrFobiddenNickname)
 	}
 
 	err := s.repo.UpdateNickname(ctx, uid, newNickname)

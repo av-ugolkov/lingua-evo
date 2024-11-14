@@ -37,6 +37,7 @@ type (
 		Get(ctx context.Context, key string) (string, error)
 		GetAccountCode(ctx context.Context, email string) (int, error)
 		SetNX(ctx context.Context, key string, value any, expiration time.Duration) (bool, error)
+		GetTTL(ct context.Context, key string) (time.Duration, error)
 	}
 )
 

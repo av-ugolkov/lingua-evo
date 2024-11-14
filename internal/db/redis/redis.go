@@ -56,6 +56,10 @@ func (r *Redis) Delete(ctx context.Context, key string) (int64, error) {
 	return r.client.Del(ctx, key).Result()
 }
 
+func (r *Redis) GetTTL(ct context.Context, key string) (time.Duration, error) {
+	return r.client.TTL(ct, key).Result()
+}
+
 func (r *Redis) GetAccountCode(ctx context.Context, email string) (int, error) {
 	codeStr, err := r.Get(ctx, email)
 	if err != nil {
