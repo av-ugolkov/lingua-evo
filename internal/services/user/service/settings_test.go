@@ -156,6 +156,7 @@ func TestService_SendSecurityCodeForUpdateEmail(t *testing.T) {
 		repo.On("GetUserByID", ctx, uid).Return(entUser, nil)
 		redisDB := new(mockRedis)
 		redisDB.On("SetNX", ctx, mock.Anything, mock.Anything, 5*time.Minute).Return(false, nil)
+		redisDB.On("GetTTL", ctx, mock.Anything).Return(time.Minute*5, nil)
 		service := NewService(nil, repo, redisDB, nil)
 		_, err := service.SendSecurityCodeForUpdateEmail(ctx, uid)
 		assert.Error(t, err)

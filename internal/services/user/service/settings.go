@@ -130,7 +130,7 @@ func (s *Service) SendSecurityCodeForUpdateEmail(ctx context.Context, uid uuid.U
 		return int(dur.Milliseconds()), msgerr.New(fmt.Errorf("auth.Service.SendSecurityCodeForUpdateEmail: %w", err), msgerr.ErrMsgInternal)
 	}
 	if !value {
-		dur, err = s.redis.GetTTL(ctx, fmt.Sprintf("%s:%s", uid, RedisUpdateEmail))
+		dur, _ = s.redis.GetTTL(ctx, fmt.Sprintf("%s:%s", uid, RedisUpdateEmail))
 		return int(dur.Milliseconds()),
 			msgerr.New(fmt.Errorf("auth.Service.SendSecurityCodeForUpdateEmail: %w", entity.ErrDuplicateCode),
 				fmt.Sprintf(entity.ErrMsgDuplicateCode, dur.String()))
