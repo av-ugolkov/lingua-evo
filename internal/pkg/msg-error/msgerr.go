@@ -21,3 +21,7 @@ func New(err error, msg string) error {
 func (e *ApiError) Error() string {
 	return e.Err.Error()
 }
+
+func (e *ApiError) Unwrap() error {
+	return e.Err
+}
