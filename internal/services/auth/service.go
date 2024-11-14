@@ -15,10 +15,6 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-var (
-	errNotEqualFingerprints = errors.New("new fingerprint is not equal old fingerprint")
-)
-
 type (
 	sessionRepo interface {
 		SetSession(ctx context.Context, key string, s Session, ttl time.Duration) error
