@@ -16,14 +16,10 @@ import (
 )
 
 type (
-	SecurityCodeRq struct {
-		Data string `json:"data"`
-	}
-
 	UpdatePswRq struct {
 		OldPsw string `json:"old_psw"`
-		NewPsw string `json:"new_psw"`
-		Code   string `json:"code"`
+		NewPsw string `json:"new_psw,omitempty"`
+		Code   string `json:"code,omitempty"`
 	}
 
 	UpdateEmailRq struct {
@@ -89,7 +85,7 @@ func (h *Handler) updatePswSendCode(c *ginext.Context) (int, any, error) {
 				msgerr.ErrMsgUnauthorized)
 	}
 
-	var data SecurityCodeRq
+	var data UpdatePswRq
 	err = c.Bind(&data)
 	if err != nil {
 		return http.StatusBadRequest, nil,
@@ -97,10 +93,13 @@ func (h *Handler) updatePswSendCode(c *ginext.Context) (int, any, error) {
 				msgerr.ErrMsgBadRequest)
 	}
 
-	err = h.userSvc.SendSecurityCodeForUpdatePsw(ctx, uid, data.Data)
-	if err != nil {
+	ttl, err := h.userSvc.SendSecurityCodeForUpdatePsw(ctx, uid, data.OldPsw)
+	switch {
+	case errors.Is(err, entity.ErrDuplicateCode):
+		return http.StatusConflict, gin.H{"ttl": ttl}, fmt.Errorf("user.handler.Handler.updatePswSendCode: %w", err)
+	case err != nil:
 		return http.StatusInternalServerError, nil,
-			fmt.Errorf("user.handler.Handler.updatePswSendCode: %v", err)
+			fmt.Errorf("user.handler.Handler.updatePswSendCode: %w", err)
 	}
 
 	return http.StatusOK, nil, nil
@@ -127,7 +126,7 @@ func (h *Handler) updatePsw(c *ginext.Context) (int, any, error) {
 	err = h.userSvc.UpdatePsw(ctx, uid, data.OldPsw, data.NewPsw, data.Code)
 	if err != nil {
 		return http.StatusInternalServerError, nil,
-			fmt.Errorf("user.handler.Handler.updatePsw: %v", err)
+			fmt.Errorf("user.handler.Handler.updatePsw: %w", err)
 	}
 
 	return http.StatusOK, nil, nil

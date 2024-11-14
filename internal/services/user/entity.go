@@ -25,7 +25,7 @@ const (
 	ErrMsgInvalidEmail    = "Invalid email"
 	ErrMsgInvalidNickname = "Invalid nickname. The nickname must be at least 3 characters long and contain only letters and numbers."
 	ErrFobiddenNickname   = "Sorry, your nickname contains forbidden words."
-	ErrMsgDuplicateCode   = "You have already sent a code. Please check your inbox or wait %s finutes"
+	ErrMsgDuplicateCode   = "You have already sent a code. Please check your inbox or wait for %s finutes"
 )
 
 type (

@@ -31,7 +31,7 @@ func TestService_SendSecurityCodeForUpdatePsw(t *testing.T) {
 		repo.On("GetPswHash", ctx, uid).Return(runtime.EmptyString, fmt.Errorf("error"))
 
 		service := NewService(nil, repo, nil, nil)
-		err := service.SendSecurityCodeForUpdatePsw(ctx, uid, psw)
+		_, err := service.SendSecurityCodeForUpdatePsw(ctx, uid, psw)
 		assert.Error(t, err)
 	})
 
@@ -40,7 +40,7 @@ func TestService_SendSecurityCodeForUpdatePsw(t *testing.T) {
 		repo.On("GetPswHash", ctx, uid).Return(pswHash, nil)
 		service := NewService(nil, repo, nil, nil)
 		wrongPsw := "wrong_psw"
-		err := service.SendSecurityCodeForUpdatePsw(ctx, uid, wrongPsw)
+		_, err := service.SendSecurityCodeForUpdatePsw(ctx, uid, wrongPsw)
 		assert.Error(t, err)
 	})
 
@@ -50,7 +50,7 @@ func TestService_SendSecurityCodeForUpdatePsw(t *testing.T) {
 		redisDB := new(mockRedis)
 		redisDB.On("SetNX", ctx, mock.Anything, mock.Anything, 5*time.Minute).Return(false, fmt.Errorf("error"))
 		service := NewService(nil, repo, redisDB, nil)
-		err := service.SendSecurityCodeForUpdatePsw(ctx, uid, psw)
+		_, err := service.SendSecurityCodeForUpdatePsw(ctx, uid, psw)
 		assert.Error(t, err)
 	})
 
@@ -60,7 +60,7 @@ func TestService_SendSecurityCodeForUpdatePsw(t *testing.T) {
 		redisDB := new(mockRedis)
 		redisDB.On("SetNX", ctx, mock.Anything, mock.Anything, 5*time.Minute).Return(false, nil)
 		service := NewService(nil, repo, redisDB, nil)
-		err := service.SendSecurityCodeForUpdatePsw(ctx, uid, psw)
+		_, err := service.SendSecurityCodeForUpdatePsw(ctx, uid, psw)
 		assert.Error(t, err)
 	})
 
@@ -73,7 +73,7 @@ func TestService_SendSecurityCodeForUpdatePsw(t *testing.T) {
 		emailMockSvc := new(mockEmailSvc)
 		emailMockSvc.On("SendEmailForUpdatePassword", mock.Anything, mock.Anything, mock.Anything).Return(fmt.Errorf("error"))
 		service := NewService(nil, repo, redisDB, emailMockSvc)
-		err := service.SendSecurityCodeForUpdatePsw(ctx, uid, psw)
+		_, err := service.SendSecurityCodeForUpdatePsw(ctx, uid, psw)
 		assert.Error(t, err)
 	})
 
@@ -86,7 +86,7 @@ func TestService_SendSecurityCodeForUpdatePsw(t *testing.T) {
 		emailMockSvc := new(mockEmailSvc)
 		emailMockSvc.On("SendEmailForUpdatePassword", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 		service := NewService(nil, repo, redisDB, emailMockSvc)
-		err := service.SendSecurityCodeForUpdatePsw(ctx, uid, psw)
+		_, err := service.SendSecurityCodeForUpdatePsw(ctx, uid, psw)
 		assert.NoError(t, err)
 	})
 }

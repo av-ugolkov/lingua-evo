@@ -43,36 +43,40 @@ func (s *Service) GetPswHash(ctx context.Context, uid uuid.UUID) (string, error)
 	return pswHash, nil
 }
 
-func (s *Service) SendSecurityCodeForUpdatePsw(ctx context.Context, uid uuid.UUID, psw string) error {
+func (s *Service) SendSecurityCodeForUpdatePsw(ctx context.Context, uid uuid.UUID, psw string) (int, error) {
+	dur := time.Duration(5 * time.Minute)
 	pswHash, err := s.repo.GetPswHash(ctx, uid)
 	if err != nil {
-		return msgerr.New(fmt.Errorf("auth.Service.SendSecurityCodeForUpdatePsw: %w", err), entity.ErrMsgUserNotFound)
+		return int(dur.Milliseconds()), msgerr.New(fmt.Errorf("auth.Service.SendSecurityCodeForUpdatePsw: %w", err), entity.ErrMsgUserNotFound)
 	}
 
 	if utils.CheckPasswordHash(psw, pswHash) != nil {
-		return msgerr.New(fmt.Errorf("auth.Service.SendSecurityCodeForUpdatePsw: incorrect password"), entity.ErrMsgIncorrectPsw)
+		return int(dur.Milliseconds()), msgerr.New(fmt.Errorf("auth.Service.SendSecurityCodeForUpdatePsw: incorrect password"), entity.ErrMsgIncorrectPsw)
 	}
 
 	code := utils.GenerateCode()
 	value, err := s.redis.SetNX(ctx, fmt.Sprintf("%s:%s", uid, RedisUpdatePsw), code, 5*time.Minute)
 	if err != nil {
-		return msgerr.New(fmt.Errorf("auth.Service.SendSecurityCodeForUpdatePsw: %w", err), msgerr.ErrMsgInternal)
+		return int(dur.Milliseconds()), msgerr.New(fmt.Errorf("auth.Service.SendSecurityCodeForUpdatePsw: %w", err), msgerr.ErrMsgInternal)
 	}
 	if !value {
-		return msgerr.New(fmt.Errorf("auth.Service.SendSecurityCodeForUpdatePsw: %w", err), "You have already sent a code. Please wait.")
+		dur, _ = s.redis.GetTTL(ctx, fmt.Sprintf("%s:%s", uid, RedisUpdatePsw))
+		return int(dur.Milliseconds()),
+			msgerr.New(fmt.Errorf("auth.Service.SendSecurityCodeForUpdatePsw: %w", entity.ErrDuplicateCode),
+				fmt.Sprintf(entity.ErrMsgDuplicateCode, dur.String()))
 	}
 
 	usr, err := s.repo.GetUserByID(ctx, uid)
 	if err != nil {
-		return msgerr.New(fmt.Errorf("auth.Service.SendSecurityCodeForUpdatePsw: %w", err), entity.ErrMsgUserNotFound)
+		return int(dur.Milliseconds()), msgerr.New(fmt.Errorf("auth.Service.SendSecurityCodeForUpdatePsw: %w", err), entity.ErrMsgUserNotFound)
 	}
 
 	err = s.emailSvc.SendEmailForUpdatePassword(usr.Email, usr.Nickname, code)
 	if err != nil {
-		return msgerr.New(fmt.Errorf("auth.Service.SendSecurityCodeForUpdatePsw: %w", err), msgerr.ErrMsgInternal)
+		return int(dur.Milliseconds()), msgerr.New(fmt.Errorf("auth.Service.SendSecurityCodeForUpdatePsw: %w", err), msgerr.ErrMsgInternal)
 	}
 
-	return nil
+	return int(dur.Milliseconds()), nil
 }
 
 func (s *Service) UpdatePsw(ctx context.Context, uid uuid.UUID, oldPsw, newPsw, code string) error {
@@ -112,12 +116,14 @@ func (s *Service) UpdatePsw(ctx context.Context, uid uuid.UUID, oldPsw, newPsw, 
 		return msgerr.New(fmt.Errorf("auth.Service.UpdatePsw: %w", err), msgerr.ErrMsgInternal)
 	}
 
+	_, _ = s.redis.Delete(ctx, fmt.Sprintf("%s:%s", uid, RedisUpdatePsw))
+
 	//TODO: нужно скидывать сессию
 
 	return nil
 }
 
-func (s *Service) SendSecurityCodeForUpdateEmail(ctx context.Context, uid uuid.UUID) (ttl int, err error) {
+func (s *Service) SendSecurityCodeForUpdateEmail(ctx context.Context, uid uuid.UUID) (int, error) {
 	dur := time.Duration(5 * time.Minute)
 	usr, err := s.repo.GetUserByID(ctx, uid)
 	if err != nil {
@@ -174,6 +180,8 @@ func (s *Service) UpdateEmail(ctx context.Context, uid uuid.UUID, newEmail, code
 	case err != nil:
 		return msgerr.New(fmt.Errorf("auth.Service.UpdateEmail: %w", err), msgerr.ErrMsgInternal)
 	}
+
+	_, _ = s.redis.Delete(ctx, fmt.Sprintf("%s:%s", uid, RedisUpdatePsw))
 
 	return nil
 }
