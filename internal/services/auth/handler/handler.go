@@ -103,6 +103,13 @@ func (h *Handler) signIn(c *ginext.Context) (int, any, error) {
 
 func (h *Handler) refresh(c *ginext.Context) (int, any, error) {
 	ctx := c.Request.Context()
+	var err error
+	defer func() {
+		if err != nil {
+			c.DeleteCookie(ginext.RefreshToken, "/auth")
+		}
+	}()
+
 	refreshToken, err := c.Cookie(ginext.RefreshToken)
 	if err != nil {
 		return http.StatusBadRequest, nil, fmt.Errorf("auth.delivery.Handler.refresh: %v", err)
@@ -162,7 +169,7 @@ func (h *Handler) signOut(c *ginext.Context) (int, any, error) {
 		return http.StatusInternalServerError, nil, fmt.Errorf("auth.delivery.Handler.signOut: %v", err)
 	}
 
-	c.DeleteCookie(ginext.RefreshToken)
+	c.DeleteCookie(ginext.RefreshToken, "/auth")
 	return http.StatusOK, gin.H{}, nil
 }
 
