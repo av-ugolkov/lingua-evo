@@ -15,7 +15,7 @@ import (
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/msg-error"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/utils"
 	"github.com/av-ugolkov/lingua-evo/internal/services/auth"
-	entityUser "github.com/av-ugolkov/lingua-evo/internal/services/user"
+	entity "github.com/av-ugolkov/lingua-evo/internal/services/auth"
 	"github.com/av-ugolkov/lingua-evo/runtime"
 
 	"github.com/gin-gonic/gin"
@@ -29,12 +29,22 @@ type (
 		Fingerprint string `json:"fingerprint"`
 	}
 
-	CreateCodeRq struct {
-		Email string `json:"email"`
-	}
-
 	CreateSessionRs struct {
 		AccessToken string `json:"access_token"`
+	}
+
+	CreateUserRq struct {
+		Password string `json:"password"`
+		Email    string `json:"email"`
+		Code     int    `json:"code"`
+	}
+
+	CreateUserRs struct {
+		UserID uuid.UUID `json:"user_id"`
+	}
+
+	CreateCodeRq struct {
+		Email string `json:"email"`
 	}
 )
 
@@ -46,6 +56,7 @@ func Create(r *ginext.Engine, authSvc *auth.Service) {
 	h := newHandler(authSvc)
 
 	r.POST(handler.SignIn, h.signIn)
+	r.POST(handler.SignUp, h.signUp)
 	r.GET(handler.Refresh, h.refresh)
 	r.POST(handler.SignOut, middleware.Auth(h.signOut))
 	r.POST(handler.SendCode, h.sendCode)
@@ -82,7 +93,7 @@ func (h *Handler) signIn(c *ginext.Context) (int, any, error) {
 	tokens, err := h.authSvc.SignIn(ctx, data.User, data.Password, data.Fingerprint, refreshTokenID)
 	if err != nil {
 		switch {
-		case errors.Is(err, entityUser.ErrNotFoundUser) ||
+		case errors.Is(err, entity.ErrNotFoundUser) ||
 			errors.Is(err, auth.ErrWrongPassword):
 			return http.StatusBadRequest, nil, msgerr.New(err, "User doesn't exist or password is wrong")
 		default:
@@ -99,6 +110,48 @@ func (h *Handler) signIn(c *ginext.Context) (int, any, error) {
 
 	c.SetCookieRefreshToken(tokens.RefreshToken, duration)
 	return http.StatusOK, sessionRs, nil
+}
+
+func (h *Handler) signUp(c *ginext.Context) (int, any, error) {
+	var data CreateUserRq
+	err := c.Bind(&data)
+	if err != nil {
+		return http.StatusBadRequest, nil,
+			msgerr.New(
+				fmt.Errorf("user.delivery.Handler.signUp: %v", err),
+				msgerr.ErrMsgBadRequest)
+
+	}
+
+	if !utils.IsPasswordValid(data.Password) {
+		return http.StatusBadRequest, nil,
+			msgerr.New(fmt.Errorf("user.delivery.Handler.signUp: invalid password"),
+				"Invalid password")
+	}
+
+	if !utils.IsEmailValid(data.Email) {
+		return http.StatusBadRequest, nil,
+			msgerr.New(fmt.Errorf("user.delivery.Handler.signUp: invalid email"),
+				msgerr.ErrMsgBadEmail)
+	}
+
+	uid, err := h.authSvc.SignUp(c.Request.Context(), entity.User{
+		Nickname: strings.Split(data.Email, "@")[0],
+		Password: data.Password,
+		Email:    data.Email,
+		Role:     runtime.User,
+		Code:     data.Code,
+	})
+	if err != nil {
+		return http.StatusInternalServerError, nil,
+			fmt.Errorf("user.delivery.Handler.signUp: %v", err)
+	}
+
+	createUserRs := &CreateUserRs{
+		UserID: uid,
+	}
+
+	return http.StatusCreated, createUserRs, nil
 }
 
 func (h *Handler) refresh(c *ginext.Context) (int, any, error) {

@@ -4,14 +4,15 @@ const (
 	CurrentLanguage    = "/current_language" //get
 	AvailableLanguages = "/languages"        //get
 
-	SignIn   = "/auth/sign_in"   //post
-	Refresh  = "/auth/refresh"   //get
-	SignOut  = "/auth/sign_out"  //get
-	SendCode = "/auth/send_code" //post
+	SignIn     = "/auth/sign_in"   //post
+	SignUp     = "/auth/sign_up"   //post
+	Refresh    = "/auth/refresh"   //get
+	SignOut    = "/auth/sign_out"  //get
+	SendCode   = "/auth/send_code" //post
+	AuthGoogle = "/auth/google"    //post
 
-	SignUp   = "/user/sign_up" //post
-	UserByID = "/user/id"      //get
-	Users    = "/users"        //get
+	UserByID = "/user/id" //get
+	Users    = "/users"   //get
 
 	AccountSettingsAccount         = "/account/settings/account"           //get
 	AccountSettingsPersonalInfo    = "/account/settings/personal_info"     //get

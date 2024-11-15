@@ -2,7 +2,6 @@ package user
 
 import (
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/av-ugolkov/lingua-evo/runtime"
@@ -40,12 +39,11 @@ type (
 	}
 
 	UserCreate struct {
-		ID       uuid.UUID
-		Nickname string
-		Password string
-		Email    string
-		Role     runtime.Role
-		Code     int
+		ID           uuid.UUID
+		Nickname     string
+		PasswordHash string
+		Email        string
+		Role         runtime.Role
 	}
 
 	Session struct {
@@ -74,18 +72,8 @@ type (
 	}
 )
 
-// TODO вынести в конфиги
-const (
-	MinUsernameLen = 3
-	MinPasswordLen = 6
-)
-
 var (
-	ErrEmailNotCorrect   = errors.New("email is not correct")
-	ErrItIsAdmin         = errors.New("it is admin")
-	ErrEmailBusy         = errors.New("this email is busy")
-	ErrUsernameLen       = fmt.Errorf("username must be more %d characters", MinUsernameLen)
-	ErrUsernameBusy      = errors.New("this username is busy")
-	ErrPasswordLen       = fmt.Errorf("password must be more %d characters", MinPasswordLen)
-	ErrPasswordDifficult = errors.New("password must be more difficult")
+	ErrEmailNotCorrect = errors.New("email is not correct")
+	ErrItIsAdmin       = errors.New("it is admin")
+	ErrEmailBusy       = errors.New("this email is busy")
 )

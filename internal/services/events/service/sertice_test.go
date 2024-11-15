@@ -81,14 +81,12 @@ func TestGetCountEvents(t *testing.T) {
 
 	t.Run("zero events", func(t *testing.T) {
 		err := tr.CreateTransaction(ctx, func(ctx context.Context) error {
-			tempUID, err := userSvc.AddUser(ctx, entityUser.UserCreate{
+			tempUID, err := userSvc.AddUser(ctx, entityUser.User{
 				ID:       uuid.New(),
 				Nickname: "user_temp",
-				Password: "password_temp",
 				Email:    "user_temp@user_temp.com",
 				Role:     runtime.User,
-				Code:     0,
-			})
+			}, "password_temp")
 			if err != nil {
 				return err
 			}
@@ -126,14 +124,12 @@ func TestGetCountEvents(t *testing.T) {
 	})
 	t.Run("one events", func(t *testing.T) {
 		err := tr.CreateTransaction(ctx, func(ctx context.Context) error {
-			tempUID, err := userSvc.AddUser(ctx, entityUser.UserCreate{
+			tempUID, err := userSvc.AddUser(ctx, entityUser.User{
 				ID:       uuid.New(),
 				Nickname: "user_temp",
-				Password: "password_temp",
 				Email:    "user_temp@user_temp.com",
 				Role:     runtime.User,
-				Code:     0,
-			})
+			}, "password_temp")
 			if err != nil {
 				return err
 			}
@@ -183,14 +179,12 @@ func TestGetCountEvents(t *testing.T) {
 	})
 	t.Run("one events after subscribe", func(t *testing.T) {
 		err := tr.CreateTransaction(ctx, func(ctx context.Context) error {
-			tempUID, err := userSvc.AddUser(ctx, entityUser.UserCreate{
+			tempUID, err := userSvc.AddUser(ctx, entityUser.User{
 				ID:       uuid.New(),
 				Nickname: "user_temp",
-				Password: "password_temp",
 				Email:    "user_temp@user_temp.com",
 				Role:     runtime.User,
-				Code:     0,
-			})
+			}, "password_temp")
 			if err != nil {
 				return err
 			}
@@ -245,14 +239,12 @@ func TestGetEvents(t *testing.T) {
 
 	t.Run("zero events", func(t *testing.T) {
 		err := tr.CreateTransaction(ctx, func(ctx context.Context) error {
-			tempUID, err := userSvc.AddUser(ctx, entityUser.UserCreate{
+			tempUID, err := userSvc.AddUser(ctx, entityUser.User{
 				ID:       uuid.New(),
 				Nickname: "user_temp",
-				Password: "password_temp",
 				Email:    "user_temp@user_temp.com",
 				Role:     runtime.User,
-				Code:     0,
-			})
+			}, "password_temp")
 			if err != nil {
 				return err
 			}
@@ -290,14 +282,12 @@ func TestGetEvents(t *testing.T) {
 	})
 	t.Run("one events", func(t *testing.T) {
 		err := tr.CreateTransaction(ctx, func(ctx context.Context) error {
-			tempUID, err := userSvc.AddUser(ctx, entityUser.UserCreate{
+			tempUID, err := userSvc.AddUser(ctx, entityUser.User{
 				ID:       uuid.New(),
 				Nickname: "user_temp",
-				Password: "password_temp",
 				Email:    "user_temp@user_temp.com",
 				Role:     runtime.User,
-				Code:     0,
-			})
+			}, "password_temp")
 			if err != nil {
 				return err
 			}
@@ -347,14 +337,12 @@ func TestGetEvents(t *testing.T) {
 	})
 	t.Run("one events after subscribe", func(t *testing.T) {
 		err := tr.CreateTransaction(ctx, func(ctx context.Context) error {
-			tempUID, err := userSvc.AddUser(ctx, entityUser.UserCreate{
+			tempUID, err := userSvc.AddUser(ctx, entityUser.User{
 				ID:       uuid.New(),
 				Nickname: "user_temp",
-				Password: "password_temp",
 				Email:    "user_temp@user_temp.com",
 				Role:     runtime.User,
-				Code:     0,
-			})
+			}, "password_temp")
 			if err != nil {
 				return err
 			}

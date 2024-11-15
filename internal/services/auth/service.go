@@ -22,10 +22,13 @@ type (
 		GetCountSession(ctx context.Context, userID uuid.UUID) (int64, error)
 		DeleteSession(ctx context.Context, key string) error
 		SetAccountCode(ctx context.Context, email string, code int, ttl time.Duration) error
+		GetAccountCode(ctx context.Context, email string) (int, error)
 	}
 
 	userSvc interface {
+		AddUser(ctx context.Context, userCreate entityUser.User, pswHash string) (uuid.UUID, error)
 		GetUser(ctx context.Context, login string) (*entityUser.User, error)
+		GetUserByNickname(ctx context.Context, nickname string) (*entityUser.User, error)
 		GetPswHash(ctx context.Context, uid uuid.UUID) (string, error)
 		GetUserByEmail(ctx context.Context, email string) (*entityUser.User, error)
 		UpdateVisitedAt(ctx context.Context, uid uuid.UUID) error
@@ -96,6 +99,45 @@ func (s *Service) SignIn(ctx context.Context, user, password, fingerprint string
 	}
 
 	return tokens, nil
+}
+
+func (s *Service) SignUp(ctx context.Context, usr User) (uuid.UUID, error) {
+	if err := s.validateEmail(ctx, usr.Email); err != nil {
+		return uuid.Nil, fmt.Errorf("auth.Service.SignUp - validateEmail: %v", err)
+	}
+
+	code, err := s.repo.GetAccountCode(ctx, usr.Email)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("auth.Service.SignUp - GetAccountCode: %v", err)
+	}
+
+	if code != usr.Code {
+		return uuid.Nil, fmt.Errorf("auth.Service.SignUp: code mismatch")
+	}
+
+	if err := s.validateUsername(ctx, usr.Nickname); err != nil {
+		return uuid.Nil, err
+	}
+
+	if err := validatePassword(usr.Password); err != nil {
+		return uuid.Nil, err
+	}
+
+	pswHash, err := utils.HashPassword(usr.Password)
+	if err != nil {
+		return uuid.Nil, err
+	}
+
+	uid, err := s.userSvc.AddUser(ctx, entityUser.User{
+		Nickname: usr.Nickname,
+		Email:    usr.Email,
+		Role:     usr.Role,
+	}, pswHash)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("auth.Service.SignUp - AddUser: %v", err)
+	}
+
+	return uid, nil
 }
 
 // RefreshSessionToken - the method is called from the client
@@ -193,6 +235,37 @@ func (s *Service) validateEmail(ctx context.Context, email string) error {
 		return ErrItIsAdmin
 	} else if userData != nil && userData.ID != uuid.Nil {
 		return ErrEmailBusy
+	}
+
+	return nil
+}
+
+func (s *Service) validateUsername(ctx context.Context, username string) error {
+	if len(username) <= MinNicknameLen {
+		return ErrNicknameLen
+	}
+
+	userData, err := s.userSvc.GetUserByNickname(ctx, username)
+	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+		return err
+	} else if errors.Is(err, pgx.ErrNoRows) {
+		return nil
+	} else if userData.ID == uuid.Nil && err == nil {
+		return ErrItIsAdmin
+	} else if userData.ID != uuid.Nil {
+		return ErrNicknameBusy
+	}
+
+	return nil
+}
+
+func validatePassword(password string) error {
+	if len(password) < MinPasswordLen {
+		return ErrPasswordLen
+	}
+
+	if !utils.IsPasswordValid(password) {
+		return ErrPasswordDifficult
 	}
 
 	return nil

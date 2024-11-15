@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/av-ugolkov/lingua-evo/internal/db/transactor"
-	"github.com/av-ugolkov/lingua-evo/internal/pkg/utils"
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/user"
 
 	"github.com/google/uuid"
@@ -35,7 +34,6 @@ type (
 
 	redis interface {
 		Get(ctx context.Context, key string) (string, error)
-		GetAccountCode(ctx context.Context, email string) (int, error)
 		SetNX(ctx context.Context, key string, value any, expiration time.Duration) (bool, error)
 		GetTTL(ctx context.Context, key string) (time.Duration, error)
 		Delete(ctx context.Context, key string) (int64, error)
@@ -64,47 +62,12 @@ func NewService(tr *transactor.Transactor, repo userRepo, redis redis, emailSvc 
 	}
 }
 
-func (s *Service) SignUp(ctx context.Context, userCreate entity.UserCreate) (uuid.UUID, error) {
-	if err := s.validateEmail(ctx, userCreate.Email); err != nil {
-		return uuid.Nil, fmt.Errorf("auth.Service.SignUp - validateEmail: %v", err)
-	}
-
-	code, err := s.redis.GetAccountCode(ctx, userCreate.Email)
-	if err != nil {
-		return uuid.Nil, fmt.Errorf("auth.Service.SignUp - GetAccountCode: %v", err)
-	}
-
-	if code != userCreate.Code {
-		return uuid.Nil, fmt.Errorf("auth.Service.SignUp: code mismatch")
-	}
-
-	uid, err := s.AddUser(ctx, userCreate)
-	if err != nil {
-		return uuid.Nil, fmt.Errorf("auth.Service.SignUp - AddUser: %v", err)
-	}
-
-	return uid, nil
-}
-
-func (s *Service) AddUser(ctx context.Context, usr entity.UserCreate) (_ uuid.UUID, err error) {
+func (s *Service) AddUser(ctx context.Context, usr entity.User, hashPassword string) (_ uuid.UUID, err error) {
 	defer func() {
 		if err != nil {
 			err = fmt.Errorf("auth.Service.AddUser: %v", err)
 		}
 	}()
-
-	if err := s.validateUsername(ctx, usr.Nickname); err != nil {
-		return uuid.Nil, err
-	}
-
-	if err := validatePassword(usr.Password); err != nil {
-		return uuid.Nil, err
-	}
-
-	hashPassword, err := utils.HashPassword(usr.Password)
-	if err != nil {
-		return uuid.Nil, err
-	}
 
 	user := &entity.User{
 		Nickname:  usr.Nickname,
@@ -226,56 +189,6 @@ func (s *Service) UpdateVisitedAt(ctx context.Context, uid uuid.UUID) error {
 	err := s.repo.UpdateVisitedAt(ctx, uid)
 	if err != nil {
 		return fmt.Errorf("user.Service.UpdateVisitedAt: %w", err)
-	}
-
-	return nil
-}
-
-func (s *Service) validateEmail(ctx context.Context, email string) error {
-	if !utils.IsEmailValid(email) {
-		return entity.ErrEmailNotCorrect
-	}
-
-	userData, err := s.GetUserByEmail(ctx, email)
-	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
-		return err
-	} else if errors.Is(err, pgx.ErrNoRows) {
-		return nil
-	} else if userData != nil && userData.ID == uuid.Nil && err == nil {
-		return entity.ErrItIsAdmin
-	} else if userData != nil && userData.ID != uuid.Nil {
-		return entity.ErrEmailBusy
-	}
-
-	return nil
-}
-
-func (s *Service) validateUsername(ctx context.Context, username string) error {
-	if len(username) <= entity.MinUsernameLen {
-		return entity.ErrUsernameLen
-	}
-
-	userData, err := s.GetUserByNickname(ctx, username)
-	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
-		return err
-	} else if errors.Is(err, pgx.ErrNoRows) {
-		return nil
-	} else if userData.ID == uuid.Nil && err == nil {
-		return entity.ErrItIsAdmin
-	} else if userData.ID != uuid.Nil {
-		return entity.ErrUsernameBusy
-	}
-
-	return nil
-}
-
-func validatePassword(password string) error {
-	if len(password) < entity.MinPasswordLen {
-		return entity.ErrPasswordLen
-	}
-
-	if !utils.IsPasswordValid(password) {
-		return entity.ErrPasswordDifficult
 	}
 
 	return nil

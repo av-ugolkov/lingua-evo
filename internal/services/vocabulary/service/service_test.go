@@ -95,14 +95,12 @@ func TestService_GetVocabularies(t *testing.T) {
 
 		err = tr.CreateTransaction(ctx, func(ctx context.Context) error {
 			for i := 0; i < 2; i++ {
-				uid, err := userSvc.AddUser(ctx, entityUser.UserCreate{
+				uid, err := userSvc.AddUser(ctx, entityUser.User{
 					ID:       uuid.New(),
 					Nickname: fmt.Sprintf("user_%d", i),
-					Password: fmt.Sprintf("password_%d", i),
 					Email:    fmt.Sprintf("user_%d@user_%d.com", i, i),
 					Role:     runtime.User,
-					Code:     0,
-				})
+				}, fmt.Sprintf("password_%d", i))
 				if err != nil {
 					return err
 				}
@@ -148,14 +146,12 @@ func TestService_GetVocabularies(t *testing.T) {
 
 		err = tr.CreateTransaction(ctx, func(ctx context.Context) error {
 			for i := 0; i < 3; i++ {
-				uid, err := userSvc.AddUser(ctx, entityUser.UserCreate{
+				uid, err := userSvc.AddUser(ctx, entityUser.User{
 					ID:       uuid.New(),
 					Nickname: fmt.Sprintf("user_%d", i),
-					Password: fmt.Sprintf("password_%d", i),
 					Email:    fmt.Sprintf("user_%d@user_%d.com", i, i),
 					Role:     runtime.User,
-					Code:     0,
-				})
+				}, fmt.Sprintf("password_%d", i))
 				if err != nil {
 					return err
 				}
@@ -202,14 +198,12 @@ func TestService_GetVocabularies(t *testing.T) {
 
 		err = tr.CreateTransaction(ctx, func(ctx context.Context) error {
 			for i := 0; i < 3; i++ {
-				uid, err := userSvc.AddUser(ctx, entityUser.UserCreate{
+				uid, err := userSvc.AddUser(ctx, entityUser.User{
 					ID:       uuid.New(),
 					Nickname: fmt.Sprintf("user_%d", i),
-					Password: fmt.Sprintf("password_%d", i),
 					Email:    fmt.Sprintf("user_%d@user_%d.com", i, i),
 					Role:     runtime.User,
-					Code:     0,
-				})
+				}, fmt.Sprintf("password_%d", i))
 				if err != nil {
 					return err
 				}
@@ -280,14 +274,12 @@ func TestService_GetVocabularies(t *testing.T) {
 
 		err = tr.CreateTransaction(ctx, func(ctx context.Context) error {
 			for i := 0; i < 3; i++ {
-				uid, err := userSvc.AddUser(ctx, entityUser.UserCreate{
+				uid, err := userSvc.AddUser(ctx, entityUser.User{
 					ID:       uuid.New(),
 					Nickname: fmt.Sprintf("user_%d", i),
-					Password: fmt.Sprintf("password_%d", i),
 					Email:    fmt.Sprintf("user_%d@user_%d.com", i, i),
 					Role:     runtime.User,
-					Code:     0,
-				})
+				}, fmt.Sprintf("password_%d", i))
 				if err != nil {
 					return err
 				}
