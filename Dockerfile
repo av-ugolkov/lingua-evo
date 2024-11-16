@@ -16,6 +16,7 @@ ARG epsw
 ARG jwts
 ARG pg_psw
 ARG redis_psw
+ARG google_client_id
 ARG branch
 ARG commit
 
@@ -36,5 +37,6 @@ ENV env_epsw=${epsw}
 ENV env_jwts=${jwts}
 ENV env_pg_psw=${pg_psw}
 ENV env_redis_psw=${redis_psw}
+ENV env_google_client_id=${google_client_id}
 
-ENTRYPOINT ./main -epsw=${env_epsw} -jwts=${env_jwts} -pg_psw=${env_pg_psw} -redis_psw=${env_redis_psw}
+ENTRYPOINT ./main -epsw=${env_epsw} -jwts=${env_jwts} -pg_psw=${env_pg_psw} -redis_psw=${env_redis_psw} -google_client_id=${env_google_client_id}

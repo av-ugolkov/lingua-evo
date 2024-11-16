@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"log/slog"
 
 	"github.com/av-ugolkov/lingua-evo/internal/app"
 	"github.com/av-ugolkov/lingua-evo/internal/config"
@@ -25,13 +24,16 @@ func main() {
 	var redisPsw string
 	flag.StringVar(&redisPsw, "redis_psw", runtime.EmptyString, "password for redis db")
 
+	var googleClientID string
+	flag.StringVar(&googleClientID, "google_client_id", runtime.EmptyString, "google client id")
+
 	flag.Parse()
 
 	if jwtSecret == runtime.EmptyString ||
 		pgPsw == runtime.EmptyString ||
-		redisPsw == runtime.EmptyString {
-		slog.Error("empty jwts, pg_psw or redis_psw")
-		return
+		redisPsw == runtime.EmptyString ||
+		googleClientID == runtime.EmptyString {
+		panic("empty jwts, pg_psw or redis_psw")
 	}
 
 	cfg := config.InitConfig(configPath)
@@ -39,6 +41,7 @@ func main() {
 	config.SetJWTSecret(jwtSecret)
 	config.SetDBPassword(pgPsw)
 	config.SetRedisPassword(redisPsw)
+	config.SetGoogleClientID(googleClientID)
 
 	app.ServerStart(cfg)
 }

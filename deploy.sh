@@ -8,6 +8,7 @@ dev() {
   jwts="$(cat jwt.env | grep JWTS | cut -d "=" -f2)"
   pg_psw="$(cat db.env | grep PG_PSW | cut -d "=" -f2)"
   redis_psw="$(cat db.env | grep REDIS_PSW | cut -d "=" -f2)"
+  google_client_id="$(cat jwt.env | grep GOOGLE_CLIENT_ID | cut -d "=" -f2)"
 
   BRANCH=${BRANCH} \
   COMMIT=${COMMIT} \
@@ -15,6 +16,7 @@ dev() {
   JWTS=${jwts} \
   PG_PSW=${pg_psw} \
   REDIS_PSW=${redis_psw} \
+  GOOGLE_CLIENT_ID=${google_client_id} \
   docker compose -p lingua-evo-dev -f deploy/docker-compose.dev.yml up --build --force-recreate    
 }
 

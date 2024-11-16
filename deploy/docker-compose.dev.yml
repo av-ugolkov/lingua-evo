@@ -46,6 +46,7 @@ services:
         jwts: ${JWTS}
         pg_psw: ${PG_PSW}
         redis_psw: ${REDIS_PSW}
+        google_client_id: ${GOOGLE_CLIENT_ID}
         branch: ${BRANCH}
         commit: ${COMMIT}
       additional_contexts:
