@@ -2,27 +2,27 @@ package google
 
 import (
 	"context"
-	_ "embed"
 	"fmt"
 	"io"
+	"os"
 
 	"github.com/av-ugolkov/lingua-evo/internal/config"
-	jsoniter "github.com/json-iterator/go"
 
+	jsoniter "github.com/json-iterator/go"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
-	"google.golang.org/api/idtoken"
 )
-
-//go:embed google_client_secret.json
-var googleClientSecret string
 
 var googleConfig *oauth2.Config
 
-func init() {
-	var err error
+func InitClient(cfg *config.Google) {
+	secret, err := os.ReadFile(cfg.SecretPath)
+	if err != nil {
+		panic(err)
+	}
+
 	googleConfig, err = google.ConfigFromJSON(
-		[]byte(googleClientSecret),
+		secret,
 		"openid",
 		"https://www.googleapis.com/auth/userinfo.email",
 		"https://www.googleapis.com/auth/userinfo.profile")
@@ -60,13 +60,4 @@ func GetProfile(ctx context.Context, token *oauth2.Token) (*GoogleProfile, error
 	}
 
 	return profile, nil
-}
-
-func ParseGoogleOauthToken(ctx context.Context, token string) (any, error) {
-	payload, err := idtoken.Validate(ctx, token, config.GetConfig().Google.ClientID)
-	if err != nil {
-		return nil, fmt.Errorf("token.ParseGoogleOauthToken: %w", err)
-	}
-
-	return payload, nil
 }

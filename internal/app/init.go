@@ -20,6 +20,7 @@ import (
 	pg "github.com/av-ugolkov/lingua-evo/internal/db/postgres"
 	"github.com/av-ugolkov/lingua-evo/internal/db/redis"
 	"github.com/av-ugolkov/lingua-evo/internal/db/transactor"
+	"github.com/av-ugolkov/lingua-evo/internal/delivery/google"
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/kafka"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/analytic"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/gin-ext"
@@ -74,6 +75,8 @@ func ServerStart(cfg *config.Config) {
 	if cfg.PprofDebug.Enable {
 		initPprof(&cfg.PprofDebug)
 	}
+
+	google.InitClient(&cfg.Google)
 
 	pgxPool, err := pg.NewDB(cfg.DbSQL.PgxPoolConfig())
 	if err != nil {

@@ -48,3 +48,5 @@ kafka:
     port: 9091
     topics:
         - user_action
+google:
+    secret_path: ./google_client_secret.json

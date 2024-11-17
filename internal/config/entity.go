@@ -113,5 +113,6 @@ func (k Kafka) Addr() string {
 }
 
 type Google struct {
-	ClientID string
+	ClientID   string
+	SecretPath string `yaml:"secret_path"`
 }
