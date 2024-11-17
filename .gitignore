@@ -10,5 +10,6 @@ tools/user/*
 .vs/
 .vscode/
 *.env
+google_client_secret.json
 # Ignore Rider IDE folder
 .idea/
