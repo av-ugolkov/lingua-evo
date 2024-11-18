@@ -51,7 +51,7 @@ func TestService_GetVocabularies(t *testing.T) {
 	exampleSvc := example.NewService(exampleRepo.NewRepo(tr))
 	mockEventsSvc := new(mockEventsSvc)
 	mockEventsSvc.On("AsyncAddEvent", mock.Anything, mock.Anything).Return(nil)
-	vocabSvc := NewService(tr, vocabRepo.NewRepo(tr), userSvc, exampleSvc, dictSvc, tagSvc, nil, mockEventsSvc)
+	vocabSvc := NewService(tr, vocabRepo.NewRepo(tr), exampleSvc, dictSvc, tagSvc, nil, mockEventsSvc)
 
 	t.Run("empty vocab", func(t *testing.T) {
 		var (

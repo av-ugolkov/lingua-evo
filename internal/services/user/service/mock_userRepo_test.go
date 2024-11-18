@@ -198,30 +198,6 @@ func (_m *mockUserRepo) GetUserData(ctx context.Context, uid uuid.UUID) (*user.U
 	return r0, r1
 }
 
-// GetUserMaxCountWords provides a mock function with given fields: ctx, uid
-func (_m *mockUserRepo) GetUserMaxCountWords(ctx context.Context, uid uuid.UUID) (int, error) {
-	ret := _m.Called(ctx, uid)
-
-	var r0 int
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) (int, error)); ok {
-		return rf(ctx, uid)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) int); ok {
-		r0 = rf(ctx, uid)
-	} else {
-		r0 = ret.Get(0).(int)
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID) error); ok {
-		r1 = rf(ctx, uid)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // GetUserSubscriptions provides a mock function with given fields: ctx, uid
 func (_m *mockUserRepo) GetUserSubscriptions(ctx context.Context, uid uuid.UUID) ([]user.Subscriptions, error) {
 	ret := _m.Called(ctx, uid)
