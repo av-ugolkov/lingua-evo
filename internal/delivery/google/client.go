@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
+	"time"
 
 	"github.com/av-ugolkov/lingua-evo/internal/config"
 
@@ -53,7 +55,7 @@ func GetProfile(ctx context.Context, token *oauth2.Token) (*GoogleProfile, error
 		return nil, fmt.Errorf("google.GetProfile: %w", err)
 	}
 
-	var profile *GoogleProfile
+	profile := new(GoogleProfile)
 	err = jsoniter.Unmarshal(data, profile)
 	if err != nil {
 		return nil, fmt.Errorf("google.GetProfile: %w", err)
@@ -61,3 +63,45 @@ func GetProfile(ctx context.Context, token *oauth2.Token) (*GoogleProfile, error
 
 	return profile, nil
 }
+
+func VerifyGoogleToken(idToken string, clientID string) (*GoogleTokenInfo, error) {
+	// Формируем URL запроса
+	url := fmt.Sprintf("https://oauth2.googleapis.com/tokeninfo?id_token=%s", idToken)
+
+	// Отправляем запрос к Google
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, fmt.Errorf("не удалось отправить запрос: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("не удалось проверить токен, статус: %v", resp.StatusCode)
+	}
+
+	// Парсим ответ
+	var tokenInfo GoogleTokenInfo
+	if err := jsoniter.NewDecoder(resp.Body).Decode(&tokenInfo); err != nil {
+		return nil, fmt.Errorf("ошибка декодирования ответа: %v", err)
+	}
+
+	// Проверяем клиента и срок действия токена
+	if tokenInfo.Audience != clientID {
+		return nil, fmt.Errorf("несовпадение client_id: %s", tokenInfo.Audience)
+	}
+
+	if time.Now().Unix() > int64(tokenInfo.ExpiresIn) {
+		return nil, fmt.Errorf("токен истёк")
+	}
+
+	return &tokenInfo, nil
+}
+
+// func ParseGoogleOauthToken(ctx context.Context, token string) (any, error) {
+// 	payload, err := idtoken.Validate(ctx, token, config.GetConfig().Google.ClientID)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("token.ParseGoogleOauthToken: %w", err)
+// 	}
+
+// 	return payload, nil
+// }

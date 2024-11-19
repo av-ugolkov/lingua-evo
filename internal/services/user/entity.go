@@ -29,13 +29,17 @@ const (
 
 type (
 	User struct {
-		ID            uuid.UUID
-		Nickname      string
-		Email         string
-		Role          runtime.Role
-		MaxCountWords int
-		CreatedAt     time.Time
-		VisitedAt     time.Time
+		ID        uuid.UUID
+		Nickname  string
+		Email     string
+		Role      runtime.Role
+		CreatedAt time.Time
+		VisitedAt time.Time
+	}
+
+	GoogleUser struct {
+		User
+		GoogleID string
 	}
 
 	UserCreate struct {

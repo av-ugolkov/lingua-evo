@@ -69,9 +69,9 @@ func (c *Context) GetQueryInt(key string) (int, error) {
 	return v, nil
 }
 
-func (c *Context) SetCookieRefreshToken(token uuid.UUID, maxAge time.Duration) {
+func (c *Context) SetCookieRefreshToken(token string, maxAge time.Duration) {
 	c.Context.SetCookie(RefreshToken,
-		token.String(),
+		token,
 		int(maxAge.Seconds()),
 		cookiePathAuth,
 		runtime.EmptyString,

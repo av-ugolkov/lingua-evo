@@ -27,10 +27,6 @@ type (
 		GetCountWords(ctx context.Context, uid uuid.UUID) (int, error)
 	}
 
-	userSvc interface {
-		UserCountWord(ctx context.Context, uid uuid.UUID) (int, error)
-	}
-
 	exampleSvc interface {
 		AddExamples(ctx context.Context, examples []entityExample.Example, langCode string) ([]uuid.UUID, error)
 		GetExamples(ctx context.Context, exampleIDs []uuid.UUID) ([]entityExample.Example, error)
@@ -49,20 +45,6 @@ type (
 )
 
 func (s *Service) AddWord(ctx context.Context, uid uuid.UUID, vocabWordData entity.VocabWordData) (entity.VocabWord, error) {
-	userCountWord, err := s.userSvc.UserCountWord(ctx, uid)
-	if err != nil {
-		return entity.VocabWord{}, msgerr.New(fmt.Errorf("word.Service.AddWord: %w", err), msgerr.ErrMsgInternal)
-	}
-
-	count, err := s.repoVocab.GetCountWords(ctx, uid)
-	if err != nil {
-		return entity.VocabWord{}, msgerr.New(fmt.Errorf("word.Service.AddWord: %v", err), msgerr.ErrMsgInternal)
-	}
-
-	if count >= userCountWord {
-		return entity.VocabWord{}, msgerr.New(fmt.Errorf("word.Service.AddWord: %v", entity.ErrUserWordLimit), "You reached word limit")
-	}
-
 	vocab, err := s.GetVocabulary(ctx, uid, vocabWordData.VocabID)
 	if err != nil {
 		return entity.VocabWord{}, msgerr.New(fmt.Errorf("word.Service.AddWord: %v", err), msgerr.ErrMsgInternal)

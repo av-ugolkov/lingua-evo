@@ -46,6 +46,10 @@ type (
 	CreateCodeRq struct {
 		Email string `json:"email"`
 	}
+
+	GoogleJWT struct {
+		Token string `json:"token"`
+	}
 )
 
 type Handler struct {
@@ -60,6 +64,7 @@ func Create(r *ginext.Engine, authSvc *auth.Service) {
 	r.GET(handler.Refresh, h.refresh)
 	r.POST(handler.SignOut, middleware.Auth(h.signOut))
 	r.POST(handler.SendCode, h.sendCode)
+	r.POST(handler.AuthGoogle, h.authGoogle)
 }
 
 func newHandler(authSvc *auth.Service) *Handler {
@@ -73,19 +78,19 @@ func (h *Handler) signIn(c *ginext.Context) (int, any, error) {
 	authorization, err := c.GetHeaderAuthorization(ginext.AuthTypeBasic)
 	if err != nil {
 		return http.StatusBadRequest, nil,
-			fmt.Errorf("auth.delivery.Handler.signIn: %w", err)
+			fmt.Errorf("auth.handler.Handler.signIn: %w", err)
 	}
 
 	var data CreateSessionRq
 	err = decodeBasicAuth(authorization, &data)
 	if err != nil {
 		return http.StatusInternalServerError, nil,
-			fmt.Errorf("auth.delivery.Handler.signIn: %v", err)
+			fmt.Errorf("auth.handler.Handler.signIn: %v", err)
 	}
 	var fingerprint string
 	if fingerprint = c.GetHeader(ginext.Fingerprint); fingerprint == runtime.EmptyString {
 		return http.StatusBadRequest, nil,
-			fmt.Errorf("auth.delivery.Handler.signIn: fingerprint not found")
+			fmt.Errorf("auth.handler.Handler.signIn: fingerprint not found")
 	}
 	data.Fingerprint = fingerprint
 
@@ -95,9 +100,13 @@ func (h *Handler) signIn(c *ginext.Context) (int, any, error) {
 		switch {
 		case errors.Is(err, entity.ErrNotFoundUser) ||
 			errors.Is(err, auth.ErrWrongPassword):
-			return http.StatusBadRequest, nil, msgerr.New(err, "User doesn't exist or password is wrong")
+			return http.StatusBadRequest, nil,
+				msgerr.New(fmt.Errorf("auth.handler.Handler.signIn: %w", err),
+					"User doesn't exist or password is wrong")
 		default:
-			return http.StatusInternalServerError, nil, msgerr.New(fmt.Errorf("auth.delivery.Handler.signIn: %v", err), msgerr.ErrMsgInternal)
+			return http.StatusInternalServerError, nil,
+				msgerr.New(fmt.Errorf("auth.handler.Handler.signIn: %w", err),
+					msgerr.ErrMsgInternal)
 		}
 	}
 
@@ -118,21 +127,26 @@ func (h *Handler) signUp(c *ginext.Context) (int, any, error) {
 	if err != nil {
 		return http.StatusBadRequest, nil,
 			msgerr.New(
-				fmt.Errorf("user.delivery.Handler.signUp: %v", err),
+				fmt.Errorf("auth.handler.Handler.signUp: %v", err),
 				msgerr.ErrMsgBadRequest)
 
 	}
 
 	if !utils.IsPasswordValid(data.Password) {
 		return http.StatusBadRequest, nil,
-			msgerr.New(fmt.Errorf("user.delivery.Handler.signUp: invalid password"),
+			msgerr.New(fmt.Errorf("auth.handler.Handler.signUp: invalid password"),
 				"Invalid password")
 	}
 
 	if !utils.IsEmailValid(data.Email) {
 		return http.StatusBadRequest, nil,
-			msgerr.New(fmt.Errorf("user.delivery.Handler.signUp: invalid email"),
+			msgerr.New(fmt.Errorf("auth.handler.Handler.signUp: invalid email"),
 				msgerr.ErrMsgBadEmail)
+	}
+
+	fingerprint := c.GetHeader(ginext.Fingerprint)
+	if fingerprint == runtime.EmptyString {
+		return http.StatusInternalServerError, nil, fmt.Errorf("auth.handler.Handler.signUp: fingerprimt is empty")
 	}
 
 	uid, err := h.authSvc.SignUp(c.Request.Context(), entity.User{
@@ -141,10 +155,10 @@ func (h *Handler) signUp(c *ginext.Context) (int, any, error) {
 		Email:    data.Email,
 		Role:     runtime.User,
 		Code:     data.Code,
-	})
+	}, fingerprint)
 	if err != nil {
 		return http.StatusInternalServerError, nil,
-			fmt.Errorf("user.delivery.Handler.signUp: %v", err)
+			fmt.Errorf("auth.handler.Handler.signUp: %w", err)
 	}
 
 	createUserRs := &CreateUserRs{
@@ -165,28 +179,29 @@ func (h *Handler) refresh(c *ginext.Context) (int, any, error) {
 
 	refreshToken, err := c.Cookie(ginext.RefreshToken)
 	if err != nil {
-		return http.StatusBadRequest, nil, fmt.Errorf("auth.delivery.Handler.refresh: %v", err)
+		return http.StatusBadRequest, nil, fmt.Errorf("auth.handler.Handler.refresh: %v", err)
 	}
 	if refreshToken == runtime.EmptyString {
-		return http.StatusBadRequest, nil, fmt.Errorf("auth.delivery.Handler.refresh - refresh token not found")
+		return http.StatusBadRequest, nil, fmt.Errorf("auth.handler.Handler.refresh - refresh token not found")
 	}
 
 	refreshID, err := uuid.Parse(refreshToken)
 	if err != nil {
 		return http.StatusBadRequest, nil,
-			fmt.Errorf("auth.delivery.Handler.refresh: %v", err)
+			fmt.Errorf("auth.handler.Handler.refresh: %v", err)
 	}
-	var fingerprint string
-	if fingerprint = c.GetHeader(ginext.Fingerprint); fingerprint == runtime.EmptyString {
+
+	fingerprint := c.GetHeader(ginext.Fingerprint)
+	if fingerprint == runtime.EmptyString {
 		return http.StatusBadRequest, nil,
-			fmt.Errorf("auth.delivery.Handler.refresh: fingerprint is empty")
+			fmt.Errorf("auth.handler.Handler.refresh: fingerprint is empty")
 	}
 
 	tokenID := uuid.New()
 	tokens, err := h.authSvc.RefreshSessionToken(ctx, tokenID, refreshID, fingerprint)
 	if err != nil {
 		return http.StatusInternalServerError, nil,
-			fmt.Errorf("auth.delivery.Handler.refresh: %v", err)
+			fmt.Errorf("auth.handler.Handler.refresh: %v", err)
 	}
 
 	sessionRs := &CreateSessionRs{
@@ -204,22 +219,22 @@ func (h *Handler) signOut(c *ginext.Context) (int, any, error) {
 
 	refreshToken, err := c.Cookie(ginext.RefreshToken)
 	if err != nil {
-		return http.StatusInternalServerError, nil, fmt.Errorf("auth.delivery.Handler.signOut: %v", err)
+		return http.StatusInternalServerError, nil, fmt.Errorf("auth.handler.Handler.signOut: %v", err)
 	}
 
 	refreshID, err := uuid.Parse(refreshToken)
 	if err != nil {
-		return http.StatusInternalServerError, nil, fmt.Errorf("auth.delivery.Handler.signOut: %v", err)
+		return http.StatusInternalServerError, nil, fmt.Errorf("auth.handler.Handler.signOut: %v", err)
 	}
 
-	var fingerprint string
-	if fingerprint = c.GetHeader(ginext.Fingerprint); fingerprint == runtime.EmptyString {
-		return http.StatusInternalServerError, nil, fmt.Errorf("auth.delivery.Handler.signOut: fingerprimt is empty")
+	fingerprint := c.GetHeader(ginext.Fingerprint)
+	if fingerprint == runtime.EmptyString {
+		return http.StatusInternalServerError, nil, fmt.Errorf("auth.handler.Handler.signOut: fingerprimt is empty")
 	}
 
 	err = h.authSvc.SignOut(ctx, refreshID, fingerprint)
 	if err != nil {
-		return http.StatusInternalServerError, nil, fmt.Errorf("auth.delivery.Handler.signOut: %v", err)
+		return http.StatusInternalServerError, nil, fmt.Errorf("auth.handler.Handler.signOut: %v", err)
 	}
 
 	c.DeleteCookie(ginext.RefreshToken, "/auth")
@@ -233,34 +248,78 @@ func (h *Handler) sendCode(c *ginext.Context) (int, any, error) {
 	err := c.Bind(&data)
 	if err != nil {
 		return http.StatusBadRequest, nil,
-			msgerr.New(fmt.Errorf("auth.delivery.Handler.sendCode: %v", err),
+			msgerr.New(fmt.Errorf("auth.handler.Handler.sendCode: %v", err),
 				msgerr.ErrMsgBadRequest)
 	}
 
 	if !utils.IsEmailValid(data.Email) {
 		return http.StatusBadRequest, nil,
-			msgerr.New(fmt.Errorf("auth.delivery.Handler.sendCode - email format is invalid"),
+			msgerr.New(fmt.Errorf("auth.handler.Handler.sendCode - email format is invalid"),
 				msgerr.ErrMsgBadEmail)
 	}
 
-	err = h.authSvc.CreateCode(ctx, data.Email)
+	fingerprint := c.GetHeader(ginext.Fingerprint)
+	if fingerprint == runtime.EmptyString {
+		return http.StatusInternalServerError, nil, fmt.Errorf("auth.handler.Handler.signOut: fingerprimt is empty")
+	}
+
+	err = h.authSvc.CreateCode(ctx, data.Email, fingerprint)
 	if err != nil {
 		return http.StatusInternalServerError, nil,
-			msgerr.New(fmt.Errorf("auth.delivery.Handler.sendCode: %v", err),
+			msgerr.New(fmt.Errorf("auth.handler.Handler.sendCode: %v", err),
 				msgerr.ErrMsgInternal)
 	}
 
 	return http.StatusOK, gin.H{}, nil
 }
 
+func (h *Handler) authGoogle(c *ginext.Context) (int, any, error) {
+	ctx := c.Request.Context()
+
+	var data GoogleJWT
+	err := c.Bind(&data)
+	if err != nil {
+		return http.StatusBadRequest, nil,
+			msgerr.New(fmt.Errorf("auth.handler.Handler.authGoogle: %v", err),
+				msgerr.ErrMsgBadRequest)
+	}
+
+	fingerprint := c.GetHeader(ginext.Fingerprint)
+	if fingerprint == runtime.EmptyString {
+		return http.StatusInternalServerError, nil, fmt.Errorf("auth.handler.Handler.authGoogle: fingerprimt is empty")
+	}
+
+	token, err := h.authSvc.SignInByGoogle(ctx, data.Token, fingerprint)
+	if err != nil {
+		switch {
+		case errors.Is(err, entity.ErrNotFoundUser) ||
+			errors.Is(err, auth.ErrWrongPassword):
+			return http.StatusBadRequest, nil,
+				msgerr.New(fmt.Errorf("auth.handler.Handler.authGoogle: %w", err),
+					"User doesn't exist or password is wrong")
+		default:
+			return http.StatusInternalServerError, nil,
+				msgerr.New(fmt.Errorf("auth.handler.Handler.authGoogle: %w", err),
+					msgerr.ErrMsgInternal)
+		}
+	}
+
+	sessionRs := &CreateSessionRs{
+		AccessToken: token.AccessToken,
+	}
+
+	c.SetCookieRefreshToken(token.RefreshToken, time.Until(token.Expiry))
+	return http.StatusOK, sessionRs, nil
+}
+
 func decodeBasicAuth(basicToken string, data *CreateSessionRq) error {
 	base, err := base64.StdEncoding.DecodeString(basicToken)
 	if err != nil {
-		return fmt.Errorf("auth.delivery.decodeBasicAuth: %v", err)
+		return fmt.Errorf("auth.handler.decodeBasicAuth: %v", err)
 	}
 	authData := strings.Split(string(base), ":")
 	if len(authData) != 2 {
-		return fmt.Errorf("auth.delivery.decodeBasicAuth: invalid auth data")
+		return fmt.Errorf("auth.handler.decodeBasicAuth: invalid auth data")
 	}
 
 	data.User = authData[0]

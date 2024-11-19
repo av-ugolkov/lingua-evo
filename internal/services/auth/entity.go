@@ -3,7 +3,6 @@ package auth
 import (
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/av-ugolkov/lingua-evo/runtime"
 
@@ -42,13 +41,7 @@ type (
 
 	Tokens struct {
 		AccessToken  string
-		RefreshToken uuid.UUID
-	}
-
-	Claims struct {
-		ID        uuid.UUID
-		UserID    uuid.UUID
-		ExpiresAt time.Time
+		RefreshToken string
 	}
 )
 

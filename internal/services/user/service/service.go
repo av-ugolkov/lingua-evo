@@ -17,12 +17,13 @@ import (
 type (
 	userRepo interface {
 		AddUser(ctx context.Context, u *entity.User, pswHash string) (uuid.UUID, error)
+		AddGoogleUser(ctx context.Context, userCreate entity.GoogleUser) (uuid.UUID, error)
 		GetUserByID(ctx context.Context, uid uuid.UUID) (*entity.User, error)
 		GetUserByNickname(ctx context.Context, name string) (*entity.User, error)
 		GetUserByEmail(ctx context.Context, email string) (*entity.User, error)
+		GetUserByGoogleID(ctx context.Context, email string) (*entity.User, error)
 		RemoveUser(ctx context.Context, uid uuid.UUID) error
 		GetUserData(ctx context.Context, uid uuid.UUID) (*entity.UserData, error)
-		GetUserMaxCountWords(ctx context.Context, uid uuid.UUID) (int, error)
 		AddUserData(ctx context.Context, data entity.UserData) error
 		AddUserNewsletters(ctx context.Context, data entity.UserNewsletters) error
 		GetUserSubscriptions(ctx context.Context, uid uuid.UUID) ([]entity.Subscriptions, error)
@@ -41,10 +42,6 @@ type (
 )
 
 //go:generate mockery --inpackage --outpkg service --testonly --name "userRepo|redis|emailSvc"
-
-const (
-	DEFAULT_COUNT_WORDS = 300
-)
 
 type Service struct {
 	tr       *transactor.Transactor
@@ -69,17 +66,9 @@ func (s *Service) AddUser(ctx context.Context, usr entity.User, hashPassword str
 		}
 	}()
 
-	user := &entity.User{
-		Nickname:  usr.Nickname,
-		Email:     usr.Email,
-		Role:      usr.Role,
-		CreatedAt: time.Now().UTC(),
-		VisitedAt: time.Now().UTC(),
-	}
-
 	uid := uuid.Nil
 	err = s.tr.CreateTransaction(ctx, func(ctx context.Context) error {
-		uid, err = s.repo.AddUser(ctx, user, hashPassword)
+		uid, err = s.repo.AddUser(ctx, &usr, hashPassword)
 		if err != nil {
 			return err
 		}
@@ -135,7 +124,21 @@ func (s *Service) GetUserByNickname(ctx context.Context, name string) (*entity.U
 }
 
 func (s *Service) GetUserByEmail(ctx context.Context, email string) (*entity.User, error) {
-	return s.repo.GetUserByEmail(ctx, email)
+	usr, err := s.repo.GetUserByEmail(ctx, email)
+	if err != nil {
+		return nil, fmt.Errorf("user.Service.GetUserByEmail: %w", err)
+	}
+
+	return usr, nil
+}
+
+func (s *Service) GetUserByGoogleID(ctx context.Context, googleID string) (*entity.User, error) {
+	usr, err := s.repo.GetUserByGoogleID(ctx, googleID)
+	if err != nil {
+		return nil, fmt.Errorf("user.Service.GetUserByGoogleID: %w", err)
+	}
+
+	return usr, nil
 }
 
 func (s *Service) GetUserByRefreshToken(ctx context.Context, token uuid.UUID) (*entity.User, error) {
@@ -154,26 +157,17 @@ func (s *Service) GetUserByRefreshToken(ctx context.Context, token uuid.UUID) (*
 	return s.repo.GetUserByID(ctx, session.UserID)
 }
 
-func (s *Service) RemoveUser(ctx context.Context, user *entity.User) error {
-	return nil
+func (s *Service) AddGoogleUser(ctx context.Context, usr entity.GoogleUser) (uuid.UUID, error) {
+	uid, err := s.repo.AddGoogleUser(ctx, usr)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("user.Service.AddGoogleUser: %w", err)
+	}
+
+	return uid, nil
 }
 
-func (s *Service) UserCountWord(ctx context.Context, uid uuid.UUID) (int, error) {
-	maxCountWords, err := s.repo.GetUserMaxCountWords(ctx, uid)
-	if err != nil {
-		return 0, fmt.Errorf("user.Service.UserCountWord - get user data: %w", err)
-	}
-
-	subscriptions, err := s.repo.GetUserSubscriptions(ctx, uid)
-	if err != nil {
-		return 0, fmt.Errorf("user.Service.UserCountWord - get user subscriptions: %w", err)
-	}
-
-	for _, sub := range subscriptions {
-		maxCountWords += sub.CountWord
-	}
-
-	return maxCountWords, nil
+func (s *Service) RemoveUser(ctx context.Context, user *entity.User) error {
+	return nil
 }
 
 func (s *Service) GetUsers(ctx context.Context, uid uuid.UUID, page, perPage, sort, order int, search string) ([]entity.User, int, error) {

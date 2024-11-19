@@ -4,15 +4,24 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
+	"strings"
 	"time"
 
 	"github.com/av-ugolkov/lingua-evo/internal/config"
+	"github.com/av-ugolkov/lingua-evo/internal/delivery/google"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/token"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/utils"
 	entityUser "github.com/av-ugolkov/lingua-evo/internal/services/user"
+	"github.com/av-ugolkov/lingua-evo/runtime"
+	"golang.org/x/oauth2"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+)
+
+const (
+	RedisCreateUser = "create_user"
 )
 
 type (
@@ -21,17 +30,19 @@ type (
 		GetSession(ctx context.Context, key string) (Session, error)
 		GetCountSession(ctx context.Context, userID uuid.UUID) (int64, error)
 		DeleteSession(ctx context.Context, key string) error
-		SetAccountCode(ctx context.Context, email string, code int, ttl time.Duration) error
-		GetAccountCode(ctx context.Context, email string) (int, error)
+		SetAccountCode(ctx context.Context, key string, code int, ttl time.Duration) error
+		GetAccountCode(ctx context.Context, key string) (int, error)
 	}
 
 	userSvc interface {
 		AddUser(ctx context.Context, userCreate entityUser.User, pswHash string) (uuid.UUID, error)
+		AddGoogleUser(ctx context.Context, userCreate entityUser.GoogleUser) (uuid.UUID, error)
 		GetUser(ctx context.Context, login string) (*entityUser.User, error)
 		GetUserByNickname(ctx context.Context, nickname string) (*entityUser.User, error)
 		GetPswHash(ctx context.Context, uid uuid.UUID) (string, error)
 		GetUserByEmail(ctx context.Context, email string) (*entityUser.User, error)
 		UpdateVisitedAt(ctx context.Context, uid uuid.UUID) error
+		GetUserByGoogleID(ctx context.Context, googleID string) (*entityUser.User, error)
 	}
 
 	emailSvc interface {
@@ -83,32 +94,27 @@ func (s *Service) SignIn(ctx context.Context, user, password, fingerprint string
 		return nil, fmt.Errorf("auth.Service.SignIn: %v", err)
 	}
 
-	claims := &Claims{
-		ID:        refreshTokenID,
-		ExpiresAt: now.Add(duration),
-	}
-
-	accessToken, err := token.NewJWTToken(u.ID, claims.ID, claims.ExpiresAt)
+	accessToken, err := token.NewJWTToken(u.ID, refreshTokenID, now.Add(duration))
 	if err != nil {
 		return nil, fmt.Errorf("auth.Service.SignIn: %v", err)
 	}
 
 	tokens := &Tokens{
 		AccessToken:  accessToken,
-		RefreshToken: refreshTokenID,
+		RefreshToken: refreshTokenID.String(),
 	}
 
 	return tokens, nil
 }
 
-func (s *Service) SignUp(ctx context.Context, usr User) (uuid.UUID, error) {
+func (s *Service) SignUp(ctx context.Context, usr User, fingerprint string) (uuid.UUID, error) {
 	if err := s.validateEmail(ctx, usr.Email); err != nil {
-		return uuid.Nil, fmt.Errorf("auth.Service.SignUp - validateEmail: %v", err)
+		return uuid.Nil, fmt.Errorf("auth.Service.SignUp: %v", err)
 	}
 
-	code, err := s.repo.GetAccountCode(ctx, usr.Email)
+	code, err := s.repo.GetAccountCode(ctx, fmt.Sprintf("%s:%s:%s", fingerprint, usr.Email, RedisCreateUser))
 	if err != nil {
-		return uuid.Nil, fmt.Errorf("auth.Service.SignUp - GetAccountCode: %v", err)
+		return uuid.Nil, fmt.Errorf("auth.Service.SignUp: %v", err)
 	}
 
 	if code != usr.Code {
@@ -164,19 +170,15 @@ func (s *Service) RefreshSessionToken(ctx context.Context, newTokenID, oldTokenI
 
 	additionalTime := config.GetConfig().JWT.ExpireAccess
 	duration := time.Duration(additionalTime) * time.Second
-	claims := &Claims{
-		ID:        newTokenID,
-		ExpiresAt: time.Now().UTC().Add(duration),
-	}
 
-	accessToken, err := token.NewJWTToken(uuid.UUID(oldRefreshSession), claims.ID, claims.ExpiresAt)
+	accessToken, err := token.NewJWTToken(uuid.UUID(oldRefreshSession), newTokenID, time.Now().UTC().Add(duration))
 	if err != nil {
 		return nil, fmt.Errorf("auth.Service.CreateSession: %v", err)
 	}
 
 	tokens := &Tokens{
 		AccessToken:  accessToken,
-		RefreshToken: newTokenID,
+		RefreshToken: newTokenID.String(),
 	}
 
 	return tokens, nil
@@ -191,7 +193,7 @@ func (s *Service) SignOut(ctx context.Context, refreshToken uuid.UUID, fingerpri
 	return nil
 }
 
-func (s *Service) CreateCode(ctx context.Context, email string) error {
+func (s *Service) CreateCode(ctx context.Context, email string, fingerprint string) error {
 	err := s.validateEmail(ctx, email)
 	if err != nil {
 		return fmt.Errorf("auth.Service.CreateCode: %v", err)
@@ -199,17 +201,57 @@ func (s *Service) CreateCode(ctx context.Context, email string) error {
 
 	creatingCode := utils.GenerateCode()
 
+	err = s.repo.SetAccountCode(ctx, fmt.Sprintf("%s:%s:%s", fingerprint, email, RedisCreateUser), creatingCode, time.Duration(5)*time.Minute)
+	if err != nil {
+		return fmt.Errorf("auth.Service.CreateCode: %w", err)
+	}
+
 	err = s.email.SendAuthCode(email, creatingCode)
 	if err != nil {
 		return fmt.Errorf("auth.Service.CreateCode: %v", err)
 	}
 
-	err = s.repo.SetAccountCode(ctx, email, creatingCode, time.Duration(5)*time.Minute)
+	return nil
+}
+
+func (s *Service) SignInByGoogle(ctx context.Context, tokenData, fingerprint string) (*oauth2.Token, error) {
+	token, err := google.GetTokenByCode(ctx, tokenData)
 	if err != nil {
-		return fmt.Errorf("auth.Service.CreateCode: %w", err)
+		return nil, fmt.Errorf("auth.Service.SignInByGoogle: %w", err)
 	}
 
-	return nil
+	profile, err := google.GetProfile(ctx, token)
+	if err != nil {
+		return nil, fmt.Errorf("auth.Service.SignInByGoogle: %w", err)
+	}
+	var session Session
+	usr, err := s.userSvc.GetUserByGoogleID(ctx, profile.ID)
+	if err != nil {
+		slog.Warn(fmt.Sprintf("auth.Service.SignInByGoogle: %v", err.Error()))
+
+		uid, err := s.userSvc.AddGoogleUser(ctx, entityUser.GoogleUser{
+			User: entityUser.User{
+				Nickname: strings.Split(profile.Email, "@")[0],
+				Email:    profile.Email,
+				Role:     runtime.User,
+			},
+			GoogleID: profile.ID,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("auth.Service.SignInByGoogle: %w", err)
+		}
+
+		session = Session(uid)
+	} else {
+		session = Session(usr.ID)
+	}
+
+	err = s.addRefreshSession(ctx, fmt.Sprintf("%s:%s", fingerprint, token.AccessToken), session)
+	if err != nil {
+		return nil, fmt.Errorf("auth.Service.SignInByGoogle: %w", err)
+	}
+
+	return token, nil
 }
 
 func (s *Service) addRefreshSession(ctx context.Context, key string, refreshSession Session) error {

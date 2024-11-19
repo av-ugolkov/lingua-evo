@@ -36,9 +36,32 @@ func (r *UserRepo) AddUser(ctx context.Context, u *entity.User, pswHash string) 
 		VALUES ($1, $2, $3, $4, $5, $6, $7) ON CONFLICT DO NOTHING RETURNING id`
 
 	var uid uuid.UUID
-	err := r.tr.QueryRow(ctx, query, uuid.New(), u.Nickname, u.Email, pswHash, u.Role, u.VisitedAt, u.CreatedAt).Scan(&uid)
+	now := time.Now().UTC()
+	err := r.tr.QueryRow(ctx, query, uuid.New(), u.Nickname, u.Email, pswHash, u.Role, now, now).Scan(&uid)
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("user.repository.UserRepo.AddUser: %w", err)
+	}
+
+	return uid, nil
+}
+
+func (r *UserRepo) AddGoogleUser(ctx context.Context, u entity.GoogleUser) (uuid.UUID, error) {
+	query := `
+		INSERT INTO users (
+			id, 
+			nickname, 
+			email, 
+			role, 
+			google_id,
+			visited_at, 
+			created_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7) ON CONFLICT DO NOTHING RETURNING id`
+
+	var uid uuid.UUID
+	now := time.Now().UTC()
+	err := r.tr.QueryRow(ctx, query, uuid.New(), u.Nickname, u.Email, u.Role, u.GoogleID, now, now).Scan(&uid)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("user.repository.UserRepo.AddGoogleUser: %w", err)
 	}
 
 	return uid, nil
@@ -51,7 +74,6 @@ func (r *UserRepo) GetUserByID(ctx context.Context, uid uuid.UUID) (*entity.User
 			nickname, 
 			email, 
 			role, 
-			max_count_words, 
 			visited_at, 
 			created_at 
 		FROM users WHERE id=$1`
@@ -61,7 +83,6 @@ func (r *UserRepo) GetUserByID(ctx context.Context, uid uuid.UUID) (*entity.User
 		&u.Nickname,
 		&u.Email,
 		&u.Role,
-		&u.MaxCountWords,
 		&u.VisitedAt,
 		&u.CreatedAt,
 	)
@@ -78,7 +99,6 @@ func (r *UserRepo) GetUserByNickname(ctx context.Context, nickname string) (*ent
 			nickname, 
 			email, 
 			role,
-			max_count_words,
 			visited_at,
 			created_at 
 		FROM users WHERE nickname=$1`
@@ -89,7 +109,6 @@ func (r *UserRepo) GetUserByNickname(ctx context.Context, nickname string) (*ent
 		&u.Nickname,
 		&u.Email,
 		&u.Role,
-		&u.MaxCountWords,
 		&u.VisitedAt,
 		&u.CreatedAt)
 	if err != nil {
@@ -106,7 +125,6 @@ func (r *UserRepo) GetUserByEmail(ctx context.Context, email string) (*entity.Us
 			nickname,
 			email,
 			role,
-			max_count_words,
 			visited_at,
 			created_at 
 		FROM users WHERE email=$1`
@@ -118,14 +136,38 @@ func (r *UserRepo) GetUserByEmail(ctx context.Context, email string) (*entity.Us
 		&u.Nickname,
 		&u.Email,
 		&u.Role,
-		&u.MaxCountWords,
 		&u.VisitedAt,
 		&u.CreatedAt)
 	if err != nil {
 		return nil, fmt.Errorf("user.repository.UserRepo.GetUserByEmail: %w", err)
 	}
 
-	u.Email = email
+	return &u, nil
+}
+
+func (r *UserRepo) GetUserByGoogleID(ctx context.Context, googleID string) (*entity.User, error) {
+	query := `
+		SELECT 
+			id,
+			nickname,
+			email,
+			role,
+			visited_at,
+			created_at 
+		FROM users WHERE google_id=$1`
+
+	var u entity.User
+
+	err := r.tr.QueryRow(ctx, query, googleID).Scan(
+		&u.ID,
+		&u.Nickname,
+		&u.Email,
+		&u.Role,
+		&u.VisitedAt,
+		&u.CreatedAt)
+	if err != nil {
+		return nil, fmt.Errorf("user.repository.UserRepo.GetUserByGoogleID: %w", err)
+	}
 
 	return &u, nil
 }
@@ -154,18 +196,6 @@ func (r *UserRepo) GetUserData(ctx context.Context, uid uuid.UUID) (*entity.User
 	}
 
 	return &data, nil
-}
-
-func (r *UserRepo) GetUserMaxCountWords(ctx context.Context, uid uuid.UUID) (int, error) {
-	const query = `SELECT max_count_words FROM users WHERE id=$1`
-
-	var maxCountWords int
-	err := r.tr.QueryRow(ctx, query, uid).Scan(&maxCountWords)
-	if err != nil {
-		return 0, fmt.Errorf("user.repository.UserRepo.GetUserMaxCountWords: %w", err)
-	}
-
-	return maxCountWords, nil
 }
 
 func (r *UserRepo) AddUserData(ctx context.Context, data entity.UserData) error {
