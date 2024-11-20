@@ -109,6 +109,7 @@ func ServerStart(cfg *config.Config) {
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"},
 		AllowCredentials: true,
 		AllowHeaders:     []string{"Authorization", "Content-Type", "Fingerprint"},
+		AllowWildcard:    true,
 	}), ginext.Logger())
 	initServer(cfg, router, pgxPool, redisDB)
 

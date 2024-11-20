@@ -10,6 +10,7 @@ import (
 
 	"github.com/av-ugolkov/lingua-evo/internal/config"
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/google"
+	msgerr "github.com/av-ugolkov/lingua-evo/internal/pkg/msg-error"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/token"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/utils"
 	entityUser "github.com/av-ugolkov/lingua-evo/internal/services/user"
@@ -214,20 +215,40 @@ func (s *Service) CreateCode(ctx context.Context, email string, fingerprint stri
 	return nil
 }
 
-func (s *Service) SignInByGoogle(ctx context.Context, tokenData, fingerprint string) (*oauth2.Token, error) {
-	token, err := google.GetTokenByCode(ctx, tokenData)
+func (s *Service) GoogleAuthUrl() string {
+	return google.GetAuthUrl()
+}
+
+func (s *Service) AuthByGoogle(ctx context.Context, code, fingerprint string) (*oauth2.Token, error) {
+	token, err := google.GetTokenByCode(ctx, code)
 	if err != nil {
-		return nil, fmt.Errorf("auth.Service.SignInByGoogle: %w", err)
+		return nil, fmt.Errorf("auth.Service.AuthByGoogle: %w", err)
 	}
+
+	/*
+		client := googleOauthConfig.Client(context.Background(), token)
+		resp, err := client.Get("https://www.googleapis.com/oauth2/v2/userinfo")
+		if err != nil {
+			http.Error(w, "Failed to get user info: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer resp.Body.Close()
+
+		var userInfo map[string]interface{}
+		if err := json.NewDecoder(resp.Body).Decode(&userInfo); err != nil {
+			http.Error(w, "Failed to parse user info: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+	*/
 
 	profile, err := google.GetProfile(ctx, token)
 	if err != nil {
-		return nil, fmt.Errorf("auth.Service.SignInByGoogle: %w", err)
+		return nil, fmt.Errorf("auth.Service.AuthByGoogle: %w", err)
 	}
 	var session Session
 	usr, err := s.userSvc.GetUserByGoogleID(ctx, profile.ID)
 	if err != nil {
-		slog.Warn(fmt.Sprintf("auth.Service.SignInByGoogle: %v", err.Error()))
+		slog.Warn(fmt.Sprintf("auth.Service.AuthByGoogle: %v", err.Error()))
 
 		uid, err := s.userSvc.AddGoogleUser(ctx, entityUser.GoogleUser{
 			User: entityUser.User{
@@ -238,7 +259,9 @@ func (s *Service) SignInByGoogle(ctx context.Context, tokenData, fingerprint str
 			GoogleID: profile.ID,
 		})
 		if err != nil {
-			return nil, fmt.Errorf("auth.Service.SignInByGoogle: %w", err)
+			return nil,
+				msgerr.New(fmt.Errorf("auth.Service.AuthByGoogle: %w", err),
+					"The user exists with the same email")
 		}
 
 		session = Session(uid)
@@ -248,7 +271,7 @@ func (s *Service) SignInByGoogle(ctx context.Context, tokenData, fingerprint str
 
 	err = s.addRefreshSession(ctx, fmt.Sprintf("%s:%s", fingerprint, token.AccessToken), session)
 	if err != nil {
-		return nil, fmt.Errorf("auth.Service.SignInByGoogle: %w", err)
+		return nil, fmt.Errorf("auth.Service.AuthByGoogle: %w", err)
 	}
 
 	return token, nil

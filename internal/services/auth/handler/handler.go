@@ -47,8 +47,12 @@ type (
 		Email string `json:"email"`
 	}
 
-	GoogleJWT struct {
-		Token string `json:"token"`
+	GoogleAuthCode struct {
+		Code     string   `json:"code"`
+		State    string   `json:"state"`
+		Scope    []string `json:"scope"`
+		Authuser int      `json:"authuser"`
+		Prompt   string   `json:"prompt"`
 	}
 )
 
@@ -64,7 +68,8 @@ func Create(r *ginext.Engine, authSvc *auth.Service) {
 	r.GET(handler.Refresh, h.refresh)
 	r.POST(handler.SignOut, middleware.Auth(h.signOut))
 	r.POST(handler.SendCode, h.sendCode)
-	r.POST(handler.AuthGoogle, h.authGoogle)
+	r.GET(handler.GoogleAuth, h.googleAuthUrl)
+	r.POST(handler.GoogleAuth, h.googleAuth)
 }
 
 func newHandler(authSvc *auth.Service) *Handler {
@@ -185,20 +190,13 @@ func (h *Handler) refresh(c *ginext.Context) (int, any, error) {
 		return http.StatusBadRequest, nil, fmt.Errorf("auth.handler.Handler.refresh - refresh token not found")
 	}
 
-	refreshID, err := uuid.Parse(refreshToken)
-	if err != nil {
-		return http.StatusBadRequest, nil,
-			fmt.Errorf("auth.handler.Handler.refresh: %v", err)
-	}
-
 	fingerprint := c.GetHeader(ginext.Fingerprint)
 	if fingerprint == runtime.EmptyString {
 		return http.StatusBadRequest, nil,
 			fmt.Errorf("auth.handler.Handler.refresh: fingerprint is empty")
 	}
 
-	tokenID := uuid.New()
-	tokens, err := h.authSvc.RefreshSessionToken(ctx, tokenID, refreshID, fingerprint)
+	tokens, err := h.authSvc.RefreshSessionToken(ctx, uuid.New(), uuid.New() /*refreshToken*/, fingerprint)
 	if err != nil {
 		return http.StatusInternalServerError, nil,
 			fmt.Errorf("auth.handler.Handler.refresh: %v", err)
@@ -273,33 +271,41 @@ func (h *Handler) sendCode(c *ginext.Context) (int, any, error) {
 	return http.StatusOK, gin.H{}, nil
 }
 
-func (h *Handler) authGoogle(c *ginext.Context) (int, any, error) {
+func (h *Handler) googleAuthUrl(c *ginext.Context) (int, any, error) {
+	url := h.authSvc.GoogleAuthUrl()
+	return http.StatusOK, gin.H{"url": url}, nil
+}
+
+func (h *Handler) googleAuth(c *ginext.Context) (int, any, error) {
 	ctx := c.Request.Context()
 
-	var data GoogleJWT
+	var data GoogleAuthCode
 	err := c.Bind(&data)
 	if err != nil {
 		return http.StatusBadRequest, nil,
-			msgerr.New(fmt.Errorf("auth.handler.Handler.authGoogle: %v", err),
+			msgerr.New(fmt.Errorf("auth.handler.Handler.googleAuth: %v", err),
 				msgerr.ErrMsgBadRequest)
 	}
 
 	fingerprint := c.GetHeader(ginext.Fingerprint)
 	if fingerprint == runtime.EmptyString {
-		return http.StatusInternalServerError, nil, fmt.Errorf("auth.handler.Handler.authGoogle: fingerprimt is empty")
+		return http.StatusInternalServerError, nil, fmt.Errorf("auth.handler.Handler.googleAuth: fingerprimt is empty")
 	}
 
-	token, err := h.authSvc.SignInByGoogle(ctx, data.Token, fingerprint)
+	token, err := h.authSvc.AuthByGoogle(ctx, data.Code, fingerprint)
+	var e *msgerr.ApiError
 	if err != nil {
 		switch {
 		case errors.Is(err, entity.ErrNotFoundUser) ||
 			errors.Is(err, auth.ErrWrongPassword):
 			return http.StatusBadRequest, nil,
-				msgerr.New(fmt.Errorf("auth.handler.Handler.authGoogle: %w", err),
+				msgerr.New(fmt.Errorf("auth.handler.Handler.googleAuth: %w", err),
 					"User doesn't exist or password is wrong")
+		case errors.As(err, &e):
+			return http.StatusBadRequest, nil, fmt.Errorf("auth.handler.Handler.googleAuth: %w", err)
 		default:
 			return http.StatusInternalServerError, nil,
-				msgerr.New(fmt.Errorf("auth.handler.Handler.authGoogle: %w", err),
+				msgerr.New(fmt.Errorf("auth.handler.Handler.googleAuth: %w", err),
 					msgerr.ErrMsgInternal)
 		}
 	}

@@ -18,7 +18,6 @@ service:
     port: 5000
     allowed_origins:
         - "http://localhost:5173"
-        - "https://localhost:5173"
 postgres:
     name: pg-lingua-evo
     user: lingua
@@ -48,3 +47,4 @@ kafka:
         - user_action
 google:
     secret_path: ./google_client_secret_dev.json
+    redirect_url: "http://localhost:5173"

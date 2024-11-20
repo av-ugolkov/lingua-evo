@@ -50,3 +50,4 @@ kafka:
         - user_action
 google:
     secret_path: ./google_client_secret.json
+    redirect_url: "https://linguaevo.twc1.net/"

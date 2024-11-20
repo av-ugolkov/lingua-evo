@@ -33,6 +33,10 @@ func InitClient(cfg *config.Google) {
 	}
 }
 
+func GetAuthUrl() string {
+	return googleConfig.AuthCodeURL("state-token", oauth2.AccessTypeOffline)
+}
+
 func GetTokenByCode(ctx context.Context, code string) (*oauth2.Token, error) {
 	token, err := googleConfig.Exchange(ctx, code)
 	if err != nil {
@@ -62,6 +66,44 @@ func GetProfile(ctx context.Context, token *oauth2.Token) (*GoogleProfile, error
 	}
 
 	return profile, nil
+}
+
+func RefreshToken(refreshToken string) (string, error) {
+	// tokenURL := "https://oauth2.googleapis.com/token"
+	// httpClient := googleConfig.Client(ctx, token)
+	// googleConfig.
+	// 	data := url.Values{}
+	// data.Set("refresh_token", refreshToken)
+	// data.Set("grant_type", "refresh_token")
+
+	// req, err := http.NewRequest("POST", tokenURL, bytes.NewBufferString(data.Encode()))
+	// if err != nil {
+	// 	return "", err
+	// }
+
+	// req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	// client := &http.Client{}
+	// resp, err := client.Do(req)
+	// if err != nil {
+	// 	return "", err
+	// }
+	// defer resp.Body.Close()
+
+	// if resp.StatusCode != http.StatusOK {
+	// 	return "", fmt.Errorf("failed to refresh token, status: %s", resp.Status)
+	// }
+
+	// var result map[string]interface{}
+	// if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+	// 	return "", err
+	// }
+
+	// newToken, ok := result["access_token"].(string)
+	// if !ok {
+	// 	return "", fmt.Errorf("unexpected response format: %v", result)
+	// }
+
+	return "newToken", nil
 }
 
 func VerifyGoogleToken(idToken string, clientID string) (*GoogleTokenInfo, error) {

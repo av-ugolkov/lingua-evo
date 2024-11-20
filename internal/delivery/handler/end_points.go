@@ -9,7 +9,7 @@ const (
 	Refresh    = "/auth/refresh"   //get
 	SignOut    = "/auth/sign_out"  //get
 	SendCode   = "/auth/send_code" //post
-	AuthGoogle = "/auth/google"    //post
+	GoogleAuth = "/auth/google"    //get, post
 
 	UserByID = "/user/id" //get
 	Users    = "/users"   //get
