@@ -49,10 +49,6 @@ func SetRedisPassword(psw string) {
 	instance.DbRedis.Password = psw
 }
 
-func SetGoogleClientID(clientID string) {
-	instance.Google.ClientID = clientID
-}
-
 func GetConfig() *Config {
 	return instance
 }

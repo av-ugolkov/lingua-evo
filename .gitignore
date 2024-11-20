@@ -8,6 +8,7 @@ tools/banch/*
 tools/fill_db/*
 tools/user/*
 google_client_secret.json
+google_client_secret_dev.json
 
 .DS_Store
 .vs/

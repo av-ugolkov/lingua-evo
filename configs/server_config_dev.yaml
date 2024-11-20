@@ -46,4 +46,4 @@ kafka:
     topics:
         - user_action
 google:
-    secret_path: ../google_client_secret.json
+    secret_path: ../google_client_secret_dev.json
