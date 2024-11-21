@@ -40,17 +40,42 @@ func (r *Redis) Get(ctx context.Context, key string) (string, error) {
 }
 
 func (r *Redis) Set(ctx context.Context, key string, value any, expiration time.Duration) (string, error) {
+	key, err := userKey(ctx, key)
+	if err != nil {
+		return runtime.EmptyString, fmt.Errorf("redis.Set: %w", err)
+	}
 	return r.client.Set(ctx, key, value, expiration).Result()
 }
 
 func (r *Redis) SetNX(ctx context.Context, key string, value any, expiration time.Duration) (bool, error) {
+	key, err := userKey(ctx, key)
+	if err != nil {
+		return false, fmt.Errorf("redis.SetNX: %w", err)
+	}
+
 	return r.client.SetNX(ctx, key, value, expiration).Result()
 }
 
 func (r *Redis) Delete(ctx context.Context, key string) (int64, error) {
+	key, err := userKey(ctx, key)
+	if err != nil {
+		return 0, fmt.Errorf("redis.Delete: %w", err)
+	}
 	return r.client.Del(ctx, key).Result()
 }
 
-func (r *Redis) GetTTL(ct context.Context, key string) (time.Duration, error) {
-	return r.client.TTL(ct, key).Result()
+func (r *Redis) GetTTL(ctx context.Context, key string) (time.Duration, error) {
+	key, err := userKey(ctx, key)
+	if err != nil {
+		return 0, fmt.Errorf("redis.GetTTL: %w", err)
+	}
+	return r.client.TTL(ctx, key).Result()
+}
+
+func userKey(ctx context.Context, key string) (string, error) {
+	uid, err := runtime.UserIDFromContext(ctx)
+	if err != nil {
+		return runtime.EmptyString, fmt.Errorf("redis.userKey: %w", err)
+	}
+	return fmt.Sprintf("%s:%s", uid, key), nil
 }
