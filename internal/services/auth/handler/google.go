@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/av-ugolkov/lingua-evo/internal/config"
 	ginext "github.com/av-ugolkov/lingua-evo/internal/pkg/gin-ext"
 	msgerr "github.com/av-ugolkov/lingua-evo/internal/pkg/msg-error"
 	"github.com/av-ugolkov/lingua-evo/internal/services/auth"
@@ -36,7 +37,7 @@ func (h *Handler) googleAuth(c *ginext.Context) (int, any, error) {
 		return http.StatusInternalServerError, nil, fmt.Errorf("auth.handler.Handler.googleAuth: fingerprimt is empty")
 	}
 
-	token, err := h.authSvc.AuthByGoogle(ctx, data.Code, fingerprint)
+	tokens, err := h.authSvc.AuthByGoogle(ctx, data.Code, fingerprint)
 	var e *msgerr.ApiError
 	if err != nil {
 		switch {
@@ -55,9 +56,12 @@ func (h *Handler) googleAuth(c *ginext.Context) (int, any, error) {
 	}
 
 	sessionRs := &CreateSessionRs{
-		AccessToken: token.AccessToken,
+		AccessToken: tokens.AccessToken,
 	}
 
-	c.SetCookieRefreshToken(token.RefreshToken, time.Until(token.Expiry))
+	additionalTime := config.GetConfig().JWT.ExpireRefresh
+	duration := time.Duration(additionalTime) * time.Second
+
+	c.SetCookieRefreshToken(tokens.RefreshToken, duration)
 	return http.StatusOK, sessionRs, nil
 }

@@ -44,7 +44,7 @@ func (s *Service) SignIn(ctx context.Context, user, password, fingerprint string
 		return nil, fmt.Errorf("auth.Service.SignIn: %v", err)
 	}
 
-	accessToken, err := token.NewJWTToken(u.ID, refreshTokenID, now.Add(duration))
+	accessToken, err := token.NewJWTToken(u.ID, refreshTokenID.String(), now.Add(duration))
 	if err != nil {
 		return nil, fmt.Errorf("auth.Service.SignIn: %v", err)
 	}
@@ -120,4 +120,21 @@ func (s *Service) CreateCode(ctx context.Context, email string, fingerprint stri
 	}
 
 	return nil
+}
+
+func (s *Service) refreshEmailToken(_ context.Context, uid uuid.UUID, refreshToken string) (*entity.Tokens, error) {
+	additionalTime := config.GetConfig().JWT.ExpireAccess
+	duration := time.Duration(additionalTime) * time.Second
+
+	accessToken, err := token.NewJWTToken(uid, refreshToken, time.Now().UTC().Add(duration))
+	if err != nil {
+		return nil, fmt.Errorf("auth.Service.CreateSession: %v", err)
+	}
+
+	tokens := &entity.Tokens{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+	}
+
+	return tokens, nil
 }

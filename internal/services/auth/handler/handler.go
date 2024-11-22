@@ -120,6 +120,11 @@ func (h *Handler) refresh(c *ginext.Context) (int, any, error) {
 func (h *Handler) signOut(c *ginext.Context) (int, any, error) {
 	ctx := c.Request.Context()
 
+	uid, err := runtime.UserIDFromContext(ctx)
+	if err != nil {
+		return http.StatusInternalServerError, nil, fmt.Errorf("auth.handler.Handler.signOut: %v", err)
+	}
+
 	refreshToken, err := c.Cookie(ginext.RefreshToken)
 	if err != nil {
 		return http.StatusInternalServerError, nil, fmt.Errorf("auth.handler.Handler.signOut: %v", err)
@@ -135,7 +140,7 @@ func (h *Handler) signOut(c *ginext.Context) (int, any, error) {
 		return http.StatusInternalServerError, nil, fmt.Errorf("auth.handler.Handler.signOut: fingerprimt is empty")
 	}
 
-	err = h.authSvc.SignOut(ctx, refreshID, fingerprint)
+	err = h.authSvc.SignOut(ctx, uid, refreshID, fingerprint)
 	if err != nil {
 		return http.StatusInternalServerError, nil, fmt.Errorf("auth.handler.Handler.signOut: %v", err)
 	}

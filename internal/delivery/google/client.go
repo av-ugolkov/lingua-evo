@@ -143,6 +143,35 @@ func VerifyGoogleToken(idToken string, clientID string) (*GoogleTokenInfo, error
 	return &tokenInfo, nil
 }
 
+func RevokeGoogleToken(accessToken string) error {
+	tokenURL := "https://oauth2.googleapis.com/revoke"
+
+	data := url.Values{}
+	data.Set("client_id", googleConfig.ClientID)
+	data.Set("client_secret", googleConfig.ClientSecret)
+	data.Set("token", accessToken)
+
+	req, err := http.NewRequest("POST", tokenURL, bytes.NewBufferString(data.Encode()))
+	if err != nil {
+		return err
+	}
+
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("Content-Length", fmt.Sprintf("%d", len(data.Encode())))
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("не удалось удалить токен, статус: %v", resp.StatusCode)
+	}
+
+	return nil
+}
+
 // func ParseGoogleOauthToken(ctx context.Context, token string) (any, error) {
 // 	payload, err := idtoken.Validate(ctx, token, config.GetConfig().Google.ClientID)
 // 	if err != nil {

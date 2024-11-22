@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"strconv"
 	"time"
 
@@ -38,10 +39,12 @@ func (r *SessionRepo) SetSession(ctx context.Context, key string, s *authEntity.
 		return err
 	}
 
-	b, err := r.redis.SetNX(ctx, key, data, expiration)
-	if !b {
-		return err
+	result, err := r.redis.Set(ctx, key, data, expiration)
+	if err != nil {
+		return fmt.Errorf("auth.repository.SessionRepo.SetSession: %w", err)
 	}
+	slog.Info(fmt.Sprintf("auth.repository.SessionRepo.SetSession: %s", result))
+
 	return nil
 }
 

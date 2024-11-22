@@ -36,6 +36,7 @@ func (r *Redis) Get(ctx context.Context, key string) (string, error) {
 	if err != nil {
 		return runtime.EmptyString, fmt.Errorf("redis.Get - key [%s]: %w", key, err)
 	}
+
 	return value, nil
 }
 

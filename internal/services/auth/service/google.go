@@ -2,16 +2,21 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
+	"time"
 
+	"github.com/av-ugolkov/lingua-evo/internal/config"
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/google"
 	msgerr "github.com/av-ugolkov/lingua-evo/internal/pkg/msg-error"
+	jwtToken "github.com/av-ugolkov/lingua-evo/internal/pkg/token"
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/auth"
 	entityUser "github.com/av-ugolkov/lingua-evo/internal/services/user"
 	"github.com/av-ugolkov/lingua-evo/runtime"
+	"github.com/google/uuid"
 
-	"golang.org/x/oauth2"
+	"github.com/redis/go-redis/v9"
 )
 
 type GoogleToken struct {
@@ -19,29 +24,36 @@ type GoogleToken struct {
 	RefreshToken string `json:"refresh_token"`
 }
 
-func (g *GoogleToken) ReadToken(token string) ([]byte, error) {
-	return []byte(token), nil
-}
-
-func (g *GoogleToken) WriteToken(token string) error {
-	return nil
-}
-
-func (s *Service) AuthByGoogle(ctx context.Context, code, fingerprint string) (*oauth2.Token, error) {
+func (s *Service) AuthByGoogle(ctx context.Context, code, fingerprint string) (_ *entity.Tokens, err error) {
 	token, err := google.GetTokenByCode(ctx, code)
 	if err != nil {
 		return nil, fmt.Errorf("auth.Service.AuthByGoogle: %w", err)
 	}
 
+	defer func() {
+		if err != nil {
+			err = google.RevokeGoogleToken(token.AccessToken)
+			if err != nil {
+				err = fmt.Errorf("auth.Service.AuthByGoogle: %w", err)
+			}
+
+			err = msgerr.New(err,
+				"Sorry! We can't sign you in. Please try again.")
+		}
+	}()
+
 	profile, err := google.GetProfile(ctx, token)
 	if err != nil {
 		return nil, fmt.Errorf("auth.Service.AuthByGoogle: %w", err)
 	}
+
 	var session *entity.Session
 	usr, err := s.userSvc.GetUserByGoogleID(ctx, profile.ID)
 	if err != nil {
 		slog.Warn(fmt.Sprintf("auth.Service.AuthByGoogle: %v", err.Error()))
-
+		if token.RefreshToken == runtime.EmptyString {
+			return nil, fmt.Errorf("auth.Service.AuthByGoogle: not fount user and refresh token is empty")
+		}
 		uid, err := s.userSvc.AddGoogleUser(ctx, entityUser.GoogleUser{
 			User: entityUser.User{
 				Nickname: runtime.GenerateNickname(),
@@ -63,12 +75,22 @@ func (s *Service) AuthByGoogle(ctx context.Context, code, fingerprint string) (*
 			ExpiresAt:    token.Expiry,
 		}
 	} else {
-		session = &entity.Session{
-			UserID:       usr.ID,
-			RefreshToken: token.RefreshToken,
-			TypeToken:    entity.Google,
-			ExpiresAt:    token.Expiry,
+		session, err = s.repo.GetSession(ctx, fmt.Sprintf("%s:%s:%s", usr.ID, fingerprint, RedisRefreshToken))
+		switch {
+		case errors.Is(err, redis.Nil):
+			session = &entity.Session{
+				UserID:       usr.ID,
+				RefreshToken: token.RefreshToken,
+				TypeToken:    entity.Google,
+				ExpiresAt:    token.Expiry,
+			}
+		case err != nil:
+			return nil, fmt.Errorf("auth.Service.AuthByGoogle: %w", err)
 		}
+		if token.RefreshToken != runtime.EmptyString {
+			session.RefreshToken = token.RefreshToken
+		}
+		session.ExpiresAt = token.Expiry
 	}
 
 	err = s.addRefreshSession(ctx, fmt.Sprintf("%s:%s:%s", session.UserID, fingerprint, RedisRefreshToken), session)
@@ -76,5 +98,44 @@ func (s *Service) AuthByGoogle(ctx context.Context, code, fingerprint string) (*
 		return nil, fmt.Errorf("auth.Service.AuthByGoogle: %w", err)
 	}
 
-	return token, nil
+	additionalTime := config.GetConfig().JWT.ExpireAccess
+	duration := time.Duration(additionalTime) * time.Second
+	now := time.Now().UTC()
+
+	accessToken, err := jwtToken.NewJWTToken(usr.ID, token.RefreshToken, now.Add(duration))
+	if err != nil {
+		return nil, fmt.Errorf("auth.Service.SignIn: %v", err)
+	}
+
+	err = s.userSvc.UpdateVisitedAt(ctx, usr.ID)
+	if err != nil {
+		return nil, fmt.Errorf("auth.Service.SignIn: %v", err)
+	}
+
+	tokens := &entity.Tokens{
+		AccessToken:  accessToken,
+		RefreshToken: session.RefreshToken,
+	}
+
+	return tokens, nil
+}
+
+func (s *Service) refreshGoogleToken(ctx context.Context, uid uuid.UUID, refreshToken string) (*entity.Tokens, error) {
+	_, err := google.RefreshToken(ctx, refreshToken)
+	if err != nil {
+		return nil, fmt.Errorf("auth.Service.refreshGoogleToken: %v", err)
+	}
+
+	additionalTime := config.GetConfig().JWT.ExpireAccess
+	duration := time.Duration(additionalTime) * time.Second
+	accessToken, err := jwtToken.NewJWTToken(uid, refreshToken, time.Now().UTC().Add(duration))
+	if err != nil {
+		return nil, fmt.Errorf("auth.Service.refreshGoogleToken: %v", err)
+	}
+
+	tokens := &entity.Tokens{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+	}
+	return tokens, nil
 }

@@ -8,7 +8,6 @@ import (
 
 	"github.com/av-ugolkov/lingua-evo/internal/config"
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/google"
-	"github.com/av-ugolkov/lingua-evo/internal/pkg/token"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/utils"
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/auth"
 	entityUser "github.com/av-ugolkov/lingua-evo/internal/services/user"
@@ -68,41 +67,27 @@ func (s *Service) RefreshSessionToken(ctx context.Context, uid uuid.UUID, oldTok
 		return nil, fmt.Errorf("auth.Service.RefreshSessionToken: %v", err)
 	}
 
+	if oldRefreshSession.RefreshToken != oldTokenID {
+		return nil, fmt.Errorf("auth.Service.RefreshSessionToken: %v", errors.New("token mismatch"))
+	}
+
 	var tokens *entity.Tokens
 	switch oldRefreshSession.TypeToken {
 	case entity.Google:
-		accessToken, err := google.RefreshToken(ctx, oldTokenID)
+		tokens, err = s.refreshGoogleToken(ctx, uid, oldRefreshSession.RefreshToken)
 		if err != nil {
 			return nil, fmt.Errorf("auth.Service.RefreshSessionToken: %v", err)
 		}
-
-		tokens = &entity.Tokens{
-			AccessToken:  accessToken,
-			RefreshToken: oldTokenID,
-		}
 	case entity.Email:
-		additionalTime := config.GetConfig().JWT.ExpireAccess
-		duration := time.Duration(additionalTime) * time.Second
-		newTokenID := uuid.New()
-		accessToken, err := token.NewJWTToken(oldRefreshSession.UserID, newTokenID, time.Now().UTC().Add(duration))
+		tokens, err = s.refreshEmailToken(ctx, uid, oldRefreshSession.RefreshToken)
 		if err != nil {
-			return nil, fmt.Errorf("auth.Service.CreateSession: %v", err)
-		}
-
-		tokens = &entity.Tokens{
-			AccessToken:  accessToken,
-			RefreshToken: newTokenID.String(),
+			return nil, fmt.Errorf("auth.Service.RefreshSessionToken: %v", err)
 		}
 	default:
 		return nil, fmt.Errorf("auth.Service.RefreshSessionToken: %v", "unknown type")
 	}
 
 	err = s.addRefreshSession(ctx, fmt.Sprintf("%s:%s:%s", uid, fingerprint, RedisRefreshToken), oldRefreshSession)
-	if err != nil {
-		return nil, fmt.Errorf("auth.Service.RefreshSessionToken: %v", err)
-	}
-
-	err = s.repo.DeleteSession(ctx, fmt.Sprintf("%s:%s", fingerprint, oldTokenID))
 	if err != nil {
 		return nil, fmt.Errorf("auth.Service.RefreshSessionToken: %v", err)
 	}
@@ -115,8 +100,17 @@ func (s *Service) RefreshSessionToken(ctx context.Context, uid uuid.UUID, oldTok
 	return tokens, nil
 }
 
-func (s *Service) SignOut(ctx context.Context, refreshToken uuid.UUID, fingerprint string) error {
-	err := s.repo.DeleteSession(ctx, fmt.Sprintf("%s:%s", fingerprint, refreshToken))
+func (s *Service) SignOut(ctx context.Context, uid, refreshToken uuid.UUID, fingerprint string) error {
+	session, err := s.repo.GetSession(ctx, fmt.Sprintf("%s:%s:%s", uid, fingerprint, RedisRefreshToken))
+	if err != nil {
+		return fmt.Errorf("auth.Service.SignOut: %v", err)
+	}
+
+	if session.RefreshToken != refreshToken.String() {
+		return fmt.Errorf("auth.Service.SignOut: %v", "refresh token not match")
+	}
+
+	err = s.repo.DeleteSession(ctx, fmt.Sprintf("%s:%s:%s", uid, fingerprint, RedisRefreshToken))
 	if err != nil {
 		return fmt.Errorf("auth.Service.SignOut: %v", err)
 	}
