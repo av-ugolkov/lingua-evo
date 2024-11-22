@@ -102,12 +102,12 @@ func RefreshToken(ctx context.Context, refreshToken string) (string, error) {
 		return "", err
 	}
 
-	newToken, ok := result["access_token"].(string)
+	accessToken, ok := result["access_token"].(string)
 	if !ok {
 		return "", fmt.Errorf("unexpected response format: %v", result)
 	}
 
-	return newToken, nil
+	return accessToken, nil
 }
 
 func VerifyGoogleToken(idToken string, clientID string) (*GoogleTokenInfo, error) {

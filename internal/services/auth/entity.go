@@ -3,8 +3,10 @@ package auth
 import (
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/av-ugolkov/lingua-evo/runtime"
+	jsoniter "github.com/json-iterator/go"
 
 	"github.com/google/uuid"
 )
@@ -27,8 +29,20 @@ var (
 	ErrPasswordDifficult = errors.New("password must be more difficult")
 )
 
+type TypeToken string
+
+const (
+	Email  TypeToken = "email"
+	Google TypeToken = "google"
+)
+
 type (
-	Session uuid.UUID
+	Session struct {
+		UserID       uuid.UUID
+		RefreshToken string    `json:"refresh_token"`
+		TypeToken    TypeToken `json:"type_token"`
+		ExpiresAt    time.Time `json:"expires_at"`
+	}
 
 	User struct {
 		ID       uuid.UUID
@@ -45,7 +59,10 @@ type (
 	}
 )
 
-func (s *Session) String() string {
-	u := uuid.UUID(*s)
-	return u.String()
+func (s *Session) JSON() ([]byte, error) {
+	b, err := jsoniter.Marshal(s)
+	if err != nil {
+		return nil, fmt.Errorf("auth.Session.JSON: %w", err)
+	}
+	return b, nil
 }

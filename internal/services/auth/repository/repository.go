@@ -7,6 +7,7 @@ import (
 	"time"
 
 	authEntity "github.com/av-ugolkov/lingua-evo/internal/services/auth"
+	jsoniter "github.com/json-iterator/go"
 
 	"github.com/google/uuid"
 )
@@ -31,22 +32,31 @@ func NewRepo(r redis) *SessionRepo {
 	}
 }
 
-func (r *SessionRepo) SetSession(ctx context.Context, key string, s authEntity.Session, expiration time.Duration) error {
-	b, err := r.redis.SetNX(ctx, key, s.String(), expiration)
+func (r *SessionRepo) SetSession(ctx context.Context, key string, s *authEntity.Session, expiration time.Duration) error {
+	data, err := s.JSON()
+	if err != nil {
+		return err
+	}
+
+	b, err := r.redis.SetNX(ctx, key, data, expiration)
 	if !b {
 		return err
 	}
 	return nil
 }
 
-func (r *SessionRepo) GetSession(ctx context.Context, key string) (authEntity.Session, error) {
+func (r *SessionRepo) GetSession(ctx context.Context, key string) (*authEntity.Session, error) {
 	value, err := r.redis.Get(ctx, key)
 	if err != nil {
-		return authEntity.Session(uuid.Nil), fmt.Errorf("auth.repository.SessionRepo.GetSession: %w", err)
+		return nil, fmt.Errorf("auth.repository.SessionRepo.GetSession: %w", err)
 	}
 
-	s := authEntity.Session(uuid.MustParse(value))
-	return s, nil
+	var session authEntity.Session
+	err = jsoniter.Unmarshal([]byte(value), &session)
+	if err != nil {
+		return nil, fmt.Errorf("auth.repository.SessionRepo.GetSession: %w", err)
+	}
+	return &session, nil
 }
 
 func (r *SessionRepo) GetCountSession(ctx context.Context, userID uuid.UUID) (int64, error) {

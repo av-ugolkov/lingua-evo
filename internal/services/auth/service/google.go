@@ -14,6 +14,19 @@ import (
 	"golang.org/x/oauth2"
 )
 
+type GoogleToken struct {
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
+}
+
+func (g *GoogleToken) ReadToken(token string) ([]byte, error) {
+	return []byte(token), nil
+}
+
+func (g *GoogleToken) WriteToken(token string) error {
+	return nil
+}
+
 func (s *Service) AuthByGoogle(ctx context.Context, code, fingerprint string) (*oauth2.Token, error) {
 	token, err := google.GetTokenByCode(ctx, code)
 	if err != nil {
@@ -24,7 +37,7 @@ func (s *Service) AuthByGoogle(ctx context.Context, code, fingerprint string) (*
 	if err != nil {
 		return nil, fmt.Errorf("auth.Service.AuthByGoogle: %w", err)
 	}
-	var session entity.Session
+	var session *entity.Session
 	usr, err := s.userSvc.GetUserByGoogleID(ctx, profile.ID)
 	if err != nil {
 		slog.Warn(fmt.Sprintf("auth.Service.AuthByGoogle: %v", err.Error()))
@@ -43,12 +56,22 @@ func (s *Service) AuthByGoogle(ctx context.Context, code, fingerprint string) (*
 					"The user exists with the same email or nickname")
 		}
 
-		session = entity.Session(uid)
+		session = &entity.Session{
+			UserID:       uid,
+			RefreshToken: token.RefreshToken,
+			TypeToken:    entity.Google,
+			ExpiresAt:    token.Expiry,
+		}
 	} else {
-		session = entity.Session(usr.ID)
+		session = &entity.Session{
+			UserID:       usr.ID,
+			RefreshToken: token.RefreshToken,
+			TypeToken:    entity.Google,
+			ExpiresAt:    token.Expiry,
+		}
 	}
 
-	err = s.addRefreshSession(ctx, fmt.Sprintf("%s:%s", fingerprint, token.RefreshToken), session)
+	err = s.addRefreshSession(ctx, fmt.Sprintf("%s:%s:%s", session.UserID, fingerprint, RedisRefreshToken), session)
 	if err != nil {
 		return nil, fmt.Errorf("auth.Service.AuthByGoogle: %w", err)
 	}

@@ -29,22 +29,27 @@ func (s *Service) SignIn(ctx context.Context, user, password, fingerprint string
 		return nil, fmt.Errorf("auth.Service.SignIn - [%w]: %v", entity.ErrWrongPassword, err)
 	}
 
-	err = s.userSvc.UpdateVisitedAt(ctx, u.ID)
-	if err != nil {
-		return nil, fmt.Errorf("auth.Service.SignIn: %v", err)
-	}
-
 	additionalTime := config.GetConfig().JWT.ExpireAccess
 	duration := time.Duration(additionalTime) * time.Second
 	now := time.Now().UTC()
-	session := entity.Session(u.ID)
+	session := &entity.Session{
+		UserID:       u.ID,
+		TypeToken:    entity.Email,
+		RefreshToken: refreshTokenID.String(),
+		ExpiresAt:    now.Add(duration),
+	}
 
-	err = s.addRefreshSession(ctx, fmt.Sprintf("%s:%s", fingerprint, refreshTokenID), session)
+	err = s.addRefreshSession(ctx, fmt.Sprintf("%s:%s:%s", u.ID, fingerprint, RedisRefreshToken), session)
 	if err != nil {
 		return nil, fmt.Errorf("auth.Service.SignIn: %v", err)
 	}
 
 	accessToken, err := token.NewJWTToken(u.ID, refreshTokenID, now.Add(duration))
+	if err != nil {
+		return nil, fmt.Errorf("auth.Service.SignIn: %v", err)
+	}
+
+	err = s.userSvc.UpdateVisitedAt(ctx, u.ID)
 	if err != nil {
 		return nil, fmt.Errorf("auth.Service.SignIn: %v", err)
 	}

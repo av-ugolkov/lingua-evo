@@ -29,7 +29,7 @@ func NewJWTToken(uid, sid uuid.UUID, expiresAt time.Time) (string, error) {
 		},
 	}
 
-	token := jwt.NewWithClaims(&jwt.SigningMethodRSA{}, userClaims)
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, userClaims)
 	t, err := token.SignedString([]byte(config.GetConfig().JWT.Secret))
 	if err != nil {
 		return runtime.EmptyString, fmt.Errorf("pkg.jwt.token.NewJWTToken - can't signed token: %w", err)
@@ -39,7 +39,7 @@ func NewJWTToken(uid, sid uuid.UUID, expiresAt time.Time) (string, error) {
 
 func ValidateJWT(tokenStr string, secret string) (*UserClaims, error) {
 	token, err := jwt.ParseWithClaims(tokenStr, &UserClaims{}, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
 		}
 

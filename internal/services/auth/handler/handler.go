@@ -95,7 +95,13 @@ func (h *Handler) refresh(c *ginext.Context) (int, any, error) {
 			fmt.Errorf("auth.handler.Handler.refresh: fingerprint is empty")
 	}
 
-	tokens, err := h.authSvc.RefreshSessionToken(ctx, uuid.NewString(), refreshToken, fingerprint)
+	uid, err := c.GetQueryUUID("uid")
+	if err != nil {
+		return http.StatusBadRequest, nil,
+			fmt.Errorf("auth.handler.Handler.refresh: %v", err)
+	}
+
+	tokens, err := h.authSvc.RefreshSessionToken(ctx, uid, refreshToken, fingerprint)
 	if err != nil {
 		return http.StatusInternalServerError, nil,
 			fmt.Errorf("auth.handler.Handler.refresh: %v", err)

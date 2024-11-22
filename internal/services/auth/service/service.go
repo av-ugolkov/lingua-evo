@@ -18,13 +18,14 @@ import (
 )
 
 const (
-	RedisCreateUser = "create_user"
+	RedisCreateUser   = "create_user"
+	RedisRefreshToken = "refresh_token"
 )
 
 type (
 	sessionRepo interface {
-		SetSession(ctx context.Context, key string, s entity.Session, ttl time.Duration) error
-		GetSession(ctx context.Context, key string) (entity.Session, error)
+		SetSession(ctx context.Context, key string, s *entity.Session, ttl time.Duration) error
+		GetSession(ctx context.Context, key string) (*entity.Session, error)
 		GetCountSession(ctx context.Context, userID uuid.UUID) (int64, error)
 		DeleteSession(ctx context.Context, key string) error
 		SetAccountCode(ctx context.Context, key string, code int, ttl time.Duration) error
@@ -61,41 +62,42 @@ func NewService(repo sessionRepo, userSvc userSvc, email emailSvc) *Service {
 	}
 }
 
-func (s *Service) RefreshSessionToken(ctx context.Context, newTokenID, oldTokenID any, fingerprint string) (*entity.Tokens, error) {
-	oldRefreshSession, err := s.repo.GetSession(ctx, fmt.Sprintf("%s:%s", fingerprint, oldTokenID))
+func (s *Service) RefreshSessionToken(ctx context.Context, uid uuid.UUID, oldTokenID string, fingerprint string) (*entity.Tokens, error) {
+	oldRefreshSession, err := s.repo.GetSession(ctx, fmt.Sprintf("%s:%s:%s", uid, fingerprint, RedisRefreshToken))
 	if err != nil {
 		return nil, fmt.Errorf("auth.Service.RefreshSessionToken: %v", err)
 	}
 
 	var tokens *entity.Tokens
-	switch oldTokenID.(type) {
-	case string:
-		accessToken, err := google.RefreshToken(ctx, oldTokenID.(string))
+	switch oldRefreshSession.TypeToken {
+	case entity.Google:
+		accessToken, err := google.RefreshToken(ctx, oldTokenID)
 		if err != nil {
 			return nil, fmt.Errorf("auth.Service.RefreshSessionToken: %v", err)
 		}
 
 		tokens = &entity.Tokens{
 			AccessToken:  accessToken,
-			RefreshToken: oldTokenID.(string),
+			RefreshToken: oldTokenID,
 		}
-	case uuid.UUID:
+	case entity.Email:
 		additionalTime := config.GetConfig().JWT.ExpireAccess
 		duration := time.Duration(additionalTime) * time.Second
-		accessToken, err := token.NewJWTToken(uuid.UUID(oldRefreshSession), newTokenID.(uuid.UUID), time.Now().UTC().Add(duration))
+		newTokenID := uuid.New()
+		accessToken, err := token.NewJWTToken(oldRefreshSession.UserID, newTokenID, time.Now().UTC().Add(duration))
 		if err != nil {
 			return nil, fmt.Errorf("auth.Service.CreateSession: %v", err)
 		}
 
 		tokens = &entity.Tokens{
 			AccessToken:  accessToken,
-			RefreshToken: newTokenID.(uuid.UUID).String(),
+			RefreshToken: newTokenID.String(),
 		}
 	default:
 		return nil, fmt.Errorf("auth.Service.RefreshSessionToken: %v", "unknown type")
 	}
 
-	err = s.addRefreshSession(ctx, fmt.Sprintf("%s:%s", fingerprint, tokens.RefreshToken), oldRefreshSession)
+	err = s.addRefreshSession(ctx, fmt.Sprintf("%s:%s:%s", uid, fingerprint, RedisRefreshToken), oldRefreshSession)
 	if err != nil {
 		return nil, fmt.Errorf("auth.Service.RefreshSessionToken: %v", err)
 	}
@@ -105,7 +107,7 @@ func (s *Service) RefreshSessionToken(ctx context.Context, newTokenID, oldTokenI
 		return nil, fmt.Errorf("auth.Service.RefreshSessionToken: %v", err)
 	}
 
-	err = s.userSvc.UpdateVisitedAt(ctx, uuid.UUID(oldRefreshSession))
+	err = s.userSvc.UpdateVisitedAt(ctx, oldRefreshSession.UserID)
 	if err != nil {
 		return nil, fmt.Errorf("auth.Service.RefreshSessionToken: %v", err)
 	}
@@ -126,7 +128,7 @@ func (s *Service) GoogleAuthUrl() string {
 	return google.GetAuthUrl()
 }
 
-func (s *Service) addRefreshSession(ctx context.Context, key string, refreshSession entity.Session) error {
+func (s *Service) addRefreshSession(ctx context.Context, key string, refreshSession *entity.Session) error {
 	ttl := time.Duration(config.GetConfig().JWT.ExpireRefresh) * time.Second
 	err := s.repo.SetSession(ctx, key, refreshSession, ttl)
 	if err != nil {

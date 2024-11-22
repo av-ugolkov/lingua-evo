@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"strconv"
 	"strings"
@@ -220,14 +221,16 @@ func (r *DictionaryRepo) GetRandomWord(ctx context.Context, langCode string) (en
 	query := fmt.Sprintf(`
 		SELECT id, text, pronunciation, lang_code 
 		FROM "%s" 
-		WHERE moderator IS NOT NULL 
 		ORDER BY RANDOM() 
 		LIMIT 1;`, table)
 	word := entity.DictWord{}
-	err := r.tr.QueryRow(ctx, query).Scan(&word.ID, &word.Text, &word.Pronunciation, &word.LangCode)
+	var pron sql.NullString
+	err := r.tr.QueryRow(ctx, query).Scan(&word.ID, &word.Text, &pron, &word.LangCode)
 	if err != nil {
 		return entity.DictWord{}, fmt.Errorf("dictionary.repository.DictionaryRepo.GetRandomWord - scan: %w", err)
 	}
+
+	word.Pronunciation = pron.String
 
 	return word, nil
 }

@@ -84,7 +84,7 @@ func (c *Context) DeleteCookie(name, path string) {
 }
 
 func (c *Context) GetHeaderAuthorization(typeAuth string) (string, error) {
-	token := c.Context.GetHeader("Authorization")
+	token := c.Context.GetHeader(Authorization)
 	if token == runtime.EmptyString {
 		return runtime.EmptyString, fmt.Errorf("ginext.Context.GetHeaderAuthorization: not found Authorization token")
 	}
