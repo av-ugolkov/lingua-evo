@@ -18,6 +18,11 @@ import (
 	"golang.org/x/oauth2/google"
 )
 
+const (
+	TokenInfo   = "https://oauth2.googleapis.com/tokeninfo?id_token=%s"
+	RemoveTokem = "https://oauth2.googleapis.com/revoke"
+)
+
 var googleConfig *oauth2.Config
 
 func InitClient(cfg *config.Google) {
@@ -111,49 +116,41 @@ func RefreshToken(ctx context.Context, refreshToken string) (string, error) {
 }
 
 func VerifyGoogleToken(idToken string, clientID string) (*GoogleTokenInfo, error) {
-	// Формируем URL запроса
-	url := fmt.Sprintf("https://oauth2.googleapis.com/tokeninfo?id_token=%s", idToken)
-
-	// Отправляем запрос к Google
-	resp, err := http.Get(url)
+	resp, err := http.Get(fmt.Sprintf(TokenInfo, idToken))
 	if err != nil {
-		return nil, fmt.Errorf("не удалось отправить запрос: %v", err)
+		return nil, fmt.Errorf("delivery.google.VerifyGoogleToken: %v", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("не удалось проверить токен, статус: %v", resp.StatusCode)
+		return nil, fmt.Errorf("delivery.google.VerifyGoogleToken: the checking token was failed")
 	}
 
-	// Парсим ответ
 	var tokenInfo GoogleTokenInfo
 	if err := jsoniter.NewDecoder(resp.Body).Decode(&tokenInfo); err != nil {
-		return nil, fmt.Errorf("ошибка декодирования ответа: %v", err)
+		return nil, fmt.Errorf("delivery.google.VerifyGoogleToken: %v", err)
 	}
 
-	// Проверяем клиента и срок действия токена
 	if tokenInfo.Audience != clientID {
-		return nil, fmt.Errorf("несовпадение client_id: %s", tokenInfo.Audience)
+		return nil, fmt.Errorf("delivery.google.VerifyGoogleToken: mismatch client_id: %s", tokenInfo.Audience)
 	}
 
 	if time.Now().Unix() > int64(tokenInfo.ExpiresIn) {
-		return nil, fmt.Errorf("токен истёк")
+		return nil, fmt.Errorf("delivery.google.VerifyGoogleToken: token is expired")
 	}
 
 	return &tokenInfo, nil
 }
 
 func RevokeGoogleToken(accessToken string) error {
-	tokenURL := "https://oauth2.googleapis.com/revoke"
-
 	data := url.Values{}
 	data.Set("client_id", googleConfig.ClientID)
 	data.Set("client_secret", googleConfig.ClientSecret)
 	data.Set("token", accessToken)
 
-	req, err := http.NewRequest("POST", tokenURL, bytes.NewBufferString(data.Encode()))
+	req, err := http.NewRequest("POST", RemoveTokem, bytes.NewBufferString(data.Encode()))
 	if err != nil {
-		return err
+		return fmt.Errorf("delivery.google.RevokeGoogleToken: %v", err)
 	}
 
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -161,22 +158,13 @@ func RevokeGoogleToken(accessToken string) error {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return err
+		return fmt.Errorf("delivery.google.RevokeGoogleToken: %v", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("не удалось удалить токен, статус: %v", resp.StatusCode)
+		return fmt.Errorf("delivery.google.RevokeGoogleToken: can't revoke token")
 	}
 
 	return nil
 }
-
-// func ParseGoogleOauthToken(ctx context.Context, token string) (any, error) {
-// 	payload, err := idtoken.Validate(ctx, token, config.GetConfig().Google.ClientID)
-// 	if err != nil {
-// 		return nil, fmt.Errorf("token.ParseGoogleOauthToken: %w", err)
-// 	}
-
-// 	return payload, nil
-// }

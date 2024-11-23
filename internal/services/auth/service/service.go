@@ -100,14 +100,22 @@ func (s *Service) RefreshSessionToken(ctx context.Context, uid uuid.UUID, oldTok
 	return tokens, nil
 }
 
-func (s *Service) SignOut(ctx context.Context, uid, refreshToken uuid.UUID, fingerprint string) error {
+func (s *Service) SignOut(ctx context.Context, uid uuid.UUID, refreshToken string, fingerprint string) error {
 	session, err := s.repo.GetSession(ctx, fmt.Sprintf("%s:%s:%s", uid, fingerprint, RedisRefreshToken))
 	if err != nil {
 		return fmt.Errorf("auth.Service.SignOut: %v", err)
 	}
 
-	if session.RefreshToken != refreshToken.String() {
+	if session.RefreshToken != refreshToken {
 		return fmt.Errorf("auth.Service.SignOut: %v", "refresh token not match")
+	}
+
+	switch session.TypeToken {
+	case entity.Google:
+		err = google.RevokeGoogleToken(session.RefreshToken)
+		if err != nil {
+			return fmt.Errorf("auth.Service.SignOut: %v", err)
+		}
 	}
 
 	err = s.repo.DeleteSession(ctx, fmt.Sprintf("%s:%s:%s", uid, fingerprint, RedisRefreshToken))

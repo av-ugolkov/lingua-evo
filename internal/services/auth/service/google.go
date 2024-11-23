@@ -14,8 +14,8 @@ import (
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/auth"
 	entityUser "github.com/av-ugolkov/lingua-evo/internal/services/user"
 	"github.com/av-ugolkov/lingua-evo/runtime"
-	"github.com/google/uuid"
 
+	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 )
 
