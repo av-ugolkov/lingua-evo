@@ -15,6 +15,8 @@ ssl:
 jwt:
     expire_access: 900 #15 min
     expire_refresh: 2592000 #30 days
+aes:
+    key: tjeTs9g02vmg6Ujyem36fmkq
 service:
     port: 5000
     allowed_origins:

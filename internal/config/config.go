@@ -18,6 +18,7 @@ type Config struct {
 	Email      Email      `yaml:"email"`
 	Kafka      Kafka      `yaml:"kafka"`
 	Google     Google     `yaml:"google"`
+	AES        Aes        `yaml:"aes"`
 }
 
 var instance *Config

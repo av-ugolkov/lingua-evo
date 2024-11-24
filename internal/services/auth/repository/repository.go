@@ -8,7 +8,6 @@ import (
 	"time"
 
 	authEntity "github.com/av-ugolkov/lingua-evo/internal/services/auth"
-	jsoniter "github.com/json-iterator/go"
 
 	"github.com/google/uuid"
 )
@@ -34,7 +33,7 @@ func NewRepo(r redis) *SessionRepo {
 }
 
 func (r *SessionRepo) SetSession(ctx context.Context, key string, s *authEntity.Session, expiration time.Duration) error {
-	data, err := s.JSON()
+	data, err := s.Marshal()
 	if err != nil {
 		return err
 	}
@@ -55,7 +54,7 @@ func (r *SessionRepo) GetSession(ctx context.Context, key string) (*authEntity.S
 	}
 
 	var session authEntity.Session
-	err = jsoniter.Unmarshal([]byte(value), &session)
+	err = session.Unmarshal([]byte(value))
 	if err != nil {
 		return nil, fmt.Errorf("auth.repository.SessionRepo.GetSession: %w", err)
 	}

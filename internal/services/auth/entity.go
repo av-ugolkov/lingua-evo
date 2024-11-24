@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/av-ugolkov/lingua-evo/internal/config"
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/aes"
 	"github.com/av-ugolkov/lingua-evo/runtime"
 	jsoniter "github.com/json-iterator/go"
 
@@ -59,10 +61,25 @@ type (
 	}
 )
 
-func (s *Session) JSON() ([]byte, error) {
+func (s *Session) Marshal() ([]byte, error) {
+	var err error
+	s.RefreshToken, err = aes.EncryptAES(s.RefreshToken, config.GetConfig().AES.Key)
+	if err != nil {
+		return nil, fmt.Errorf("auth.Session.Marshal: %w", err)
+	}
+
 	b, err := jsoniter.Marshal(s)
 	if err != nil {
-		return nil, fmt.Errorf("auth.Session.JSON: %w", err)
+		return nil, fmt.Errorf("auth.Session.Marshal: %w", err)
 	}
 	return b, nil
+}
+
+func (s *Session) Unmarshal(data []byte) error {
+	err := jsoniter.Unmarshal(data, &s)
+	if err != nil {
+		return fmt.Errorf("auth.Session.Unmarshal: %w", err)
+	}
+
+	return nil
 }

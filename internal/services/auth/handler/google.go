@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/av-ugolkov/lingua-evo/internal/config"
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/aes"
 	ginext "github.com/av-ugolkov/lingua-evo/internal/pkg/gin-ext"
 	msgerr "github.com/av-ugolkov/lingua-evo/internal/pkg/msg-error"
 	"github.com/av-ugolkov/lingua-evo/internal/services/auth"
@@ -62,6 +63,11 @@ func (h *Handler) googleAuth(c *ginext.Context) (int, any, error) {
 	additionalTime := config.GetConfig().JWT.ExpireRefresh
 	duration := time.Duration(additionalTime) * time.Second
 
-	c.SetCookieRefreshToken(tokens.RefreshToken, duration)
+	rt, err := aes.EncryptAES(tokens.RefreshToken, config.GetConfig().AES.Key)
+	if err != nil {
+		return http.StatusInternalServerError, nil, fmt.Errorf("auth.handler.Handler.googleAuth: %v", err)
+	}
+
+	c.SetCookieRefreshToken(rt, duration)
 	return http.StatusOK, sessionRs, nil
 }

@@ -116,3 +116,7 @@ type Google struct {
 	SecretPath  string `yaml:"secret_path"`
 	RedirectUrl string `yaml:"redirect_url"`
 }
+
+type Aes struct {
+	Key string `yaml:"key"`
+}
