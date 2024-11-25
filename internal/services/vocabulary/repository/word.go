@@ -27,7 +27,7 @@ func (r *VocabRepo) GetWord(ctx context.Context, wid uuid.UUID, nativeLang, tran
 			n.id as native_id,
 			n."text", 
 			coalesce(w.pronunciation, '') as pronunciation, 
-			description,
+			definition,
 			array_agg(distinct t."text") FILTER (WHERE t."text" IS NOT NULL) translates, 
 			array_agg(distinct e."text") FILTER (WHERE e."text" IS NOT NULL) examples
 		FROM word w
@@ -247,7 +247,7 @@ func (r *VocabRepo) GetVocabWords(ctx context.Context, vocabID uuid.UUID) ([]ent
 			n.id as native_id,
 			n."text",
 			coalesce(w.pronunciation, '') as pronunciation,
-			description,
+			definition,
 			array_agg(distinct t."text") FILTER (WHERE t."text" IS NOT NULL) translates,
 			array_agg(distinct e."text") FILTER (WHERE e."text" IS NOT NULL) examples,
 			w.updated_at,
@@ -375,13 +375,117 @@ func (r *VocabRepo) UpdateWord(ctx context.Context, vocabWord entity.VocabWord) 
 			updated_at=$6 
 		WHERE id=$7;`
 
-	result, err := r.tr.Exec(ctx, query, vocabWord.NativeID, vocabWord.Pronunciation, vocabWord.Definition, vocabWord.TranslateIDs, vocabWord.ExampleIDs, vocabWord.UpdatedAt.Format(time.RFC3339), vocabWord.ID)
+	result, err := r.tr.Exec(
+		ctx,
+		query,
+		vocabWord.NativeID,
+		vocabWord.Pronunciation,
+		vocabWord.Definition,
+		vocabWord.TranslateIDs,
+		vocabWord.ExampleIDs,
+		time.Now().UTC().Format(time.RFC3339),
+		vocabWord.ID)
 	if err != nil {
-		return fmt.Errorf("word.repository.WordRepo.UpdateWord - exec: %w", err)
+		return fmt.Errorf("service.vocabulary.repository.VocabRepo.UpdateWord: %w", err)
 	}
 
 	if rows := result.RowsAffected(); rows == 0 {
-		return fmt.Errorf("word.repository.WordRepo.UpdateWord - rows affected: %w", pgx.ErrNoRows)
+		return fmt.Errorf("service.vocabulary.repository.VocabRepo.UpdateWord: %w", pgx.ErrNoRows)
+	}
+
+	return nil
+}
+
+func (r *VocabRepo) UpdateWordText(ctx context.Context, vocabWord entity.VocabWord) error {
+	query := `
+		UPDATE word 
+		SET native_id=$1, 
+			updated_at=$2 
+		WHERE id=$3;`
+
+	result, err := r.tr.Exec(ctx, query, vocabWord.NativeID, time.Now().UTC().Format(time.RFC3339), vocabWord.ID)
+	if err != nil {
+		return fmt.Errorf("service.vocabulary.repository.VocabRepo.UpdateWordText: %w", err)
+	}
+
+	if rows := result.RowsAffected(); rows == 0 {
+		return fmt.Errorf("service.vocabulary.repository.VocabRepo.UpdateWordText: %w", pgx.ErrNoRows)
+	}
+
+	return nil
+}
+
+func (r *VocabRepo) UpdateWordPronunciation(ctx context.Context, vocabWord entity.VocabWord) error {
+	query := `
+		UPDATE word 
+		SET pronunciation=$1, 
+			updated_at=$2 
+		WHERE id=$3;`
+
+	result, err := r.tr.Exec(ctx, query, vocabWord.Pronunciation, time.Now().UTC().Format(time.RFC3339), vocabWord.ID)
+	if err != nil {
+		return fmt.Errorf("service.vocabulary.repository.VocabRepo.UpdateWordPronunciation: %w", err)
+	}
+
+	if rows := result.RowsAffected(); rows == 0 {
+		return fmt.Errorf("service.vocabulary.repository.VocabRepo.UpdateWordPronunciation: %w", pgx.ErrNoRows)
+	}
+
+	return nil
+}
+
+func (r *VocabRepo) UpdateWordDefinition(ctx context.Context, vocabWord entity.VocabWord) error {
+	query := `
+		UPDATE word 
+		SET definition=$1,  
+			updated_at=$2 
+		WHERE id=$3;`
+
+	result, err := r.tr.Exec(ctx, query, vocabWord.Definition, time.Now().UTC().Format(time.RFC3339), vocabWord.ID)
+	if err != nil {
+		return fmt.Errorf("service.vocabulary.repository.VocabRepo.UpdateWordDefinition: %w", err)
+	}
+
+	if rows := result.RowsAffected(); rows == 0 {
+		return fmt.Errorf("service.vocabulary.repository.VocabRepo.UpdateWordDefinition: %w", pgx.ErrNoRows)
+	}
+
+	return nil
+}
+
+func (r *VocabRepo) UpdateWordTranslates(ctx context.Context, vocabWord entity.VocabWord) error {
+	query := `
+		UPDATE word 
+		SET translate_ids=$1, 
+			updated_at=$2 
+		WHERE id=$3;`
+
+	result, err := r.tr.Exec(ctx, query, vocabWord.TranslateIDs, time.Now().UTC().Format(time.RFC3339), vocabWord.ID)
+	if err != nil {
+		return fmt.Errorf("service.vocabulary.repository.VocabRepo.UpdateWordTranslates: %w", err)
+	}
+
+	if rows := result.RowsAffected(); rows == 0 {
+		return fmt.Errorf("service.vocabulary.repository.VocabRepo.UpdateWordTranslates: %w", pgx.ErrNoRows)
+	}
+
+	return nil
+}
+
+func (r *VocabRepo) UpdateWordExamples(ctx context.Context, vocabWord entity.VocabWord) error {
+	query := `
+		UPDATE word 
+		SET example_ids=$1, 
+			updated_at=$2 
+		WHERE id=$3;`
+
+	result, err := r.tr.Exec(ctx, query, vocabWord.ExampleIDs, time.Now().UTC().Format(time.RFC3339), vocabWord.ID)
+	if err != nil {
+		return fmt.Errorf("service.vocabulary.repository.VocabRepo.UpdateWordExamples: %w", err)
+	}
+
+	if rows := result.RowsAffected(); rows == 0 {
+		return fmt.Errorf("service.vocabulary.repository.VocabRepo.UpdateWordExamples: %w", pgx.ErrNoRows)
 	}
 
 	return nil

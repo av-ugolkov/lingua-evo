@@ -70,6 +70,10 @@ func (s *Service) GetOrAddWords(ctx context.Context, inWords []DictWord) ([]Dict
 	words = append(words, getWords...)
 	words = append(words, addWords...)
 
+	if len(words) != len(inWords) {
+		return nil, msgerr.New(fmt.Errorf("dictionary.Service.AddWords: %w", ErrDuplicateWords), "There were some repeated words. Only unique words have been added.")
+	}
+
 	return words, nil
 }
 

@@ -24,6 +24,11 @@ type (
 		GetVocabWords(ctx context.Context, vid uuid.UUID) ([]entity.VocabWordData, error)
 		GetVocabSeveralWords(ctx context.Context, vid uuid.UUID, count int, nativeLang, translateLang string) ([]entity.VocabWordData, error)
 		UpdateWord(ctx context.Context, word entity.VocabWord) error
+		UpdateWordText(ctx context.Context, word entity.VocabWord) error
+		UpdateWordPronunciation(ctx context.Context, word entity.VocabWord) error
+		UpdateWordDefinition(ctx context.Context, word entity.VocabWord) error
+		UpdateWordTranslates(ctx context.Context, word entity.VocabWord) error
+		UpdateWordExamples(ctx context.Context, word entity.VocabWord) error
 		GetCountWords(ctx context.Context, uid uuid.UUID) (int, error)
 	}
 
@@ -127,7 +132,7 @@ func (s *Service) AddWord(ctx context.Context, uid uuid.UUID, vocabWordData enti
 func (s *Service) UpdateWord(ctx context.Context, uid uuid.UUID, vocabWordData entity.VocabWordData) (entity.VocabWord, error) {
 	vocab, err := s.GetVocabulary(ctx, uid, vocabWordData.VocabID)
 	if err != nil {
-		return entity.VocabWord{}, fmt.Errorf("word.Service.UpdateWord - get dictionary: %w", err)
+		return entity.VocabWord{}, fmt.Errorf("service.vocabulary.Service.UpdateWord: %w", err)
 	}
 
 	vocabWordData.Native.LangCode = vocab.NativeLang
@@ -135,7 +140,7 @@ func (s *Service) UpdateWord(ctx context.Context, uid uuid.UUID, vocabWordData e
 
 	nativeWords, err := s.dictSvc.GetOrAddWords(ctx, []entityDict.DictWord{vocabWordData.Native})
 	if err != nil {
-		return entity.VocabWord{}, fmt.Errorf("word.Service.UpdateWord - add native word in dictionary: %w", err)
+		return entity.VocabWord{}, fmt.Errorf("service.vocabulary.Service.UpdateWord: %w", err)
 	}
 	nativeWordID := nativeWords[0].ID
 
@@ -145,7 +150,7 @@ func (s *Service) UpdateWord(ctx context.Context, uid uuid.UUID, vocabWordData e
 	}
 	translateWords, err := s.dictSvc.GetOrAddWords(ctx, vocabWordData.Translates)
 	if err != nil {
-		return entity.VocabWord{}, fmt.Errorf("word.Service.UpdateWord - add translate word in dictionary: %w", err)
+		return entity.VocabWord{}, fmt.Errorf("service.vocabulary.Service.UpdateWord: %w", err)
 	}
 	translateWordIDs := make([]uuid.UUID, 0, len(translateWords))
 	for _, word := range translateWords {
@@ -154,7 +159,7 @@ func (s *Service) UpdateWord(ctx context.Context, uid uuid.UUID, vocabWordData e
 
 	exampleIDs, err := s.exampleSvc.AddExamples(ctx, vocabWordData.Examples, vocab.NativeLang)
 	if err != nil {
-		return entity.VocabWord{}, fmt.Errorf("word.Service.UpdateWord - add example: %w", err)
+		return entity.VocabWord{}, fmt.Errorf("service.vocabulary.Service.UpdateWord: %w", err)
 	}
 
 	vocabWord := entity.VocabWord{
@@ -170,7 +175,7 @@ func (s *Service) UpdateWord(ctx context.Context, uid uuid.UUID, vocabWordData e
 
 	err = s.repoVocab.UpdateWord(ctx, vocabWord)
 	if err != nil {
-		return entity.VocabWord{}, fmt.Errorf("word.Service.UpdateWord - update vocabulary: %w", err)
+		return entity.VocabWord{}, fmt.Errorf("service.vocabulary.Service.UpdateWord: %w", err)
 	}
 
 	eventType := entityEvents.VocabWordUpdated
@@ -182,6 +187,192 @@ func (s *Service) UpdateWord(ctx context.Context, uid uuid.UUID, vocabWordData e
 		Type: eventType,
 		Payload: entityEvents.PayloadDataVocab{
 			DictWordID: &nativeWordID,
+			DictWord:   vocabWordData.Native.Text,
+			VocabID:    &vocabWord.VocabID,
+			VocabTitle: vocab.Name,
+		},
+	})
+
+	return vocabWord, nil
+}
+
+func (s *Service) UpdateWordText(ctx context.Context, uid uuid.UUID, vocabWordData entity.VocabWordData) (entity.VocabWord, error) {
+	vocab, err := s.GetVocabulary(ctx, uid, vocabWordData.VocabID)
+	if err != nil {
+		return entity.VocabWord{}, fmt.Errorf("service.vocabulary.Service.UpdateWordText: %w", err)
+	}
+
+	vocabWordData.Native.LangCode = vocab.NativeLang
+	vocabWordData.Native.Creator = vocab.UserID
+
+	nativeWords, err := s.dictSvc.GetOrAddWords(ctx, []entityDict.DictWord{vocabWordData.Native})
+	if err != nil {
+		return entity.VocabWord{}, fmt.Errorf("service.vocabulary.Service.UpdateWordText: %w", err)
+	}
+	nativeWordID := nativeWords[0].ID
+
+	vocabWord := entity.VocabWord{
+		ID:       vocabWordData.ID,
+		VocabID:  vocabWordData.VocabID,
+		NativeID: nativeWordID,
+	}
+
+	err = s.repoVocab.UpdateWordText(ctx, vocabWord)
+	if err != nil {
+		return entity.VocabWord{}, fmt.Errorf("service.vocabulary.Service.UpdateWordText: %w", err)
+	}
+
+	eventType := entityEvents.VocabWordUpdated
+	if vocabWordData.Native.ID != nativeWordID {
+		eventType = entityEvents.VocabWordRenamed
+	}
+	s.eventsSvc.AsyncAddEvent(entityEvents.Event{
+		User: entityEvents.UserData{ID: uid},
+		Type: eventType,
+		Payload: entityEvents.PayloadDataVocab{
+			DictWordID: &nativeWordID,
+			DictWord:   vocabWordData.Native.Text,
+			VocabID:    &vocabWord.VocabID,
+			VocabTitle: vocab.Name,
+		},
+	})
+
+	return vocabWord, nil
+}
+
+func (s *Service) UpdateWordPronunciation(ctx context.Context, uid uuid.UUID, vocabWordData entity.VocabWordData) (entity.VocabWord, error) {
+	vocab, err := s.GetVocabulary(ctx, uid, vocabWordData.VocabID)
+	if err != nil {
+		return entity.VocabWord{}, fmt.Errorf("service.vocabulary.Service.UpdateWordPronunciation: %w", err)
+	}
+
+	vocabWord := entity.VocabWord{
+		ID:            vocabWordData.ID,
+		VocabID:       vocabWordData.VocabID,
+		Pronunciation: vocabWordData.Native.Pronunciation,
+	}
+
+	err = s.repoVocab.UpdateWordPronunciation(ctx, vocabWord)
+	if err != nil {
+		return entity.VocabWord{}, fmt.Errorf("service.vocabulary.Service.UpdateWordPronunciation: %w", err)
+	}
+
+	s.eventsSvc.AsyncAddEvent(entityEvents.Event{
+		User: entityEvents.UserData{ID: uid},
+		Type: entityEvents.VocabWordUpdated,
+		Payload: entityEvents.PayloadDataVocab{
+			DictWordID: &vocabWordData.Native.ID,
+			DictWord:   vocabWordData.Native.Text,
+			VocabID:    &vocabWord.VocabID,
+			VocabTitle: vocab.Name,
+		},
+	})
+
+	return vocabWord, nil
+}
+
+func (s *Service) UpdateWordDefinition(ctx context.Context, uid uuid.UUID, vocabWordData entity.VocabWordData) (entity.VocabWord, error) {
+	vocab, err := s.GetVocabulary(ctx, uid, vocabWordData.VocabID)
+	if err != nil {
+		return entity.VocabWord{}, fmt.Errorf("service.vocabulary.Service.UpdateWordDefinition: %w", err)
+	}
+
+	vocabWord := entity.VocabWord{
+		ID:         vocabWordData.ID,
+		VocabID:    vocabWordData.VocabID,
+		Definition: vocabWordData.Definition,
+	}
+
+	err = s.repoVocab.UpdateWordDefinition(ctx, vocabWord)
+	if err != nil {
+		return entity.VocabWord{}, fmt.Errorf("service.vocabulary.Service.UpdateWordDefinition: %w", err)
+	}
+
+	s.eventsSvc.AsyncAddEvent(entityEvents.Event{
+		User: entityEvents.UserData{ID: uid},
+		Type: entityEvents.VocabWordUpdated,
+		Payload: entityEvents.PayloadDataVocab{
+			DictWordID: &vocabWordData.Native.ID,
+			DictWord:   vocabWordData.Native.Text,
+			VocabID:    &vocabWord.VocabID,
+			VocabTitle: vocab.Name,
+		},
+	})
+
+	return vocabWord, nil
+}
+
+func (s *Service) UpdateWordTranslates(ctx context.Context, uid uuid.UUID, vocabWordData entity.VocabWordData) (entity.VocabWord, error) {
+	vocab, err := s.GetVocabulary(ctx, uid, vocabWordData.VocabID)
+	if err != nil {
+		return entity.VocabWord{}, fmt.Errorf("service.vocabulary.Service.UpdateWordTranslates: %w", err)
+	}
+
+	for i := 0; i < len(vocabWordData.Translates); i++ {
+		vocabWordData.Translates[i].LangCode = vocab.TranslateLang
+		vocabWordData.Translates[i].Creator = vocab.UserID
+	}
+	translateWords, err := s.dictSvc.GetOrAddWords(ctx, vocabWordData.Translates)
+	if err != nil {
+		return entity.VocabWord{}, fmt.Errorf("service.vocabulary.Service.UpdateWordTranslates: %w", err)
+	}
+	translateWordIDs := make([]uuid.UUID, 0, len(translateWords))
+	for _, word := range translateWords {
+		translateWordIDs = append(translateWordIDs, word.ID)
+	}
+
+	vocabWord := entity.VocabWord{
+		ID:           vocabWordData.ID,
+		VocabID:      vocabWordData.VocabID,
+		TranslateIDs: translateWordIDs,
+	}
+
+	err = s.repoVocab.UpdateWordTranslates(ctx, vocabWord)
+	if err != nil {
+		return entity.VocabWord{}, fmt.Errorf("service.vocabulary.Service.UpdateWordTranslates: %w", err)
+	}
+
+	s.eventsSvc.AsyncAddEvent(entityEvents.Event{
+		User: entityEvents.UserData{ID: uid},
+		Type: entityEvents.VocabWordUpdated,
+		Payload: entityEvents.PayloadDataVocab{
+			DictWordID: &vocabWordData.Native.ID,
+			DictWord:   vocabWordData.Native.Text,
+			VocabID:    &vocabWord.VocabID,
+			VocabTitle: vocab.Name,
+		},
+	})
+
+	return vocabWord, nil
+}
+
+func (s *Service) UpdateWordExamples(ctx context.Context, uid uuid.UUID, vocabWordData entity.VocabWordData) (entity.VocabWord, error) {
+	vocab, err := s.GetVocabulary(ctx, uid, vocabWordData.VocabID)
+	if err != nil {
+		return entity.VocabWord{}, fmt.Errorf("service.vocabulary.Service.UpdateWordExamples: %w", err)
+	}
+
+	exampleIDs, err := s.exampleSvc.AddExamples(ctx, vocabWordData.Examples, vocab.NativeLang)
+	if err != nil {
+		return entity.VocabWord{}, fmt.Errorf("service.vocabulary.Service.UpdateWordExamples: %w", err)
+	}
+
+	vocabWord := entity.VocabWord{
+		ID:         vocabWordData.ID,
+		VocabID:    vocabWordData.VocabID,
+		ExampleIDs: exampleIDs,
+	}
+
+	err = s.repoVocab.UpdateWordExamples(ctx, vocabWord)
+	if err != nil {
+		return entity.VocabWord{}, fmt.Errorf("service.vocabulary.Service.UpdateWordExamples: %w", err)
+	}
+
+	s.eventsSvc.AsyncAddEvent(entityEvents.Event{
+		User: entityEvents.UserData{ID: uid},
+		Type: entityEvents.VocabWordUpdated,
+		Payload: entityEvents.PayloadDataVocab{
+			DictWordID: &vocabWordData.Native.ID,
 			DictWord:   vocabWordData.Native.Text,
 			VocabID:    &vocabWord.VocabID,
 			VocabTitle: vocab.Name,

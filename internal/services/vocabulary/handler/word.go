@@ -168,64 +168,60 @@ func (h *Handler) addWord(c *ginext.Context) (int, any, error) {
 
 func (h *Handler) updateWord(c *ginext.Context) (int, any, error) {
 	ctx := c.Request.Context()
-
 	userID, err := runtime.UserIDFromContext(ctx)
 	if err != nil {
-		return http.StatusUnauthorized, nil, fmt.Errorf("word.delivery.Handler.updateWord: %v", err)
+		return http.StatusUnauthorized, nil, fmt.Errorf("service.vocabulary.Handler.updateWord: %v", err)
 	}
 
 	var data VocabWordRq
 	err = c.Bind(&data)
 	if err != nil {
 		return http.StatusInternalServerError, nil,
-			msgerr.New(fmt.Errorf("word.delivery.Handler.updateWord: %v", err),
+			msgerr.New(fmt.Errorf("service.vocabulary.Handler.updateWord: %v", err),
 				msgerr.ErrMsgBadRequest)
 	}
 
 	if utf8.RuneCountInString(data.Native.Text) > 100 {
 		return http.StatusBadRequest, nil,
-			msgerr.New(fmt.Errorf("word.delivery.Handler.updateWord: word is too long"),
+			msgerr.New(fmt.Errorf("service.vocabulary.Handler.updateWord: word is too long"),
 				ErrWordTooLong)
 	}
 
 	if utf8.RuneCountInString(data.Native.Pronunciation) > 100 {
 		return http.StatusBadRequest, nil,
-			msgerr.New(fmt.Errorf("word.delivery.Handler.updateWord: pronunciation is too long"),
+			msgerr.New(fmt.Errorf("service.vocabulary.Handler.updateWord: pronunciation is too long"),
 				ErrPronunciationTooLong)
 	}
 
 	if utf8.RuneCountInString(data.Definition) > 100 {
 		return http.StatusBadRequest, nil,
-			msgerr.New(fmt.Errorf("word.delivery.Handler.updateWord: definition is too long"),
+			msgerr.New(fmt.Errorf("service.vocabulary.Handler.updateWord: definition is too long"),
 				ErrDefinitionTooLong)
 	}
 
 	if len(data.Translates) > 10 {
 		return http.StatusBadRequest, nil,
-			msgerr.New(fmt.Errorf("word.delivery.Handler.updateWord: translates more than 10"),
+			msgerr.New(fmt.Errorf("service.vocabulary.Handler.updateWord: translates more than 10"),
 				ErrCountTranslates)
 	}
 
 	if len(data.Examples) > 5 {
 		return http.StatusBadRequest, nil,
-			msgerr.New(fmt.Errorf("word.delivery.Handler.updateWord: translates more than 5"),
+			msgerr.New(fmt.Errorf("service.vocabulary.Handler.updateWord: translates more than 5"),
 				ErrCountExamples)
 	}
 
 	translates := make([]entityDict.DictWord, 0, len(data.Translates))
 	for _, tr := range data.Translates {
 		translates = append(translates, entityDict.DictWord{
-			Text:      tr,
-			CreatedAt: time.Now().UTC(),
-			UpdatedAt: time.Now().UTC(),
+			Text: tr,
 		})
 	}
 
 	examples := make([]entityExample.Example, 0, len(data.Examples))
 	for _, example := range data.Examples {
 		examples = append(examples, entityExample.Example{
-			Text:      example,
-			CreatedAt: time.Now().UTC(),
+			Text: example,
 		})
 	}
 
@@ -236,16 +232,14 @@ func (h *Handler) updateWord(c *ginext.Context) (int, any, error) {
 			ID:            *data.Native.ID,
 			Text:          data.Native.Text,
 			Pronunciation: data.Native.Pronunciation,
-			UpdatedAt:     time.Now().UTC(),
 		},
 		Definition: data.Definition,
 		Translates: translates,
 		Examples:   examples,
-		UpdatedAt:  time.Now().UTC(),
 	})
 	if err != nil {
 		return http.StatusInternalServerError, nil,
-			fmt.Errorf("word.delivery.Handler.updateWord: %v", err)
+			fmt.Errorf("service.vocabulary.Handler.updateWord: %v", err)
 	}
 
 	wordRs := &VocabWordRs{
@@ -253,6 +247,227 @@ func (h *Handler) updateWord(c *ginext.Context) (int, any, error) {
 		Native: &VocabWord{
 			ID: &vocabWord.NativeID,
 		},
+		Updated: vocabWord.UpdatedAt.UnixMilli(),
+	}
+
+	return http.StatusOK, wordRs, nil
+}
+
+func (h *Handler) updateWordText(c *ginext.Context) (int, any, error) {
+	ctx := c.Request.Context()
+	userID, err := runtime.UserIDFromContext(ctx)
+	if err != nil {
+		return http.StatusUnauthorized, nil, fmt.Errorf("service.vocabulary.Handler.updateWordText: %v", err)
+	}
+
+	var data VocabWordRq
+	err = c.Bind(&data)
+	if err != nil {
+		return http.StatusInternalServerError, nil,
+			msgerr.New(fmt.Errorf("service.vocabulary.Handler.updateWordText: %v", err),
+				msgerr.ErrMsgBadRequest)
+	}
+
+	if utf8.RuneCountInString(data.Native.Text) > 100 {
+		return http.StatusBadRequest, nil,
+			msgerr.New(fmt.Errorf("service.vocabulary.Handler.updateWordText: word is too long"),
+				ErrWordTooLong)
+	}
+
+	vocabWord, err := h.vocabSvc.UpdateWordText(ctx, userID, entity.VocabWordData{
+		ID:      *data.ID,
+		VocabID: data.VocabID,
+		Native: entityDict.DictWord{
+			ID:   *data.Native.ID,
+			Text: data.Native.Text,
+		},
+	})
+	if err != nil {
+		return http.StatusInternalServerError, nil,
+			fmt.Errorf("service.vocabulary.Handler.updateWordText: %v", err)
+	}
+
+	wordRs := &VocabWordRs{
+		ID: &vocabWord.ID,
+		Native: &VocabWord{
+			ID: &vocabWord.NativeID,
+		},
+		Updated: vocabWord.UpdatedAt.UnixMilli(),
+	}
+
+	return http.StatusOK, wordRs, nil
+}
+
+func (h *Handler) updateWordPronunciation(c *ginext.Context) (int, any, error) {
+	ctx := c.Request.Context()
+	userID, err := runtime.UserIDFromContext(ctx)
+	if err != nil {
+		return http.StatusUnauthorized, nil, fmt.Errorf("service.vocabulary.Handler.updateWordPronunciation: %v", err)
+	}
+
+	var data VocabWordRq
+	err = c.Bind(&data)
+	if err != nil {
+		return http.StatusInternalServerError, nil,
+			msgerr.New(fmt.Errorf("service.vocabulary.Handler.updateWordPronunciation: %v", err),
+				msgerr.ErrMsgBadRequest)
+	}
+
+	if utf8.RuneCountInString(data.Native.Pronunciation) > 100 {
+		return http.StatusBadRequest, nil,
+			msgerr.New(fmt.Errorf("service.vocabulary.Handler.updateWordPronunciation: pronunciation is too long"),
+				ErrPronunciationTooLong)
+	}
+
+	vocabWord, err := h.vocabSvc.UpdateWordPronunciation(ctx, userID, entity.VocabWordData{
+		ID:      *data.ID,
+		VocabID: data.VocabID,
+		Native: entityDict.DictWord{
+			ID:            *data.Native.ID,
+			Pronunciation: data.Native.Pronunciation,
+		},
+	})
+	if err != nil {
+		return http.StatusInternalServerError, nil,
+			fmt.Errorf("service.vocabulary.Handler.updateWordPronunciation: %v", err)
+	}
+
+	wordRs := &VocabWordRs{
+		ID:      &vocabWord.ID,
+		Updated: vocabWord.UpdatedAt.UnixMilli(),
+	}
+
+	return http.StatusOK, wordRs, nil
+}
+
+func (h *Handler) updateWordDefinition(c *ginext.Context) (int, any, error) {
+	ctx := c.Request.Context()
+	userID, err := runtime.UserIDFromContext(ctx)
+	if err != nil {
+		return http.StatusUnauthorized, nil, fmt.Errorf("service.vocabulary.Handler.updateWordDefinition: %v", err)
+	}
+
+	var data VocabWordRq
+	err = c.Bind(&data)
+	if err != nil {
+		return http.StatusInternalServerError, nil,
+			msgerr.New(fmt.Errorf("service.vocabulary.Handler.updateWordDefinition: %v", err),
+				msgerr.ErrMsgBadRequest)
+	}
+
+	if utf8.RuneCountInString(data.Definition) > 100 {
+		return http.StatusBadRequest, nil,
+			msgerr.New(fmt.Errorf("service.vocabulary.Handler.updateWordDefinition: definition is too long"),
+				ErrDefinitionTooLong)
+	}
+
+	vocabWord, err := h.vocabSvc.UpdateWordDefinition(ctx, userID, entity.VocabWordData{
+		ID:         *data.ID,
+		VocabID:    data.VocabID,
+		Definition: data.Definition,
+	})
+	if err != nil {
+		return http.StatusInternalServerError, nil,
+			fmt.Errorf("service.vocabulary.Handler.updateWordDefinition: %v", err)
+	}
+
+	wordRs := &VocabWordRs{
+		ID:      &vocabWord.ID,
+		Updated: vocabWord.UpdatedAt.UnixMilli(),
+	}
+
+	return http.StatusOK, wordRs, nil
+}
+
+func (h *Handler) updateWordTranslates(c *ginext.Context) (int, any, error) {
+	ctx := c.Request.Context()
+	userID, err := runtime.UserIDFromContext(ctx)
+	if err != nil {
+		return http.StatusUnauthorized, nil, fmt.Errorf("service.vocabulary.Handler.updateWordTranslates: %v", err)
+	}
+
+	var data VocabWordRq
+	err = c.Bind(&data)
+	if err != nil {
+		return http.StatusInternalServerError, nil,
+			msgerr.New(fmt.Errorf("service.vocabulary.Handler.updateWordTranslates: %v", err),
+				msgerr.ErrMsgBadRequest)
+	}
+
+	if len(data.Translates) > 10 {
+		return http.StatusBadRequest, nil,
+			msgerr.New(fmt.Errorf("service.vocabulary.Handler.updateWordTranslates: translates more than 10"),
+				ErrCountTranslates)
+	}
+
+	translates := make([]entityDict.DictWord, 0, len(data.Translates))
+	for _, tr := range data.Translates {
+		translates = append(translates, entityDict.DictWord{
+			Text: tr,
+		})
+	}
+
+	vocabWord, err := h.vocabSvc.UpdateWordTranslates(ctx, userID, entity.VocabWordData{
+		ID:         *data.ID,
+		VocabID:    data.VocabID,
+		Translates: translates,
+	})
+	switch {
+	case errors.Is(err, entityDict.ErrDuplicateWords):
+		return http.StatusConflict, nil, fmt.Errorf("service.vocabulary.Handler.updateWordTranslates: %w", err)
+	case err != nil:
+		return http.StatusInternalServerError, nil,
+			fmt.Errorf("service.vocabulary.Handler.updateWordTranslates: %w", err)
+	}
+
+	wordRs := &VocabWordRs{
+		ID:      &vocabWord.ID,
+		Updated: vocabWord.UpdatedAt.UnixMilli(),
+	}
+
+	return http.StatusOK, wordRs, nil
+}
+
+func (h *Handler) updateWordExamples(c *ginext.Context) (int, any, error) {
+	ctx := c.Request.Context()
+	userID, err := runtime.UserIDFromContext(ctx)
+	if err != nil {
+		return http.StatusUnauthorized, nil, fmt.Errorf("service.vocabulary.Handler.updateWordExamples: %v", err)
+	}
+
+	var data VocabWordRq
+	err = c.Bind(&data)
+	if err != nil {
+		return http.StatusInternalServerError, nil,
+			msgerr.New(fmt.Errorf("service.vocabulary.Handler.updateWordExamples: %v", err),
+				msgerr.ErrMsgBadRequest)
+	}
+
+	if len(data.Examples) > 5 {
+		return http.StatusBadRequest, nil,
+			msgerr.New(fmt.Errorf("service.vocabulary.Handler.updateWordExamples: translates more than 5"),
+				ErrCountExamples)
+	}
+
+	examples := make([]entityExample.Example, 0, len(data.Examples))
+	for _, example := range data.Examples {
+		examples = append(examples, entityExample.Example{
+			Text: example,
+		})
+	}
+
+	vocabWord, err := h.vocabSvc.UpdateWordExamples(ctx, userID, entity.VocabWordData{
+		ID:       *data.ID,
+		VocabID:  data.VocabID,
+		Examples: examples,
+	})
+	if err != nil {
+		return http.StatusInternalServerError, nil,
+			fmt.Errorf("service.vocabulary.Handler.updateWordExamples: %v", err)
+	}
+
+	wordRs := &VocabWordRs{
+		ID:      &vocabWord.ID,
 		Updated: vocabWord.UpdatedAt.UnixMilli(),
 	}
 

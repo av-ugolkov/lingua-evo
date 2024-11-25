@@ -8,7 +8,8 @@ import (
 )
 
 var (
-	ErrorAffectRows = errors.New("more than 1 affected rows have changed")
+	ErrAffectRows     = errors.New("more than 1 affected rows have changed")
+	ErrDuplicateWords = errors.New("duplicate words")
 )
 
 type DictWord struct {

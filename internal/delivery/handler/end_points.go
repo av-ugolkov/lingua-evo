@@ -36,10 +36,15 @@ const (
 	VocabularyAccessForUser = "/vocabulary/access/user"   //get post delete patch
 	VocabulariesByUser      = "/vocabularies/user"        //get
 
-	VocabularyWord       = "/vocabulary/word"               //get post delete
-	VocabularyWordUpdate = "/vocabulary/word/update"        //post
-	VocabularyWords      = "/vocabulary/words"              //get
-	WordPronunciation    = "/vocabulary/word/pronunciation" //get
+	VocabularyWord                    = "/vocabulary/word"                      //get post delete
+	VocabularyWordUpdateFull          = "/vocabulary/word/update/word"          //post
+	VocabularyWordUpdateText          = "/vocabulary/word/update/text"          //post
+	VocabularyWordUpdatePronunciation = "/vocabulary/word/update/pronunciation" //post
+	VocabularyWordUpdateDefinition    = "/vocabulary/word/update/definition"    //post
+	VocabularyWordUpdateTranslates    = "/vocabulary/word/update/translates"    //post
+	VocabularyWordUpdateExamples      = "/vocabulary/word/update/examples"      //post
+	VocabularyWords                   = "/vocabulary/words"                     //get
+	WordPronunciation                 = "/vocabulary/word/pronunciation"        //get
 
 	VocabularyTags = "/vocabulary/tag" //get
 
