@@ -3,7 +3,6 @@ package redis
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"time"
 
 	"github.com/av-ugolkov/lingua-evo/internal/config"
@@ -37,6 +36,7 @@ func (r *Redis) Get(ctx context.Context, key string) (string, error) {
 	if err != nil {
 		return runtime.EmptyString, fmt.Errorf("redis.Get - key [%s]: %w", key, err)
 	}
+
 	return value, nil
 }
 
@@ -52,20 +52,6 @@ func (r *Redis) Delete(ctx context.Context, key string) (int64, error) {
 	return r.client.Del(ctx, key).Result()
 }
 
-func (r *Redis) GetTTL(ct context.Context, key string) (time.Duration, error) {
-	return r.client.TTL(ct, key).Result()
-}
-
-func (r *Redis) GetAccountCode(ctx context.Context, email string) (int, error) {
-	codeStr, err := r.Get(ctx, email)
-	if err != nil {
-		return 0, fmt.Errorf("redis.GetAccountCode: %w", err)
-	}
-
-	code, err := strconv.Atoi(codeStr)
-	if err != nil {
-		return 0, fmt.Errorf("redis.GetAccountCode - convert string to int: %w", err)
-	}
-
-	return code, nil
+func (r *Redis) GetTTL(ctx context.Context, key string) (time.Duration, error) {
+	return r.client.TTL(ctx, key).Result()
 }

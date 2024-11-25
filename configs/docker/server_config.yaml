@@ -13,8 +13,10 @@ ssl:
     public: fullchain.pem
     private: privkey.pem
 jwt:
-    expire_access: 300 #5 min
+    expire_access: 900 #15 min
     expire_refresh: 2592000 #30 days
+aes:
+    key: tjeTs9g02vmg6Ujyem36fmkq
 service:
     port: 5000
     allowed_origins:
@@ -49,3 +51,6 @@ kafka:
     port: 9091
     topics:
         - user_action
+google:
+    secret_path: ./google_client_secret.json
+    redirect_url: "https://linguaevo.twc1.net/"

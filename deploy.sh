@@ -8,7 +8,7 @@ dev() {
   jwts="$(cat jwt.env | grep JWTS | cut -d "=" -f2)"
   pg_psw="$(cat db.env | grep PG_PSW | cut -d "=" -f2)"
   redis_psw="$(cat db.env | grep REDIS_PSW | cut -d "=" -f2)"
-
+  
   BRANCH=${BRANCH} \
   COMMIT=${COMMIT} \
   EPSW=${epsw} \

@@ -51,7 +51,7 @@ func TestMain(m *testing.M) {
 	}
 	tagSvc := tag.NewService(repository.NewRepo(tr))
 
-	vocabSvc = NewService(tr, vocabRepo.NewRepo(tr), userTestSvc, nil, nil, tagSvc, subscrbTestSvc, nil)
+	vocabSvc = NewService(tr, vocabRepo.NewRepo(tr), nil, nil, tagSvc, subscrbTestSvc, nil)
 }
 
 func TestService_UserGetVocabularies(t *testing.T) {
@@ -140,14 +140,12 @@ func TestService_UserGetVocabularies(t *testing.T) {
 			}
 
 			for i := 0; i < 3; i++ {
-				uid, err := userTestSvc.AddUser(ctx, entityUser.UserCreate{
+				uid, err := userTestSvc.AddUser(ctx, entityUser.User{
 					ID:       uuid.New(),
 					Nickname: fmt.Sprintf("user_%d", i),
-					Password: fmt.Sprintf("password_%d", i),
 					Email:    fmt.Sprintf("user_%d@user_%d.com", i, i),
 					Role:     runtime.User,
-					Code:     0,
-				})
+				}, fmt.Sprintf("password_%d", i))
 				if err != nil {
 					return err
 				}

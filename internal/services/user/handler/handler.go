@@ -3,15 +3,11 @@ package handler
 import (
 	"fmt"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler/middleware"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/gin-ext"
-	"github.com/av-ugolkov/lingua-evo/internal/pkg/msg-error"
-	"github.com/av-ugolkov/lingua-evo/internal/pkg/utils"
-	entity "github.com/av-ugolkov/lingua-evo/internal/services/user"
 	user "github.com/av-ugolkov/lingua-evo/internal/services/user/service"
 	"github.com/av-ugolkov/lingua-evo/runtime"
 
@@ -28,18 +24,8 @@ const (
 )
 
 type (
-	CreateUserRq struct {
-		Password string `json:"password"`
-		Email    string `json:"email"`
-		Code     int    `json:"code"`
-	}
-
 	GetValueRq struct {
 		Value string `json:"value"`
-	}
-
-	CreateUserRs struct {
-		UserID uuid.UUID `json:"user_id"`
 	}
 
 	UserRs struct {
@@ -56,61 +42,14 @@ type Handler struct {
 }
 
 func Create(g *ginext.Engine, userSvc *user.Service) {
-	h := newHandler(userSvc)
+	h := &Handler{
+		userSvc: userSvc,
+	}
 
-	g.POST(handler.SignUp, h.signUp)
 	g.GET(handler.UserByID, middleware.Auth(h.getUserByID))
 	g.GET(handler.Users, h.getUsers)
 
 	h.initSettingsHandler(g)
-}
-
-func newHandler(userSvc *user.Service) *Handler {
-	return &Handler{
-		userSvc: userSvc,
-	}
-}
-
-func (h *Handler) signUp(c *ginext.Context) (int, any, error) {
-	var data CreateUserRq
-	err := c.Bind(&data)
-	if err != nil {
-		return http.StatusBadRequest, nil,
-			msgerr.New(
-				fmt.Errorf("user.delivery.Handler.signUp: %v", err),
-				msgerr.ErrMsgBadRequest)
-
-	}
-
-	if !utils.IsPasswordValid(data.Password) {
-		return http.StatusBadRequest, nil,
-			msgerr.New(fmt.Errorf("user.delivery.Handler.signUp: invalid password"),
-				"Invalid password")
-	}
-
-	if !utils.IsEmailValid(data.Email) {
-		return http.StatusBadRequest, nil,
-			msgerr.New(fmt.Errorf("user.delivery.Handler.signUp: invalid email"),
-				msgerr.ErrMsgBadEmail)
-	}
-
-	uid, err := h.userSvc.SignUp(c.Request.Context(), entity.UserCreate{
-		Nickname: strings.Split(data.Email, "@")[0],
-		Password: data.Password,
-		Email:    data.Email,
-		Role:     runtime.User,
-		Code:     data.Code,
-	})
-	if err != nil {
-		return http.StatusInternalServerError, nil,
-			fmt.Errorf("user.delivery.Handler.signUp: %v", err)
-	}
-
-	createUserRs := &CreateUserRs{
-		UserID: uid,
-	}
-
-	return http.StatusCreated, createUserRs, nil
 }
 
 func (h *Handler) getUserByID(c *ginext.Context) (int, any, error) {

@@ -45,8 +45,8 @@ test:
 gosec:
 	gosec ./...
 
-.PHONY: count line
-count line:
+.PHONY: count-line
+count-line:
 	find . -name '*.go' | xargs wc -l
 
 .PHONY: pprof.cpu

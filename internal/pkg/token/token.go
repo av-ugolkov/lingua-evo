@@ -19,11 +19,11 @@ type (
 	}
 )
 
-func NewJWTToken(uid, sid uuid.UUID, expiresAt time.Time) (string, error) {
+func NewJWTToken(uid uuid.UUID, sid string, expiresAt time.Time) (string, error) {
 	userClaims := UserClaims{
 		UserID: uid,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ID:        sid.String(),
+			ID:        sid,
 			Audience:  []string{"users"},
 			ExpiresAt: jwt.NewNumericDate(expiresAt),
 		},

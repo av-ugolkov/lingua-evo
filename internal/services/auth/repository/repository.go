@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"time"
 
 	authEntity "github.com/av-ugolkov/lingua-evo/internal/services/auth"
@@ -30,22 +31,32 @@ func NewRepo(r redis) *SessionRepo {
 	}
 }
 
-func (r *SessionRepo) SetSession(ctx context.Context, key string, s authEntity.Session, expiration time.Duration) error {
-	b, err := r.redis.SetNX(ctx, key, s.String(), expiration)
-	if !b {
+func (r *SessionRepo) SetSession(ctx context.Context, key string, s *authEntity.Session, expiration time.Duration) error {
+	data, err := s.Marshal()
+	if err != nil {
 		return err
 	}
+
+	_, err = r.redis.Set(ctx, key, data, expiration)
+	if err != nil {
+		return fmt.Errorf("auth.repository.SessionRepo.SetSession: %w", err)
+	}
+
 	return nil
 }
 
-func (r *SessionRepo) GetSession(ctx context.Context, key string) (authEntity.Session, error) {
+func (r *SessionRepo) GetSession(ctx context.Context, key string) (*authEntity.Session, error) {
 	value, err := r.redis.Get(ctx, key)
 	if err != nil {
-		return authEntity.Session(uuid.Nil), fmt.Errorf("auth.repository.SessionRepo.GetSession: %w", err)
+		return nil, fmt.Errorf("auth.repository.SessionRepo.GetSession: %w", err)
 	}
 
-	s := authEntity.Session(uuid.MustParse(value))
-	return s, nil
+	var session authEntity.Session
+	err = session.Unmarshal([]byte(value))
+	if err != nil {
+		return nil, fmt.Errorf("auth.repository.SessionRepo.GetSession: %w", err)
+	}
+	return &session, nil
 }
 
 func (r *SessionRepo) GetCountSession(ctx context.Context, userID uuid.UUID) (int64, error) {
@@ -72,4 +83,18 @@ func (r *SessionRepo) SetAccountCode(ctx context.Context, email string, code int
 	}
 
 	return nil
+}
+
+func (r *SessionRepo) GetAccountCode(ctx context.Context, email string) (int, error) {
+	value, err := r.redis.Get(ctx, email)
+	if err != nil {
+		return 0, fmt.Errorf("auth.repository.SessionRepo.GetAccountCode: %w", err)
+	}
+
+	code, err := strconv.Atoi(value)
+	if err != nil {
+		return 0, fmt.Errorf("auth.repository.SessionRepo.GetAccountCode: %w", err)
+	}
+
+	return code, nil
 }

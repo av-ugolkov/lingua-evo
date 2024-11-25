@@ -12,13 +12,14 @@ ssl:
     public: fullchain.pem
     private: privkey.pem
 jwt:
-    expire_access: 180 #3 min
+    expire_access: 300 #5 min
     expire_refresh: 2592000 #30 days
+aes:
+    key: 1234567890123456
 service:
     port: 5000
     allowed_origins:
         - "http://localhost:5173"
-        - "https://localhost:5173"
 postgres:
     name: pg-lingua-evo
     user: lingua
@@ -45,3 +46,6 @@ kafka:
     port: 9091
     topics:
         - user_action
+google:
+    secret_path: ../google_client_secret_dev.json
+    redirect_url: "http://localhost:5173"

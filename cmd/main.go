@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"log/slog"
 
 	"github.com/av-ugolkov/lingua-evo/internal/app"
 	"github.com/av-ugolkov/lingua-evo/internal/config"
@@ -30,8 +29,7 @@ func main() {
 	if jwtSecret == runtime.EmptyString ||
 		pgPsw == runtime.EmptyString ||
 		redisPsw == runtime.EmptyString {
-		slog.Error("empty jwts, pg_psw or redis_psw")
-		return
+		panic("empty jwts, pg_psw or redis_psw")
 	}
 
 	cfg := config.InitConfig(configPath)

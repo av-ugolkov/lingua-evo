@@ -3,6 +3,7 @@ package ginext
 import (
 	"errors"
 	"log/slog"
+	"net/http"
 
 	msgerr "github.com/av-ugolkov/lingua-evo/internal/pkg/msg-error"
 	"github.com/gin-gonic/gin"
@@ -25,20 +26,23 @@ func execHandlers(gc *gin.Context, handlers ...HandlerFunc) {
 	for _, h := range handlers {
 		c := NewContext(gc)
 		status, resp, err := h(c)
-
-		obj := gin.H{"resp": resp}
-		if err != nil {
-			slog.Error(err.Error())
-			var e *msgerr.ApiError
-			switch {
-			case errors.As(err, &e):
-				obj["msg"] = e.Msg
-			default:
-				obj["msg"] = err.Error()
+		switch status {
+		case http.StatusPermanentRedirect, http.StatusTemporaryRedirect:
+			c.Redirect(status, resp.(string))
+		default:
+			obj := gin.H{"resp": resp}
+			if err != nil {
+				slog.Error(err.Error())
+				var e *msgerr.ApiError
+				switch {
+				case errors.As(err, &e):
+					obj["msg"] = e.Msg
+				default:
+					obj["msg"] = err.Error()
+				}
 			}
+			c.JSON(status, obj)
 		}
-
-		c.JSON(status, obj)
 
 	}
 }

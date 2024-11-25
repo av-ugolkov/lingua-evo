@@ -54,7 +54,6 @@ type (
 type Service struct {
 	tr             *transactor.Transactor
 	repoVocab      repoVocab
-	userSvc        userSvc
 	exampleSvc     exampleSvc
 	dictSvc        dictSvc
 	tagSvc         tagSvc
@@ -65,7 +64,6 @@ type Service struct {
 func NewService(
 	tr *transactor.Transactor,
 	repoVocab repoVocab,
-	userSvc userSvc,
 	exampleSvc exampleSvc,
 	dictSvc dictSvc,
 	tagSvc tagSvc,
@@ -75,7 +73,6 @@ func NewService(
 	return &Service{
 		tr:             tr,
 		repoVocab:      repoVocab,
-		userSvc:        userSvc,
 		exampleSvc:     exampleSvc,
 		dictSvc:        dictSvc,
 		tagSvc:         tagSvc,

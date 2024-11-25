@@ -20,6 +20,7 @@ import (
 	pg "github.com/av-ugolkov/lingua-evo/internal/db/postgres"
 	"github.com/av-ugolkov/lingua-evo/internal/db/redis"
 	"github.com/av-ugolkov/lingua-evo/internal/db/transactor"
+	"github.com/av-ugolkov/lingua-evo/internal/delivery/google"
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/kafka"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/analytic"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/gin-ext"
@@ -27,9 +28,9 @@ import (
 	accessService "github.com/av-ugolkov/lingua-evo/internal/services/access"
 	accessHandler "github.com/av-ugolkov/lingua-evo/internal/services/access/handler"
 	accessRepository "github.com/av-ugolkov/lingua-evo/internal/services/access/repository"
-	authService "github.com/av-ugolkov/lingua-evo/internal/services/auth"
 	authHandler "github.com/av-ugolkov/lingua-evo/internal/services/auth/handler"
 	authRepository "github.com/av-ugolkov/lingua-evo/internal/services/auth/repository"
+	authService "github.com/av-ugolkov/lingua-evo/internal/services/auth/service"
 	dictService "github.com/av-ugolkov/lingua-evo/internal/services/dictionary"
 	dictHandler "github.com/av-ugolkov/lingua-evo/internal/services/dictionary/handler"
 	dictRepository "github.com/av-ugolkov/lingua-evo/internal/services/dictionary/repository"
@@ -75,6 +76,8 @@ func ServerStart(cfg *config.Config) {
 		initPprof(&cfg.PprofDebug)
 	}
 
+	google.InitClient(&cfg.Google)
+
 	pgxPool, err := pg.NewDB(cfg.DbSQL.PgxPoolConfig())
 	if err != nil {
 		slog.Error(fmt.Sprintf("can't create pg pool: %v", err))
@@ -106,6 +109,7 @@ func ServerStart(cfg *config.Config) {
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"},
 		AllowCredentials: true,
 		AllowHeaders:     []string{"Authorization", "Content-Type", "Fingerprint"},
+		AllowWildcard:    true,
 	}), ginext.Logger())
 	initServer(cfg, router, pgxPool, redisDB)
 
@@ -183,7 +187,7 @@ func initServer(cfg *config.Config, r *ginext.Engine, pgxPool *pgxpool.Pool, red
 	tagRepo := tagRepository.NewRepo(tr)
 	tagSvc := tagService.NewService(tagRepo)
 	vocabRepo := vocabRepository.NewRepo(tr)
-	vocabSvc := vocabService.NewService(tr, vocabRepo, userSvc, exampleSvc, dictSvc, tagSvc, subscribersSvc, eventsSvc)
+	vocabSvc := vocabService.NewService(tr, vocabRepo, exampleSvc, dictSvc, tagSvc, subscribersSvc, eventsSvc)
 	authRepo := authRepository.NewRepo(redis)
 	authSvc := authService.NewService(authRepo, userSvc, emailSvc)
 	supportSvc := supportService.NewService(emailSvc)

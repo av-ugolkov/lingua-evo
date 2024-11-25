@@ -69,9 +69,9 @@ func (c *Context) GetQueryInt(key string) (int, error) {
 	return v, nil
 }
 
-func (c *Context) SetCookieRefreshToken(token uuid.UUID, maxAge time.Duration) {
+func (c *Context) SetCookieRefreshToken(token string, maxAge time.Duration) {
 	c.Context.SetCookie(RefreshToken,
-		token.String(),
+		token,
 		int(maxAge.Seconds()),
 		cookiePathAuth,
 		runtime.EmptyString,
@@ -84,7 +84,7 @@ func (c *Context) DeleteCookie(name, path string) {
 }
 
 func (c *Context) GetHeaderAuthorization(typeAuth string) (string, error) {
-	token := c.Context.GetHeader("Authorization")
+	token := c.Context.GetHeader(Authorization)
 	if token == runtime.EmptyString {
 		return runtime.EmptyString, fmt.Errorf("ginext.Context.GetHeaderAuthorization: not found Authorization token")
 	}
