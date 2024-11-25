@@ -25,7 +25,7 @@ const (
 const (
 	ErrWordTooLong          = "Word or phrase length should be less than 100 characters"
 	ErrPronunciationTooLong = "Pronunciation length should be less than 100 characters"
-	ErrDescriptionTooLong   = "Description length should be less than 100 characters"
+	ErrDefinitionTooLong    = "Definition length should be less than 100 characters"
 	ErrCountTranslates      = "Count of translates should be less than 10"
 	ErrCountExamples        = "Count of examples should be less than 5"
 	ErrWordIsExists         = "This word is already exists"
@@ -39,12 +39,12 @@ type (
 	}
 
 	VocabWordRq struct {
-		ID          *uuid.UUID `json:"id,omitempty"`
-		VocabID     uuid.UUID  `json:"vocab_id"`
-		Native      VocabWord  `json:"native"`
-		Description string     `json:"description,omitempty"`
-		Translates  []string   `json:"translates,omitempty"`
-		Examples    []string   `json:"examples,omitempty"`
+		ID         *uuid.UUID `json:"id,omitempty"`
+		VocabID    uuid.UUID  `json:"vocab_id"`
+		Native     VocabWord  `json:"native"`
+		Definition string     `json:"definition,omitempty"`
+		Translates []string   `json:"translates,omitempty"`
+		Examples   []string   `json:"examples,omitempty"`
 	}
 
 	RemoveVocabWordRq struct {
@@ -53,13 +53,13 @@ type (
 	}
 
 	VocabWordRs struct {
-		ID          *uuid.UUID `json:"id,omitempty"`
-		Native      *VocabWord `json:"native,omitempty"`
-		Description string     `json:"description,omitempty"`
-		Translates  []string   `json:"translates,omitempty"`
-		Examples    []string   `json:"examples,omitempty"`
-		Created     int64      `json:"created,omitempty"`
-		Updated     int64      `json:"updated,omitempty"`
+		ID         *uuid.UUID `json:"id,omitempty"`
+		Native     *VocabWord `json:"native,omitempty"`
+		Definition string     `json:"definition,omitempty"`
+		Translates []string   `json:"translates,omitempty"`
+		Examples   []string   `json:"examples,omitempty"`
+		Created    int64      `json:"created,omitempty"`
+		Updated    int64      `json:"updated,omitempty"`
 	}
 )
 
@@ -92,10 +92,10 @@ func (h *Handler) addWord(c *ginext.Context) (int, any, error) {
 				ErrPronunciationTooLong)
 	}
 
-	if utf8.RuneCountInString(data.Description) > 100 {
+	if utf8.RuneCountInString(data.Definition) > 100 {
 		return http.StatusBadRequest, nil,
-			msgerr.New(fmt.Errorf("word.delivery.Handler.addWord: description is too long"),
-				ErrDescriptionTooLong)
+			msgerr.New(fmt.Errorf("word.delivery.Handler.addWord: definition is too long"),
+				ErrDefinitionTooLong)
 	}
 
 	if len(data.Translates) > 10 {
@@ -135,11 +135,11 @@ func (h *Handler) addWord(c *ginext.Context) (int, any, error) {
 			CreatedAt:     time.Now().UTC(),
 			UpdatedAt:     time.Now().UTC(),
 		},
-		Description: data.Description,
-		Translates:  translateWords,
-		Examples:    examples,
-		CreatedAt:   time.Now().UTC(),
-		UpdatedAt:   time.Now().UTC(),
+		Definition: data.Definition,
+		Translates: translateWords,
+		Examples:   examples,
+		CreatedAt:  time.Now().UTC(),
+		UpdatedAt:  time.Now().UTC(),
 	})
 	if err != nil {
 		switch {
@@ -194,10 +194,10 @@ func (h *Handler) updateWord(c *ginext.Context) (int, any, error) {
 				ErrPronunciationTooLong)
 	}
 
-	if utf8.RuneCountInString(data.Description) > 100 {
+	if utf8.RuneCountInString(data.Definition) > 100 {
 		return http.StatusBadRequest, nil,
-			msgerr.New(fmt.Errorf("word.delivery.Handler.updateWord: description is too long"),
-				ErrDescriptionTooLong)
+			msgerr.New(fmt.Errorf("word.delivery.Handler.updateWord: definition is too long"),
+				ErrDefinitionTooLong)
 	}
 
 	if len(data.Translates) > 10 {
@@ -238,10 +238,10 @@ func (h *Handler) updateWord(c *ginext.Context) (int, any, error) {
 			Pronunciation: data.Native.Pronunciation,
 			UpdatedAt:     time.Now().UTC(),
 		},
-		Description: data.Description,
-		Translates:  translates,
-		Examples:    examples,
-		UpdatedAt:   time.Now().UTC(),
+		Definition: data.Definition,
+		Translates: translates,
+		Examples:   examples,
+		UpdatedAt:  time.Now().UTC(),
 	})
 	if err != nil {
 		return http.StatusInternalServerError, nil,
@@ -325,9 +325,9 @@ func (h *Handler) getWord(c *ginext.Context) (int, any, error) {
 			Text:          vocabWord.Native.Text,
 			Pronunciation: vocabWord.Native.Pronunciation,
 		},
-		Description: vocabWord.Description,
-		Translates:  translates,
-		Examples:    examples,
+		Definition: vocabWord.Definition,
+		Translates: translates,
+		Examples:   examples,
 	}
 
 	return http.StatusOK, wordRs, nil
@@ -369,11 +369,11 @@ func (h *Handler) getWords(c *ginext.Context) (int, any, error) {
 				Text:          vocabWord.Native.Text,
 				Pronunciation: vocabWord.Native.Pronunciation,
 			},
-			Description: vocabWord.Description,
-			Translates:  translates,
-			Examples:    examples,
-			Created:     vocabWord.CreatedAt.UnixMilli(),
-			Updated:     vocabWord.UpdatedAt.UnixMilli(),
+			Definition: vocabWord.Definition,
+			Translates: translates,
+			Examples:   examples,
+			Created:    vocabWord.CreatedAt.UnixMilli(),
+			Updated:    vocabWord.UpdatedAt.UnixMilli(),
 		}
 
 		wordsRs = append(wordsRs, wordRs)

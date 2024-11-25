@@ -48,7 +48,7 @@ func (r *VocabRepo) GetWord(ctx context.Context, wid uuid.UUID, nativeLang, tran
 		&vocabWordData.Native.ID,
 		&vocabWordData.Native.Text,
 		&vocabWordData.Native.Pronunciation,
-		&vocabWordData.Description,
+		&vocabWordData.Definition,
 		&translates,
 		&examples)
 	if err != nil {
@@ -73,14 +73,14 @@ func (r *VocabRepo) AddWord(ctx context.Context, word entity.VocabWord) (uuid.UU
 		vocabulary_id,
 		native_id, 
 		pronunciation,
-		description, 
+		definition, 
 		translate_ids, 
 		example_ids, 
 		updated_at, 
 		created_at) 
 	VALUES($1, $2, $3, $4, $5, $6, $7, $8, $8);`
 	vocabWordID := uuid.New()
-	_, err := r.tr.Exec(ctx, query, vocabWordID, word.VocabID, word.NativeID, word.Pronunciation, word.Description, word.TranslateIDs, word.ExampleIDs, time.Now().UTC())
+	_, err := r.tr.Exec(ctx, query, vocabWordID, word.VocabID, word.NativeID, word.Pronunciation, word.Definition, word.TranslateIDs, word.ExampleIDs, time.Now().UTC())
 	if err != nil {
 		var pgErr *pgconn.PgError
 		switch {
@@ -276,7 +276,7 @@ func (r *VocabRepo) GetVocabWords(ctx context.Context, vocabID uuid.UUID) ([]ent
 			&wordData.Native.ID,
 			&wordData.Native.Text,
 			&wordData.Native.Pronunciation,
-			&wordData.Description,
+			&wordData.Definition,
 			&translates,
 			&examples,
 			&wordData.UpdatedAt,
@@ -369,13 +369,13 @@ func (r *VocabRepo) UpdateWord(ctx context.Context, vocabWord entity.VocabWord) 
 		UPDATE word 
 		SET native_id=$1, 
 			pronunciation=$2, 
-			description=$3, 
+			definition=$3, 
 			translate_ids=$4, 
 			example_ids=$5, 
 			updated_at=$6 
 		WHERE id=$7;`
 
-	result, err := r.tr.Exec(ctx, query, vocabWord.NativeID, vocabWord.Pronunciation, vocabWord.Description, vocabWord.TranslateIDs, vocabWord.ExampleIDs, vocabWord.UpdatedAt.Format(time.RFC3339), vocabWord.ID)
+	result, err := r.tr.Exec(ctx, query, vocabWord.NativeID, vocabWord.Pronunciation, vocabWord.Definition, vocabWord.TranslateIDs, vocabWord.ExampleIDs, vocabWord.UpdatedAt.Format(time.RFC3339), vocabWord.ID)
 	if err != nil {
 		return fmt.Errorf("word.repository.WordRepo.UpdateWord - exec: %w", err)
 	}

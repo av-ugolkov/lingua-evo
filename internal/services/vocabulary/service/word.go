@@ -83,7 +83,7 @@ func (s *Service) AddWord(ctx context.Context, uid uuid.UUID, vocabWordData enti
 			VocabID:       vocabWordData.VocabID,
 			NativeID:      nativeWordID,
 			Pronunciation: vocabWordData.Native.Pronunciation,
-			Description:   vocabWordData.Description,
+			Definition:    vocabWordData.Definition,
 			TranslateIDs:  translateWordIDs,
 			ExampleIDs:    exampleIDs,
 		})
@@ -162,7 +162,7 @@ func (s *Service) UpdateWord(ctx context.Context, uid uuid.UUID, vocabWordData e
 		VocabID:       vocabWordData.VocabID,
 		NativeID:      nativeWordID,
 		Pronunciation: vocabWordData.Native.Pronunciation,
-		Description:   vocabWordData.Description,
+		Definition:    vocabWordData.Definition,
 		TranslateIDs:  translateWordIDs,
 		ExampleIDs:    exampleIDs,
 		UpdatedAt:     vocabWordData.UpdatedAt,
