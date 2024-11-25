@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/av-ugolkov/lingua-evo/internal/config"
-	"github.com/av-ugolkov/lingua-evo/internal/pkg/aes"
 	ginext "github.com/av-ugolkov/lingua-evo/internal/pkg/gin-ext"
 	msgerr "github.com/av-ugolkov/lingua-evo/internal/pkg/msg-error"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/utils"
@@ -64,12 +63,7 @@ func (h *Handler) signIn(c *ginext.Context) (int, any, error) {
 	additionalTime := config.GetConfig().JWT.ExpireRefresh
 	duration := time.Duration(additionalTime) * time.Second
 
-	rt, err := aes.EncryptAES(tokens.RefreshToken, config.GetConfig().AES.Key)
-	if err != nil {
-		return http.StatusInternalServerError, nil, fmt.Errorf("auth.handler.Handler.signIn: %v", err)
-	}
-
-	c.SetCookieRefreshToken(rt, duration)
+	c.SetCookieRefreshToken(tokens.RefreshToken, duration)
 	return http.StatusOK, sessionRs, nil
 }
 
@@ -139,7 +133,7 @@ func (h *Handler) sendCode(c *ginext.Context) (int, any, error) {
 
 	fingerprint := c.GetHeader(ginext.Fingerprint)
 	if fingerprint == runtime.EmptyString {
-		return http.StatusInternalServerError, nil, fmt.Errorf("auth.handler.Handler.signOut: fingerprimt is empty")
+		return http.StatusInternalServerError, nil, fmt.Errorf("auth.handler.Handler.sendCode: fingerprimt is empty")
 	}
 
 	err = h.authSvc.CreateCode(ctx, data.Email, fingerprint)

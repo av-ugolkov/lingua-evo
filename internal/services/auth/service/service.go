@@ -8,6 +8,7 @@ import (
 
 	"github.com/av-ugolkov/lingua-evo/internal/config"
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/google"
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/aes"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/utils"
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/auth"
 	entityUser "github.com/av-ugolkov/lingua-evo/internal/services/user"
@@ -67,8 +68,13 @@ func (s *Service) RefreshSessionToken(ctx context.Context, uid uuid.UUID, oldTok
 		return nil, fmt.Errorf("auth.Service.RefreshSessionToken: %v", err)
 	}
 
-	if oldRefreshSession.RefreshToken != oldTokenID {
-		return nil, fmt.Errorf("auth.Service.RefreshSessionToken: %v", errors.New("token mismatch"))
+	rt, err := aes.DecryptAES(oldTokenID, config.GetConfig().AES.Key)
+	if err != nil {
+		return nil, fmt.Errorf("auth.Service.RefreshSessionToken: %v", err)
+	}
+
+	if oldRefreshSession.RefreshToken != rt {
+		return nil, fmt.Errorf("auth.Service.RefreshSessionToken: %v", "token mismatch")
 	}
 
 	var tokens *entity.Tokens
@@ -92,6 +98,8 @@ func (s *Service) RefreshSessionToken(ctx context.Context, uid uuid.UUID, oldTok
 		return nil, fmt.Errorf("auth.Service.RefreshSessionToken: %v", err)
 	}
 
+	tokens.RefreshToken = oldRefreshSession.RefreshToken
+
 	err = s.userSvc.UpdateVisitedAt(ctx, oldRefreshSession.UserID)
 	if err != nil {
 		return nil, fmt.Errorf("auth.Service.RefreshSessionToken: %v", err)
@@ -106,7 +114,12 @@ func (s *Service) SignOut(ctx context.Context, uid uuid.UUID, refreshToken strin
 		return fmt.Errorf("auth.Service.SignOut: %v", err)
 	}
 
-	if session.RefreshToken != refreshToken {
+	rt, err := aes.DecryptAES(refreshToken, config.GetConfig().AES.Key)
+	if err != nil {
+		return fmt.Errorf("auth.handler.Handler.signOut: %v", err)
+	}
+
+	if session.RefreshToken != rt {
 		return fmt.Errorf("auth.Service.SignOut: %v", "refresh token not match")
 	}
 

@@ -142,11 +142,11 @@ func VerifyGoogleToken(idToken string, clientID string) (*GoogleTokenInfo, error
 	return &tokenInfo, nil
 }
 
-func RevokeGoogleToken(accessToken string) error {
+func RevokeGoogleToken(token string) error {
 	data := url.Values{}
 	data.Set("client_id", googleConfig.ClientID)
 	data.Set("client_secret", googleConfig.ClientSecret)
-	data.Set("token", accessToken)
+	data.Set("token", token)
 
 	req, err := http.NewRequest("POST", RemoveTokem, bytes.NewBufferString(data.Encode()))
 	if err != nil {

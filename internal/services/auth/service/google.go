@@ -90,6 +90,9 @@ func (s *Service) AuthByGoogle(ctx context.Context, code, fingerprint string) (_
 		if token.RefreshToken != runtime.EmptyString {
 			session.RefreshToken = token.RefreshToken
 		}
+		if session.RefreshToken == runtime.EmptyString {
+			return nil, fmt.Errorf("auth.Service.AuthByGoogle: not fount refresh token")
+		}
 		session.ExpiresAt = token.Expiry
 	}
 

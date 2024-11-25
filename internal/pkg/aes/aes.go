@@ -7,13 +7,21 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
+	"sync"
 )
 
+type Cipher struct {
+	key   string
+	block cipher.Block
+}
+
+var refreshToken *Cipher
+var mx sync.Mutex
+
 func EncryptAES(plainText, key string) (string, error) {
-	keyBytes := []byte(key)
 	plainTextBytes := []byte(plainText)
 
-	block, err := aes.NewCipher(keyBytes)
+	block, err := cipherBlock(key)
 	if err != nil {
 		return "", fmt.Errorf("pkg.aes.EncryptAES: %w", err)
 	}
@@ -31,15 +39,14 @@ func EncryptAES(plainText, key string) (string, error) {
 }
 
 func DecryptAES(cipherHex, key string) (string, error) {
-	keyBytes := []byte(key)
 	cipherText, err := hex.DecodeString(cipherHex)
 	if err != nil {
 		return "", fmt.Errorf("pkg.aes.DecryptAES: %w", err)
 	}
 
-	block, err := aes.NewCipher(keyBytes)
+	block, err := cipherBlock(key)
 	if err != nil {
-		return "", fmt.Errorf("pkg.aes.DecryptAES: %w", err)
+		return "", fmt.Errorf("pkg.aes.EncryptAES: %w", err)
 	}
 
 	if len(cipherText) < aes.BlockSize {
@@ -52,4 +59,26 @@ func DecryptAES(cipherHex, key string) (string, error) {
 	stream.XORKeyStream(cipherText, cipherText)
 
 	return string(cipherText), nil
+}
+
+func cipherBlock(key string) (cipher.Block, error) {
+	if refreshToken == nil {
+		mx.Lock()
+		defer mx.Unlock()
+	}
+	if refreshToken != nil && refreshToken.key == key {
+		return refreshToken.block, nil
+	}
+
+	block, err := aes.NewCipher([]byte(key))
+	if err != nil {
+		return nil, err
+	}
+
+	refreshToken = &Cipher{
+		key:   key,
+		block: block,
+	}
+
+	return refreshToken.block, nil
 }

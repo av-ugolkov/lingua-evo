@@ -8,7 +8,6 @@ import (
 	"github.com/av-ugolkov/lingua-evo/internal/config"
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler/middleware"
-	"github.com/av-ugolkov/lingua-evo/internal/pkg/aes"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/gin-ext"
 	auth "github.com/av-ugolkov/lingua-evo/internal/services/auth/service"
 	"github.com/av-ugolkov/lingua-evo/runtime"
@@ -102,12 +101,7 @@ func (h *Handler) refresh(c *ginext.Context) (int, any, error) {
 			fmt.Errorf("auth.handler.Handler.refresh: %v", err)
 	}
 
-	rt, err := aes.DecryptAES(refreshToken, config.GetConfig().AES.Key)
-	if err != nil {
-		return http.StatusInternalServerError, nil, fmt.Errorf("auth.handler.Handler.refresh: %v", err)
-	}
-
-	tokens, err := h.authSvc.RefreshSessionToken(ctx, uid, rt, fingerprint)
+	tokens, err := h.authSvc.RefreshSessionToken(ctx, uid, refreshToken, fingerprint)
 	if err != nil {
 		return http.StatusInternalServerError, nil,
 			fmt.Errorf("auth.handler.Handler.refresh: %v", err)
@@ -120,12 +114,7 @@ func (h *Handler) refresh(c *ginext.Context) (int, any, error) {
 	additionalTime := config.GetConfig().JWT.ExpireRefresh
 	duration := time.Duration(additionalTime) * time.Second
 
-	rt, err = aes.EncryptAES(tokens.RefreshToken, config.GetConfig().AES.Key)
-	if err != nil {
-		return http.StatusInternalServerError, nil, fmt.Errorf("auth.handler.Handler.refresh: %v", err)
-	}
-
-	c.SetCookieRefreshToken(rt, duration)
+	c.SetCookieRefreshToken(tokens.RefreshToken, duration)
 	return http.StatusOK, sessionRs, nil
 }
 

@@ -81,5 +81,10 @@ func (s *Session) Unmarshal(data []byte) error {
 		return fmt.Errorf("auth.Session.Unmarshal: %w", err)
 	}
 
+	s.RefreshToken, err = aes.DecryptAES(s.RefreshToken, config.GetConfig().AES.Key)
+	if err != nil {
+		return fmt.Errorf("auth.Session.Unmarshal: %w", err)
+	}
+
 	return nil
 }
