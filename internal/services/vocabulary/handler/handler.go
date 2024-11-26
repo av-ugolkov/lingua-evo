@@ -98,7 +98,6 @@ func Create(r *ginext.Engine, vocabSvc *vocabulary.Service) {
 	r.GET(handler.VocabularyWord, middleware.Auth(h.getWord))
 	r.POST(handler.VocabularyWord, middleware.Auth(h.addWord))
 	r.DELETE(handler.VocabularyWord, middleware.Auth(h.deleteWord))
-	r.POST(handler.VocabularyWordUpdateFull, middleware.Auth(h.updateWord))
 	r.POST(handler.VocabularyWordUpdateText, middleware.Auth(h.updateWordText))
 	r.POST(handler.VocabularyWordUpdatePronunciation, middleware.Auth(h.updateWordPronunciation))
 	r.POST(handler.VocabularyWordUpdateDefinition, middleware.Auth(h.updateWordDefinition))

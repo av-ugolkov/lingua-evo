@@ -37,7 +37,6 @@ const (
 	VocabulariesByUser      = "/vocabularies/user"        //get
 
 	VocabularyWord                    = "/vocabulary/word"                      //get post delete
-	VocabularyWordUpdateFull          = "/vocabulary/word/update/word"          //post
 	VocabularyWordUpdateText          = "/vocabulary/word/update/text"          //post
 	VocabularyWordUpdatePronunciation = "/vocabulary/word/update/pronunciation" //post
 	VocabularyWordUpdateDefinition    = "/vocabulary/word/update/definition"    //post

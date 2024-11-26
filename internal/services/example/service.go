@@ -33,7 +33,7 @@ func (s *Service) AddExamples(ctx context.Context, examples []Example, langCode 
 
 	ids, err := s.repo.AddExamples(ctx, examples, langCode)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("example.Service.AddExamples: %w", err)
 	}
 
 	return ids, nil
@@ -42,7 +42,7 @@ func (s *Service) AddExamples(ctx context.Context, examples []Example, langCode 
 func (s *Service) GetExampleById(ctx context.Context, id uuid.UUID, langCode string) (string, error) {
 	text, err := s.repo.GetExampleById(ctx, id, langCode)
 	if err != nil {
-		return runtime.EmptyString, err
+		return runtime.EmptyString, fmt.Errorf("example.Service.GetExampleById: %w", err)
 	}
 
 	return text, nil

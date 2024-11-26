@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"slices"
 	"time"
 	"unicode/utf8"
 
@@ -29,6 +30,7 @@ const (
 	ErrCountTranslates      = "Count of translates should be less than 10"
 	ErrCountExamples        = "Count of examples should be less than 5"
 	ErrWordIsExists         = "This word is already exists"
+	ErrExampleIsExists      = "This example is already exists"
 )
 
 type (
@@ -36,15 +38,6 @@ type (
 		ID            *uuid.UUID `json:"id,omitempty"`
 		Text          string     `json:"text,omitempty"`
 		Pronunciation string     `json:"pronunciation,omitempty"`
-	}
-
-	VocabWordRq struct {
-		ID         *uuid.UUID `json:"id,omitempty"`
-		VocabID    uuid.UUID  `json:"vocab_id"`
-		Native     VocabWord  `json:"native"`
-		Definition string     `json:"definition,omitempty"`
-		Translates []string   `json:"translates,omitempty"`
-		Examples   []string   `json:"examples,omitempty"`
 	}
 
 	RemoveVocabWordRq struct {
@@ -72,7 +65,13 @@ func (h *Handler) addWord(c *ginext.Context) (int, any, error) {
 			fmt.Errorf("word.delivery.Handler.addWord: %v", err)
 	}
 
-	var data VocabWordRq
+	var data struct {
+		VocabID    uuid.UUID `json:"vocab_id"`
+		Native     VocabWord `json:"native"`
+		Definition string    `json:"definition,omitempty"`
+		Translates []string  `json:"translates,omitempty"`
+		Examples   []string  `json:"examples,omitempty"`
+	}
 	err = c.Bind(&data)
 	if err != nil {
 		return http.StatusInternalServerError, nil,
@@ -166,93 +165,6 @@ func (h *Handler) addWord(c *ginext.Context) (int, any, error) {
 	return http.StatusCreated, wordRs, nil
 }
 
-func (h *Handler) updateWord(c *ginext.Context) (int, any, error) {
-	ctx := c.Request.Context()
-	userID, err := runtime.UserIDFromContext(ctx)
-	if err != nil {
-		return http.StatusUnauthorized, nil, fmt.Errorf("service.vocabulary.Handler.updateWord: %v", err)
-	}
-
-	var data VocabWordRq
-	err = c.Bind(&data)
-	if err != nil {
-		return http.StatusInternalServerError, nil,
-			msgerr.New(fmt.Errorf("service.vocabulary.Handler.updateWord: %v", err),
-				msgerr.ErrMsgBadRequest)
-	}
-
-	if utf8.RuneCountInString(data.Native.Text) > 100 {
-		return http.StatusBadRequest, nil,
-			msgerr.New(fmt.Errorf("service.vocabulary.Handler.updateWord: word is too long"),
-				ErrWordTooLong)
-	}
-
-	if utf8.RuneCountInString(data.Native.Pronunciation) > 100 {
-		return http.StatusBadRequest, nil,
-			msgerr.New(fmt.Errorf("service.vocabulary.Handler.updateWord: pronunciation is too long"),
-				ErrPronunciationTooLong)
-	}
-
-	if utf8.RuneCountInString(data.Definition) > 100 {
-		return http.StatusBadRequest, nil,
-			msgerr.New(fmt.Errorf("service.vocabulary.Handler.updateWord: definition is too long"),
-				ErrDefinitionTooLong)
-	}
-
-	if len(data.Translates) > 10 {
-		return http.StatusBadRequest, nil,
-			msgerr.New(fmt.Errorf("service.vocabulary.Handler.updateWord: translates more than 10"),
-				ErrCountTranslates)
-	}
-
-	if len(data.Examples) > 5 {
-		return http.StatusBadRequest, nil,
-			msgerr.New(fmt.Errorf("service.vocabulary.Handler.updateWord: translates more than 5"),
-				ErrCountExamples)
-	}
-
-	translates := make([]entityDict.DictWord, 0, len(data.Translates))
-	for _, tr := range data.Translates {
-		translates = append(translates, entityDict.DictWord{
-			Text: tr,
-		})
-	}
-
-	examples := make([]entityExample.Example, 0, len(data.Examples))
-	for _, example := range data.Examples {
-		examples = append(examples, entityExample.Example{
-			Text: example,
-		})
-	}
-
-	vocabWord, err := h.vocabSvc.UpdateWord(ctx, userID, entity.VocabWordData{
-		ID:      *data.ID,
-		VocabID: data.VocabID,
-		Native: entityDict.DictWord{
-			ID:            *data.Native.ID,
-			Text:          data.Native.Text,
-			Pronunciation: data.Native.Pronunciation,
-		},
-		Definition: data.Definition,
-		Translates: translates,
-		Examples:   examples,
-	})
-	if err != nil {
-		return http.StatusInternalServerError, nil,
-			fmt.Errorf("service.vocabulary.Handler.updateWord: %v", err)
-	}
-
-	wordRs := &VocabWordRs{
-		ID: &vocabWord.ID,
-		Native: &VocabWord{
-			ID: &vocabWord.NativeID,
-		},
-		Updated: vocabWord.UpdatedAt.UnixMilli(),
-	}
-
-	return http.StatusOK, wordRs, nil
-}
-
 func (h *Handler) updateWordText(c *ginext.Context) (int, any, error) {
 	ctx := c.Request.Context()
 	userID, err := runtime.UserIDFromContext(ctx)
@@ -260,7 +172,14 @@ func (h *Handler) updateWordText(c *ginext.Context) (int, any, error) {
 		return http.StatusUnauthorized, nil, fmt.Errorf("service.vocabulary.Handler.updateWordText: %v", err)
 	}
 
-	var data VocabWordRq
+	var data struct {
+		ID      uuid.UUID `json:"id"`
+		VocabID uuid.UUID `json:"vocab_id"`
+		Native  struct {
+			ID   uuid.UUID `json:"id"`
+			Text string    `json:"text"`
+		}
+	}
 	err = c.Bind(&data)
 	if err != nil {
 		return http.StatusInternalServerError, nil,
@@ -275,10 +194,10 @@ func (h *Handler) updateWordText(c *ginext.Context) (int, any, error) {
 	}
 
 	vocabWord, err := h.vocabSvc.UpdateWordText(ctx, userID, entity.VocabWordData{
-		ID:      *data.ID,
+		ID:      data.ID,
 		VocabID: data.VocabID,
 		Native: entityDict.DictWord{
-			ID:   *data.Native.ID,
+			ID:   data.Native.ID,
 			Text: data.Native.Text,
 		},
 	})
@@ -305,7 +224,15 @@ func (h *Handler) updateWordPronunciation(c *ginext.Context) (int, any, error) {
 		return http.StatusUnauthorized, nil, fmt.Errorf("service.vocabulary.Handler.updateWordPronunciation: %v", err)
 	}
 
-	var data VocabWordRq
+	var data struct {
+		ID      uuid.UUID `json:"id"`
+		VocabID uuid.UUID `json:"vocab_id"`
+		Native  struct {
+			ID            uuid.UUID `json:"id"`
+			Text          string    `json:"text"`
+			Pronunciation string    `json:"pronunciation"`
+		}
+	}
 	err = c.Bind(&data)
 	if err != nil {
 		return http.StatusInternalServerError, nil,
@@ -320,10 +247,11 @@ func (h *Handler) updateWordPronunciation(c *ginext.Context) (int, any, error) {
 	}
 
 	vocabWord, err := h.vocabSvc.UpdateWordPronunciation(ctx, userID, entity.VocabWordData{
-		ID:      *data.ID,
+		ID:      data.ID,
 		VocabID: data.VocabID,
 		Native: entityDict.DictWord{
-			ID:            *data.Native.ID,
+			ID:            data.Native.ID,
+			Text:          data.Native.Text,
 			Pronunciation: data.Native.Pronunciation,
 		},
 	})
@@ -347,7 +275,15 @@ func (h *Handler) updateWordDefinition(c *ginext.Context) (int, any, error) {
 		return http.StatusUnauthorized, nil, fmt.Errorf("service.vocabulary.Handler.updateWordDefinition: %v", err)
 	}
 
-	var data VocabWordRq
+	var data struct {
+		ID      uuid.UUID `json:"id"`
+		VocabID uuid.UUID `json:"vocab_id"`
+		Native  struct {
+			ID   uuid.UUID `json:"id"`
+			Text string    `json:"text"`
+		}
+		Definition string `json:"definition"`
+	}
 	err = c.Bind(&data)
 	if err != nil {
 		return http.StatusInternalServerError, nil,
@@ -362,7 +298,7 @@ func (h *Handler) updateWordDefinition(c *ginext.Context) (int, any, error) {
 	}
 
 	vocabWord, err := h.vocabSvc.UpdateWordDefinition(ctx, userID, entity.VocabWordData{
-		ID:         *data.ID,
+		ID:         data.ID,
 		VocabID:    data.VocabID,
 		Definition: data.Definition,
 	})
@@ -386,7 +322,11 @@ func (h *Handler) updateWordTranslates(c *ginext.Context) (int, any, error) {
 		return http.StatusUnauthorized, nil, fmt.Errorf("service.vocabulary.Handler.updateWordTranslates: %v", err)
 	}
 
-	var data VocabWordRq
+	var data struct {
+		ID         uuid.UUID `json:"id"`
+		VocabID    uuid.UUID `json:"vocab_id"`
+		Translates []string  `json:"translates"`
+	}
 	err = c.Bind(&data)
 	if err != nil {
 		return http.StatusInternalServerError, nil,
@@ -402,20 +342,24 @@ func (h *Handler) updateWordTranslates(c *ginext.Context) (int, any, error) {
 
 	translates := make([]entityDict.DictWord, 0, len(data.Translates))
 	for _, tr := range data.Translates {
+		if slices.ContainsFunc(translates, func(t entityDict.DictWord) bool {
+			return t.Text == tr
+		}) {
+			return http.StatusBadRequest, nil,
+				msgerr.New(fmt.Errorf("service.vocabulary.Handler.updateWordTranslates: duplicate translate"),
+					ErrWordIsExists)
+		}
 		translates = append(translates, entityDict.DictWord{
 			Text: tr,
 		})
 	}
 
 	vocabWord, err := h.vocabSvc.UpdateWordTranslates(ctx, userID, entity.VocabWordData{
-		ID:         *data.ID,
+		ID:         data.ID,
 		VocabID:    data.VocabID,
 		Translates: translates,
 	})
-	switch {
-	case errors.Is(err, entityDict.ErrDuplicateWords):
-		return http.StatusConflict, nil, fmt.Errorf("service.vocabulary.Handler.updateWordTranslates: %w", err)
-	case err != nil:
+	if err != nil {
 		return http.StatusInternalServerError, nil,
 			fmt.Errorf("service.vocabulary.Handler.updateWordTranslates: %w", err)
 	}
@@ -435,7 +379,11 @@ func (h *Handler) updateWordExamples(c *ginext.Context) (int, any, error) {
 		return http.StatusUnauthorized, nil, fmt.Errorf("service.vocabulary.Handler.updateWordExamples: %v", err)
 	}
 
-	var data VocabWordRq
+	var data struct {
+		ID       uuid.UUID `json:"id"`
+		VocabID  uuid.UUID `json:"vocab_id"`
+		Examples []string  `json:"examples"`
+	}
 	err = c.Bind(&data)
 	if err != nil {
 		return http.StatusInternalServerError, nil,
@@ -450,14 +398,21 @@ func (h *Handler) updateWordExamples(c *ginext.Context) (int, any, error) {
 	}
 
 	examples := make([]entityExample.Example, 0, len(data.Examples))
-	for _, example := range data.Examples {
+	for _, ex := range data.Examples {
+		if slices.ContainsFunc(examples, func(e entityExample.Example) bool {
+			return e.Text == ex
+		}) {
+			return http.StatusBadRequest, nil,
+				msgerr.New(fmt.Errorf("service.vocabulary.Handler.updateWordExamples: duplicate example"),
+					ErrExampleIsExists)
+		}
 		examples = append(examples, entityExample.Example{
-			Text: example,
+			Text: ex,
 		})
 	}
 
 	vocabWord, err := h.vocabSvc.UpdateWordExamples(ctx, userID, entity.VocabWordData{
-		ID:       *data.ID,
+		ID:       data.ID,
 		VocabID:  data.VocabID,
 		Examples: examples,
 	})

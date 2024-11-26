@@ -288,6 +288,11 @@ func (s *Service) UpdateWordDefinition(ctx context.Context, uid uuid.UUID, vocab
 		return entity.VocabWord{}, fmt.Errorf("service.vocabulary.Service.UpdateWordDefinition: %w", err)
 	}
 
+	vocabWordData, err = s.repoVocab.GetWord(ctx, vocabWord.ID, vocab.NativeLang, vocab.TranslateLang)
+	if err != nil {
+		return entity.VocabWord{}, fmt.Errorf("service.vocabulary.Service.UpdateWordDefinition: %w", err)
+	}
+
 	s.eventsSvc.AsyncAddEvent(entityEvents.Event{
 		User: entityEvents.UserData{ID: uid},
 		Type: entityEvents.VocabWordUpdated,
@@ -332,6 +337,11 @@ func (s *Service) UpdateWordTranslates(ctx context.Context, uid uuid.UUID, vocab
 		return entity.VocabWord{}, fmt.Errorf("service.vocabulary.Service.UpdateWordTranslates: %w", err)
 	}
 
+	vocabWordData, err = s.repoVocab.GetWord(ctx, vocabWord.ID, vocab.NativeLang, vocab.TranslateLang)
+	if err != nil {
+		return entity.VocabWord{}, fmt.Errorf("service.vocabulary.Service.UpdateWordDefinition: %w", err)
+	}
+
 	s.eventsSvc.AsyncAddEvent(entityEvents.Event{
 		User: entityEvents.UserData{ID: uid},
 		Type: entityEvents.VocabWordUpdated,
@@ -366,6 +376,11 @@ func (s *Service) UpdateWordExamples(ctx context.Context, uid uuid.UUID, vocabWo
 	err = s.repoVocab.UpdateWordExamples(ctx, vocabWord)
 	if err != nil {
 		return entity.VocabWord{}, fmt.Errorf("service.vocabulary.Service.UpdateWordExamples: %w", err)
+	}
+
+	vocabWordData, err = s.repoVocab.GetWord(ctx, vocabWord.ID, vocab.NativeLang, vocab.TranslateLang)
+	if err != nil {
+		return entity.VocabWord{}, fmt.Errorf("service.vocabulary.Service.UpdateWordDefinition: %w", err)
 	}
 
 	s.eventsSvc.AsyncAddEvent(entityEvents.Event{
