@@ -567,7 +567,8 @@ func (h *Handler) getPronunciation(c *ginext.Context) (int, any, error) {
 
 	pronunciation, err := h.vocabSvc.GetPronunciation(ctx, uid, vid, text)
 	if err != nil {
-		return http.StatusInternalServerError, nil, err
+		return http.StatusInternalServerError, nil,
+			fmt.Errorf("word.delivery.Handler.getPronunciation: %w", err)
 	}
 
 	vocabWordRs := VocabWordRs{
