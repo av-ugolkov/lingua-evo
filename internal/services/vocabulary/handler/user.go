@@ -8,7 +8,6 @@ import (
 
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/gin-ext"
 	msgerr "github.com/av-ugolkov/lingua-evo/internal/pkg/msg-error"
-	entityTag "github.com/av-ugolkov/lingua-evo/internal/services/tag"
 	"github.com/av-ugolkov/lingua-evo/internal/services/vocabulary"
 	"github.com/av-ugolkov/lingua-evo/runtime"
 
@@ -49,19 +48,6 @@ func (h *Handler) userAddVocabulary(c *ginext.Context) (int, any, error) {
 				ErrMsgDescriptionTooLong)
 	}
 
-	if len(data.Tags) > 5 {
-		return http.StatusBadRequest, nil,
-			msgerr.New(fmt.Errorf("vocabulary.delivery.Handler.addVocabulary: tags must less than 5"),
-				ErrMsgCountTags)
-	}
-
-	tags := make([]entityTag.Tag, 0, len(data.Tags))
-	for _, tag := range data.Tags {
-		tags = append(tags, entityTag.Tag{
-			Text: tag,
-		})
-	}
-
 	vocab, err := h.vocabSvc.UserAddVocabulary(ctx, vocabulary.Vocab{
 		UserID:        userID,
 		Name:          data.Name,
@@ -69,7 +55,6 @@ func (h *Handler) userAddVocabulary(c *ginext.Context) (int, any, error) {
 		NativeLang:    data.NativeLang,
 		TranslateLang: data.TranslateLang,
 		Description:   data.Description,
-		Tags:          tags,
 	})
 	if err != nil {
 		return http.StatusInternalServerError, nil,
@@ -207,12 +192,6 @@ func (h *Handler) userEditVocabulary(c *ginext.Context) (int, any, error) {
 		return http.StatusBadRequest, nil,
 			msgerr.New(fmt.Errorf("vocabulary.delivery.Handler.editVocabulary: description is too long"),
 				ErrMsgDescriptionTooLong)
-	}
-
-	if len(data.Tags) > 5 {
-		return http.StatusBadRequest, nil,
-			msgerr.New(fmt.Errorf("vocabulary.delivery.Handler.editVocabulary: tags must less than 5"),
-				ErrMsgCountTags)
 	}
 
 	err = h.vocabSvc.UserEditVocabulary(ctx, vocabulary.Vocab{

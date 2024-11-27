@@ -31,12 +31,7 @@ func (s *Service) UserAddVocabulary(ctx context.Context, vocabulary entity.Vocab
 	}
 
 	err = s.tr.CreateTransaction(ctx, func(ctx context.Context) error {
-		tagIDs, err := s.tagSvc.AddTags(ctx, vocabulary.Tags)
-		if err != nil {
-			return fmt.Errorf("add tags: %w", err)
-		}
-
-		vocabulary.ID, err = s.repoVocab.AddVocab(ctx, vocabulary, tagIDs)
+		vocabulary.ID, err = s.repoVocab.AddVocab(ctx, vocabulary)
 		if err != nil {
 			return fmt.Errorf("add vocabulary: %w", err)
 		}

@@ -71,10 +71,9 @@ func TestGetVocabulariesWithMaxWords(t *testing.T) {
 					NativeLang:    "en",
 					TranslateLang: "ru",
 					Description:   runtime.EmptyString,
-					Tags:          nil,
 					CreatedAt:     time.Now().UTC(),
 					UpdatedAt:     time.Now().UTC(),
-				}, nil)
+				})
 				if err != nil {
 					return err
 				}
@@ -113,10 +112,9 @@ func TestGetVocabulariesWithMaxWords(t *testing.T) {
 					NativeLang:    "en",
 					TranslateLang: "ru",
 					Description:   runtime.EmptyString,
-					Tags:          nil,
 					CreatedAt:     time.Now().UTC(),
 					UpdatedAt:     time.Now().UTC(),
-				}, nil)
+				})
 				if err != nil {
 					return err
 				}
@@ -190,10 +188,9 @@ func TestGetVocabsWithCountWords(t *testing.T) {
 					NativeLang:    "en",
 					TranslateLang: "ru",
 					Description:   runtime.EmptyString,
-					Tags:          nil,
 					CreatedAt:     time.Now().UTC(),
 					UpdatedAt:     time.Now().UTC(),
-				}, nil)
+				})
 				if err != nil {
 					return err
 				}
@@ -261,10 +258,9 @@ func TestGetVocabulariesRecommended(t *testing.T) {
 						NativeLang:    "en",
 						TranslateLang: "ru",
 						Description:   runtime.EmptyString,
-						Tags:          nil,
 						CreatedAt:     time.Now().UTC(),
 						UpdatedAt:     time.Now().UTC(),
-					}, nil)
+					})
 					if err != nil {
 						return err
 					}
@@ -292,10 +288,9 @@ func TestGetVocabulariesRecommended(t *testing.T) {
 				NativeLang:    "fi",
 				TranslateLang: "ru",
 				Description:   runtime.EmptyString,
-				Tags:          nil,
 				CreatedAt:     time.Now().UTC(),
 				UpdatedAt:     time.Now().UTC(),
-			}, nil)
+			})
 			if err != nil {
 				return err
 			}
@@ -318,10 +313,9 @@ func TestGetVocabulariesRecommended(t *testing.T) {
 						NativeLang:    "en",
 						TranslateLang: "ru",
 						Description:   runtime.EmptyString,
-						Tags:          nil,
 						CreatedAt:     time.Now().UTC(),
 						UpdatedAt:     time.Now().UTC(),
-					}, nil)
+					})
 					if err != nil {
 						return err
 					}
@@ -349,10 +343,9 @@ func TestGetVocabulariesRecommended(t *testing.T) {
 				NativeLang:    "en",
 				TranslateLang: "ru",
 				Description:   runtime.EmptyString,
-				Tags:          nil,
 				CreatedAt:     time.Now().UTC(),
 				UpdatedAt:     time.Now().UTC(),
-			}, nil)
+			})
 			if err != nil {
 				return err
 			}
@@ -374,10 +367,9 @@ func TestGetVocabulariesRecommended(t *testing.T) {
 					NativeLang:    "en",
 					TranslateLang: "ru",
 					Description:   runtime.EmptyString,
-					Tags:          nil,
 					CreatedAt:     time.Now().UTC(),
 					UpdatedAt:     time.Now().UTC(),
-				}, nil)
+				})
 				if err != nil {
 					return err
 				}

@@ -2,13 +2,11 @@ package repository
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"time"
 
 	"github.com/av-ugolkov/lingua-evo/internal/db/transactor"
 	sorted "github.com/av-ugolkov/lingua-evo/internal/pkg/utils"
-	entityTag "github.com/av-ugolkov/lingua-evo/internal/services/tag"
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary"
 	"github.com/av-ugolkov/lingua-evo/runtime"
 	"github.com/av-ugolkov/lingua-evo/runtime/access"
@@ -26,7 +24,7 @@ func NewRepo(tr *transactor.Transactor) *VocabRepo {
 	}
 }
 
-func (r *VocabRepo) AddVocab(ctx context.Context, vocab entity.Vocab, tagIDs []uuid.UUID) (uuid.UUID, error) {
+func (r *VocabRepo) AddVocab(ctx context.Context, vocab entity.Vocab) (uuid.UUID, error) {
 	query := `
 	INSERT INTO vocabulary (
 		id, 
@@ -35,14 +33,13 @@ func (r *VocabRepo) AddVocab(ctx context.Context, vocab entity.Vocab, tagIDs []u
 		native_lang, 
 		translate_lang, 
 		description, 
-		tags, 
 		updated_at, 
 		created_at, 
 		access) 
-	VALUES($1, $2, $3, $4, $5, $6, $7, $8, $8, $9);`
+	VALUES($1, $2, $3, $4, $5, $6, $7, $7, $8);`
 
 	vid := uuid.New()
-	_, err := r.tr.Exec(ctx, query, vid, vocab.UserID, vocab.Name, vocab.NativeLang, vocab.TranslateLang, vocab.Description, tagIDs, time.Now().UTC(), vocab.Access)
+	_, err := r.tr.Exec(ctx, query, vid, vocab.UserID, vocab.Name, vocab.NativeLang, vocab.TranslateLang, vocab.Description, time.Now().UTC(), vocab.Access)
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("vocabulary.delivery.repository.VocabRepo.Add: %w", err)
 	}
@@ -72,14 +69,12 @@ func (r *VocabRepo) GetVocab(ctx context.Context, vid uuid.UUID) (entity.Vocab, 
 		native_lang, 
 		translate_lang, 
 		description, 
-		tags, 
 		access, 
 		created_at, 
 		updated_at
 	FROM vocabulary v
 	WHERE id=$1;`
 	var vocab entity.Vocab
-	var tags []uuid.UUID
 	err := r.tr.QueryRow(ctx, query, vid).Scan(
 		&vocab.ID,
 		&vocab.UserID,
@@ -87,17 +82,11 @@ func (r *VocabRepo) GetVocab(ctx context.Context, vid uuid.UUID) (entity.Vocab, 
 		&vocab.NativeLang,
 		&vocab.TranslateLang,
 		&vocab.Description,
-		&tags,
 		&vocab.Access,
 		&vocab.CreatedAt,
 		&vocab.UpdatedAt)
 	if err != nil {
 		return vocab, fmt.Errorf("vocabulary.delivery.repository.VocabRepo.Get: %w", err)
-	}
-
-	vocab.Tags = make([]entityTag.Tag, 0, len(tags))
-	for _, tagID := range tags {
-		vocab.Tags = append(vocab.Tags, entityTag.Tag{ID: tagID})
 	}
 
 	return vocab, nil
@@ -207,12 +196,10 @@ func (r *VocabRepo) GetVocabulariesByAccess(ctx context.Context, uid uuid.UUID, 
 		v.translate_lang,
 		v.description,
 		count(w.id) as "words_count",
-		array_agg(tg."text") as tags,
 		v.access,
 		v.updated_at,
 		v.created_at
 	FROM vocabulary v
-	LEFT JOIN "tag" tg ON tg.id = any(v.tags)
 	LEFT JOIN users u ON u.id = v.user_id
 	LEFT JOIN word w ON w.vocabulary_id = v.id 
 	WHERE (v.user_id=$1 OR v.access = ANY($2))
@@ -230,7 +217,6 @@ func (r *VocabRepo) GetVocabulariesByAccess(ctx context.Context, uid uuid.UUID, 
 	vocabularies := make([]entity.VocabWithUser, 0, itemsPerPage)
 	var vocab entity.VocabWithUser
 	for rows.Next() {
-		var sqlTags []sql.NullString
 		err := rows.Scan(
 			&vocab.ID,
 			&vocab.UserID,
@@ -240,7 +226,6 @@ func (r *VocabRepo) GetVocabulariesByAccess(ctx context.Context, uid uuid.UUID, 
 			&vocab.TranslateLang,
 			&vocab.Description,
 			&vocab.WordsCount,
-			&sqlTags,
 			&vocab.Access,
 			&vocab.UpdatedAt,
 			&vocab.CreatedAt,
@@ -249,11 +234,6 @@ func (r *VocabRepo) GetVocabulariesByAccess(ctx context.Context, uid uuid.UUID, 
 			return nil, fmt.Errorf("vocabulary.delivery.repository.VocabRepo.GetVocabulariesByAccess - scan: %w", err)
 		}
 
-		for _, t := range sqlTags {
-			if t.Valid {
-				vocab.Tags = append(vocab.Tags, entityTag.Tag{Text: t.String})
-			}
-		}
 		vocabularies = append(vocabularies, vocab)
 	}
 
@@ -275,13 +255,8 @@ func (r *VocabRepo) CopyVocab(ctx context.Context, uid, vid uuid.UUID) (uuid.UUI
 		return uuid.Nil, fmt.Errorf("vocabulary.delivery.repository.VocabRepo.Copy - get vocab: %w", err)
 	}
 
-	tags := make([]uuid.UUID, 0, len(vocab.Tags))
-	for _, t := range vocab.Tags {
-		tags = append(tags, t.ID)
-	}
-
 	vocab.UserID = uid
-	vid, err = r.AddVocab(ctx, vocab, tags)
+	vid, err = r.AddVocab(ctx, vocab)
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("vocabulary.delivery.repository.VocabRepo.Copy - add vocab: %w", err)
 	}

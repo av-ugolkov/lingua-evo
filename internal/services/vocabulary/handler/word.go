@@ -4,14 +4,11 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"slices"
-	"time"
 	"unicode/utf8"
 
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/gin-ext"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/msg-error"
-	entityDict "github.com/av-ugolkov/lingua-evo/internal/services/dictionary"
-	entityExample "github.com/av-ugolkov/lingua-evo/internal/services/example"
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/utils/slices"
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary"
 	"github.com/av-ugolkov/lingua-evo/runtime"
 
@@ -103,42 +100,40 @@ func (h *Handler) addWord(c *ginext.Context) (int, any, error) {
 				ErrCountTranslates)
 	}
 
+	if slices.HasDuplicates(data.Translates) {
+		return http.StatusBadRequest, nil,
+			msgerr.New(fmt.Errorf("word.delivery.Handler.addWord: translates contains duplicates"),
+				ErrWordIsExists)
+	}
+
+	translates := make([]entity.DictWord, 0, len(data.Translates))
+	for _, translate := range data.Translates {
+		translates = append(translates, entity.DictWord{
+			Text: translate,
+		})
+	}
+
 	if len(data.Examples) > 5 {
 		return http.StatusBadRequest, nil,
 			msgerr.New(fmt.Errorf("word.delivery.Handler.addWord: translates more than 5"),
 				ErrCountExamples)
 	}
-
-	translateWords := make([]entityDict.DictWord, 0, len(data.Translates))
-	for _, translateWord := range data.Translates {
-		translateWords = append(translateWords, entityDict.DictWord{
-			Text:      translateWord,
-			CreatedAt: time.Now().UTC(),
-			UpdatedAt: time.Now().UTC(),
-		})
-	}
-
-	examples := make([]entityExample.Example, 0, len(data.Examples))
+	examples := make([]entity.Example, 0, len(data.Examples))
 	for _, example := range data.Examples {
-		examples = append(examples, entityExample.Example{
-			Text:      example,
-			CreatedAt: time.Now().UTC(),
+		examples = append(examples, entity.Example{
+			Text: example,
 		})
 	}
 
 	vocabWord, err := h.vocabSvc.AddWord(ctx, userID, entity.VocabWordData{
 		VocabID: data.VocabID,
-		Native: entityDict.DictWord{
+		Native: entity.DictWord{
 			Text:          data.Native.Text,
 			Pronunciation: data.Native.Pronunciation,
-			CreatedAt:     time.Now().UTC(),
-			UpdatedAt:     time.Now().UTC(),
 		},
 		Definition: data.Definition,
-		Translates: translateWords,
+		Translates: translates,
 		Examples:   examples,
-		CreatedAt:  time.Now().UTC(),
-		UpdatedAt:  time.Now().UTC(),
 	})
 	if err != nil {
 		switch {
@@ -196,7 +191,7 @@ func (h *Handler) updateWordText(c *ginext.Context) (int, any, error) {
 	vocabWord, err := h.vocabSvc.UpdateWordText(ctx, userID, entity.VocabWordData{
 		ID:      data.ID,
 		VocabID: data.VocabID,
-		Native: entityDict.DictWord{
+		Native: entity.DictWord{
 			ID:   data.Native.ID,
 			Text: data.Native.Text,
 		},
@@ -249,7 +244,7 @@ func (h *Handler) updateWordPronunciation(c *ginext.Context) (int, any, error) {
 	vocabWord, err := h.vocabSvc.UpdateWordPronunciation(ctx, userID, entity.VocabWordData{
 		ID:      data.ID,
 		VocabID: data.VocabID,
-		Native: entityDict.DictWord{
+		Native: entity.DictWord{
 			ID:            data.Native.ID,
 			Text:          data.Native.Text,
 			Pronunciation: data.Native.Pronunciation,
@@ -340,17 +335,16 @@ func (h *Handler) updateWordTranslates(c *ginext.Context) (int, any, error) {
 				ErrCountTranslates)
 	}
 
-	translates := make([]entityDict.DictWord, 0, len(data.Translates))
-	for _, tr := range data.Translates {
-		if slices.ContainsFunc(translates, func(t entityDict.DictWord) bool {
-			return t.Text == tr
-		}) {
-			return http.StatusBadRequest, nil,
-				msgerr.New(fmt.Errorf("service.vocabulary.Handler.updateWordTranslates: duplicate translate"),
-					ErrWordIsExists)
-		}
-		translates = append(translates, entityDict.DictWord{
-			Text: tr,
+	if slices.HasDuplicates(data.Translates) {
+		return http.StatusBadRequest, nil,
+			msgerr.New(fmt.Errorf("service.vocabulary.Handler.updateWordTranslates: translates must be unique"),
+				ErrWordIsExists)
+	}
+
+	translates := make([]entity.DictWord, 0, len(data.Translates))
+	for _, translate := range data.Translates {
+		translates = append(translates, entity.DictWord{
+			Text: translate,
 		})
 	}
 
@@ -397,17 +391,16 @@ func (h *Handler) updateWordExamples(c *ginext.Context) (int, any, error) {
 				ErrCountExamples)
 	}
 
-	examples := make([]entityExample.Example, 0, len(data.Examples))
-	for _, ex := range data.Examples {
-		if slices.ContainsFunc(examples, func(e entityExample.Example) bool {
-			return e.Text == ex
-		}) {
-			return http.StatusBadRequest, nil,
-				msgerr.New(fmt.Errorf("service.vocabulary.Handler.updateWordExamples: duplicate example"),
-					ErrExampleIsExists)
-		}
-		examples = append(examples, entityExample.Example{
-			Text: ex,
+	if slices.HasDuplicates(data.Examples) {
+		return http.StatusBadRequest, nil,
+			msgerr.New(fmt.Errorf("service.vocabulary.Handler.updateWordExamples: examples must be unique"),
+				ErrExampleIsExists)
+	}
+
+	examples := make([]entity.Example, 0, len(data.Examples))
+	for _, example := range data.Examples {
+		examples = append(examples, entity.Example{
+			Text: example,
 		})
 	}
 
@@ -526,7 +519,6 @@ func (h *Handler) getWords(c *ginext.Context) (int, any, error) {
 		for _, translate := range vocabWord.Translates {
 			translates = append(translates, translate.Text)
 		}
-
 		examples := make([]string, 0, len(vocabWord.Examples))
 		for _, example := range vocabWord.Examples {
 			examples = append(examples, example.Text)

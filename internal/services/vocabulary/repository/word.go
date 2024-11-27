@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	entityDict "github.com/av-ugolkov/lingua-evo/internal/services/dictionary"
-	entityExample "github.com/av-ugolkov/lingua-evo/internal/services/example"
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary"
 
 	"github.com/google/uuid"
@@ -42,7 +40,6 @@ func (r *VocabRepo) GetWord(ctx context.Context, wid uuid.UUID, nativeLang, tran
 
 	var vocabWordData entity.VocabWordData
 	var translates []string
-	var examples []string
 	err := r.tr.QueryRow(ctx, query, wid).Scan(
 		&vocabWordData.ID,
 		&vocabWordData.Native.ID,
@@ -50,17 +47,13 @@ func (r *VocabRepo) GetWord(ctx context.Context, wid uuid.UUID, nativeLang, tran
 		&vocabWordData.Native.Pronunciation,
 		&vocabWordData.Definition,
 		&translates,
-		&examples)
+		&vocabWordData.Examples)
 	if err != nil {
 		return entity.VocabWordData{}, fmt.Errorf("word.repository.WordRepo.GetWord: %w", err)
 	}
 
 	for _, tr := range translates {
-		vocabWordData.Translates = append(vocabWordData.Translates, entityDict.DictWord{Text: tr})
-	}
-
-	for _, ex := range examples {
-		vocabWordData.Examples = append(vocabWordData.Examples, entityExample.Example{Text: ex})
+		vocabWordData.Translates = append(vocabWordData.Translates, entity.DictWord{Text: tr})
 	}
 
 	return vocabWordData, nil
@@ -191,7 +184,7 @@ func (r *VocabRepo) GetRandomVocabulary(ctx context.Context, vocabID uuid.UUID, 
 		}
 
 		for _, tr := range translates {
-			vocabulary.Translates = append(vocabulary.Translates, entityDict.DictWord{Text: tr})
+			vocabulary.Translates = append(vocabulary.Translates, entity.DictWord{Text: tr})
 		}
 
 		vocabularyWords = append(vocabularyWords, vocabulary)
@@ -266,11 +259,10 @@ func (r *VocabRepo) GetVocabWords(ctx context.Context, vocabID uuid.UUID) ([]ent
 	}
 	defer rows.Close()
 
+	var wordData entity.VocabWordData
+	var translates []string
 	vocabularyWords := make([]entity.VocabWordData, 0, countRows)
 	for rows.Next() {
-		var wordData entity.VocabWordData
-		var translates []string
-		var examples []string
 		err = rows.Scan(
 			&wordData.ID,
 			&wordData.Native.ID,
@@ -278,7 +270,7 @@ func (r *VocabRepo) GetVocabWords(ctx context.Context, vocabID uuid.UUID) ([]ent
 			&wordData.Native.Pronunciation,
 			&wordData.Definition,
 			&translates,
-			&examples,
+			&wordData.Examples,
 			&wordData.UpdatedAt,
 			&wordData.CreatedAt,
 		)
@@ -287,11 +279,7 @@ func (r *VocabRepo) GetVocabWords(ctx context.Context, vocabID uuid.UUID) ([]ent
 		}
 
 		for _, tr := range translates {
-			wordData.Translates = append(wordData.Translates, entityDict.DictWord{Text: tr, LangCode: translateLang})
-		}
-
-		for _, ex := range examples {
-			wordData.Examples = append(wordData.Examples, entityExample.Example{Text: ex})
+			wordData.Translates = append(wordData.Translates, entity.DictWord{Text: tr, LangCode: translateLang})
 		}
 
 		wordData.VocabID = vocabID
@@ -328,18 +316,17 @@ func (r *VocabRepo) GetVocabSeveralWords(ctx context.Context, vocabID uuid.UUID,
 	}
 	defer rows.Close()
 
+	var wordData entity.VocabWordData
+	var translates []string
 	vocabularyWords := make([]entity.VocabWordData, 0, count)
 	for rows.Next() {
-		var wordData entity.VocabWordData
-		var translates []string
-		var examples []string
 		err = rows.Scan(
 			&wordData.ID,
 			&wordData.Native.ID,
 			&wordData.Native.Text,
 			&wordData.Native.Pronunciation,
 			&translates,
-			&examples,
+			&wordData.Examples,
 			&wordData.UpdatedAt,
 			&wordData.CreatedAt,
 		)
@@ -348,11 +335,7 @@ func (r *VocabRepo) GetVocabSeveralWords(ctx context.Context, vocabID uuid.UUID,
 		}
 
 		for _, tr := range translates {
-			wordData.Translates = append(wordData.Translates, entityDict.DictWord{Text: tr, LangCode: translateLang})
-		}
-
-		for _, ex := range examples {
-			wordData.Examples = append(wordData.Examples, entityExample.Example{Text: ex})
+			wordData.Translates = append(wordData.Translates, entity.DictWord{Text: tr, LangCode: translateLang})
 		}
 
 		wordData.VocabID = vocabID
