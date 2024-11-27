@@ -18,7 +18,7 @@ import (
 	entityUser "github.com/av-ugolkov/lingua-evo/internal/services/user"
 	userRepo "github.com/av-ugolkov/lingua-evo/internal/services/user/repository"
 	user "github.com/av-ugolkov/lingua-evo/internal/services/user/service"
-	vocabEntity "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary"
+	entity "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary"
 	vocabRepo "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary/repository"
 	"github.com/av-ugolkov/lingua-evo/runtime"
 
@@ -215,9 +215,9 @@ func TestService_GetVocabularies(t *testing.T) {
 
 				for _, vocab := range vocabs {
 					for i := 0; i < 3; i++ {
-						_, err := vocabSvc.AddWord(ctx, uid, vocabEntity.VocabWordData{
+						_, err := vocabSvc.AddWord(ctx, uid, entity.VocabWordData{
 							VocabID: vocab.ID,
-							Native: entityDict.DictWord{
+							Native: entity.DictWord{
 								Text: fmt.Sprintf("text_%d_%s", i, vocab.Name),
 							},
 						})
@@ -291,9 +291,9 @@ func TestService_GetVocabularies(t *testing.T) {
 
 				for _, vocab := range vocabs {
 					for i := 0; i < 10; i++ {
-						_, err := vocabSvc.AddWord(ctx, uid, vocabEntity.VocabWordData{
+						_, err := vocabSvc.AddWord(ctx, uid, entity.VocabWordData{
 							VocabID: vocab.ID,
-							Native: entityDict.DictWord{
+							Native: entity.DictWord{
 								Text: fmt.Sprintf("text_%d_%s", i, vocab.Name),
 							},
 						})

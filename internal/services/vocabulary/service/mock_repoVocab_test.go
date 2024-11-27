@@ -683,6 +683,76 @@ func (_m *mockRepoVocab) UpdateWord(ctx context.Context, word vocabulary.VocabWo
 	return r0
 }
 
+// UpdateWordDefinition provides a mock function with given fields: ctx, word
+func (_m *mockRepoVocab) UpdateWordDefinition(ctx context.Context, word vocabulary.VocabWord) error {
+	ret := _m.Called(ctx, word)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, vocabulary.VocabWord) error); ok {
+		r0 = rf(ctx, word)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// UpdateWordExamples provides a mock function with given fields: ctx, word
+func (_m *mockRepoVocab) UpdateWordExamples(ctx context.Context, word vocabulary.VocabWord) error {
+	ret := _m.Called(ctx, word)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, vocabulary.VocabWord) error); ok {
+		r0 = rf(ctx, word)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// UpdateWordPronunciation provides a mock function with given fields: ctx, word
+func (_m *mockRepoVocab) UpdateWordPronunciation(ctx context.Context, word vocabulary.VocabWord) error {
+	ret := _m.Called(ctx, word)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, vocabulary.VocabWord) error); ok {
+		r0 = rf(ctx, word)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// UpdateWordText provides a mock function with given fields: ctx, word
+func (_m *mockRepoVocab) UpdateWordText(ctx context.Context, word vocabulary.VocabWord) error {
+	ret := _m.Called(ctx, word)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, vocabulary.VocabWord) error); ok {
+		r0 = rf(ctx, word)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// UpdateWordTranslates provides a mock function with given fields: ctx, word
+func (_m *mockRepoVocab) UpdateWordTranslates(ctx context.Context, word vocabulary.VocabWord) error {
+	ret := _m.Called(ctx, word)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, vocabulary.VocabWord) error); ok {
+		r0 = rf(ctx, word)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // newMockRepoVocab creates a new instance of mockRepoVocab. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func newMockRepoVocab(t interface {

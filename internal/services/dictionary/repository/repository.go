@@ -176,7 +176,7 @@ func (r *DictionaryRepo) UpdateWord(ctx context.Context, w *entity.DictWord) err
 	}
 
 	if rows := result.RowsAffected(); rows > 1 {
-		return fmt.Errorf("dictionary.repository.DictionaryRepo.EditWord: %w", entity.ErrorAffectRows)
+		return fmt.Errorf("dictionary.repository.DictionaryRepo.EditWord: %w", entity.ErrAffectRows)
 	}
 
 	return nil

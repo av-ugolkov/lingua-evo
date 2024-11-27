@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"fmt"
-	entity "github.com/av-ugolkov/lingua-evo/internal/services/events"
 	"log/slog"
 	"os"
 	"testing"
@@ -13,6 +12,7 @@ import (
 	"github.com/av-ugolkov/lingua-evo/internal/db/transactor"
 	"github.com/av-ugolkov/lingua-evo/internal/services/dictionary"
 	dictRepo "github.com/av-ugolkov/lingua-evo/internal/services/dictionary/repository"
+	entity "github.com/av-ugolkov/lingua-evo/internal/services/events"
 	eventsRepo "github.com/av-ugolkov/lingua-evo/internal/services/events/repository"
 	"github.com/av-ugolkov/lingua-evo/internal/services/example"
 	exampleRepo "github.com/av-ugolkov/lingua-evo/internal/services/example/repository"
@@ -96,7 +96,6 @@ func TestGetCountEvents(t *testing.T) {
 				NativeLang:    "en",
 				TranslateLang: "ru",
 				Access:        1,
-				Tags:          []tag.Tag{},
 			})
 			if err != nil {
 				return err
@@ -139,7 +138,6 @@ func TestGetCountEvents(t *testing.T) {
 				NativeLang:    "en",
 				TranslateLang: "ru",
 				Access:        1,
-				Tags:          []tag.Tag{},
 			})
 			if err != nil {
 				return err
@@ -155,7 +153,7 @@ func TestGetCountEvents(t *testing.T) {
 
 			_, err = vocabularySvc.AddWord(ctx, usr.ID, entityVocab.VocabWordData{
 				VocabID: vocabTemp.ID,
-				Native: dictionary.DictWord{
+				Native: entityVocab.DictWord{
 					Text: "temp",
 				},
 			})
@@ -194,7 +192,6 @@ func TestGetCountEvents(t *testing.T) {
 				NativeLang:    "en",
 				TranslateLang: "ru",
 				Access:        1,
-				Tags:          []tag.Tag{},
 			})
 			if err != nil {
 				return err
@@ -202,7 +199,7 @@ func TestGetCountEvents(t *testing.T) {
 
 			_, err = vocabularySvc.AddWord(ctx, usr.ID, entityVocab.VocabWordData{
 				VocabID: vocabTemp.ID,
-				Native: dictionary.DictWord{
+				Native: entityVocab.DictWord{
 					Text: "temp",
 				},
 			})
@@ -254,7 +251,6 @@ func TestGetEvents(t *testing.T) {
 				NativeLang:    "en",
 				TranslateLang: "ru",
 				Access:        1,
-				Tags:          []tag.Tag{},
 			})
 			if err != nil {
 				return err
@@ -297,7 +293,6 @@ func TestGetEvents(t *testing.T) {
 				NativeLang:    "en",
 				TranslateLang: "ru",
 				Access:        1,
-				Tags:          []tag.Tag{},
 			})
 			if err != nil {
 				return err
@@ -313,7 +308,7 @@ func TestGetEvents(t *testing.T) {
 
 			_, err = vocabularySvc.AddWord(ctx, usr.ID, entityVocab.VocabWordData{
 				VocabID: vocabTemp.ID,
-				Native: dictionary.DictWord{
+				Native: entityVocab.DictWord{
 					Text: "temp",
 				},
 			})
@@ -352,7 +347,6 @@ func TestGetEvents(t *testing.T) {
 				NativeLang:    "en",
 				TranslateLang: "ru",
 				Access:        1,
-				Tags:          []tag.Tag{},
 			})
 			if err != nil {
 				return err
@@ -360,7 +354,7 @@ func TestGetEvents(t *testing.T) {
 
 			_, err = vocabularySvc.AddWord(ctx, usr.ID, entityVocab.VocabWordData{
 				VocabID: vocabTemp.ID,
-				Native: dictionary.DictWord{
+				Native: entityVocab.DictWord{
 					Text: "temp",
 				},
 			})

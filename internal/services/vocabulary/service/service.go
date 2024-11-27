@@ -19,7 +19,7 @@ import (
 
 type (
 	repoVocab interface {
-		AddVocab(ctx context.Context, vocab entity.Vocab, tagIDs []uuid.UUID) (uuid.UUID, error)
+		AddVocab(ctx context.Context, vocab entity.Vocab) (uuid.UUID, error)
 		DeleteVocab(ctx context.Context, vocab entity.Vocab) error
 		GetVocab(ctx context.Context, vid uuid.UUID) (entity.Vocab, error)
 		GetByName(ctx context.Context, uid uuid.UUID, name string) (entity.Vocab, error)
@@ -132,13 +132,6 @@ func (s *Service) GetVocabulary(ctx context.Context, uid, vid uuid.UUID) (entity
 		return entity.Vocab{}, fmt.Errorf("vocabulary.Service.GetVocabulary: %w", err)
 	}
 
-	tags, err := s.repoVocab.GetTagsVocabulary(ctx, vocab.ID)
-	if err != nil {
-		return entity.Vocab{}, fmt.Errorf("vocabulary.Service.GetVocabulary: %w", err)
-	}
-	for _, tag := range tags {
-		vocab.Tags = append(vocab.Tags, entityTag.Tag{Text: tag})
-	}
 	return vocab, nil
 }
 

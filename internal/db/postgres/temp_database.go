@@ -51,6 +51,7 @@ func NewTempPostgres(ctx context.Context, root string) *TempPostgres {
 			path.Join(root, "migration/migrations/010_event_vocab.up.sql"),
 			path.Join(root, "migration/migrations/011_user_data.up.sql"),
 			path.Join(root, "migration/migrations/012_google_account.up.sql"),
+			path.Join(root, "migration/migrations/013_definition.up.sql"),
 		),
 		postgres.WithDatabase("test_db"),
 		postgres.WithUsername("user"),

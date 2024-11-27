@@ -39,7 +39,6 @@ type (
 		NativeLang    string    `json:"native_lang,omitempty"`
 		TranslateLang string    `json:"translate_lang,omitempty"`
 		Description   string    `json:"description,omitempty"`
-		Tags          []string  `json:"tags,omitempty"`
 	}
 
 	VocabularyRs struct {
@@ -50,7 +49,6 @@ type (
 		NativeLang    string    `json:"native_lang,omitempty"`
 		TranslateLang string    `json:"translate_lang,omitempty"`
 		Description   string    `json:"description,omitempty"`
-		Tags          []string  `json:"tags,omitempty"`
 		UserName      string    `json:"user_name,omitempty"`
 		Editable      *bool     `json:"editable,omitempty"`
 		WordsCount    *uint     `json:"words_count,omitempty"`
@@ -98,7 +96,11 @@ func Create(r *ginext.Engine, vocabSvc *vocabulary.Service) {
 	r.GET(handler.VocabularyWord, middleware.Auth(h.getWord))
 	r.POST(handler.VocabularyWord, middleware.Auth(h.addWord))
 	r.DELETE(handler.VocabularyWord, middleware.Auth(h.deleteWord))
-	r.POST(handler.VocabularyWordUpdate, middleware.Auth(h.updateWord))
+	r.POST(handler.VocabularyWordUpdateText, middleware.Auth(h.updateWordText))
+	r.POST(handler.VocabularyWordUpdatePronunciation, middleware.Auth(h.updateWordPronunciation))
+	r.POST(handler.VocabularyWordUpdateDefinition, middleware.Auth(h.updateWordDefinition))
+	r.POST(handler.VocabularyWordUpdateTranslates, middleware.Auth(h.updateWordTranslates))
+	r.POST(handler.VocabularyWordUpdateExamples, middleware.Auth(h.updateWordExamples))
 	r.GET(handler.VocabularyWords, middleware.OptionalAuth(h.getWords))
 	r.GET(handler.WordPronunciation, middleware.Auth(h.getPronunciation))
 
@@ -174,11 +176,6 @@ func (h *Handler) getVocabularies(c *ginext.Context) (int, any, error) {
 
 	vocabsWithWordsRs := make([]VocabularyWithWords, 0, len(vocabularies))
 	for _, vocab := range vocabularies {
-		tags := make([]string, 0, len(vocab.Tags))
-		for _, tag := range vocab.Tags {
-			tags = append(tags, tag.Text)
-		}
-
 		vocabsWithWordsRs = append(vocabsWithWordsRs, VocabularyWithWords{
 			VocabularyRs: VocabularyRs{
 				ID:            vocab.ID,
@@ -190,7 +187,6 @@ func (h *Handler) getVocabularies(c *ginext.Context) (int, any, error) {
 				TranslateLang: vocab.TranslateLang,
 				Description:   vocab.Description,
 				WordsCount:    &vocab.WordsCount,
-				Tags:          tags,
 				CreatedAt:     vocab.CreatedAt,
 				UpdatedAt:     vocab.UpdatedAt,
 			},
@@ -261,11 +257,6 @@ func (h *Handler) getVocabularyInfo(c *ginext.Context) (int, any, error) {
 			fmt.Errorf("vocabulary.delivery.Handler.getVocabulary - vocabulary not found: %v", err)
 	}
 
-	tags := make([]string, 0, len(vocab.Tags))
-	for _, tag := range vocab.Tags {
-		tags = append(tags, tag.Text)
-	}
-
 	vocabRs := VocabularyRs{
 		ID:            vocab.ID,
 		AccessID:      &vocab.Access,
@@ -276,7 +267,6 @@ func (h *Handler) getVocabularyInfo(c *ginext.Context) (int, any, error) {
 		TranslateLang: vocab.TranslateLang,
 		Description:   vocab.Description,
 		Editable:      &vocab.Editable,
-		Tags:          tags,
 		WordsCount:    &vocab.WordsCount,
 		CreatedAt:     vocab.CreatedAt,
 		UpdatedAt:     vocab.UpdatedAt,
@@ -321,11 +311,6 @@ func (h *Handler) getRecommendedVocabularies(c *ginext.Context) (int, any, error
 
 	vocabulariesRs := make([]VocabularyRs, 0, len(vocabs))
 	for _, vocab := range vocabs {
-		tags := make([]string, 0, len(vocab.Tags))
-		for _, tag := range vocab.Tags {
-			tags = append(tags, tag.Text)
-		}
-
 		vocabulariesRs = append(vocabulariesRs, VocabularyRs{
 			ID:            vocab.ID,
 			UserID:        vocab.UserID,
@@ -334,7 +319,6 @@ func (h *Handler) getRecommendedVocabularies(c *ginext.Context) (int, any, error
 			NativeLang:    vocab.NativeLang,
 			TranslateLang: vocab.TranslateLang,
 			Description:   vocab.Description,
-			Tags:          tags,
 			WordsCount:    &vocab.WordsCount,
 		})
 	}

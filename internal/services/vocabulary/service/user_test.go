@@ -188,7 +188,6 @@ func addVocabs(ctx context.Context, vocabSvc *Service, uid uuid.UUID, count int)
 			NativeLang:    "en",
 			TranslateLang: "ru",
 			Access:        1,
-			Tags:          []tag.Tag{},
 		})
 		if err != nil {
 			return nil, fmt.Errorf("user.createUsers - UserAddVocabulary: %w", err)
