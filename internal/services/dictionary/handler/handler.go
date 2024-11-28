@@ -12,6 +12,7 @@ import (
 	dictionarySvc "github.com/av-ugolkov/lingua-evo/internal/services/dictionary"
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/dictionary"
 	"github.com/av-ugolkov/lingua-evo/runtime"
+	"github.com/gin-gonic/gin"
 
 	"github.com/google/uuid"
 )
@@ -57,6 +58,7 @@ func Create(r *ginext.Engine, dictSvc *dictionarySvc.Service) {
 	r.POST(handler.DictionaryWord, middleware.Auth(h.addWord))
 	r.GET(handler.DictionaryWord, h.getWord)
 	r.GET(handler.GetRandomWord, h.getRandomWord)
+	r.GET(handler.WordPronunciation, middleware.Auth(h.getPronunciation))
 }
 
 func newHandler(dictSvc *dictionarySvc.Service) *Handler {
@@ -163,4 +165,28 @@ func (h *Handler) getRandomWord(c *ginext.Context) (int, any, error) {
 		LangCode:      word.LangCode,
 		Pronunciation: word.Pronunciation,
 	}, nil
+}
+
+func (h *Handler) getPronunciation(c *ginext.Context) (int, any, error) {
+	ctx := c.Request.Context()
+
+	text, err := c.GetQuery(QueryParamText)
+	if err != nil {
+		return http.StatusInternalServerError, nil,
+			fmt.Errorf("word.delivery.Handler.getPronunciation: %w", err)
+	}
+
+	langCode, err := c.GetQuery(QueryParamLangCode)
+	if err != nil {
+		return http.StatusInternalServerError, nil,
+			fmt.Errorf("word.delivery.Handler.getPronunciation: %w", err)
+	}
+
+	pronunciation, err := h.dictSvc.GetPronunciation(ctx, text, langCode)
+	if err != nil {
+		return http.StatusInternalServerError, nil,
+			fmt.Errorf("word.delivery.Handler.getPronunciation: %w", err)
+	}
+
+	return http.StatusOK, gin.H{"pronunciation": pronunciation}, nil
 }

@@ -235,6 +235,22 @@ func (r *DictionaryRepo) GetRandomWord(ctx context.Context, langCode string) (en
 	return word, nil
 }
 
+func (r *DictionaryRepo) GetPronunciation(ctx context.Context, text, langCode string) (string, error) {
+	table := getTable(langCode)
+
+	query := fmt.Sprintf(`
+		SELECT pronunciation 
+		FROM "%s" 
+		WHERE text=$1;`, table)
+
+	var pron sql.NullString
+	err := r.tr.QueryRow(ctx, query, text).Scan(&pron)
+	if err != nil {
+		return "", fmt.Errorf("dictionary.repository.DictionaryRepo.GetPronunciation: %w", err)
+	}
+	return pron.String, nil
+}
+
 func getTable(langCode string) string {
 	table := "dictionary"
 	if len(langCode) != 0 {

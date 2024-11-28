@@ -10,6 +10,9 @@ import (
 var (
 	ErrAffectRows     = errors.New("more than 1 affected rows have changed")
 	ErrDuplicateWords = errors.New("duplicate words")
+
+	ErrMsgLanguageNotFound          = "Sorry, language not found."
+	ErrMsgWordPronunciationNotFound = "Sorry, pronunciation not found"
 )
 
 type DictWord struct {

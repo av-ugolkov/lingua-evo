@@ -23,6 +23,7 @@ type (
 		FindWords(ctx context.Context, w *DictWord) ([]uuid.UUID, error)
 		DeleteWordByText(ctx context.Context, word *DictWord) error
 		GetRandomWord(ctx context.Context, langCode string) (DictWord, error)
+		GetPronunciation(ctx context.Context, text, langCode string) (string, error)
 	}
 
 	langSvc interface {
@@ -125,6 +126,27 @@ func (s *Service) DeleteWordByText(ctx context.Context, word DictWord) error {
 	}
 
 	return nil
+}
+
+func (s *Service) GetPronunciation(ctx context.Context, text, langCode string) (string, error) {
+	err := s.langSvc.CheckLanguage(ctx, langCode)
+	if err != nil {
+		return "", msgerr.New(fmt.Errorf("dictionary.Service.GetPronunciation: %v", err),
+			ErrMsgLanguageNotFound)
+	}
+
+	pronunciation, err := s.repo.GetPronunciation(ctx, text, langCode)
+	if err != nil {
+		return "", msgerr.New(fmt.Errorf("dictionary.Service.GetPronunciation: %v", err),
+			msgerr.ErrMsgInternal)
+	}
+
+	if pronunciation == runtime.EmptyString {
+		return "", msgerr.New(fmt.Errorf("dictionary.Service.GetPronunciation: %v", err),
+			ErrMsgWordPronunciationNotFound)
+	}
+
+	return pronunciation, nil
 }
 
 func checkWords(words []DictWord, languages []entityLanguage.Language) []DictWord {

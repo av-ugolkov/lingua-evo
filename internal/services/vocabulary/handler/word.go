@@ -17,10 +17,6 @@ import (
 )
 
 const (
-	paramsText string = "text"
-)
-
-const (
 	ErrWordTooLong          = "Word or phrase length should be less than 100 characters"
 	ErrPronunciationTooLong = "Pronunciation length should be less than 100 characters"
 	ErrDefinitionTooLong    = "Definition length should be less than 100 characters"
@@ -542,40 +538,4 @@ func (h *Handler) getWords(c *ginext.Context) (int, any, error) {
 	}
 
 	return http.StatusOK, wordsRs, nil
-}
-
-func (h *Handler) getPronunciation(c *ginext.Context) (int, any, error) {
-	ctx := c.Request.Context()
-
-	uid, err := runtime.UserIDFromContext(ctx)
-	if err != nil {
-		return http.StatusUnauthorized, nil,
-			fmt.Errorf("word.delivery.Handler.getPronunciation: %w", err)
-	}
-
-	text, err := c.GetQuery(paramsText)
-	if err != nil {
-		return http.StatusInternalServerError, nil,
-			fmt.Errorf("word.delivery.Handler.getPronunciation: %w", err)
-	}
-
-	vid, err := c.GetQueryUUID(paramsID)
-	if err != nil {
-		return http.StatusInternalServerError, nil,
-			fmt.Errorf("word.delivery.Handler.getPronunciation: %w", err)
-	}
-
-	pronunciation, err := h.vocabSvc.GetPronunciation(ctx, uid, vid, text)
-	if err != nil {
-		return http.StatusInternalServerError, nil,
-			fmt.Errorf("word.delivery.Handler.getPronunciation: %w", err)
-	}
-
-	vocabWordRs := VocabWordRs{
-		Native: &VocabWord{
-			Pronunciation: pronunciation,
-		},
-	}
-
-	return http.StatusOK, vocabWordRs, nil
 }

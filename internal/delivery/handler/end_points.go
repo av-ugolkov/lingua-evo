@@ -23,8 +23,9 @@ const (
 	AccountSettingsUpdateEmail     = "/account/settings/update_email"      //post
 	AccountSettingsUpdateNickname  = "/account/settings/update_nickname"   //post
 
-	DictionaryWord = "/dictionary/word"        //get post
-	GetRandomWord  = "/dictionary/word/random" //get
+	DictionaryWord    = "/dictionary/word"               //get post
+	GetRandomWord     = "/dictionary/word/random"        //get
+	WordPronunciation = "/dictionary/word/pronunciation" //get
 
 	UserVocabularies = "/account/vocabularies" //get
 
@@ -36,14 +37,13 @@ const (
 	VocabularyAccessForUser = "/vocabulary/access/user"   //get post delete patch
 	VocabulariesByUser      = "/vocabularies/user"        //get
 
-	VocabularyWord                    = "/vocabulary/word"                      //get post delete
-	VocabularyWordUpdateText          = "/vocabulary/word/update/text"          //post
-	VocabularyWordUpdatePronunciation = "/vocabulary/word/update/pronunciation" //post
-	VocabularyWordUpdateDefinition    = "/vocabulary/word/update/definition"    //post
-	VocabularyWordUpdateTranslates    = "/vocabulary/word/update/translates"    //post
-	VocabularyWordUpdateExamples      = "/vocabulary/word/update/examples"      //post
-	VocabularyWords                   = "/vocabulary/words"                     //get
-	WordPronunciation                 = "/vocabulary/word/pronunciation"        //get
+	VocabularyWord              = "/vocabulary/word"               //get post delete
+	VocabularyWordText          = "/vocabulary/word/text"          //post
+	VocabularyWordPronunciation = "/vocabulary/word/pronunciation" //post
+	VocabularyWordDefinition    = "/vocabulary/word/definition"    //post
+	VocabularyWordTranslates    = "/vocabulary/word/translates"    //post
+	VocabularyWordExamples      = "/vocabulary/word/examples"      //post
+	VocabularyWords             = "/vocabulary/words"              //get
 
 	VocabularyTags = "/vocabulary/tag" //get
 
