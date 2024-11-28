@@ -24,6 +24,38 @@ func NewRepo(tr *transactor.Transactor) *DictionaryRepo {
 	}
 }
 
+func (r *DictionaryRepo) GetDictionary(ctx context.Context, langCode string) ([]entity.DictWord, error) {
+	query := fmt.Sprintf(`
+		SELECT 
+			id, 
+			text, 
+			pronunciation,
+			creator,
+			created_at
+		FROM dictionary_%s;`, langCode)
+
+	rows, err := r.tr.Query(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("dictionary.repository.DictionaryRepo.GetDictionary: %w", err)
+	}
+	defer rows.Close()
+
+	words := make([]entity.DictWord, 0, 100)
+	var pron sql.NullString
+	var word entity.DictWord
+	for rows.Next() {
+		err = rows.Scan(&word.ID, &word.Text, &pron, &word.Creator, &word.CreatedAt)
+		if err != nil {
+			return nil, fmt.Errorf("dictionary.repository.DictionaryRepo.GetDictionary - scan: %w", err)
+		}
+
+		word.Pronunciation = pron.String
+		words = append(words, word)
+	}
+
+	return words, nil
+}
+
 func (r *DictionaryRepo) AddWords(ctx context.Context, inWords []entity.DictWord) ([]entity.DictWord, error) {
 	statements := make([]string, 0, len(inWords))
 	params := make([]any, 0, len(inWords))

@@ -55,6 +55,7 @@ type Handler struct {
 func Create(r *ginext.Engine, dictSvc *dictionarySvc.Service) {
 	h := newHandler(dictSvc)
 
+	r.GET(handler.Dictionary, h.getDictionary)
 	r.POST(handler.DictionaryWord, middleware.Auth(h.addWord))
 	r.GET(handler.DictionaryWord, h.getWord)
 	r.GET(handler.GetRandomWord, h.getRandomWord)
@@ -65,6 +66,31 @@ func newHandler(dictSvc *dictionarySvc.Service) *Handler {
 	return &Handler{
 		dictSvc: dictSvc,
 	}
+}
+
+func (h *Handler) getDictionary(c *ginext.Context) (int, any, error) {
+	ctx := c.Request.Context()
+
+	langCode := c.Query(QueryParamLangCode)
+
+	dict, err := h.dictSvc.GetDictionary(ctx, langCode)
+	if err != nil {
+		return http.StatusInternalServerError, nil,
+			fmt.Errorf("dictionary.delivery.Handler.getDictionary: %v", err)
+	}
+
+	wordsRs := make([]WordRs, 0, len(dict))
+	for _, w := range dict {
+		wordsRs = append(wordsRs, WordRs{
+			ID:            &w.ID,
+			Text:          w.Text,
+			Pronunciation: w.Pronunciation,
+			LangCode:      w.LangCode,
+			CreatedAt:     &w.CreatedAt,
+		})
+	}
+
+	return http.StatusOK, wordsRs, nil
 }
 
 func (h *Handler) addWord(c *ginext.Context) (int, any, error) {

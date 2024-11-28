@@ -23,6 +23,7 @@ const (
 	AccountSettingsUpdateEmail     = "/account/settings/update_email"      //post
 	AccountSettingsUpdateNickname  = "/account/settings/update_nickname"   //post
 
+	Dictionary        = "/dictionary"
 	DictionaryWord    = "/dictionary/word"               //get post
 	GetRandomWord     = "/dictionary/word/random"        //get
 	WordPronunciation = "/dictionary/word/pronunciation" //get

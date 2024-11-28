@@ -16,6 +16,7 @@ import (
 
 type (
 	repoDictionary interface {
+		GetDictionary(ctx context.Context, langCode string) ([]DictWord, error)
 		AddWords(ctx context.Context, words []DictWord) ([]DictWord, error)
 		GetWordsByText(ctx context.Context, words []DictWord) ([]DictWord, error)
 		GetWords(ctx context.Context, ids []uuid.UUID) ([]DictWord, error)
@@ -46,10 +47,27 @@ func NewService(repo repoDictionary, langSvc langSvc) *Service {
 	}
 }
 
+func (s *Service) GetDictionary(ctx context.Context, langCode string) ([]DictWord, error) {
+	err := s.langSvc.CheckLanguage(ctx, langCode)
+	if err != nil {
+		return nil, msgerr.New(fmt.Errorf("dictionary.Service.GetDictionary: %v", err),
+			ErrMsgLanguageNotFound)
+	}
+
+	words, err := s.repo.GetDictionary(ctx, langCode)
+	if err != nil {
+		return nil, msgerr.New(fmt.Errorf("dictionary.Service.GetDictionary: %v", err),
+			msgerr.ErrMsgInternal)
+	}
+
+	return words, nil
+}
+
 func (s *Service) GetOrAddWords(ctx context.Context, inWords []DictWord) ([]DictWord, error) {
 	languages, err := s.langSvc.GetAvailableLanguages(ctx)
 	if err != nil {
-		return nil, msgerr.New(fmt.Errorf("dictionary.Service.AddWords - get languages: %v", err), msgerr.ErrMsgInternal)
+		return nil, msgerr.New(fmt.Errorf("dictionary.Service.AddWords: %v", err),
+			ErrMsgLanguageNotFound)
 	}
 
 	dictWords := checkWords(inWords, languages)
