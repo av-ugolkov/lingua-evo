@@ -81,19 +81,19 @@ func (_m *mockRepoDictionary) FindWords(ctx context.Context, w *DictWord) ([]uui
 }
 
 // GetDictionary provides a mock function with given fields: ctx, langCode, search, page, itemsPerPage
-func (_m *mockRepoDictionary) GetDictionary(ctx context.Context, langCode string, search string, page int, itemsPerPage int) ([]DictWord, error) {
+func (_m *mockRepoDictionary) GetDictionary(ctx context.Context, langCode string, search string, page int, itemsPerPage int) ([]DictWordData, error) {
 	ret := _m.Called(ctx, langCode, search, page, itemsPerPage)
 
-	var r0 []DictWord
+	var r0 []DictWordData
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, int, int) ([]DictWord, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, int, int) ([]DictWordData, error)); ok {
 		return rf(ctx, langCode, search, page, itemsPerPage)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, int, int) []DictWord); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, int, int) []DictWordData); ok {
 		r0 = rf(ctx, langCode, search, page, itemsPerPage)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]DictWord)
+			r0 = ret.Get(0).([]DictWordData)
 		}
 	}
 

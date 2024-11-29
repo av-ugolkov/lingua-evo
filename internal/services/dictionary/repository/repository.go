@@ -24,34 +24,33 @@ func NewRepo(tr *transactor.Transactor) *DictionaryRepo {
 	}
 }
 
-func (r *DictionaryRepo) GetDictionary(ctx context.Context, langCode, search string, page, itemsPerPage int) ([]entity.DictWord, error) {
+func (r *DictionaryRepo) GetDictionary(ctx context.Context, langCode, search string, page, itemsPerPage int) ([]entity.DictWordData, error) {
 	query := fmt.Sprintf(`
 		SELECT 
-			id, 
+			d.id, 
 			text, 
-			pronunciation,
-			creator,
-			created_at
-		FROM dictionary_%[1]s
+			COALESCE(pronunciation, ''), 
+			u.nickname,
+			d.created_at
+		FROM dictionary_%[1]s d
+		LEFT JOIN users u ON d.creator = u.id 
 		WHERE text ILIKE '%[2]s' || $1 || '%[2]s'
-		LIMIT %[3]d OFFSET %[4]d;`, langCode, "%", itemsPerPage, page)
+		LIMIT $2 OFFSET $3;`, langCode, "%")
 
-	rows, err := r.tr.Query(ctx, query, search)
+	rows, err := r.tr.Query(ctx, query, search, itemsPerPage, (page-1)*itemsPerPage)
 	if err != nil {
 		return nil, fmt.Errorf("dictionary.repository.DictionaryRepo.GetDictionary: %w", err)
 	}
 	defer rows.Close()
 
-	words := make([]entity.DictWord, 0, 100)
-	var pron sql.NullString
-	var word entity.DictWord
+	words := make([]entity.DictWordData, 0, 100)
+	var word entity.DictWordData
 	for rows.Next() {
-		err = rows.Scan(&word.ID, &word.Text, &pron, &word.Creator, &word.CreatedAt)
+		err = rows.Scan(&word.ID, &word.Text, &word.Pronunciation, &word.Creator, &word.CreatedAt)
 		if err != nil {
 			return nil, fmt.Errorf("dictionary.repository.DictionaryRepo.GetDictionary - scan: %w", err)
 		}
 
-		word.Pronunciation = pron.String
 		words = append(words, word)
 	}
 

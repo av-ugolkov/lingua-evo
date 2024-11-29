@@ -49,6 +49,15 @@ type (
 		CreatedAt     *time.Time `json:"created_at,omitempty"`
 		UpdatedAt     *time.Time `json:"updated_at,omitempty"`
 	}
+
+	WordDataRs struct {
+		ID            *uuid.UUID `json:"id,omitempty"`
+		Text          string     `json:"text,omitempty"`
+		Pronunciation string     `json:"pronunciation,omitempty"`
+		LangCode      string     `json:"lang_code,omitempty"`
+		Creator       string     `json:"creator,omitempty"`
+		CreatedAt     *time.Time `json:"created_at,omitempty"`
+	}
 )
 
 type Handler struct {
@@ -102,13 +111,14 @@ func (h *Handler) getDictionary(c *ginext.Context) (int, any, error) {
 			fmt.Errorf("dictionary.delivery.Handler.getDictionary: %v", err)
 	}
 
-	wordsRs := make([]WordRs, 0, len(dict))
+	wordsRs := make([]WordDataRs, 0, len(dict))
 	for _, w := range dict {
-		wordsRs = append(wordsRs, WordRs{
+		wordsRs = append(wordsRs, WordDataRs{
 			ID:            &w.ID,
 			Text:          w.Text,
 			Pronunciation: w.Pronunciation,
 			LangCode:      w.LangCode,
+			Creator:       w.Creator,
 			CreatedAt:     &w.CreatedAt,
 		})
 	}

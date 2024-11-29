@@ -25,3 +25,13 @@ type DictWord struct {
 	UpdatedAt     time.Time
 	CreatedAt     time.Time
 }
+
+type DictWordData struct {
+	ID            uuid.UUID
+	Text          string
+	Pronunciation string
+	LangCode      string
+	Creator       string
+	UpdatedAt     time.Time
+	CreatedAt     time.Time
+}
