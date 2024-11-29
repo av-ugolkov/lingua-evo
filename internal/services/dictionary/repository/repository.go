@@ -44,6 +44,7 @@ func (r *DictionaryRepo) GetDictionary(ctx context.Context, langCode, search str
 			text, 
 			COALESCE(pronunciation, ''), 
 			COALESCE(u.nickname, ''),
+			lang_code,
 			d.created_at
 		FROM dictionary_%[1]s d
 		LEFT JOIN users u ON d.creator = u.id 
@@ -61,9 +62,15 @@ func (r *DictionaryRepo) GetDictionary(ctx context.Context, langCode, search str
 	words := make([]entity.DictWordData, 0, 100)
 	var word entity.DictWordData
 	for rows.Next() {
-		err = rows.Scan(&word.ID, &word.Text, &word.Pronunciation, &word.Creator, &word.CreatedAt)
+		err = rows.Scan(
+			&word.ID,
+			&word.Text,
+			&word.Pronunciation,
+			&word.Creator,
+			&word.LangCode,
+			&word.CreatedAt)
 		if err != nil {
-			return nil, fmt.Errorf("dictionary.repository.DictionaryRepo.GetDictionary - scan: %w", err)
+			return nil, fmt.Errorf("dictionary.repository.DictionaryRepo.GetDictionary: %w", err)
 		}
 
 		words = append(words, word)
