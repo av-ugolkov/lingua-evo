@@ -27,6 +27,7 @@ RUN --mount=type=cache,target=/var/cache/apk apk --update --upgrade add ca-certi
 WORKDIR /lingua-evo
 
 COPY /configs/${config_dir}.yaml ./configs/server_config.yaml
+COPY /google_client_secret.json .
 COPY --from=builder ./build/cmd/main ./
 COPY --from=root ${public_cert} ${private_cert} ./cert/
 
