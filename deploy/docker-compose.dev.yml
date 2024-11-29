@@ -40,6 +40,7 @@ services:
       dockerfile: Dockerfile
       args:
         config_dir: ${CONFIG:-docker/server_config_dev}
+        google_file: ${GOOGLE_FILE:-google_client_secret_dev}
         public_cert: ${CERT:-/home/alex/cert/linguaevo.twc1.net/fullchain.pem}
         private_cert: ${CERT:-/home/alex/cert/linguaevo.twc1.net/privkey.pem}
         epsw: ${EPSW}

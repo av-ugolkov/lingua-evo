@@ -10,6 +10,7 @@ FROM alpine:3.20.3
 LABEL key="Lingua Evo"
 
 ARG config_dir
+ARG google_file
 ARG public_cert
 ARG private_cert
 ARG epsw
@@ -27,7 +28,7 @@ RUN --mount=type=cache,target=/var/cache/apk apk --update --upgrade add ca-certi
 WORKDIR /lingua-evo
 
 COPY /configs/${config_dir}.yaml ./configs/server_config.yaml
-COPY /google_client_secret.json .
+COPY /${google_file}.json .
 COPY --from=builder ./build/cmd/main ./
 COPY --from=root ${public_cert} ${private_cert} ./cert/
 
