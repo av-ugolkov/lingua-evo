@@ -12,6 +12,7 @@ import (
 	dictionarySvc "github.com/av-ugolkov/lingua-evo/internal/services/dictionary"
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/dictionary"
 	"github.com/av-ugolkov/lingua-evo/runtime"
+	"github.com/gin-gonic/gin"
 
 	"github.com/google/uuid"
 )
@@ -23,6 +24,9 @@ const (
 const (
 	QueryParamText     = "text"
 	QueryParamLangCode = "lang_code"
+	QueryParamPage     = "page"
+	QueryParamPerPage  = "per_page"
+	QueryParamSearch   = "search"
 )
 
 type (
@@ -45,6 +49,15 @@ type (
 		CreatedAt     *time.Time `json:"created_at,omitempty"`
 		UpdatedAt     *time.Time `json:"updated_at,omitempty"`
 	}
+
+	WordDataRs struct {
+		ID            *uuid.UUID `json:"id,omitempty"`
+		Text          string     `json:"text,omitempty"`
+		Pronunciation string     `json:"pronunciation,omitempty"`
+		LangCode      string     `json:"lang_code,omitempty"`
+		Creator       string     `json:"creator,omitempty"`
+		CreatedAt     *time.Time `json:"created_at,omitempty"`
+	}
 )
 
 type Handler struct {
@@ -54,15 +67,63 @@ type Handler struct {
 func Create(r *ginext.Engine, dictSvc *dictionarySvc.Service) {
 	h := newHandler(dictSvc)
 
+	r.GET(handler.Dictionary, h.getDictionary)
 	r.POST(handler.DictionaryWord, middleware.Auth(h.addWord))
 	r.GET(handler.DictionaryWord, h.getWord)
 	r.GET(handler.GetRandomWord, h.getRandomWord)
+	r.GET(handler.WordPronunciation, middleware.Auth(h.getPronunciation))
 }
 
 func newHandler(dictSvc *dictionarySvc.Service) *Handler {
 	return &Handler{
 		dictSvc: dictSvc,
 	}
+}
+
+func (h *Handler) getDictionary(c *ginext.Context) (int, any, error) {
+	ctx := c.Request.Context()
+
+	langCode, err := c.GetQuery(QueryParamLangCode)
+	if err != nil {
+		return http.StatusBadRequest, nil,
+			fmt.Errorf("dictionary.delivery.Handler.getDictionary: %w", err)
+	}
+
+	page, err := c.GetQueryInt(QueryParamPage)
+	if err != nil {
+		return http.StatusBadRequest, nil,
+			fmt.Errorf("dictionary.delivery.Handler.getDictionary: %w", err)
+	}
+	itemsPerPage, err := c.GetQueryInt(QueryParamPerPage)
+	if err != nil {
+		return http.StatusBadRequest, nil,
+			fmt.Errorf("dictionary.delivery.Handler.getDictionary: %w", err)
+	}
+	search, err := c.GetQuery(QueryParamSearch)
+	if err != nil {
+		return http.StatusBadRequest, nil,
+			fmt.Errorf("dictionary.delivery.Handler.getDictionary: %w", err)
+	}
+
+	dict, countWords, err := h.dictSvc.GetDictionary(ctx, langCode, search, page, itemsPerPage)
+	if err != nil {
+		return http.StatusInternalServerError, nil,
+			fmt.Errorf("dictionary.delivery.Handler.getDictionary: %v", err)
+	}
+
+	wordsRs := make([]WordDataRs, 0, len(dict))
+	for _, w := range dict {
+		wordsRs = append(wordsRs, WordDataRs{
+			ID:            &w.ID,
+			Text:          w.Text,
+			Pronunciation: w.Pronunciation,
+			LangCode:      w.LangCode,
+			Creator:       w.Creator,
+			CreatedAt:     &w.CreatedAt,
+		})
+	}
+
+	return http.StatusOK, gin.H{"words": wordsRs, "count_words": countWords}, nil
 }
 
 func (h *Handler) addWord(c *ginext.Context) (int, any, error) {
@@ -163,4 +224,28 @@ func (h *Handler) getRandomWord(c *ginext.Context) (int, any, error) {
 		LangCode:      word.LangCode,
 		Pronunciation: word.Pronunciation,
 	}, nil
+}
+
+func (h *Handler) getPronunciation(c *ginext.Context) (int, any, error) {
+	ctx := c.Request.Context()
+
+	text, err := c.GetQuery(QueryParamText)
+	if err != nil {
+		return http.StatusInternalServerError, nil,
+			fmt.Errorf("word.delivery.Handler.getPronunciation: %w", err)
+	}
+
+	langCode, err := c.GetQuery(QueryParamLangCode)
+	if err != nil {
+		return http.StatusInternalServerError, nil,
+			fmt.Errorf("word.delivery.Handler.getPronunciation: %w", err)
+	}
+
+	pronunciation, err := h.dictSvc.GetPronunciation(ctx, text, langCode)
+	if err != nil {
+		return http.StatusInternalServerError, nil,
+			fmt.Errorf("word.delivery.Handler.getPronunciation: %w", err)
+	}
+
+	return http.StatusOK, gin.H{"pronunciation": pronunciation}, nil
 }

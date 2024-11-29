@@ -13,8 +13,6 @@ var (
 	ErrVocabularyNotFound = errors.New("vocabulary not found")
 	ErrAccessDenied       = errors.New("access denied")
 	ErrDuplicate          = errors.New("duplicate key value violates unique constraint")
-	ErrWordPronunciation  = errors.New("Pronunciation not found")
-	ErrUserWordLimit      = errors.New("user word limit reached")
 )
 
 type (

@@ -16,6 +16,8 @@ import (
 
 type (
 	repoDictionary interface {
+		GetDictionary(ctx context.Context, langCode, search string, page, itemsPerPage int) ([]DictWordData, error)
+		GetCountDictionaryWords(ctx context.Context, langCode string) (int, error)
 		AddWords(ctx context.Context, words []DictWord) ([]DictWord, error)
 		GetWordsByText(ctx context.Context, words []DictWord) ([]DictWord, error)
 		GetWords(ctx context.Context, ids []uuid.UUID) ([]DictWord, error)
@@ -23,6 +25,7 @@ type (
 		FindWords(ctx context.Context, w *DictWord) ([]uuid.UUID, error)
 		DeleteWordByText(ctx context.Context, word *DictWord) error
 		GetRandomWord(ctx context.Context, langCode string) (DictWord, error)
+		GetPronunciation(ctx context.Context, text, langCode string) (string, error)
 	}
 
 	langSvc interface {
@@ -45,10 +48,33 @@ func NewService(repo repoDictionary, langSvc langSvc) *Service {
 	}
 }
 
+func (s *Service) GetDictionary(ctx context.Context, langCode, search string, page, itemsPerPage int) ([]DictWordData, int, error) {
+	err := s.langSvc.CheckLanguage(ctx, langCode)
+	if err != nil {
+		return nil, 0, msgerr.New(fmt.Errorf("dictionary.Service.GetDictionary: %v", err),
+			ErrMsgLanguageNotFound)
+	}
+
+	words, err := s.repo.GetDictionary(ctx, langCode, search, page, itemsPerPage)
+	if err != nil {
+		return nil, 0, msgerr.New(fmt.Errorf("dictionary.Service.GetDictionary: %v", err),
+			msgerr.ErrMsgInternal)
+	}
+
+	count, err := s.repo.GetCountDictionaryWords(ctx, langCode)
+	if err != nil {
+		return nil, 0, msgerr.New(fmt.Errorf("dictionary.Service.GetDictionary: %v", err),
+			msgerr.ErrMsgInternal)
+	}
+
+	return words, count, nil
+}
+
 func (s *Service) GetOrAddWords(ctx context.Context, inWords []DictWord) ([]DictWord, error) {
 	languages, err := s.langSvc.GetAvailableLanguages(ctx)
 	if err != nil {
-		return nil, msgerr.New(fmt.Errorf("dictionary.Service.AddWords - get languages: %v", err), msgerr.ErrMsgInternal)
+		return nil, msgerr.New(fmt.Errorf("dictionary.Service.AddWords: %v", err),
+			ErrMsgLanguageNotFound)
 	}
 
 	dictWords := checkWords(inWords, languages)
@@ -125,6 +151,27 @@ func (s *Service) DeleteWordByText(ctx context.Context, word DictWord) error {
 	}
 
 	return nil
+}
+
+func (s *Service) GetPronunciation(ctx context.Context, text, langCode string) (string, error) {
+	err := s.langSvc.CheckLanguage(ctx, langCode)
+	if err != nil {
+		return "", msgerr.New(fmt.Errorf("dictionary.Service.GetPronunciation: %v", err),
+			ErrMsgLanguageNotFound)
+	}
+
+	pronunciation, err := s.repo.GetPronunciation(ctx, text, langCode)
+	if err != nil {
+		return "", msgerr.New(fmt.Errorf("dictionary.Service.GetPronunciation: %v", err),
+			msgerr.ErrMsgInternal)
+	}
+
+	if pronunciation == runtime.EmptyString {
+		return "", msgerr.New(fmt.Errorf("dictionary.Service.GetPronunciation: %v", err),
+			ErrMsgWordPronunciationNotFound)
+	}
+
+	return pronunciation, nil
 }
 
 func checkWords(words []DictWord, languages []entityLanguage.Language) []DictWord {

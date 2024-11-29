@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"strconv"
 	"strings"
@@ -22,6 +21,55 @@ func NewRepo(tr *transactor.Transactor) *DictionaryRepo {
 	return &DictionaryRepo{
 		tr: tr,
 	}
+}
+
+func (r *DictionaryRepo) GetCountDictionaryWords(ctx context.Context, langCode string) (int, error) {
+	query := fmt.Sprintf(`
+		SELECT 
+			count(id) 
+		FROM dictionary_%[1]s;`, langCode)
+
+	var count int
+	err := r.tr.QueryRow(ctx, query).Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("dictionary.repository.DictionaryRepo.GetDictionary: %w", err)
+	}
+	return count, nil
+}
+
+func (r *DictionaryRepo) GetDictionary(ctx context.Context, langCode, search string, page, itemsPerPage int) ([]entity.DictWordData, error) {
+	query := fmt.Sprintf(`
+		SELECT 
+			d.id, 
+			text, 
+			COALESCE(pronunciation, ''), 
+			COALESCE(u.nickname, ''),
+			d.created_at
+		FROM dictionary_%[1]s d
+		LEFT JOIN users u ON d.creator = u.id 
+		WHERE text ILIKE '%[2]s' || $1 || '%[2]s'
+		ORDER BY text
+		LIMIT $2
+		OFFSET $3;`, langCode, "%")
+
+	rows, err := r.tr.Query(ctx, query, search, itemsPerPage, (page-1)*itemsPerPage)
+	if err != nil {
+		return nil, fmt.Errorf("dictionary.repository.DictionaryRepo.GetDictionary: %w", err)
+	}
+	defer rows.Close()
+
+	words := make([]entity.DictWordData, 0, 100)
+	var word entity.DictWordData
+	for rows.Next() {
+		err = rows.Scan(&word.ID, &word.Text, &word.Pronunciation, &word.Creator, &word.CreatedAt)
+		if err != nil {
+			return nil, fmt.Errorf("dictionary.repository.DictionaryRepo.GetDictionary - scan: %w", err)
+		}
+
+		words = append(words, word)
+	}
+
+	return words, nil
 }
 
 func (r *DictionaryRepo) AddWords(ctx context.Context, inWords []entity.DictWord) ([]entity.DictWord, error) {
@@ -219,20 +267,37 @@ func (r *DictionaryRepo) DeleteWordByText(ctx context.Context, w *entity.DictWor
 func (r *DictionaryRepo) GetRandomWord(ctx context.Context, langCode string) (entity.DictWord, error) {
 	table := getTable(langCode)
 	query := fmt.Sprintf(`
-		SELECT id, text, pronunciation, lang_code 
+		SELECT 
+			id, 
+			text, 
+			COALESCE(pronunciation, ''), 
+			lang_code 
 		FROM "%s" 
 		ORDER BY RANDOM() 
 		LIMIT 1;`, table)
 	word := entity.DictWord{}
-	var pron sql.NullString
-	err := r.tr.QueryRow(ctx, query).Scan(&word.ID, &word.Text, &pron, &word.LangCode)
+	err := r.tr.QueryRow(ctx, query).Scan(&word.ID, &word.Text, &word.Pronunciation, &word.LangCode)
 	if err != nil {
 		return entity.DictWord{}, fmt.Errorf("dictionary.repository.DictionaryRepo.GetRandomWord - scan: %w", err)
 	}
 
-	word.Pronunciation = pron.String
-
 	return word, nil
+}
+
+func (r *DictionaryRepo) GetPronunciation(ctx context.Context, text, langCode string) (string, error) {
+	table := getTable(langCode)
+
+	query := fmt.Sprintf(`
+		SELECT COALESCE(pronunciation, '') 
+		FROM "%s" 
+		WHERE text=$1;`, table)
+
+	var pron string
+	err := r.tr.QueryRow(ctx, query, text).Scan(&pron)
+	if err != nil {
+		return "", fmt.Errorf("dictionary.repository.DictionaryRepo.GetPronunciation: %w", err)
+	}
+	return pron, nil
 }
 
 func getTable(langCode string) string {

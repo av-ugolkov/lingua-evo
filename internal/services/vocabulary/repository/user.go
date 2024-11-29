@@ -2,12 +2,11 @@ package repository
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
-	"github.com/av-ugolkov/lingua-evo/runtime/access"
 
 	sorted "github.com/av-ugolkov/lingua-evo/internal/pkg/utils"
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary"
+	"github.com/av-ugolkov/lingua-evo/runtime/access"
 
 	"github.com/google/uuid"
 )
@@ -91,12 +90,10 @@ func (r *VocabRepo) GetSortedVocabulariesByUser(ctx context.Context, userID uuid
         v.translate_lang,
         v.description,
         count(w.id) AS words_count,
-        array_agg(tg.text) AS tags,
         v.access,
         v.updated_at,
         v.created_at
     FROM vocabulary v
-    LEFT JOIN "tag" tg ON tg.id = ANY(v.tags)
     LEFT JOIN users u ON u.id = v.user_id
     LEFT JOIN word w ON w.vocabulary_id = v.id
     LEFT JOIN subscribers s ON s.subscribers_id = v.user_id 
@@ -123,7 +120,6 @@ func (r *VocabRepo) GetSortedVocabulariesByUser(ctx context.Context, userID uuid
 	var vocabularies []entity.VocabWithUser
 	var vocab entity.VocabWithUser
 	for rows.Next() {
-		var sqlTags []sql.NullString
 		err := rows.Scan(
 			&vocab.ID,
 			&vocab.UserID,
@@ -133,7 +129,6 @@ func (r *VocabRepo) GetSortedVocabulariesByUser(ctx context.Context, userID uuid
 			&vocab.TranslateLang,
 			&vocab.Description,
 			&vocab.WordsCount,
-			&sqlTags,
 			&vocab.Access,
 			&vocab.UpdatedAt,
 			&vocab.CreatedAt,

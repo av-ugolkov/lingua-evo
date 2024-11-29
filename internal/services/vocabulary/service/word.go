@@ -10,7 +10,6 @@ import (
 	entityEvents "github.com/av-ugolkov/lingua-evo/internal/services/events"
 	entityExample "github.com/av-ugolkov/lingua-evo/internal/services/example"
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary"
-	"github.com/av-ugolkov/lingua-evo/runtime"
 
 	"github.com/google/uuid"
 )
@@ -450,27 +449,6 @@ func (s *Service) GetSeveralWords(ctx context.Context, uid, vid uuid.UUID, count
 	}
 
 	return vocabWordsData, nil
-}
-
-func (s *Service) GetPronunciation(ctx context.Context, uid, vid uuid.UUID, text string) (string, error) {
-	vocab, err := s.GetVocabulary(ctx, uid, vid)
-	if err != nil {
-		return runtime.EmptyString, fmt.Errorf("word.Service.GetPronunciation: %w", err)
-	}
-	words, err := s.dictSvc.GetWordsByText(ctx, []entityDict.DictWord{{Text: text, LangCode: vocab.NativeLang}})
-	if err != nil {
-		return runtime.EmptyString, fmt.Errorf("word.Service.GetPronunciation: %w", err)
-	}
-	if len(words) == 0 {
-		return runtime.EmptyString,
-			msgerr.New(fmt.Errorf("word.Service.GetPronunciation: word not found"), entity.ErrWordPronunciation.Error())
-	}
-	word := words[0]
-	if word.Pronunciation == runtime.EmptyString {
-		return runtime.EmptyString,
-			msgerr.New(fmt.Errorf("word.Service.GetPronunciation: %w", entity.ErrWordPronunciation), entity.ErrWordPronunciation.Error())
-	}
-	return word.Pronunciation, nil
 }
 
 func (s *Service) CopyWords(ctx context.Context, vid, copyVid uuid.UUID) error {

@@ -80,6 +80,80 @@ func (_m *mockRepoDictionary) FindWords(ctx context.Context, w *DictWord) ([]uui
 	return r0, r1
 }
 
+// GetCountDictionaryWords provides a mock function with given fields: ctx, langCode
+func (_m *mockRepoDictionary) GetCountDictionaryWords(ctx context.Context, langCode string) (int, error) {
+	ret := _m.Called(ctx, langCode)
+
+	var r0 int
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) (int, error)); ok {
+		return rf(ctx, langCode)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) int); ok {
+		r0 = rf(ctx, langCode)
+	} else {
+		r0 = ret.Get(0).(int)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, langCode)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetDictionary provides a mock function with given fields: ctx, langCode, search, page, itemsPerPage
+func (_m *mockRepoDictionary) GetDictionary(ctx context.Context, langCode string, search string, page int, itemsPerPage int) ([]DictWordData, error) {
+	ret := _m.Called(ctx, langCode, search, page, itemsPerPage)
+
+	var r0 []DictWordData
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, int, int) ([]DictWordData, error)); ok {
+		return rf(ctx, langCode, search, page, itemsPerPage)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, int, int) []DictWordData); ok {
+		r0 = rf(ctx, langCode, search, page, itemsPerPage)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]DictWordData)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, int, int) error); ok {
+		r1 = rf(ctx, langCode, search, page, itemsPerPage)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetPronunciation provides a mock function with given fields: ctx, text, langCode
+func (_m *mockRepoDictionary) GetPronunciation(ctx context.Context, text string, langCode string) (string, error) {
+	ret := _m.Called(ctx, text, langCode)
+
+	var r0 string
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) (string, error)); ok {
+		return rf(ctx, text, langCode)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) string); ok {
+		r0 = rf(ctx, text, langCode)
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = rf(ctx, text, langCode)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetRandomWord provides a mock function with given fields: ctx, langCode
 func (_m *mockRepoDictionary) GetRandomWord(ctx context.Context, langCode string) (DictWord, error) {
 	ret := _m.Called(ctx, langCode)
