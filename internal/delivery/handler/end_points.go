@@ -4,17 +4,29 @@ const (
 	CurrentLanguage    = "/current_language" //get
 	AvailableLanguages = "/languages"        //get
 
-	SignIn   = "/auth/sign_in"   //post
-	Refresh  = "/auth/refresh"   //get
-	SignOut  = "/auth/sign_out"  //get
-	SendCode = "/auth/send_code" //post
+	SignIn     = "/auth/sign_in"   //post
+	SignUp     = "/auth/sign_up"   //post
+	Refresh    = "/auth/refresh"   //get
+	SignOut    = "/auth/sign_out"  //get
+	SendCode   = "/auth/send_code" //post
+	GoogleAuth = "/auth/google"    //get, post
 
-	SignUp   = "/user/sign_up" //post
-	UserByID = "/user/id"      //get
-	Users    = "/users"        //get
+	UserByID = "/user/id" //get
+	Users    = "/users"   //get
 
-	DictionaryWord = "/dictionary/word"        //get post
-	GetRandomWord  = "/dictionary/word/random" //get
+	AccountSettingsAccount         = "/account/settings/account"           //get
+	AccountSettingsPersonalInfo    = "/account/settings/personal_info"     //get
+	AccountSettingsEmailNotif      = "/account/settings/email_notif"       //get
+	AccountSettingsUpdatePswCode   = "/account/settings/update_psw_code"   //post
+	AccountSettingsUpdatePsw       = "/account/settings/update_psw"        //post
+	AccountSettingsUpdateEmailCode = "/account/settings/update_email_code" //post
+	AccountSettingsUpdateEmail     = "/account/settings/update_email"      //post
+	AccountSettingsUpdateNickname  = "/account/settings/update_nickname"   //post
+
+	Dictionary        = "/dictionary"
+	DictionaryWord    = "/dictionary/word"               //get post
+	GetRandomWord     = "/dictionary/word/random"        //get
+	WordPronunciation = "/dictionary/word/pronunciation" //get
 
 	UserVocabularies = "/account/vocabularies" //get
 
@@ -26,10 +38,13 @@ const (
 	VocabularyAccessForUser = "/vocabulary/access/user"   //get post delete patch
 	VocabulariesByUser      = "/vocabularies/user"        //get
 
-	VocabularyWord       = "/vocabulary/word"               //get post delete
-	VocabularyWordUpdate = "/vocabulary/word/update"        //post
-	VocabularyWords      = "/vocabulary/words"              //get
-	WordPronunciation    = "/vocabulary/word/pronunciation" //get
+	VocabularyWord              = "/vocabulary/word"               //get post delete
+	VocabularyWordText          = "/vocabulary/word/text"          //post
+	VocabularyWordPronunciation = "/vocabulary/word/pronunciation" //post
+	VocabularyWordDefinition    = "/vocabulary/word/definition"    //post
+	VocabularyWordTranslates    = "/vocabulary/word/translates"    //post
+	VocabularyWordExamples      = "/vocabulary/word/examples"      //post
+	VocabularyWords             = "/vocabulary/words"              //get
 
 	VocabularyTags = "/vocabulary/tag" //get
 
@@ -42,4 +57,8 @@ const (
 	NotificationVocab = "/notifications/vocabulary"
 
 	SupportRequest = "/support/request"
+
+	Events      = "/events"
+	CountEvents = "/events/count"
+	MarkWatched = "/event/watched"
 )

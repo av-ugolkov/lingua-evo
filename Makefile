@@ -4,7 +4,7 @@ build:
 
 .PHONY: run
 run:
-	./cmd/main
+	@./run.sh run
 
 .PHONY: backup
 backup:
@@ -41,8 +41,12 @@ lint:
 test: 
 	go test ./... -count=1 -cover
 
-.PHONY: count line
-count line:
+.PHONY: gosec
+gosec:
+	gosec ./...
+
+.PHONY: count-line
+count-line:
 	find . -name '*.go' | xargs wc -l
 
 .PHONY: pprof.cpu

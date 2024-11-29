@@ -5,6 +5,8 @@ import (
 	"io"
 	"log"
 	"log/slog"
+
+	"github.com/av-ugolkov/lingua-evo/runtime"
 )
 
 type color string
@@ -28,7 +30,7 @@ type CustomHandler struct {
 func NewCustomHandler(writers io.Writer, opts *slog.HandlerOptions) *CustomHandler {
 	return &CustomHandler{
 		Handler: slog.NewTextHandler(writers, opts),
-		l:       log.New(writers, "", 0),
+		l:       log.New(writers, runtime.EmptyString, 0),
 	}
 }
 

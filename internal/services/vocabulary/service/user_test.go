@@ -3,48 +3,59 @@ package service
 import (
 	"context"
 	"fmt"
+	"log/slog"
+	"os"
 	"testing"
 
 	"github.com/av-ugolkov/lingua-evo/internal/db/postgres"
 	"github.com/av-ugolkov/lingua-evo/internal/db/transactor"
 	"github.com/av-ugolkov/lingua-evo/internal/services/subscribers"
-	subscribersRepository "github.com/av-ugolkov/lingua-evo/internal/services/subscribers/delivery/repository"
+	subscribersRepo "github.com/av-ugolkov/lingua-evo/internal/services/subscribers/repository"
 	"github.com/av-ugolkov/lingua-evo/internal/services/tag"
-	"github.com/av-ugolkov/lingua-evo/internal/services/tag/delivery/repository"
-	"github.com/av-ugolkov/lingua-evo/internal/services/user"
+	"github.com/av-ugolkov/lingua-evo/internal/services/tag/repository"
 	entityUser "github.com/av-ugolkov/lingua-evo/internal/services/user"
-	userRepository "github.com/av-ugolkov/lingua-evo/internal/services/user/delivery/repository"
+	userRepo "github.com/av-ugolkov/lingua-evo/internal/services/user/repository"
+	user "github.com/av-ugolkov/lingua-evo/internal/services/user/service"
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary"
-	vocabRepository "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary/delivery/repository"
+	vocabRepo "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary/repository"
 	"github.com/av-ugolkov/lingua-evo/runtime"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestService_UserGetVocabularies(t *testing.T) {
+var (
+	tr             *transactor.Transactor
+	userTestSvc    *user.Service
+	subscrbTestSvc *subscribers.Service
+	vocabSvc       *Service
+
+	usr *entityUser.User
+)
+
+func TestMain(m *testing.M) {
 	ctx := context.Background()
 
 	tp := postgres.NewTempPostgres(ctx, "../../../..")
 	defer tp.DropDB(ctx)
 
-	if tp == nil {
-		t.Fatal("can't init container for DB")
-	}
-
 	tr := transactor.NewTransactor(tp.PgxPool)
-	vocabRepo := vocabRepository.NewRepo(tr)
-	userRepo := userRepository.NewRepo(tr)
-	userSvc := user.NewService(userRepo, nil, tr)
-	subscribersSvc := subscribers.NewService(subscribersRepository.NewRepo(tr))
+	userTestSvc = user.NewService(tr, userRepo.NewRepo(tr), nil, nil)
+	subscrbTestSvc = subscribers.NewService(subscribersRepo.NewRepo(tr))
 
-	usr, err := userSvc.GetUserByName(ctx, "admin")
+	var err error
+	usr, err = userTestSvc.GetUserByNickname(ctx, "admin")
 	if err != nil {
-		t.Fatal(err)
+		slog.Error(fmt.Sprintf("%s", err))
+		os.Exit(1)
 	}
 	tagSvc := tag.NewService(repository.NewRepo(tr))
 
-	vocabSvc := NewService(tr, vocabRepo, userSvc, nil, nil, tagSvc, subscribersSvc)
+	vocabSvc = NewService(tr, vocabRepo.NewRepo(tr), nil, nil, tagSvc, subscrbTestSvc, nil)
+}
+
+func TestService_UserGetVocabularies(t *testing.T) {
+	ctx := context.Background()
 
 	t.Run("empty vocab", func(t *testing.T) {
 		var (
@@ -52,7 +63,7 @@ func TestService_UserGetVocabularies(t *testing.T) {
 			itemsPerPage  = 5
 			typeSort      = 1
 			order         = 0
-			search        = ""
+			search        = runtime.EmptyString
 			nativeLang    = "en"
 			translateLang = "ru"
 		)
@@ -79,13 +90,13 @@ func TestService_UserGetVocabularies(t *testing.T) {
 			itemsPerPage  = 5
 			typeSort      = 1
 			order         = 0
-			search        = ""
+			search        = runtime.EmptyString
 			nativeLang    = "en"
 			translateLang = "ru"
 		)
 
-		err = tr.CreateTransaction(ctx, func(ctx context.Context) error {
-			_, err := AddVocabs(ctx, vocabSvc, usr.ID, expectCount)
+		err := tr.CreateTransaction(ctx, func(ctx context.Context) error {
+			_, err := addVocabs(ctx, vocabSvc, usr.ID, expectCount)
 			if err != nil {
 				return err
 			}
@@ -117,36 +128,34 @@ func TestService_UserGetVocabularies(t *testing.T) {
 			itemsPerPage  = 5
 			typeSort      = 1
 			order         = 0
-			search        = ""
+			search        = runtime.EmptyString
 			nativeLang    = "en"
 			translateLang = "ru"
 		)
 
-		err = tr.CreateTransaction(ctx, func(ctx context.Context) error {
-			_, err := AddVocabs(ctx, vocabSvc, usr.ID, 5)
+		err := tr.CreateTransaction(ctx, func(ctx context.Context) error {
+			_, err := addVocabs(ctx, vocabSvc, usr.ID, 5)
 			if err != nil {
 				return err
 			}
 
 			for i := 0; i < 3; i++ {
-				uid, err := userSvc.AddUser(ctx, entityUser.UserCreate{
+				uid, err := userTestSvc.AddUser(ctx, entityUser.User{
 					ID:       uuid.New(),
-					Name:     fmt.Sprintf("user_%d", i),
-					Password: fmt.Sprintf("password_%d", i),
+					Nickname: fmt.Sprintf("user_%d", i),
 					Email:    fmt.Sprintf("user_%d@user_%d.com", i, i),
 					Role:     runtime.User,
-					Code:     0,
-				})
+				}, fmt.Sprintf("password_%d", i))
 				if err != nil {
 					return err
 				}
 
-				_, err = AddVocabs(ctx, vocabSvc, uid, 3)
+				_, err = addVocabs(ctx, vocabSvc, uid, 3)
 				if err != nil {
 					return err
 				}
 
-				err = subscribersSvc.Subscribe(ctx, usr.ID, uid)
+				err = subscrbTestSvc.Subscribe(ctx, usr.ID, uid)
 				if err != nil {
 					return err
 				}
@@ -170,7 +179,7 @@ func TestService_UserGetVocabularies(t *testing.T) {
 	})
 }
 
-func AddVocabs(ctx context.Context, vocabSvc *Service, uid uuid.UUID, count int) ([]entity.Vocab, error) {
+func addVocabs(ctx context.Context, vocabSvc *Service, uid uuid.UUID, count int) ([]entity.Vocab, error) {
 	vocabs := make([]entity.Vocab, 0, count)
 	for j := 0; j < count; j++ {
 		vocab, err := vocabSvc.UserAddVocabulary(ctx, entity.Vocab{
@@ -179,7 +188,6 @@ func AddVocabs(ctx context.Context, vocabSvc *Service, uid uuid.UUID, count int)
 			NativeLang:    "en",
 			TranslateLang: "ru",
 			Access:        1,
-			Tags:          []tag.Tag{},
 		})
 		if err != nil {
 			return nil, fmt.Errorf("user.createUsers - UserAddVocabulary: %w", err)

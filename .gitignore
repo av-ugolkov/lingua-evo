@@ -1,3 +1,5 @@
+__debug*
+
 # Lingua
 logs/*
 cmd/main
@@ -5,11 +7,12 @@ cmd/logs/*
 tools/banch/*
 tools/fill_db/*
 tools/user/*
-
+google_client_secret.json
+google_client_secret_dev.json
 
 .DS_Store
 .vs/
 .vscode/
-.env
+*.env
 # Ignore Rider IDE folder
 .idea/

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	_ "net/http/pprof"
 	"os"
 	"os/signal"
 	"syscall"
@@ -21,41 +20,45 @@ import (
 	pg "github.com/av-ugolkov/lingua-evo/internal/db/postgres"
 	"github.com/av-ugolkov/lingua-evo/internal/db/redis"
 	"github.com/av-ugolkov/lingua-evo/internal/db/transactor"
-	ginExt "github.com/av-ugolkov/lingua-evo/internal/delivery/handler/gin"
+	"github.com/av-ugolkov/lingua-evo/internal/delivery/google"
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/kafka"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/analytic"
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/gin-ext"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/log"
 	accessService "github.com/av-ugolkov/lingua-evo/internal/services/access"
-	accessHandler "github.com/av-ugolkov/lingua-evo/internal/services/access/delivery/handler"
-	accessRepository "github.com/av-ugolkov/lingua-evo/internal/services/access/delivery/repository"
-	authService "github.com/av-ugolkov/lingua-evo/internal/services/auth"
-	authHandler "github.com/av-ugolkov/lingua-evo/internal/services/auth/delivery/handler"
-	authRepository "github.com/av-ugolkov/lingua-evo/internal/services/auth/delivery/repository"
+	accessHandler "github.com/av-ugolkov/lingua-evo/internal/services/access/handler"
+	accessRepository "github.com/av-ugolkov/lingua-evo/internal/services/access/repository"
+	authHandler "github.com/av-ugolkov/lingua-evo/internal/services/auth/handler"
+	authRepository "github.com/av-ugolkov/lingua-evo/internal/services/auth/repository"
+	authService "github.com/av-ugolkov/lingua-evo/internal/services/auth/service"
 	dictService "github.com/av-ugolkov/lingua-evo/internal/services/dictionary"
-	dictHandler "github.com/av-ugolkov/lingua-evo/internal/services/dictionary/delivery/handler"
-	dictRepository "github.com/av-ugolkov/lingua-evo/internal/services/dictionary/delivery/repository"
+	dictHandler "github.com/av-ugolkov/lingua-evo/internal/services/dictionary/handler"
+	dictRepository "github.com/av-ugolkov/lingua-evo/internal/services/dictionary/repository"
 	emailService "github.com/av-ugolkov/lingua-evo/internal/services/email"
+	eventsHandler "github.com/av-ugolkov/lingua-evo/internal/services/events/handler"
+	eventRepository "github.com/av-ugolkov/lingua-evo/internal/services/events/repository"
+	eventService "github.com/av-ugolkov/lingua-evo/internal/services/events/service"
 	exampleService "github.com/av-ugolkov/lingua-evo/internal/services/example"
-	exampleRepository "github.com/av-ugolkov/lingua-evo/internal/services/example/delivery/repository"
+	exampleRepository "github.com/av-ugolkov/lingua-evo/internal/services/example/repository"
 	langService "github.com/av-ugolkov/lingua-evo/internal/services/language"
-	languageHandler "github.com/av-ugolkov/lingua-evo/internal/services/language/delivery/handler"
-	langRepository "github.com/av-ugolkov/lingua-evo/internal/services/language/delivery/repository"
+	languageHandler "github.com/av-ugolkov/lingua-evo/internal/services/language/handler"
+	langRepository "github.com/av-ugolkov/lingua-evo/internal/services/language/repository"
 	notificationService "github.com/av-ugolkov/lingua-evo/internal/services/notifications"
-	notificationHandler "github.com/av-ugolkov/lingua-evo/internal/services/notifications/delivery/handler"
-	notificationRepository "github.com/av-ugolkov/lingua-evo/internal/services/notifications/delivery/repository"
+	notificationHandler "github.com/av-ugolkov/lingua-evo/internal/services/notifications/handler"
+	notificationRepository "github.com/av-ugolkov/lingua-evo/internal/services/notifications/repository"
 	subscribersService "github.com/av-ugolkov/lingua-evo/internal/services/subscribers"
-	subscribersHandler "github.com/av-ugolkov/lingua-evo/internal/services/subscribers/delivery/handler"
-	subscribersRepository "github.com/av-ugolkov/lingua-evo/internal/services/subscribers/delivery/repository"
+	subscribersHandler "github.com/av-ugolkov/lingua-evo/internal/services/subscribers/handler"
+	subscribersRepository "github.com/av-ugolkov/lingua-evo/internal/services/subscribers/repository"
 	supportService "github.com/av-ugolkov/lingua-evo/internal/services/support"
-	supportHandler "github.com/av-ugolkov/lingua-evo/internal/services/support/delivery/handler"
+	supportHandler "github.com/av-ugolkov/lingua-evo/internal/services/support/handler"
 	tagService "github.com/av-ugolkov/lingua-evo/internal/services/tag"
-	tagHandler "github.com/av-ugolkov/lingua-evo/internal/services/tag/delivery/handler"
-	tagRepository "github.com/av-ugolkov/lingua-evo/internal/services/tag/delivery/repository"
-	userService "github.com/av-ugolkov/lingua-evo/internal/services/user"
-	userHandler "github.com/av-ugolkov/lingua-evo/internal/services/user/delivery/handler"
-	userRepository "github.com/av-ugolkov/lingua-evo/internal/services/user/delivery/repository"
-	vocabHandler "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary/delivery/handler"
-	vocabRepository "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary/delivery/repository"
+	tagHandler "github.com/av-ugolkov/lingua-evo/internal/services/tag/handler"
+	tagRepository "github.com/av-ugolkov/lingua-evo/internal/services/tag/repository"
+	userHandler "github.com/av-ugolkov/lingua-evo/internal/services/user/handler"
+	userRepository "github.com/av-ugolkov/lingua-evo/internal/services/user/repository"
+	userService "github.com/av-ugolkov/lingua-evo/internal/services/user/service"
+	vocabHandler "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary/handler"
+	vocabRepository "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary/repository"
 	vocabService "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary/service"
 )
 
@@ -69,15 +72,11 @@ func ServerStart(cfg *config.Config) {
 		logger.Close()
 		return nil
 	})
-	var pprofSrv *http.Server
 	if cfg.PprofDebug.Enable {
-		go func() {
-			pprofSrv = &http.Server{
-				Addr: cfg.PprofDebug.Addr(),
-			}
-			slog.Error(pprofSrv.ListenAndServe().Error())
-		}()
+		initPprof(&cfg.PprofDebug)
 	}
+
+	google.InitClient(&cfg.Google)
 
 	pgxPool, err := pg.NewDB(cfg.DbSQL.PgxPoolConfig())
 	if err != nil {
@@ -104,14 +103,14 @@ func ServerStart(cfg *config.Config) {
 	})
 
 	gin.SetMode(gin.ReleaseMode)
-	router := gin.New()
-	router.UseH2C = true
+	router := ginext.NewEngine(gin.New())
 	router.Use(cors.New(cors.Config{
 		AllowOrigins:     cfg.Service.AllowedOrigins,
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"},
 		AllowCredentials: true,
 		AllowHeaders:     []string{"Authorization", "Content-Type", "Fingerprint"},
-	}), ginExt.Logger())
+		AllowWildcard:    true,
+	}), ginext.Logger())
 	initServer(cfg, router, pgxPool, redisDB)
 
 	address := fmt.Sprintf(":%d", cfg.Service.Port)
@@ -151,11 +150,8 @@ func ServerStart(cfg *config.Config) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	if pprofSrv != nil {
-		if err := pprofSrv.Shutdown(ctx); err != nil {
-			slog.Error(fmt.Sprintf("server pprof shutdown returned an err: %v\n", err))
-		}
-	}
+	shutdownPprof(ctx)
+
 	if err := server.Shutdown(ctx); err != nil {
 		slog.Error(fmt.Sprintf("server shutdown returned an err: %v\n", err))
 	}
@@ -168,12 +164,16 @@ func ServerStart(cfg *config.Config) {
 	slog.Info("final")
 }
 
-func initServer(cfg *config.Config, r *gin.Engine, pgxPool *pgxpool.Pool, redis *redis.Redis) {
+func initServer(cfg *config.Config, r *ginext.Engine, pgxPool *pgxpool.Pool, redis *redis.Redis) {
 	tr := transactor.NewTransactor(pgxPool)
 	slog.Info("create services")
 	emailSvc := emailService.NewService(cfg.Email)
+	notificationRepo := notificationRepository.NewRepo(tr)
+	notificationSvc := notificationService.NewService(notificationRepo)
+	eventsRepo := eventRepository.NewRepo(tr)
+	eventsSvc := eventService.NewService(tr, eventsRepo, notificationSvc)
 	userRepo := userRepository.NewRepo(tr)
-	userSvc := userService.NewService(userRepo, redis, tr)
+	userSvc := userService.NewService(tr, userRepo, redis, emailSvc)
 	accessRepo := accessRepository.NewRepo(tr)
 	accessSvc := accessService.NewService(accessRepo)
 	langRepo := langRepository.NewRepo(tr)
@@ -187,11 +187,9 @@ func initServer(cfg *config.Config, r *gin.Engine, pgxPool *pgxpool.Pool, redis 
 	tagRepo := tagRepository.NewRepo(tr)
 	tagSvc := tagService.NewService(tagRepo)
 	vocabRepo := vocabRepository.NewRepo(tr)
-	vocabSvc := vocabService.NewService(tr, vocabRepo, userSvc, exampleSvc, dictSvc, tagSvc, subscribersSvc)
+	vocabSvc := vocabService.NewService(tr, vocabRepo, exampleSvc, dictSvc, tagSvc, subscribersSvc, eventsSvc)
 	authRepo := authRepository.NewRepo(redis)
 	authSvc := authService.NewService(authRepo, userSvc, emailSvc)
-	notificationRepo := notificationRepository.NewRepo(tr)
-	notificationSvc := notificationService.NewService(notificationRepo)
 	supportSvc := supportService.NewService(emailSvc)
 
 	slog.Info("create handlers")
@@ -205,6 +203,7 @@ func initServer(cfg *config.Config, r *gin.Engine, pgxPool *pgxpool.Pool, redis 
 	subscribersHandler.Create(r, subscribersSvc)
 	notificationHandler.Create(r, notificationSvc)
 	supportHandler.Create(r, supportSvc)
+	eventsHandler.Create(r, eventsSvc)
 
 	slog.Info("end init services")
 }

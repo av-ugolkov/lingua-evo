@@ -7,7 +7,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/msg-error"
 	entityLanguage "github.com/av-ugolkov/lingua-evo/internal/services/language"
 	"github.com/av-ugolkov/lingua-evo/runtime"
 
@@ -16,6 +16,8 @@ import (
 
 type (
 	repoDictionary interface {
+		GetDictionary(ctx context.Context, langCode, search string, page, itemsPerPage int) ([]DictWordData, error)
+		GetCountDictionaryWords(ctx context.Context, langCode string) (int, error)
 		AddWords(ctx context.Context, words []DictWord) ([]DictWord, error)
 		GetWordsByText(ctx context.Context, words []DictWord) ([]DictWord, error)
 		GetWords(ctx context.Context, ids []uuid.UUID) ([]DictWord, error)
@@ -23,6 +25,7 @@ type (
 		FindWords(ctx context.Context, w *DictWord) ([]uuid.UUID, error)
 		DeleteWordByText(ctx context.Context, word *DictWord) error
 		GetRandomWord(ctx context.Context, langCode string) (DictWord, error)
+		GetPronunciation(ctx context.Context, text, langCode string) (string, error)
 	}
 
 	langSvc interface {
@@ -45,10 +48,33 @@ func NewService(repo repoDictionary, langSvc langSvc) *Service {
 	}
 }
 
+func (s *Service) GetDictionary(ctx context.Context, langCode, search string, page, itemsPerPage int) ([]DictWordData, int, error) {
+	err := s.langSvc.CheckLanguage(ctx, langCode)
+	if err != nil {
+		return nil, 0, msgerr.New(fmt.Errorf("dictionary.Service.GetDictionary: %v", err),
+			ErrMsgLanguageNotFound)
+	}
+
+	words, err := s.repo.GetDictionary(ctx, langCode, search, page, itemsPerPage)
+	if err != nil {
+		return nil, 0, msgerr.New(fmt.Errorf("dictionary.Service.GetDictionary: %v", err),
+			msgerr.ErrMsgInternal)
+	}
+
+	count, err := s.repo.GetCountDictionaryWords(ctx, langCode)
+	if err != nil {
+		return nil, 0, msgerr.New(fmt.Errorf("dictionary.Service.GetDictionary: %v", err),
+			msgerr.ErrMsgInternal)
+	}
+
+	return words, count, nil
+}
+
 func (s *Service) GetOrAddWords(ctx context.Context, inWords []DictWord) ([]DictWord, error) {
 	languages, err := s.langSvc.GetAvailableLanguages(ctx)
 	if err != nil {
-		return nil, handler.NewError(fmt.Errorf("dictionary.Service.AddWords - get languages: %v", err), handler.ErrInternal)
+		return nil, msgerr.New(fmt.Errorf("dictionary.Service.AddWords: %v", err),
+			ErrMsgLanguageNotFound)
 	}
 
 	dictWords := checkWords(inWords, languages)
@@ -58,12 +84,12 @@ func (s *Service) GetOrAddWords(ctx context.Context, inWords []DictWord) ([]Dict
 
 	getWords, err := s.repo.GetWordsByText(ctx, dictWords)
 	if err != nil {
-		return nil, handler.NewError(fmt.Errorf("dictionary.Service.AddWords - get words: %v", err), handler.ErrInternal)
+		return nil, msgerr.New(fmt.Errorf("dictionary.Service.AddWords - get words: %v", err), msgerr.ErrMsgInternal)
 	}
 
 	addWords, err := s.repo.AddWords(ctx, dictWords)
 	if err != nil {
-		return nil, handler.NewError(fmt.Errorf("dictionary.Service.AddWords: %v", err), handler.ErrInternal)
+		return nil, msgerr.New(fmt.Errorf("dictionary.Service.AddWords: %v", err), msgerr.ErrMsgInternal)
 	}
 
 	words := make([]DictWord, 0, len(getWords)+len(addWords))
@@ -80,7 +106,7 @@ func (s *Service) GetWordsByID(ctx context.Context, wordIDs []uuid.UUID) ([]Dict
 
 	words, err := s.repo.GetWords(ctx, wordIDs)
 	if err != nil {
-		return nil, handler.NewError(fmt.Errorf("dictionary.Service.GetWords: %v", err), handler.ErrInternal)
+		return nil, msgerr.New(fmt.Errorf("dictionary.Service.GetWords: %v", err), msgerr.ErrMsgInternal)
 	}
 
 	return words, nil
@@ -89,17 +115,17 @@ func (s *Service) GetWordsByID(ctx context.Context, wordIDs []uuid.UUID) ([]Dict
 func (s *Service) GetWordsByText(ctx context.Context, inWords []DictWord) ([]DictWord, error) {
 	languages, err := s.langSvc.GetAvailableLanguages(ctx)
 	if err != nil {
-		return nil, handler.NewError(fmt.Errorf("dictionary.Service.AddWords - get languages: %v", err), handler.ErrInternal)
+		return nil, msgerr.New(fmt.Errorf("dictionary.Service.AddWords: %v", err), msgerr.ErrMsgInternal)
 	}
 
 	dictWords := checkWords(inWords, languages)
 	if len(dictWords) == 0 {
-		return nil, handler.NewError(fmt.Errorf("dictionary.Service.AddWords - no words"), handler.ErrNotFound)
+		return []DictWord{}, nil
 	}
 
 	words, err := s.repo.GetWordsByText(ctx, dictWords)
 	if err != nil {
-		return nil, handler.NewError(fmt.Errorf("dictionary.Service.GetWordByText: %v", err), handler.ErrInternal)
+		return nil, msgerr.New(fmt.Errorf("dictionary.Service.GetWordByText: %v", err), msgerr.ErrMsgInternal)
 	}
 	return words, nil
 }
@@ -107,12 +133,12 @@ func (s *Service) GetWordsByText(ctx context.Context, inWords []DictWord) ([]Dic
 func (s *Service) GetRandomWord(ctx context.Context, langCode string) (DictWord, error) {
 	err := s.langSvc.CheckLanguage(ctx, langCode)
 	if err != nil {
-		return DictWord{}, handler.NewError(fmt.Errorf("dictionary.Service.GetRandomWord - check language: %v", err), handler.ErrInternal)
+		return DictWord{}, msgerr.New(fmt.Errorf("dictionary.Service.GetRandomWord - check language: %v", err), msgerr.ErrMsgInternal)
 	}
 
 	word, err := s.repo.GetRandomWord(ctx, langCode)
 	if err != nil {
-		return DictWord{}, handler.NewError(fmt.Errorf("dictionary.Service.GetRandomWord: %v", err), handler.ErrInternal)
+		return DictWord{}, msgerr.New(fmt.Errorf("dictionary.Service.GetRandomWord: %v", err), msgerr.ErrMsgInternal)
 	}
 
 	return word, nil
@@ -125,6 +151,27 @@ func (s *Service) DeleteWordByText(ctx context.Context, word DictWord) error {
 	}
 
 	return nil
+}
+
+func (s *Service) GetPronunciation(ctx context.Context, text, langCode string) (string, error) {
+	err := s.langSvc.CheckLanguage(ctx, langCode)
+	if err != nil {
+		return "", msgerr.New(fmt.Errorf("dictionary.Service.GetPronunciation: %v", err),
+			ErrMsgLanguageNotFound)
+	}
+
+	pronunciation, err := s.repo.GetPronunciation(ctx, text, langCode)
+	if err != nil {
+		return "", msgerr.New(fmt.Errorf("dictionary.Service.GetPronunciation: %v", err),
+			msgerr.ErrMsgInternal)
+	}
+
+	if pronunciation == runtime.EmptyString {
+		return "", msgerr.New(fmt.Errorf("dictionary.Service.GetPronunciation: %v", err),
+			ErrMsgWordPronunciationNotFound)
+	}
+
+	return pronunciation, nil
 }
 
 func checkWords(words []DictWord, languages []entityLanguage.Language) []DictWord {

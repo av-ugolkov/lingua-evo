@@ -4,13 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
+
 	"github.com/av-ugolkov/lingua-evo/internal/db/transactor"
-	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/msg-error"
 	entityTag "github.com/av-ugolkov/lingua-evo/internal/services/tag"
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary"
 	"github.com/av-ugolkov/lingua-evo/runtime/access"
 	"github.com/av-ugolkov/lingua-evo/tools/math"
-	"log/slog"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -18,7 +19,7 @@ import (
 
 type (
 	repoVocab interface {
-		AddVocab(ctx context.Context, vocab entity.Vocab, tagIDs []uuid.UUID) (uuid.UUID, error)
+		AddVocab(ctx context.Context, vocab entity.Vocab) (uuid.UUID, error)
 		DeleteVocab(ctx context.Context, vocab entity.Vocab) error
 		GetVocab(ctx context.Context, vid uuid.UUID) (entity.Vocab, error)
 		GetByName(ctx context.Context, uid uuid.UUID, name string) (entity.Vocab, error)
@@ -48,33 +49,35 @@ type (
 	}
 )
 
+//go:generate mockery --inpackage --outpkg vocabulary --testonly --name "repoVocab|userSvc|exampleSvc|dictSvc|tagSvc|subscribersSvc|eventsSvc"
+
 type Service struct {
 	tr             *transactor.Transactor
 	repoVocab      repoVocab
-	userSvc        userSvc
 	exampleSvc     exampleSvc
 	dictSvc        dictSvc
 	tagSvc         tagSvc
 	subscribersSvc subscribersSvc
+	eventsSvc      eventsSvc
 }
 
 func NewService(
 	tr *transactor.Transactor,
 	repoVocab repoVocab,
-	userSvc userSvc,
 	exampleSvc exampleSvc,
 	dictSvc dictSvc,
 	tagSvc tagSvc,
 	subscribersSvc subscribersSvc,
+	eventsSvc eventsSvc,
 ) *Service {
 	return &Service{
 		tr:             tr,
 		repoVocab:      repoVocab,
-		userSvc:        userSvc,
 		exampleSvc:     exampleSvc,
 		dictSvc:        dictSvc,
 		tagSvc:         tagSvc,
 		subscribersSvc: subscribersSvc,
+		eventsSvc:      eventsSvc,
 	}
 }
 
@@ -113,11 +116,15 @@ func (s *Service) GetVocabularies(ctx context.Context, uid uuid.UUID, page, item
 func (s *Service) GetVocabulary(ctx context.Context, uid, vid uuid.UUID) (entity.Vocab, error) {
 	accessStatus, err := s.GetAccessForUser(ctx, uid, vid)
 	if err != nil {
-		return entity.Vocab{}, handler.NewError(fmt.Errorf("vocabulary.Service.GetVocabulary - %w: %w", entity.ErrAccessDenied, err), handler.ErrForbidden)
+		return entity.Vocab{},
+			msgerr.New(fmt.Errorf("vocabulary.Service.GetVocabulary - %w: %w", entity.ErrAccessDenied, err),
+				msgerr.ErrMsgForbidden)
 	}
 
 	if accessStatus == access.Forbidden {
-		return entity.Vocab{}, handler.NewError(fmt.Errorf("vocabulary.Service.GetVocabulary - %w", entity.ErrAccessDenied), handler.ErrForbidden)
+		return entity.Vocab{},
+			msgerr.New(fmt.Errorf("vocabulary.Service.GetVocabulary - %w", entity.ErrAccessDenied),
+				msgerr.ErrMsgForbidden)
 	}
 
 	vocab, err := s.repoVocab.GetVocab(ctx, vid)
@@ -125,13 +132,6 @@ func (s *Service) GetVocabulary(ctx context.Context, uid, vid uuid.UUID) (entity
 		return entity.Vocab{}, fmt.Errorf("vocabulary.Service.GetVocabulary: %w", err)
 	}
 
-	tags, err := s.repoVocab.GetTagsVocabulary(ctx, vocab.ID)
-	if err != nil {
-		return entity.Vocab{}, fmt.Errorf("vocabulary.Service.GetVocabulary: %w", err)
-	}
-	for _, tag := range tags {
-		vocab.Tags = append(vocab.Tags, entityTag.Tag{Text: tag})
-	}
 	return vocab, nil
 }
 

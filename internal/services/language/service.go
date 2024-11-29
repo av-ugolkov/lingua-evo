@@ -3,7 +3,9 @@ package language
 import (
 	"context"
 	"fmt"
-	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
+
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/msg-error"
+	"github.com/av-ugolkov/lingua-evo/runtime"
 )
 
 type langRepo interface {
@@ -24,7 +26,7 @@ func NewService(repo langRepo) *Service {
 func (s *Service) GetLangByCode(ctx context.Context, lang string) (string, error) {
 	language, err := s.repo.GetLanguage(ctx, lang)
 	if err != nil {
-		return "", handler.NewError(fmt.Errorf("language.Service.GetLanguage: %v", err), handler.ErrInternal)
+		return runtime.EmptyString, msgerr.New(fmt.Errorf("language.Service.GetLanguage: %v", err), msgerr.ErrMsgInternal)
 	}
 
 	return language, nil
@@ -33,7 +35,7 @@ func (s *Service) GetLangByCode(ctx context.Context, lang string) (string, error
 func (s *Service) GetAvailableLanguages(ctx context.Context) ([]Language, error) {
 	languages, err := s.repo.GetAvailableLanguages(ctx)
 	if err != nil {
-		return nil, handler.NewError(fmt.Errorf("language.Service.GetAvailableLanguages: %v", err), handler.ErrInternal)
+		return nil, msgerr.New(fmt.Errorf("language.Service.GetAvailableLanguages: %v", err), msgerr.ErrMsgInternal)
 	}
 
 	return languages, nil
@@ -45,7 +47,7 @@ func (s *Service) CheckLanguage(ctx context.Context, langCode string) error {
 	}
 
 	if _, err := s.repo.GetLanguage(ctx, langCode); err != nil {
-		return handler.NewError(fmt.Errorf("language.Service.CheckLanguage: %w", err), handler.ErrInternal)
+		return msgerr.New(fmt.Errorf("language.Service.CheckLanguage: %w", err), msgerr.ErrMsgInternal)
 	}
 	return nil
 }

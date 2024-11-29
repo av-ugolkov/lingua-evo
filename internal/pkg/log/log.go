@@ -25,11 +25,11 @@ func CustomLogger(cfgLog *cfgLog.Logger) *Logger {
 	for _, writer := range cfgLog.Output {
 		switch writer {
 		case "file":
-			err = os.Mkdir("logs", 0755)
+			err = os.Mkdir("logs", 0750)
 			if err != nil {
 				slog.Warn(fmt.Sprintf("pgk.log.CustomLogger: %v", err))
 			}
-			file, err = os.OpenFile(fmt.Sprintf("logs/log_file_%s.log", time.Now().Format("2006_01_02_15_04_05")), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+			file, err = os.OpenFile(fmt.Sprintf("logs/log_file_%s.log", time.Now().Format("2006_01_02_15_04_05")), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
 			if err != nil {
 				slog.Error(fmt.Sprintf("pgk.log.CustomLogger: %v", err))
 				return nil

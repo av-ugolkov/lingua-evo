@@ -8,22 +8,23 @@ import (
 	"github.com/av-ugolkov/lingua-evo/internal/db/postgres"
 	"github.com/av-ugolkov/lingua-evo/internal/db/transactor"
 	entityDict "github.com/av-ugolkov/lingua-evo/internal/services/dictionary"
-	dictRepo "github.com/av-ugolkov/lingua-evo/internal/services/dictionary/delivery/repository"
+	dictRepo "github.com/av-ugolkov/lingua-evo/internal/services/dictionary/repository"
 	"github.com/av-ugolkov/lingua-evo/internal/services/example"
-	exampleRepo "github.com/av-ugolkov/lingua-evo/internal/services/example/delivery/repository"
+	exampleRepo "github.com/av-ugolkov/lingua-evo/internal/services/example/repository"
 	"github.com/av-ugolkov/lingua-evo/internal/services/language"
-	"github.com/av-ugolkov/lingua-evo/internal/services/language/delivery/repository"
+	"github.com/av-ugolkov/lingua-evo/internal/services/language/repository"
 	"github.com/av-ugolkov/lingua-evo/internal/services/tag"
-	tagRepo "github.com/av-ugolkov/lingua-evo/internal/services/tag/delivery/repository"
-	"github.com/av-ugolkov/lingua-evo/internal/services/user"
+	tagRepo "github.com/av-ugolkov/lingua-evo/internal/services/tag/repository"
 	entityUser "github.com/av-ugolkov/lingua-evo/internal/services/user"
-	userRepository "github.com/av-ugolkov/lingua-evo/internal/services/user/delivery/repository"
-	vocabEntity "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary"
-	vocabRepository "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary/delivery/repository"
+	userRepo "github.com/av-ugolkov/lingua-evo/internal/services/user/repository"
+	user "github.com/av-ugolkov/lingua-evo/internal/services/user/service"
+	entity "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary"
+	vocabRepo "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary/repository"
 	"github.com/av-ugolkov/lingua-evo/runtime"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestService_GetVocabularies(t *testing.T) {
@@ -37,11 +38,9 @@ func TestService_GetVocabularies(t *testing.T) {
 	}
 
 	tr := transactor.NewTransactor(tp.PgxPool)
-	vocabRepo := vocabRepository.NewRepo(tr)
-	userRepo := userRepository.NewRepo(tr)
-	userSvc := user.NewService(userRepo, nil, tr)
+	userSvc := user.NewService(tr, userRepo.NewRepo(tr), nil, nil)
 
-	usr, err := userSvc.GetUserByName(ctx, "admin")
+	usr, err := userSvc.GetUserByNickname(ctx, "admin")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -50,7 +49,9 @@ func TestService_GetVocabularies(t *testing.T) {
 	langSvc := language.NewService(repository.NewRepo(tr))
 	dictSvc := entityDict.NewService(dictRepo.NewRepo(tr), langSvc)
 	exampleSvc := example.NewService(exampleRepo.NewRepo(tr))
-	vocabSvc := NewService(tr, vocabRepo, userSvc, exampleSvc, dictSvc, tagSvc, nil)
+	mockEventsSvc := new(mockEventsSvc)
+	mockEventsSvc.On("AsyncAddEvent", mock.Anything, mock.Anything).Return(nil)
+	vocabSvc := NewService(tr, vocabRepo.NewRepo(tr), exampleSvc, dictSvc, tagSvc, nil, mockEventsSvc)
 
 	t.Run("empty vocab", func(t *testing.T) {
 		var (
@@ -58,7 +59,7 @@ func TestService_GetVocabularies(t *testing.T) {
 			itemsPerPage  = 5
 			typeSort      = 1
 			order         = 0
-			search        = ""
+			search        = runtime.EmptyString
 			nativeLang    = "en"
 			translateLang = "ru"
 			maxWords      = 5
@@ -86,7 +87,7 @@ func TestService_GetVocabularies(t *testing.T) {
 			itemsPerPage  = 5
 			typeSort      = 1
 			order         = 0
-			search        = ""
+			search        = runtime.EmptyString
 			nativeLang    = "en"
 			translateLang = "ru"
 			maxWords      = 5
@@ -94,19 +95,17 @@ func TestService_GetVocabularies(t *testing.T) {
 
 		err = tr.CreateTransaction(ctx, func(ctx context.Context) error {
 			for i := 0; i < 2; i++ {
-				uid, err := userSvc.AddUser(ctx, entityUser.UserCreate{
+				uid, err := userSvc.AddUser(ctx, entityUser.User{
 					ID:       uuid.New(),
-					Name:     fmt.Sprintf("user_%d", i),
-					Password: fmt.Sprintf("password_%d", i),
+					Nickname: fmt.Sprintf("user_%d", i),
 					Email:    fmt.Sprintf("user_%d@user_%d.com", i, i),
 					Role:     runtime.User,
-					Code:     0,
-				})
+				}, fmt.Sprintf("password_%d", i))
 				if err != nil {
 					return err
 				}
 
-				_, err = AddVocabs(ctx, vocabSvc, uid, 2)
+				_, err = addVocabs(ctx, vocabSvc, uid, 2)
 				if err != nil {
 					return err
 				}
@@ -139,7 +138,7 @@ func TestService_GetVocabularies(t *testing.T) {
 			itemsPerPage  = 5
 			typeSort      = 1
 			order         = 0
-			search        = ""
+			search        = runtime.EmptyString
 			nativeLang    = "en"
 			translateLang = "ru"
 			maxWords      = 5
@@ -147,19 +146,17 @@ func TestService_GetVocabularies(t *testing.T) {
 
 		err = tr.CreateTransaction(ctx, func(ctx context.Context) error {
 			for i := 0; i < 3; i++ {
-				uid, err := userSvc.AddUser(ctx, entityUser.UserCreate{
+				uid, err := userSvc.AddUser(ctx, entityUser.User{
 					ID:       uuid.New(),
-					Name:     fmt.Sprintf("user_%d", i),
-					Password: fmt.Sprintf("password_%d", i),
+					Nickname: fmt.Sprintf("user_%d", i),
 					Email:    fmt.Sprintf("user_%d@user_%d.com", i, i),
 					Role:     runtime.User,
-					Code:     0,
-				})
+				}, fmt.Sprintf("password_%d", i))
 				if err != nil {
 					return err
 				}
 
-				_, err = AddVocabs(ctx, vocabSvc, uid, 3)
+				_, err = addVocabs(ctx, vocabSvc, uid, 3)
 				if err != nil {
 					return err
 				}
@@ -193,7 +190,7 @@ func TestService_GetVocabularies(t *testing.T) {
 			itemsPerPage  = 5
 			typeSort      = 1
 			order         = 0
-			search        = ""
+			search        = runtime.EmptyString
 			nativeLang    = "en"
 			translateLang = "ru"
 			maxWords      = 5
@@ -201,28 +198,26 @@ func TestService_GetVocabularies(t *testing.T) {
 
 		err = tr.CreateTransaction(ctx, func(ctx context.Context) error {
 			for i := 0; i < 3; i++ {
-				uid, err := userSvc.AddUser(ctx, entityUser.UserCreate{
+				uid, err := userSvc.AddUser(ctx, entityUser.User{
 					ID:       uuid.New(),
-					Name:     fmt.Sprintf("user_%d", i),
-					Password: fmt.Sprintf("password_%d", i),
+					Nickname: fmt.Sprintf("user_%d", i),
 					Email:    fmt.Sprintf("user_%d@user_%d.com", i, i),
 					Role:     runtime.User,
-					Code:     0,
-				})
+				}, fmt.Sprintf("password_%d", i))
 				if err != nil {
 					return err
 				}
 
-				vocabs, err := AddVocabs(ctx, vocabSvc, uid, 3)
+				vocabs, err := addVocabs(ctx, vocabSvc, uid, 3)
 				if err != nil {
 					return err
 				}
 
 				for _, vocab := range vocabs {
 					for i := 0; i < 3; i++ {
-						_, err := vocabSvc.AddWord(ctx, uid, vocabEntity.VocabWordData{
+						_, err := vocabSvc.AddWord(ctx, uid, entity.VocabWordData{
 							VocabID: vocab.ID,
-							Native: entityDict.DictWord{
+							Native: entity.DictWord{
 								Text: fmt.Sprintf("text_%d_%s", i, vocab.Name),
 							},
 						})
@@ -271,7 +266,7 @@ func TestService_GetVocabularies(t *testing.T) {
 			itemsPerPage  = 5
 			typeSort      = 1
 			order         = 0
-			search        = ""
+			search        = runtime.EmptyString
 			nativeLang    = "en"
 			translateLang = "ru"
 			maxWords      = 5
@@ -279,28 +274,26 @@ func TestService_GetVocabularies(t *testing.T) {
 
 		err = tr.CreateTransaction(ctx, func(ctx context.Context) error {
 			for i := 0; i < 3; i++ {
-				uid, err := userSvc.AddUser(ctx, entityUser.UserCreate{
+				uid, err := userSvc.AddUser(ctx, entityUser.User{
 					ID:       uuid.New(),
-					Name:     fmt.Sprintf("user_%d", i),
-					Password: fmt.Sprintf("password_%d", i),
+					Nickname: fmt.Sprintf("user_%d", i),
 					Email:    fmt.Sprintf("user_%d@user_%d.com", i, i),
 					Role:     runtime.User,
-					Code:     0,
-				})
+				}, fmt.Sprintf("password_%d", i))
 				if err != nil {
 					return err
 				}
 
-				vocabs, err := AddVocabs(ctx, vocabSvc, uid, 3)
+				vocabs, err := addVocabs(ctx, vocabSvc, uid, 3)
 				if err != nil {
 					return err
 				}
 
 				for _, vocab := range vocabs {
 					for i := 0; i < 10; i++ {
-						_, err := vocabSvc.AddWord(ctx, uid, vocabEntity.VocabWordData{
+						_, err := vocabSvc.AddWord(ctx, uid, entity.VocabWordData{
 							VocabID: vocab.ID,
-							Native: entityDict.DictWord{
+							Native: entity.DictWord{
 								Text: fmt.Sprintf("text_%d_%s", i, vocab.Name),
 							},
 						})

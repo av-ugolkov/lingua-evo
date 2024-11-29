@@ -4,9 +4,6 @@ import (
 	"errors"
 	"time"
 
-	entityDict "github.com/av-ugolkov/lingua-evo/internal/services/dictionary"
-	entityExample "github.com/av-ugolkov/lingua-evo/internal/services/example"
-	entityTag "github.com/av-ugolkov/lingua-evo/internal/services/tag"
 	"github.com/av-ugolkov/lingua-evo/runtime/access"
 
 	"github.com/google/uuid"
@@ -15,10 +12,7 @@ import (
 var (
 	ErrVocabularyNotFound = errors.New("vocabulary not found")
 	ErrAccessDenied       = errors.New("access denied")
-
-	ErrDuplicate         = errors.New("duplicate key value violates unique constraint")
-	ErrWordPronunciation = errors.New("Pronunciation not found")
-	ErrUserWordLimit     = errors.New("user word limit reached")
+	ErrDuplicate          = errors.New("duplicate key value violates unique constraint")
 )
 
 type (
@@ -30,7 +24,6 @@ type (
 		NativeLang    string
 		TranslateLang string
 		Description   string
-		Tags          []entityTag.Tag
 		CreatedAt     time.Time
 		UpdatedAt     time.Time
 	}
@@ -53,18 +46,33 @@ type (
 		VocabID       uuid.UUID
 		NativeID      uuid.UUID
 		Pronunciation string
+		Definition    string
 		TranslateIDs  []uuid.UUID
 		ExampleIDs    []uuid.UUID
 		UpdatedAt     time.Time
 		CreatedAt     time.Time
 	}
 
+	DictWord struct {
+		ID            uuid.UUID
+		Text          string
+		Pronunciation string
+		LangCode      string
+		Creator       uuid.UUID
+	}
+
+	Example struct {
+		ID   uuid.UUID
+		Text string
+	}
+
 	VocabWordData struct {
 		ID         uuid.UUID
 		VocabID    uuid.UUID
-		Native     entityDict.DictWord
-		Translates []entityDict.DictWord
-		Examples   []entityExample.Example
+		Native     DictWord
+		Definition string
+		Translates []DictWord
+		Examples   []Example
 		UpdatedAt  time.Time
 		CreatedAt  time.Time
 	}

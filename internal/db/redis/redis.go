@@ -3,10 +3,10 @@ package redis
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"time"
 
 	"github.com/av-ugolkov/lingua-evo/internal/config"
+	"github.com/av-ugolkov/lingua-evo/runtime"
 
 	rClient "github.com/redis/go-redis/v9"
 )
@@ -34,8 +34,9 @@ func (r *Redis) Close() error {
 func (r *Redis) Get(ctx context.Context, key string) (string, error) {
 	value, err := r.client.Get(ctx, key).Result()
 	if err != nil {
-		return "", fmt.Errorf("redis.Get - key [%s]: %w", key, err)
+		return runtime.EmptyString, fmt.Errorf("redis.Get - key [%s]: %w", key, err)
 	}
+
 	return value, nil
 }
 
@@ -47,24 +48,10 @@ func (r *Redis) SetNX(ctx context.Context, key string, value any, expiration tim
 	return r.client.SetNX(ctx, key, value, expiration).Result()
 }
 
-func (r *Redis) ExpireAt(ctx context.Context, key string, tm time.Time) (bool, error) {
-	return r.client.ExpireAt(ctx, key, tm).Result()
-}
-
 func (r *Redis) Delete(ctx context.Context, key string) (int64, error) {
 	return r.client.Del(ctx, key).Result()
 }
 
-func (r *Redis) GetAccountCode(ctx context.Context, email string) (int, error) {
-	codeStr, err := r.Get(ctx, email)
-	if err != nil {
-		return 0, fmt.Errorf("redis.GetAccountCode: %w", err)
-	}
-
-	code, err := strconv.Atoi(codeStr)
-	if err != nil {
-		return 0, fmt.Errorf("redis.GetAccountCode - convert string to int: %w", err)
-	}
-
-	return code, nil
+func (r *Redis) GetTTL(ctx context.Context, key string) (time.Duration, error) {
+	return r.client.TTL(ctx, key).Result()
 }
