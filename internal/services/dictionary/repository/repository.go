@@ -24,7 +24,7 @@ func NewRepo(tr *transactor.Transactor) *DictionaryRepo {
 	}
 }
 
-func (r *DictionaryRepo) GetDictionary(ctx context.Context, langCode string) ([]entity.DictWord, error) {
+func (r *DictionaryRepo) GetDictionary(ctx context.Context, langCode, search string, page, itemsPerPage int) ([]entity.DictWord, error) {
 	query := fmt.Sprintf(`
 		SELECT 
 			id, 
@@ -32,9 +32,11 @@ func (r *DictionaryRepo) GetDictionary(ctx context.Context, langCode string) ([]
 			pronunciation,
 			creator,
 			created_at
-		FROM dictionary_%s;`, langCode)
+		FROM dictionary_%[1]s
+		WHERE text ILIKE '%[2]s' || $1 || '%[2]s'
+		LIMIT %[3]d OFFSET %[4]d;`, langCode, "%", itemsPerPage, page)
 
-	rows, err := r.tr.Query(ctx, query)
+	rows, err := r.tr.Query(ctx, query, search)
 	if err != nil {
 		return nil, fmt.Errorf("dictionary.repository.DictionaryRepo.GetDictionary: %w", err)
 	}

@@ -16,7 +16,7 @@ import (
 
 type (
 	repoDictionary interface {
-		GetDictionary(ctx context.Context, langCode string) ([]DictWord, error)
+		GetDictionary(ctx context.Context, langCode, search string, page, itemsPerPage int) ([]DictWord, error)
 		AddWords(ctx context.Context, words []DictWord) ([]DictWord, error)
 		GetWordsByText(ctx context.Context, words []DictWord) ([]DictWord, error)
 		GetWords(ctx context.Context, ids []uuid.UUID) ([]DictWord, error)
@@ -47,14 +47,14 @@ func NewService(repo repoDictionary, langSvc langSvc) *Service {
 	}
 }
 
-func (s *Service) GetDictionary(ctx context.Context, langCode string) ([]DictWord, error) {
+func (s *Service) GetDictionary(ctx context.Context, langCode, search string, page, itemsPerPage int) ([]DictWord, error) {
 	err := s.langSvc.CheckLanguage(ctx, langCode)
 	if err != nil {
 		return nil, msgerr.New(fmt.Errorf("dictionary.Service.GetDictionary: %v", err),
 			ErrMsgLanguageNotFound)
 	}
 
-	words, err := s.repo.GetDictionary(ctx, langCode)
+	words, err := s.repo.GetDictionary(ctx, langCode, search, page, itemsPerPage)
 	if err != nil {
 		return nil, msgerr.New(fmt.Errorf("dictionary.Service.GetDictionary: %v", err),
 			msgerr.ErrMsgInternal)

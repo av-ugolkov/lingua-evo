@@ -24,6 +24,9 @@ const (
 const (
 	QueryParamText     = "text"
 	QueryParamLangCode = "lang_code"
+	QueryParamPage     = "page"
+	QueryParamPerPage  = "per_page"
+	QueryParamSearch   = "search"
 )
 
 type (
@@ -71,9 +74,29 @@ func newHandler(dictSvc *dictionarySvc.Service) *Handler {
 func (h *Handler) getDictionary(c *ginext.Context) (int, any, error) {
 	ctx := c.Request.Context()
 
-	langCode := c.Query(QueryParamLangCode)
+	langCode, err := c.GetQuery(QueryParamLangCode)
+	if err != nil {
+		return http.StatusBadRequest, nil,
+			fmt.Errorf("dictionary.delivery.Handler.getDictionary: %w", err)
+	}
 
-	dict, err := h.dictSvc.GetDictionary(ctx, langCode)
+	page, err := c.GetQueryInt(QueryParamPage)
+	if err != nil {
+		return http.StatusBadRequest, nil,
+			fmt.Errorf("dictionary.delivery.Handler.getDictionary: %w", err)
+	}
+	itemsPerPage, err := c.GetQueryInt(QueryParamPerPage)
+	if err != nil {
+		return http.StatusBadRequest, nil,
+			fmt.Errorf("dictionary.delivery.Handler.getDictionary: %w", err)
+	}
+	search, err := c.GetQuery(QueryParamSearch)
+	if err != nil {
+		return http.StatusBadRequest, nil,
+			fmt.Errorf("dictionary.delivery.Handler.getDictionary: %w", err)
+	}
+
+	dict, err := h.dictSvc.GetDictionary(ctx, langCode, search, page, itemsPerPage)
 	if err != nil {
 		return http.StatusInternalServerError, nil,
 			fmt.Errorf("dictionary.delivery.Handler.getDictionary: %v", err)
