@@ -105,7 +105,7 @@ func (h *Handler) getDictionary(c *ginext.Context) (int, any, error) {
 			fmt.Errorf("dictionary.delivery.Handler.getDictionary: %w", err)
 	}
 
-	dict, err := h.dictSvc.GetDictionary(ctx, langCode, search, page, itemsPerPage)
+	dict, countWords, err := h.dictSvc.GetDictionary(ctx, langCode, search, page, itemsPerPage)
 	if err != nil {
 		return http.StatusInternalServerError, nil,
 			fmt.Errorf("dictionary.delivery.Handler.getDictionary: %v", err)
@@ -123,7 +123,7 @@ func (h *Handler) getDictionary(c *ginext.Context) (int, any, error) {
 		})
 	}
 
-	return http.StatusOK, wordsRs, nil
+	return http.StatusOK, gin.H{"words": wordsRs, "count_words": countWords}, nil
 }
 
 func (h *Handler) addWord(c *ginext.Context) (int, any, error) {
