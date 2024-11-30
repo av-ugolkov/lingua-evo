@@ -2,6 +2,7 @@ package handler
 
 import (
 	"fmt"
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -22,11 +23,12 @@ const (
 )
 
 const (
-	QueryParamText     = "text"
-	QueryParamLangCode = "lang_code"
-	QueryParamPage     = "page"
-	QueryParamPerPage  = "per_page"
-	QueryParamSearch   = "search"
+	QueryParamText             = "text"
+	QueryParamLangCode         = "lang_code"
+	QueryParamRandomWordsLimit = "limit"
+	QueryParamPage             = "page"
+	QueryParamPerPage          = "per_page"
+	QueryParamSearch           = "search"
 )
 
 type (
@@ -70,7 +72,7 @@ func Create(r *ginext.Engine, dictSvc *dictionarySvc.Service) {
 	r.GET(handler.Dictionary, h.getDictionary)
 	r.POST(handler.DictionaryWord, middleware.Auth(h.addWord))
 	r.GET(handler.DictionaryWord, h.getWord)
-	r.GET(handler.GetRandomWord, h.getRandomWord)
+	r.GET(handler.GetRandomWord, h.getRandomWords)
 	r.GET(handler.WordPronunciation, middleware.Auth(h.getPronunciation))
 }
 
@@ -204,7 +206,7 @@ func (h *Handler) getWord(c *ginext.Context) (int, any, error) {
 	}, nil
 }
 
-func (h *Handler) getRandomWord(c *ginext.Context) (int, any, error) {
+func (h *Handler) getRandomWords(c *ginext.Context) (int, any, error) {
 	ctx := c.Request.Context()
 
 	langCode, err := c.GetQuery(QueryParamLangCode)
@@ -213,17 +215,28 @@ func (h *Handler) getRandomWord(c *ginext.Context) (int, any, error) {
 			fmt.Errorf("dictionary.delivery.Handler.getRandomWord: %w", err)
 	}
 
-	word, err := h.dictSvc.GetRandomWord(ctx, langCode)
+	count, err := c.GetQueryInt(QueryParamRandomWordsLimit)
+	if err != nil {
+		slog.Warn(fmt.Sprintf("dictionary.delivery.Handler.getRandomWord: %v", err))
+		count = 1
+	}
+
+	word, err := h.dictSvc.GetRandomWords(ctx, langCode, count)
 	if err != nil {
 		return http.StatusInternalServerError, nil,
 			fmt.Errorf("dictionary.delivery.Handler.getRandomWord: %v", err)
 	}
 
-	return http.StatusOK, &WordRs{
-		Text:          word.Text,
-		LangCode:      word.LangCode,
-		Pronunciation: word.Pronunciation,
-	}, nil
+	wordsRs := make([]WordRs, 0, len(word))
+	for _, w := range word {
+		wordsRs = append(wordsRs, WordRs{
+			Text:          w.Text,
+			LangCode:      w.LangCode,
+			Pronunciation: w.Pronunciation,
+		})
+	}
+
+	return http.StatusOK, wordsRs, nil
 }
 
 func (h *Handler) getPronunciation(c *ginext.Context) (int, any, error) {

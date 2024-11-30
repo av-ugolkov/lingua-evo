@@ -24,7 +24,7 @@ type (
 		UpdateWord(ctx context.Context, w *DictWord) error
 		FindWords(ctx context.Context, w *DictWord) ([]uuid.UUID, error)
 		DeleteWordByText(ctx context.Context, word *DictWord) error
-		GetRandomWord(ctx context.Context, langCode string) (DictWord, error)
+		GetRandomWords(ctx context.Context, langCode string, count int) ([]DictWord, error)
 		GetPronunciation(ctx context.Context, text, langCode string) (string, error)
 	}
 
@@ -130,18 +130,18 @@ func (s *Service) GetWordsByText(ctx context.Context, inWords []DictWord) ([]Dic
 	return words, nil
 }
 
-func (s *Service) GetRandomWord(ctx context.Context, langCode string) (DictWord, error) {
+func (s *Service) GetRandomWords(ctx context.Context, langCode string, count int) ([]DictWord, error) {
 	err := s.langSvc.CheckLanguage(ctx, langCode)
 	if err != nil {
-		return DictWord{}, msgerr.New(fmt.Errorf("dictionary.Service.GetRandomWord - check language: %v", err), msgerr.ErrMsgInternal)
+		return nil, msgerr.New(fmt.Errorf("dictionary.Service.GetRandomWord - check language: %v", err), msgerr.ErrMsgInternal)
 	}
 
-	word, err := s.repo.GetRandomWord(ctx, langCode)
+	words, err := s.repo.GetRandomWords(ctx, langCode, count)
 	if err != nil {
-		return DictWord{}, msgerr.New(fmt.Errorf("dictionary.Service.GetRandomWord: %v", err), msgerr.ErrMsgInternal)
+		return nil, msgerr.New(fmt.Errorf("dictionary.Service.GetRandomWord: %v", err), msgerr.ErrMsgInternal)
 	}
 
-	return word, nil
+	return words, nil
 }
 
 func (s *Service) DeleteWordByText(ctx context.Context, word DictWord) error {
