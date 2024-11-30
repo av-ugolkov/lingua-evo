@@ -271,24 +271,39 @@ func (r *DictionaryRepo) DeleteWordByText(ctx context.Context, w *entity.DictWor
 	return nil
 }
 
-func (r *DictionaryRepo) GetRandomWord(ctx context.Context, langCode string) (entity.DictWord, error) {
-	table := getTable(langCode)
-	query := fmt.Sprintf(`
+func (r *DictionaryRepo) GetRandomWords(ctx context.Context, langCode string, count int) ([]entity.DictWord, error) {
+	const query = `
 		SELECT 
 			id, 
 			text, 
 			COALESCE(pronunciation, ''), 
 			lang_code 
-		FROM "%s" 
+		FROM "dictionary" 
 		ORDER BY RANDOM() 
-		LIMIT 1;`, table)
-	word := entity.DictWord{}
-	err := r.tr.QueryRow(ctx, query).Scan(&word.ID, &word.Text, &word.Pronunciation, &word.LangCode)
+		LIMIT $1;`
+	rows, err := r.tr.Query(ctx, query, count)
 	if err != nil {
-		return entity.DictWord{}, fmt.Errorf("dictionary.repository.DictionaryRepo.GetRandomWord - scan: %w", err)
+		return nil, fmt.Errorf("dictionary.repository.DictionaryRepo.GetRandomWord: %w", err)
+	}
+	defer rows.Close()
+
+	var word entity.DictWord
+	words := make([]entity.DictWord, 0, count)
+	for rows.Next() {
+		err = rows.Scan(
+			&word.ID,
+			&word.Text,
+			&word.Pronunciation,
+			&word.LangCode,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("dictionary.repository.DictionaryRepo.GetRandomWord: %w", err)
+		}
+
+		words = append(words, word)
 	}
 
-	return word, nil
+	return words, nil
 }
 
 func (r *DictionaryRepo) GetPronunciation(ctx context.Context, text, langCode string) (string, error) {
