@@ -275,11 +275,11 @@ func (r *VocabRepo) GetVocabWords(ctx context.Context, vocabID uuid.UUID) ([]ent
 	}
 	defer rows.Close()
 
-	var wordData entity.VocabWordData
+	vocabularyWords := make([]entity.VocabWordData, 0, countRows)
 	var translates []string
 	var examples []string
-	vocabularyWords := make([]entity.VocabWordData, 0, countRows)
 	for rows.Next() {
+		var wordData entity.VocabWordData
 		err = rows.Scan(
 			&wordData.ID,
 			&wordData.Native.ID,
@@ -338,11 +338,11 @@ func (r *VocabRepo) GetVocabSeveralWords(ctx context.Context, vocabID uuid.UUID,
 	}
 	defer rows.Close()
 
-	var wordData entity.VocabWordData
 	var translates []string
 	var examples []string
 	vocabularyWords := make([]entity.VocabWordData, 0, count)
 	for rows.Next() {
+		var wordData entity.VocabWordData
 		err = rows.Scan(
 			&wordData.ID,
 			&wordData.Native.ID,

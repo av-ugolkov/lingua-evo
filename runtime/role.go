@@ -7,3 +7,7 @@ const (
 	Guest Role = "guest"
 	Admin Role = "admin"
 )
+
+func (r Role) IsAdmin() bool {
+	return r == Admin
+}

@@ -14,19 +14,19 @@ type mockUserSvc struct {
 	mock.Mock
 }
 
-// UserCountWord provides a mock function with given fields: ctx, uid
-func (_m *mockUserSvc) UserCountWord(ctx context.Context, uid uuid.UUID) (int, error) {
+// CheckAdmin provides a mock function with given fields: ctx, uid
+func (_m *mockUserSvc) CheckAdmin(ctx context.Context, uid uuid.UUID) (bool, error) {
 	ret := _m.Called(ctx, uid)
 
-	var r0 int
+	var r0 bool
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) (int, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) (bool, error)); ok {
 		return rf(ctx, uid)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) int); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) bool); ok {
 		r0 = rf(ctx, uid)
 	} else {
-		r0 = ret.Get(0).(int)
+		r0 = ret.Get(0).(bool)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID) error); ok {

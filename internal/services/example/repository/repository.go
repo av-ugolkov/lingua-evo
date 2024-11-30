@@ -33,6 +33,7 @@ func (r *ExampleRepo) AddExamples(ctx context.Context, examples []entity.Example
 	params := make([]any, 0, len(examples)+1)
 	params = append(params, &wordTexts)
 	counter := len(params)
+	now := time.Now().UTC()
 	for i := 0; i < len(examples); i++ {
 		wordTexts = append(wordTexts, examples[i].Text)
 		statement := "$" + strconv.Itoa(counter+1) +
@@ -42,7 +43,7 @@ func (r *ExampleRepo) AddExamples(ctx context.Context, examples []entity.Example
 		counter += 3
 		statements = append(statements, "("+statement+")")
 
-		params = append(params, uuid.New(), examples[i].Text, examples[i].CreatedAt.Format(time.RFC3339))
+		params = append(params, uuid.New(), examples[i].Text, now.Format(time.RFC3339))
 	}
 
 	query := fmt.Sprintf(`

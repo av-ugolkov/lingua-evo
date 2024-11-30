@@ -76,8 +76,8 @@ func (s *Service) AddWord(ctx context.Context, uid uuid.UUID, vocabWordData enti
 		for _, tr := range vocabWordData.Translates {
 			translates = append(translates, entityDict.DictWord{
 				Text:     tr.Text,
-				LangCode: tr.LangCode,
-				Creator:  tr.Creator,
+				LangCode: vocab.TranslateLang,
+				Creator:  vocabWordData.Native.Creator,
 			})
 		}
 		translateWords, err := s.dictSvc.GetOrAddWords(ctx, translates)

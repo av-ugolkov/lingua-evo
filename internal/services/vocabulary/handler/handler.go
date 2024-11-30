@@ -42,18 +42,18 @@ type (
 	}
 
 	VocabularyRs struct {
-		ID            uuid.UUID `json:"id,omitempty"`
-		UserID        uuid.UUID `json:"user_id,omitempty"`
-		Name          string    `json:"name,omitempty"`
-		AccessID      *uint8    `json:"access_id,omitempty"`
-		NativeLang    string    `json:"native_lang,omitempty"`
-		TranslateLang string    `json:"translate_lang,omitempty"`
-		Description   string    `json:"description,omitempty"`
-		UserName      string    `json:"user_name,omitempty"`
-		Editable      *bool     `json:"editable,omitempty"`
-		WordsCount    *uint     `json:"words_count,omitempty"`
-		CreatedAt     time.Time `json:"created_at,omitempty"`
-		UpdatedAt     time.Time `json:"updated_at,omitempty"`
+		ID            *uuid.UUID `json:"id,omitempty"`
+		UserID        *uuid.UUID `json:"user_id,omitempty"`
+		Name          string     `json:"name,omitempty"`
+		AccessID      *uint8     `json:"access_id,omitempty"`
+		NativeLang    string     `json:"native_lang,omitempty"`
+		TranslateLang string     `json:"translate_lang,omitempty"`
+		Description   string     `json:"description,omitempty"`
+		UserName      string     `json:"user_name,omitempty"`
+		Editable      *bool      `json:"editable,omitempty"`
+		WordsCount    *uint      `json:"words_count,omitempty"`
+		CreatedAt     *time.Time `json:"created_at,omitempty"`
+		UpdatedAt     *time.Time `json:"updated_at,omitempty"`
 	}
 
 	VocabByUserRs struct {
@@ -177,8 +177,8 @@ func (h *Handler) getVocabularies(c *ginext.Context) (int, any, error) {
 	for _, vocab := range vocabularies {
 		vocabsWithWordsRs = append(vocabsWithWordsRs, VocabularyWithWords{
 			VocabularyRs: VocabularyRs{
-				ID:            vocab.ID,
-				UserID:        vocab.UserID,
+				ID:            &vocab.ID,
+				UserID:        &vocab.UserID,
 				UserName:      vocab.UserName,
 				Name:          vocab.Name,
 				AccessID:      &vocab.Access,
@@ -186,8 +186,8 @@ func (h *Handler) getVocabularies(c *ginext.Context) (int, any, error) {
 				TranslateLang: vocab.TranslateLang,
 				Description:   vocab.Description,
 				WordsCount:    &vocab.WordsCount,
-				CreatedAt:     vocab.CreatedAt,
-				UpdatedAt:     vocab.UpdatedAt,
+				CreatedAt:     &vocab.CreatedAt,
+				UpdatedAt:     &vocab.UpdatedAt,
 			},
 			Words: vocab.Words,
 		})
@@ -257,9 +257,9 @@ func (h *Handler) getVocabularyInfo(c *ginext.Context) (int, any, error) {
 	}
 
 	vocabRs := VocabularyRs{
-		ID:            vocab.ID,
+		ID:            &vocab.ID,
 		AccessID:      &vocab.Access,
-		UserID:        vocab.UserID,
+		UserID:        &vocab.UserID,
 		UserName:      vocab.UserName,
 		Name:          vocab.Name,
 		NativeLang:    vocab.NativeLang,
@@ -267,8 +267,8 @@ func (h *Handler) getVocabularyInfo(c *ginext.Context) (int, any, error) {
 		Description:   vocab.Description,
 		Editable:      &vocab.Editable,
 		WordsCount:    &vocab.WordsCount,
-		CreatedAt:     vocab.CreatedAt,
-		UpdatedAt:     vocab.UpdatedAt,
+		CreatedAt:     &vocab.CreatedAt,
+		UpdatedAt:     &vocab.UpdatedAt,
 	}
 
 	return http.StatusOK, vocabRs, nil
@@ -311,8 +311,8 @@ func (h *Handler) getRecommendedVocabularies(c *ginext.Context) (int, any, error
 	vocabulariesRs := make([]VocabularyRs, 0, len(vocabs))
 	for _, vocab := range vocabs {
 		vocabulariesRs = append(vocabulariesRs, VocabularyRs{
-			ID:            vocab.ID,
-			UserID:        vocab.UserID,
+			ID:            &vocab.ID,
+			UserID:        &vocab.UserID,
 			Name:          vocab.Name,
 			AccessID:      &vocab.Access,
 			NativeLang:    vocab.NativeLang,
