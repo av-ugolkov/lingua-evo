@@ -53,10 +53,12 @@ func (r *VocabRepo) GetWord(ctx context.Context, wid uuid.UUID, nativeLang, tran
 		return entity.VocabWordData{}, fmt.Errorf("word.repository.WordRepo.GetWord: %w", err)
 	}
 
+	vocabWordData.Translates = vocabWordData.Translates[:0]
 	for _, tr := range translates {
 		vocabWordData.Translates = append(vocabWordData.Translates, entity.DictWord{Text: tr})
 	}
 
+	vocabWordData.Examples = vocabWordData.Examples[:0]
 	for _, ex := range examples {
 		vocabWordData.Examples = append(vocabWordData.Examples, entity.Example{Text: ex})
 	}
@@ -188,6 +190,7 @@ func (r *VocabRepo) GetRandomVocabulary(ctx context.Context, vocabID uuid.UUID, 
 			return nil, fmt.Errorf("word.repository.WordRepo.GetRandomVocabulary - scan: %w", err)
 		}
 
+		vocabulary.Translates = make([]entity.DictWord, 0, len(translates))
 		for _, tr := range translates {
 			vocabulary.Translates = append(vocabulary.Translates, entity.DictWord{Text: tr})
 		}
@@ -284,10 +287,11 @@ func (r *VocabRepo) GetVocabWords(ctx context.Context, vocabID uuid.UUID) ([]ent
 			return nil, fmt.Errorf("word.repository.WordRepo.GetVocabularyWords - scan: %w", err)
 		}
 
+		wordData.Translates = wordData.Translates[:0]
 		for _, tr := range translates {
 			wordData.Translates = append(wordData.Translates, entity.DictWord{Text: tr, LangCode: translateLang})
 		}
-
+		wordData.Examples = wordData.Examples[:0]
 		for _, ex := range examples {
 			wordData.Examples = append(wordData.Examples, entity.Example{Text: ex})
 		}
@@ -345,10 +349,12 @@ func (r *VocabRepo) GetVocabSeveralWords(ctx context.Context, vocabID uuid.UUID,
 			return nil, fmt.Errorf("word.repository.WordRepo.GetVocabularyWords - scan: %w", err)
 		}
 
+		wordData.Translates = wordData.Translates[:0]
 		for _, tr := range translates {
 			wordData.Translates = append(wordData.Translates, entity.DictWord{Text: tr, LangCode: translateLang})
 		}
 
+		wordData.Examples = wordData.Examples[:0]
 		for _, ex := range examples {
 			wordData.Examples = append(wordData.Examples, entity.Example{Text: ex})
 		}
