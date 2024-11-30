@@ -328,6 +328,7 @@ func (r *VocabRepo) GetVocabSeveralWords(ctx context.Context, vocabID uuid.UUID,
 
 	var wordData entity.VocabWordData
 	var translates []string
+	var examples []string
 	vocabularyWords := make([]entity.VocabWordData, 0, count)
 	for rows.Next() {
 		err = rows.Scan(
@@ -336,7 +337,7 @@ func (r *VocabRepo) GetVocabSeveralWords(ctx context.Context, vocabID uuid.UUID,
 			&wordData.Native.Text,
 			&wordData.Native.Pronunciation,
 			&translates,
-			&wordData.Examples,
+			&examples,
 			&wordData.UpdatedAt,
 			&wordData.CreatedAt,
 		)
@@ -346,6 +347,10 @@ func (r *VocabRepo) GetVocabSeveralWords(ctx context.Context, vocabID uuid.UUID,
 
 		for _, tr := range translates {
 			wordData.Translates = append(wordData.Translates, entity.DictWord{Text: tr, LangCode: translateLang})
+		}
+
+		for _, ex := range examples {
+			wordData.Examples = append(wordData.Examples, entity.Example{Text: ex})
 		}
 
 		wordData.VocabID = vocabID
