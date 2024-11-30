@@ -80,7 +80,15 @@ func (r *VocabRepo) AddWord(ctx context.Context, word entity.VocabWord) (uuid.UU
 		created_at) 
 	VALUES($1, $2, $3, $4, $5, $6, $7, $8, $8);`
 	vocabWordID := uuid.New()
-	_, err := r.tr.Exec(ctx, query, vocabWordID, word.VocabID, word.NativeID, word.Pronunciation, word.Definition, word.TranslateIDs, word.ExampleIDs, time.Now().UTC())
+	_, err := r.tr.Exec(ctx, query,
+		vocabWordID,
+		word.VocabID,
+		word.NativeID,
+		word.Pronunciation,
+		word.Definition,
+		word.TranslateIDs,
+		word.ExampleIDs,
+		time.Now().UTC())
 	if err != nil {
 		var pgErr *pgconn.PgError
 		switch {

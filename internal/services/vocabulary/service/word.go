@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/msg-error"
 	entityDict "github.com/av-ugolkov/lingua-evo/internal/services/dictionary"
@@ -122,12 +123,13 @@ func (s *Service) AddWord(ctx context.Context, uid uuid.UUID, vocabWordData enti
 		return entity.VocabWord{}, fmt.Errorf("word.Service.AddWord: %w", err)
 	}
 
+	now := time.Now().UTC()
 	vocabularyWord := entity.VocabWord{
 		ID:        vocabWordData.ID,
 		VocabID:   vocabWordData.VocabID,
 		NativeID:  nativeWordID,
-		CreatedAt: vocabWordData.CreatedAt,
-		UpdatedAt: vocabWordData.UpdatedAt,
+		CreatedAt: now,
+		UpdatedAt: now,
 	}
 
 	s.eventsSvc.AsyncAddEvent(entityEvents.Event{
