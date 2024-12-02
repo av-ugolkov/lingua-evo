@@ -83,6 +83,7 @@ func (r *DictionaryRepo) AddWords(ctx context.Context, inWords []entity.DictWord
 	statements := make([]string, 0, len(inWords))
 	params := make([]any, 0, len(inWords))
 	counter := len(params)
+	now := time.Now().UTC()
 	for _, word := range inWords {
 		statement := "$" + strconv.Itoa(counter+1) +
 			",$" + strconv.Itoa(counter+2) +
@@ -94,7 +95,7 @@ func (r *DictionaryRepo) AddWords(ctx context.Context, inWords []entity.DictWord
 		counter += 6
 		statements = append(statements, "("+statement+")")
 
-		params = append(params, uuid.New(), word.Text, word.LangCode, word.Creator, word.UpdatedAt.Format(time.RFC3339), word.CreatedAt.Format(time.RFC3339))
+		params = append(params, uuid.New(), word.Text, word.LangCode, word.Creator, now.Format(time.RFC3339), now.Format(time.RFC3339))
 	}
 
 	table := getTable(inWords[0].LangCode)
