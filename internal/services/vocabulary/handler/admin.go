@@ -4,10 +4,15 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler/middleware"
 	ginext "github.com/av-ugolkov/lingua-evo/internal/pkg/gin-ext"
 	"github.com/av-ugolkov/lingua-evo/runtime"
 	"github.com/google/uuid"
 )
+
+func (h *Handler) adminHandler(r *ginext.Engine) {
+	r.POST("/admin/vocabulary/change-translation-lang", middleware.Auth(h.changeVocabTranslationLang))
+}
 
 func (h *Handler) changeVocabTranslationLang(c *ginext.Context) (int, any, error) {
 	ctx := c.Request.Context()
