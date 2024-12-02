@@ -31,11 +31,15 @@ func (s *Service) UserAddVocabulary(ctx context.Context, vocabulary entity.Vocab
 	}
 
 	err = s.tr.CreateTransaction(ctx, func(ctx context.Context) error {
-		vocabulary.ID, err = s.repoVocab.AddVocab(ctx, vocabulary)
+		id, err := s.repoVocab.AddVocab(ctx, vocabulary)
 		if err != nil {
 			return fmt.Errorf("add vocabulary: %w", err)
 		}
 
+		vocabulary, err = s.repoVocab.GetVocab(ctx, id)
+		if err != nil {
+			return fmt.Errorf("get vocabulary: %w", err)
+		}
 		return nil
 	})
 

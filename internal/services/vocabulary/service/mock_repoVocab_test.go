@@ -33,25 +33,25 @@ func (_m *mockRepoVocab) AddAccessForUser(ctx context.Context, vid uuid.UUID, ui
 	return r0
 }
 
-// AddVocab provides a mock function with given fields: ctx, vocab, tagIDs
-func (_m *mockRepoVocab) AddVocab(ctx context.Context, vocab vocabulary.Vocab, tagIDs []uuid.UUID) (uuid.UUID, error) {
-	ret := _m.Called(ctx, vocab, tagIDs)
+// AddVocab provides a mock function with given fields: ctx, vocab
+func (_m *mockRepoVocab) AddVocab(ctx context.Context, vocab vocabulary.Vocab) (uuid.UUID, error) {
+	ret := _m.Called(ctx, vocab)
 
 	var r0 uuid.UUID
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, vocabulary.Vocab, []uuid.UUID) (uuid.UUID, error)); ok {
-		return rf(ctx, vocab, tagIDs)
+	if rf, ok := ret.Get(0).(func(context.Context, vocabulary.Vocab) (uuid.UUID, error)); ok {
+		return rf(ctx, vocab)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, vocabulary.Vocab, []uuid.UUID) uuid.UUID); ok {
-		r0 = rf(ctx, vocab, tagIDs)
+	if rf, ok := ret.Get(0).(func(context.Context, vocabulary.Vocab) uuid.UUID); ok {
+		r0 = rf(ctx, vocab)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(uuid.UUID)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, vocabulary.Vocab, []uuid.UUID) error); ok {
-		r1 = rf(ctx, vocab, tagIDs)
+	if rf, ok := ret.Get(1).(func(context.Context, vocabulary.Vocab) error); ok {
+		r1 = rf(ctx, vocab)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -83,6 +83,20 @@ func (_m *mockRepoVocab) AddWord(ctx context.Context, word vocabulary.VocabWord)
 	}
 
 	return r0, r1
+}
+
+// ChangeVocabTranslationLang provides a mock function with given fields: ctx, vid, lang
+func (_m *mockRepoVocab) ChangeVocabTranslationLang(ctx context.Context, vid uuid.UUID, lang string) error {
+	ret := _m.Called(ctx, vid, lang)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, string) error); ok {
+		r0 = rf(ctx, vid, lang)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
 }
 
 // CopyVocab provides a mock function with given fields: ctx, uid, vid

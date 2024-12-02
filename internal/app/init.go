@@ -187,7 +187,7 @@ func initServer(cfg *config.Config, r *ginext.Engine, pgxPool *pgxpool.Pool, red
 	tagRepo := tagRepository.NewRepo(tr)
 	tagSvc := tagService.NewService(tagRepo)
 	vocabRepo := vocabRepository.NewRepo(tr)
-	vocabSvc := vocabService.NewService(tr, vocabRepo, exampleSvc, dictSvc, tagSvc, subscribersSvc, eventsSvc)
+	vocabSvc := vocabService.NewService(tr, vocabRepo, userSvc, exampleSvc, dictSvc, tagSvc, subscribersSvc, eventsSvc)
 	authRepo := authRepository.NewRepo(redis)
 	authSvc := authService.NewService(authRepo, userSvc, emailSvc)
 	supportSvc := supportService.NewService(emailSvc)

@@ -56,7 +56,7 @@ func (s *Service) SignIn(ctx context.Context, user, password, fingerprint string
 
 	tokens := &entity.Tokens{
 		AccessToken:  accessToken,
-		RefreshToken: refreshTokenID.String(),
+		RefreshToken: session.RefreshToken,
 	}
 
 	return tokens, nil

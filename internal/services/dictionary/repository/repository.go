@@ -83,6 +83,7 @@ func (r *DictionaryRepo) AddWords(ctx context.Context, inWords []entity.DictWord
 	statements := make([]string, 0, len(inWords))
 	params := make([]any, 0, len(inWords))
 	counter := len(params)
+	now := time.Now().UTC()
 	for _, word := range inWords {
 		statement := "$" + strconv.Itoa(counter+1) +
 			",$" + strconv.Itoa(counter+2) +
@@ -94,7 +95,7 @@ func (r *DictionaryRepo) AddWords(ctx context.Context, inWords []entity.DictWord
 		counter += 6
 		statements = append(statements, "("+statement+")")
 
-		params = append(params, uuid.New(), word.Text, word.LangCode, word.Creator, word.UpdatedAt.Format(time.RFC3339), word.CreatedAt.Format(time.RFC3339))
+		params = append(params, uuid.New(), word.Text, word.LangCode, word.Creator, now.Format(time.RFC3339), now.Format(time.RFC3339))
 	}
 
 	table := getTable(inWords[0].LangCode)
@@ -271,24 +272,39 @@ func (r *DictionaryRepo) DeleteWordByText(ctx context.Context, w *entity.DictWor
 	return nil
 }
 
-func (r *DictionaryRepo) GetRandomWord(ctx context.Context, langCode string) (entity.DictWord, error) {
-	table := getTable(langCode)
-	query := fmt.Sprintf(`
+func (r *DictionaryRepo) GetRandomWords(ctx context.Context, langCode string, count int) ([]entity.DictWord, error) {
+	const query = `
 		SELECT 
 			id, 
 			text, 
 			COALESCE(pronunciation, ''), 
 			lang_code 
-		FROM "%s" 
+		FROM "dictionary" 
 		ORDER BY RANDOM() 
-		LIMIT 1;`, table)
-	word := entity.DictWord{}
-	err := r.tr.QueryRow(ctx, query).Scan(&word.ID, &word.Text, &word.Pronunciation, &word.LangCode)
+		LIMIT $1;`
+	rows, err := r.tr.Query(ctx, query, count)
 	if err != nil {
-		return entity.DictWord{}, fmt.Errorf("dictionary.repository.DictionaryRepo.GetRandomWord - scan: %w", err)
+		return nil, fmt.Errorf("dictionary.repository.DictionaryRepo.GetRandomWord: %w", err)
+	}
+	defer rows.Close()
+
+	var word entity.DictWord
+	words := make([]entity.DictWord, 0, count)
+	for rows.Next() {
+		err = rows.Scan(
+			&word.ID,
+			&word.Text,
+			&word.Pronunciation,
+			&word.LangCode,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("dictionary.repository.DictionaryRepo.GetRandomWord: %w", err)
+		}
+
+		words = append(words, word)
 	}
 
-	return word, nil
+	return words, nil
 }
 
 func (r *DictionaryRepo) GetPronunciation(ctx context.Context, text, langCode string) (string, error) {

@@ -63,7 +63,10 @@ func (h *Handler) userAddVocabulary(c *ginext.Context) (int, any, error) {
 	}
 
 	return http.StatusOK, VocabularyRs{
-		ID: vocab.ID,
+		ID:        &vocab.ID,
+		UserID:    &vocab.UserID,
+		CreatedAt: &vocab.CreatedAt,
+		UpdatedAt: &vocab.UpdatedAt,
 	}, nil
 }
 
@@ -153,13 +156,13 @@ func (h *Handler) userGetVocabularies(c *ginext.Context) (int, any, error) {
 	vocabulariesRs := make([]VocabularyRs, 0, len(vocabs))
 	for _, vocab := range vocabs {
 		vocabulariesRs = append(vocabulariesRs, VocabularyRs{
-			ID:            vocab.ID,
-			UserID:        vocab.UserID,
+			ID:            &vocab.ID,
+			UserID:        &vocab.UserID,
 			Name:          vocab.Name,
 			AccessID:      &vocab.Access,
 			NativeLang:    vocab.NativeLang,
 			TranslateLang: vocab.TranslateLang,
-			CreatedAt:     vocab.CreatedAt,
+			CreatedAt:     &vocab.CreatedAt,
 			UserName:      vocab.UserName,
 			WordsCount:    &vocab.WordsCount,
 		})
