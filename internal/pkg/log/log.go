@@ -55,6 +55,9 @@ func CustomLogger(cfgLog *cfgLog.Logger) *Logger {
 }
 
 func (l *Logger) Close() {
+	if l.file == nil {
+		return
+	}
 	err := l.file.Close()
 	if err != nil {
 		slog.Error(fmt.Sprintf("pgk.Logger.Close: %v", err))

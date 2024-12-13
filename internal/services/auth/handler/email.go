@@ -46,7 +46,7 @@ func (h *Handler) signIn(c *ginext.Context) (int, any, error) {
 		switch {
 		case errors.Is(err, entity.ErrNotFoundUser) ||
 			errors.Is(err, auth.ErrWrongPassword):
-			return http.StatusBadRequest, nil,
+			return http.StatusNotFound, nil,
 				msgerr.New(fmt.Errorf("auth.handler.Handler.signIn: %w", err),
 					"User doesn't exist or password is wrong")
 		default:
