@@ -38,7 +38,6 @@ type (
 		repoVocabUser
 		repoWord
 		repoVocabAccess
-		repoVocabAdmin
 	}
 
 	tagSvc interface {
@@ -48,18 +47,13 @@ type (
 	subscribersSvc interface {
 		Check(ctx context.Context, uid, subID uuid.UUID) (bool, error)
 	}
-
-	userSvc interface {
-		CheckAdmin(ctx context.Context, uid uuid.UUID) (bool, error)
-	}
 )
 
-//go:generate mockery --inpackage --outpkg vocabulary --testonly --name "repoVocab|userSvc|exampleSvc|dictSvc|tagSvc|subscribersSvc|eventsSvc"
+//go:generate mockery --inpackage --outpkg vocabulary --testonly --name "repoVocab|exampleSvc|dictSvc|tagSvc|subscribersSvc|eventsSvc"
 
 type Service struct {
 	tr             *transactor.Transactor
 	repoVocab      repoVocab
-	userSvc        userSvc
 	exampleSvc     exampleSvc
 	dictSvc        dictSvc
 	tagSvc         tagSvc
@@ -70,7 +64,6 @@ type Service struct {
 func NewService(
 	tr *transactor.Transactor,
 	repoVocab repoVocab,
-	userSvc userSvc,
 	exampleSvc exampleSvc,
 	dictSvc dictSvc,
 	tagSvc tagSvc,
@@ -80,7 +73,6 @@ func NewService(
 	return &Service{
 		tr:             tr,
 		repoVocab:      repoVocab,
-		userSvc:        userSvc,
 		exampleSvc:     exampleSvc,
 		dictSvc:        dictSvc,
 		tagSvc:         tagSvc,

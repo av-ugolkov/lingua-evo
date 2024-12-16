@@ -61,7 +61,7 @@ func TestMain(m *testing.M) {
 	eventsSvc = NewService(tr, eventsRepo.NewRepo(tr), notifSvc)
 	userSvc = user.NewService(tr, userRepo.NewRepo(tr), nil, nil)
 	exampleSvc = example.NewService(exampleRepo.NewRepo(tr))
-	vocabularySvc = vocabService.NewService(tr, vocabRepo.NewRepo(tr), nil, exampleSvc, dictSvc, tagSvc, nil, eventsSvc)
+	vocabularySvc = vocabService.NewService(tr, vocabRepo.NewRepo(tr), exampleSvc, dictSvc, tagSvc, nil, eventsSvc)
 
 	var err error
 	usr, err = userSvc.GetUserByNickname(ctx, "admin")

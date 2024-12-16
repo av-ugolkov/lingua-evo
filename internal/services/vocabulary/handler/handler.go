@@ -107,8 +107,6 @@ func Create(r *ginext.Engine, vocabSvc *vocabulary.Service) {
 	r.POST(handler.VocabularyAccessForUser, middleware.Auth(h.addAccessForUser))
 	r.DELETE(handler.VocabularyAccessForUser, middleware.Auth(h.removeAccessForUser))
 	r.PATCH(handler.VocabularyAccessForUser, middleware.Auth(h.updateAccessForUser))
-
-	h.adminHandler(r)
 }
 
 func newHandler(vocabSvc *vocabulary.Service) *Handler {

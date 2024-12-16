@@ -32,9 +32,9 @@ services:
     networks:
       - lingua-dev
 
-  service:
-    container_name: lingua-evo-dev
-    image: lingua-evo:${BRANCH:-dev}
+  base:
+    container_name: lingua-base-dev
+    image: lingua-base:${BRANCH:-dev}
     build:
       context: ../.
       dockerfile: Dockerfile

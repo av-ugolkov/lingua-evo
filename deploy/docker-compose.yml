@@ -28,9 +28,9 @@ services:
     networks:
       - lingua
 
-  service:
-    container_name: lingua-evo
-    image: lingua-evo:${BRANCH:-release}
+  base:
+    container_name: lingua-base
+    image: lingua-base:${BRANCH:-release}
     build:
       context: ../.
       dockerfile: Dockerfile
