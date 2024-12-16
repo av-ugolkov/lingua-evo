@@ -25,7 +25,7 @@ LABEL git.commit=$commit
 
 RUN --mount=type=cache,target=/var/cache/apk apk --update --upgrade add ca-certificates git bash
 
-WORKDIR /lingua-evo
+WORKDIR /lingua-base
 
 COPY /configs/${config_dir}.yaml ./configs/server_config.yaml
 COPY /${google_file}.json .

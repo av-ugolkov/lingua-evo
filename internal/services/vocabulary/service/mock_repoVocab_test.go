@@ -85,20 +85,6 @@ func (_m *mockRepoVocab) AddWord(ctx context.Context, word vocabulary.VocabWord)
 	return r0, r1
 }
 
-// ChangeVocabTranslationLang provides a mock function with given fields: ctx, vid, lang
-func (_m *mockRepoVocab) ChangeVocabTranslationLang(ctx context.Context, vid uuid.UUID, lang string) error {
-	ret := _m.Called(ctx, vid, lang)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, string) error); ok {
-		r0 = rf(ctx, vid, lang)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
 // CopyVocab provides a mock function with given fields: ctx, uid, vid
 func (_m *mockRepoVocab) CopyVocab(ctx context.Context, uid uuid.UUID, vid uuid.UUID) (uuid.UUID, error) {
 	ret := _m.Called(ctx, uid, vid)
