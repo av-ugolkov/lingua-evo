@@ -61,4 +61,6 @@ const (
 	Events      = "/events"
 	CountEvents = "/events/count"
 	MarkWatched = "/event/watched"
+
+	ReviseGame = "/game/revise"
 )
