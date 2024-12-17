@@ -29,6 +29,8 @@ var (
 	ErrNicknameLen       = fmt.Errorf("nickname must be more %d characters", MinNicknameLen)
 	ErrPasswordLen       = fmt.Errorf("password must be more %d characters", MinPasswordLen)
 	ErrPasswordDifficult = errors.New("password must be more difficult")
+
+	ErrMsgUserExists = "Sorry, the user exists with the same email or nickname"
 )
 
 type TypeToken string

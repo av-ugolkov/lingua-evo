@@ -7,11 +7,10 @@ import (
 
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler/middleware"
-	"github.com/av-ugolkov/lingua-evo/internal/pkg/gin-ext"
 	user "github.com/av-ugolkov/lingua-evo/internal/services/user/service"
 	"github.com/av-ugolkov/lingua-evo/runtime"
 
-	"github.com/gin-gonic/gin"
+	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 )
 
@@ -41,26 +40,28 @@ type Handler struct {
 	userSvc *user.Service
 }
 
-func Create(g *ginext.Engine, userSvc *user.Service) {
+func Create(r *fiber.App, userSvc *user.Service) {
 	h := &Handler{
 		userSvc: userSvc,
 	}
 
-	g.GET(handler.UserByID, middleware.Auth(h.getUserByID))
-	g.GET(handler.Users, h.getUsers)
+	r.Get(handler.UserByID, middleware.Auth(h.getUserByID))
+	r.Get(handler.Users, h.getUsers)
 
-	h.initSettingsHandler(g)
+	h.initSettingsHandler(r)
 }
 
-func (h *Handler) getUserByID(c *ginext.Context) (int, any, error) {
-	ctx := c.Request.Context()
+func (h *Handler) getUserByID(c *fiber.Ctx) error {
+	ctx := c.Context()
 	userID, err := runtime.UserIDFromContext(ctx)
 	if err != nil {
-		return http.StatusUnauthorized, nil, fmt.Errorf("user.delivery.Handler.getUserByID: %v", err)
+		return fiber.NewError(http.StatusUnauthorized,
+			fmt.Sprintf("user.delivery.Handler.getUserByID: %v", err))
 	}
 	usr, err := h.userSvc.GetUserByID(ctx, userID)
 	if err != nil {
-		return http.StatusInternalServerError, nil, fmt.Errorf("user.delivery.Handler.getUserByID: %v", err)
+		return fiber.NewError(http.StatusInternalServerError,
+			fmt.Sprintf("user.delivery.Handler.getUserByID: %v", err))
 	}
 
 	userRs := &UserRs{
@@ -70,47 +71,39 @@ func (h *Handler) getUserByID(c *ginext.Context) (int, any, error) {
 		Role:     usr.Role,
 	}
 
-	return http.StatusOK, userRs, nil
+	return c.Status(http.StatusOK).JSON(userRs)
 }
 
-func (h *Handler) getUsers(c *ginext.Context) (int, any, error) {
-	ctx := c.Request.Context()
+func (h *Handler) getUsers(c *fiber.Ctx) error {
+	ctx := c.Context()
 
 	uid, _ := runtime.UserIDFromContext(ctx)
 
-	page, err := c.GetQueryInt(paramsPage)
-	if err != nil {
-		return http.StatusBadRequest, nil,
-			fmt.Errorf("user.delivery.Handler.getUsers: %v", err)
+	page := c.QueryInt(paramsPage, 1)
+	perPage := c.QueryInt(paramsPerPage)
+	if perPage == 0 {
+		return fiber.NewError(fiber.StatusBadRequest,
+			fmt.Sprintf("user.delivery.Handler.getUsers: not found query [%s]", paramsPerPage))
 	}
 
-	perPage, err := c.GetQueryInt(paramsPerPage)
-	if err != nil {
-		return http.StatusBadRequest, nil,
-			fmt.Errorf("user.delivery.Handler.getUsers: %v", err)
+	search := c.Query(paramsSearch)
+
+	sort := c.QueryInt(paramsSort, -1)
+	if sort == -1 {
+		return fiber.NewError(fiber.StatusBadRequest,
+			fmt.Sprintf("user.delivery.Handler.getUsers: not found query [%s]", paramsSort))
 	}
 
-	search, err := c.GetQuery(paramsSearch)
-	if err != nil {
-		return http.StatusBadRequest, nil,
-			fmt.Errorf("user.delivery.Handler.getUsers: %v", err)
-	}
-
-	sort, err := c.GetQueryInt(paramsSort)
-	if err != nil {
-		return http.StatusBadRequest, nil,
-			fmt.Errorf("user.delivery.Handler.getUsers: %v", err)
-	}
-
-	order, err := c.GetQueryInt(paramsOrder)
-	if err != nil {
-		return http.StatusBadRequest, nil,
-			fmt.Errorf("user.delivery.Handler.getUsers: %v", err)
+	order := c.QueryInt(paramsOrder)
+	if order == -1 {
+		return fiber.NewError(fiber.StatusBadRequest,
+			fmt.Sprintf("user.delivery.Handler.getUsers: not found query [%s]", paramsOrder))
 	}
 
 	users, countUsers, err := h.userSvc.GetUsers(ctx, uid, page, perPage, sort, order, search)
 	if err != nil {
-		return http.StatusInternalServerError, nil, fmt.Errorf("user.delivery.Handler.getUsers: %v", err)
+		return fiber.NewError(fiber.StatusInternalServerError,
+			fmt.Sprintf("user.delivery.Handler.getUsers: %v", err))
 	}
 
 	usersRs := make([]UserRs, 0, len(users))
@@ -123,8 +116,8 @@ func (h *Handler) getUsers(c *ginext.Context) (int, any, error) {
 		})
 	}
 
-	return http.StatusOK, gin.H{
+	return c.Status(http.StatusOK).JSON(fiber.Map{
 		"users":       usersRs,
 		"count_users": countUsers,
-	}, nil
+	})
 }

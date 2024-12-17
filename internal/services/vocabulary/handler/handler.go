@@ -7,12 +7,11 @@ import (
 
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler/middleware"
-	"github.com/av-ugolkov/lingua-evo/internal/pkg/gin-ext"
 	vocabulary "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary/service"
 	"github.com/av-ugolkov/lingua-evo/runtime"
 	"github.com/av-ugolkov/lingua-evo/runtime/access"
 
-	"github.com/gin-gonic/gin"
+	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 )
 
@@ -80,33 +79,33 @@ type Handler struct {
 	vocabSvc *vocabulary.Service
 }
 
-func Create(r *ginext.Engine, vocabSvc *vocabulary.Service) {
+func Create(r *fiber.App, vocabSvc *vocabulary.Service) {
 	h := newHandler(vocabSvc)
 
-	r.POST(handler.Vocabulary, middleware.Auth(h.userAddVocabulary))
-	r.DELETE(handler.Vocabulary, middleware.Auth(h.userDeleteVocabulary))
-	r.PUT(handler.Vocabulary, middleware.Auth(h.userEditVocabulary))
-	r.GET(handler.UserVocabularies, middleware.Auth(h.userGetVocabularies))
-	r.GET(handler.Vocabularies, middleware.OptionalAuth(h.getVocabularies))
-	r.GET(handler.VocabulariesByUser, middleware.OptionalAuth(h.getVocabulariesByUser))
-	r.GET(handler.VocabularyInfo, middleware.OptionalAuth(h.getVocabularyInfo))
-	r.POST(handler.VocabularyCopy, middleware.Auth(h.copyVocabulary))
-	r.GET(handler.VocabulariesRecommended, middleware.OptionalAuth(h.getRecommendedVocabularies))
+	r.Post(handler.Vocabulary, middleware.Auth(h.userAddVocabulary))
+	r.Delete(handler.Vocabulary, middleware.Auth(h.userDeleteVocabulary))
+	r.Put(handler.Vocabulary, middleware.Auth(h.userEditVocabulary))
+	r.Get(handler.UserVocabularies, middleware.Auth(h.userGetVocabularies))
+	r.Get(handler.Vocabularies, middleware.OptionalAuth(h.getVocabularies))
+	r.Get(handler.VocabulariesByUser, middleware.OptionalAuth(h.getVocabulariesByUser))
+	r.Get(handler.VocabularyInfo, middleware.OptionalAuth(h.getVocabularyInfo))
+	r.Post(handler.VocabularyCopy, middleware.Auth(h.copyVocabulary))
+	r.Get(handler.VocabulariesRecommended, middleware.OptionalAuth(h.getRecommendedVocabularies))
 
-	r.GET(handler.VocabularyWord, middleware.Auth(h.getWord))
-	r.POST(handler.VocabularyWord, middleware.Auth(h.addWord))
-	r.DELETE(handler.VocabularyWord, middleware.Auth(h.deleteWord))
-	r.POST(handler.VocabularyWordText, middleware.Auth(h.updateWordText))
-	r.POST(handler.VocabularyWordPronunciation, middleware.Auth(h.updateWordPronunciation))
-	r.POST(handler.VocabularyWordDefinition, middleware.Auth(h.updateWordDefinition))
-	r.POST(handler.VocabularyWordTranslates, middleware.Auth(h.updateWordTranslates))
-	r.POST(handler.VocabularyWordExamples, middleware.Auth(h.updateWordExamples))
-	r.GET(handler.VocabularyWords, middleware.OptionalAuth(h.getWords))
+	r.Get(handler.VocabularyWord, middleware.Auth(h.getWord))
+	r.Post(handler.VocabularyWord, middleware.Auth(h.addWord))
+	r.Delete(handler.VocabularyWord, middleware.Auth(h.deleteWord))
+	r.Post(handler.VocabularyWordText, middleware.Auth(h.updateWordText))
+	r.Post(handler.VocabularyWordPronunciation, middleware.Auth(h.updateWordPronunciation))
+	r.Post(handler.VocabularyWordDefinition, middleware.Auth(h.updateWordDefinition))
+	r.Post(handler.VocabularyWordTranslates, middleware.Auth(h.updateWordTranslates))
+	r.Post(handler.VocabularyWordExamples, middleware.Auth(h.updateWordExamples))
+	r.Get(handler.VocabularyWords, middleware.OptionalAuth(h.getWords))
 
-	r.GET(handler.VocabularyAccessForUser, middleware.Auth(h.getAccessForUser))
-	r.POST(handler.VocabularyAccessForUser, middleware.Auth(h.addAccessForUser))
-	r.DELETE(handler.VocabularyAccessForUser, middleware.Auth(h.removeAccessForUser))
-	r.PATCH(handler.VocabularyAccessForUser, middleware.Auth(h.updateAccessForUser))
+	r.Get(handler.VocabularyAccessForUser, middleware.Auth(h.getAccessForUser))
+	r.Post(handler.VocabularyAccessForUser, middleware.Auth(h.addAccessForUser))
+	r.Delete(handler.VocabularyAccessForUser, middleware.Auth(h.removeAccessForUser))
+	r.Patch(handler.VocabularyAccessForUser, middleware.Auth(h.updateAccessForUser))
 }
 
 func newHandler(vocabSvc *vocabulary.Service) *Handler {
@@ -115,62 +114,57 @@ func newHandler(vocabSvc *vocabulary.Service) *Handler {
 	}
 }
 
-func (h *Handler) getVocabularies(c *ginext.Context) (int, any, error) {
-	ctx := c.Request.Context()
+func (h *Handler) getVocabularies(c *fiber.Ctx) error {
+	ctx := c.Context()
 	uid, _ := runtime.UserIDFromContext(ctx)
 
-	page, err := c.GetQueryInt(paramsPage)
-	if err != nil {
-		return http.StatusInternalServerError, nil,
-			fmt.Errorf("vocabulary.delivery.Handler.getVocabularies: %v", err)
+	page := c.QueryInt(paramsPage)
+	if page == 0 {
+		return fiber.NewError(http.StatusBadRequest,
+			fmt.Sprintf("vocabulary.Handler.getVocabularies: not found query [%s]", paramsPage))
 	}
 
-	itemsPerPage, err := c.GetQueryInt(paramsPerPage)
-	if err != nil {
-		return http.StatusInternalServerError, nil,
-			fmt.Errorf("vocabulary.delivery.Handler.getVocabularies: %v", err)
+	itemsPerPage := c.QueryInt(paramsPerPage)
+	if itemsPerPage == 0 {
+		return fiber.NewError(http.StatusBadRequest,
+			fmt.Sprintf("vocabulary.Handler.getVocabularies: not found query [%s]", paramsPerPage))
 	}
 
-	typeSort, err := c.GetQueryInt(paramsSort)
-	if err != nil {
-		return http.StatusInternalServerError, nil,
-			fmt.Errorf("vocabulary.delivery.Handler.getVocabularies: %v", err)
+	typeSort := c.QueryInt(paramsSort, -1)
+	if typeSort == -1 {
+		return fiber.NewError(http.StatusBadRequest,
+			fmt.Sprintf("vocabulary.Handler.getVocabularies: not found query [%s]", paramsSort))
 	}
 
-	order, err := c.GetQueryInt(paramsOrder)
-	if err != nil {
-		return http.StatusInternalServerError, nil,
-			fmt.Errorf("vocabulary.delivery.Handler.getVocabularies: %v", err)
+	order := c.QueryInt(paramsOrder, -1)
+	if order == -1 {
+		return fiber.NewError(http.StatusBadRequest,
+			fmt.Sprintf("vocabulary.Handler.getVocabularies: not found query [%s]", paramsOrder))
 	}
 
-	search, err := c.GetQuery(paramsSearch)
-	if err != nil {
-		return http.StatusInternalServerError, nil,
-			fmt.Errorf("vocabulary.delivery.Handler.getVocabularies: %v", err)
+	search := c.Query(paramsSearch)
+	nativeLang := c.Query(paramsNativeLang)
+	if nativeLang == runtime.EmptyString {
+		return fiber.NewError(http.StatusBadRequest,
+			fmt.Sprintf("vocabulary.Handler.getVocabularies: not found query [%s]", paramsNativeLang))
 	}
 
-	nativeLang, err := c.GetQuery(paramsNativeLang)
-	if err != nil {
-		return http.StatusInternalServerError, nil,
-			fmt.Errorf("vocabulary.delivery.Handler.getVocabularies: %v", err)
+	translateLang := c.Query(paramsTranslateLang)
+	if translateLang == runtime.EmptyString {
+		return fiber.NewError(http.StatusBadRequest,
+			fmt.Sprintf("vocabulary.Handler.getVocabularies: not found query [%s]", paramsNativeLang))
 	}
 
-	translateLang, err := c.GetQuery(paramsTranslateLang)
-	if err != nil {
-		return http.StatusInternalServerError, nil,
-			fmt.Errorf("vocabulary.delivery.Handler.getVocabularies: %v", err)
-	}
-
-	limitWords, err := c.GetQueryInt(paramsLimitWords)
-	if err != nil {
-		return http.StatusInternalServerError, nil,
-			fmt.Errorf("vocabulary.delivery.Handler.getVocabularies: %v", err)
+	limitWords := c.QueryInt(paramsLimitWords)
+	if limitWords == 0 {
+		return fiber.NewError(http.StatusBadRequest,
+			fmt.Sprintf("vocabulary.Handler.getVocabularies: not found query [%s]", paramsLimitWords))
 	}
 
 	vocabularies, totalCount, err := h.vocabSvc.GetVocabularies(ctx, uid, page, itemsPerPage, typeSort, order, search, nativeLang, translateLang, limitWords)
 	if err != nil {
-		return http.StatusInternalServerError, nil,
-			fmt.Errorf("vocabulary.delivery.Handler.getVocabularies: %v", err)
+		return fiber.NewError(http.StatusInternalServerError,
+			fmt.Sprintf("vocabulary.Handler.getVocabularies: %v", err))
 	}
 
 	vocabsWithWordsRs := make([]VocabularyWithWords, 0, len(vocabularies))
@@ -193,27 +187,27 @@ func (h *Handler) getVocabularies(c *ginext.Context) (int, any, error) {
 		})
 	}
 
-	return http.StatusOK, gin.H{
+	return c.Status(http.StatusOK).JSON(fiber.Map{
 		"vocabularies": vocabsWithWordsRs,
 		"total_count":  totalCount,
-	}, nil
+	})
 }
 
-func (h *Handler) getVocabulariesByUser(c *ginext.Context) (int, any, error) {
-	ctx := c.Request.Context()
+func (h *Handler) getVocabulariesByUser(c *fiber.Ctx) error {
+	ctx := c.Context()
 
 	uid, _ := runtime.UserIDFromContext(ctx)
 
-	owner, err := c.GetQueryUUID(paramsUserID)
-	if err != nil {
-		return http.StatusInternalServerError, nil,
-			fmt.Errorf("vocabulary.delivery.Handler.getVocabulariesByUser: %v", err)
+	owner, err := uuid.Parse(c.Query(paramsUserID))
+	if err == nil {
+		return fiber.NewError(http.StatusBadRequest,
+			fmt.Sprintf("vocabulary.Handler.getVocabulariesByUser: %v", err))
 	}
 
 	vocabs, err := h.vocabSvc.GetVocabulariesByUser(ctx, uid, owner, []access.Type{access.Public, access.Subscribers})
 	if err != nil {
-		return http.StatusInternalServerError, nil,
-			fmt.Errorf("vocabulary.delivery.Handler.getVocabulariesByUser: %v", err)
+		return fiber.NewError(http.StatusInternalServerError,
+			fmt.Sprintf("vocabulary.Handler.getVocabulariesByUser: %v", err))
 	}
 
 	vocabulariesRs := make([]VocabByUserRs, 0, len(vocabs))
@@ -233,27 +227,28 @@ func (h *Handler) getVocabulariesByUser(c *ginext.Context) (int, any, error) {
 		})
 	}
 
-	return http.StatusOK, vocabulariesRs, nil
+	return c.Status(http.StatusOK).JSON(vocabulariesRs)
 }
 
-func (h *Handler) getVocabularyInfo(c *ginext.Context) (int, any, error) {
-	ctx := c.Request.Context()
+func (h *Handler) getVocabularyInfo(c *fiber.Ctx) error {
+	ctx := c.Context()
 
 	uid, _ := runtime.UserIDFromContext(ctx)
 
-	vid, err := c.GetQueryUUID(paramsID)
+	vid, err := uuid.Parse(c.Query(paramsID))
 	if err != nil {
-		return http.StatusInternalServerError, nil,
-			fmt.Errorf("vocabulary.delivery.Handler.getVocabulary: %v", err)
+		return fiber.NewError(http.StatusBadRequest,
+			fmt.Sprintf("vocabulary.Handler.getVocabulary: %v", err))
 	}
 
 	vocab, err := h.vocabSvc.GetVocabularyInfo(ctx, uid, vid)
 	if err != nil {
-		return http.StatusInternalServerError, nil, fmt.Errorf("vocabulary.delivery.Handler.getVocabulary: %v", err)
+		return fiber.NewError(http.StatusInternalServerError,
+			fmt.Sprintf("vocabulary.Handler.getVocabulary: %v", err))
 	}
 	if vocab.ID == uuid.Nil {
-		return http.StatusNotFound, nil,
-			fmt.Errorf("vocabulary.delivery.Handler.getVocabulary - vocabulary not found: %v", err)
+		return fiber.NewError(http.StatusNotFound,
+			fmt.Sprintf("vocabulary.Handler.getVocabulary - vocabulary not found: %v", err))
 	}
 
 	vocabRs := VocabularyRs{
@@ -271,41 +266,41 @@ func (h *Handler) getVocabularyInfo(c *ginext.Context) (int, any, error) {
 		UpdatedAt:     &vocab.UpdatedAt,
 	}
 
-	return http.StatusOK, vocabRs, nil
+	return c.Status(http.StatusOK).JSON(vocabRs)
 }
 
-func (h *Handler) copyVocabulary(c *ginext.Context) (int, any, error) {
-	ctx := c.Request.Context()
+func (h *Handler) copyVocabulary(c *fiber.Ctx) error {
+	ctx := c.Context()
 
 	uid, err := runtime.UserIDFromContext(ctx)
 	if err != nil {
-		return http.StatusUnauthorized, nil,
-			fmt.Errorf("vocabulary.delivery.Handler.copyVocabulary: %v", err)
+		return fiber.NewError(http.StatusUnauthorized,
+			fmt.Sprintf("vocabulary.Handler.copyVocabulary: %v", err))
 	}
 
-	vid, err := c.GetQueryUUID(paramsID)
+	vid, err := uuid.Parse(c.Query(paramsID))
 	if err != nil {
-		return http.StatusBadRequest, nil,
-			fmt.Errorf("vocabulary.delivery.Handler.copyVocabulary: %v", err)
+		return fiber.NewError(http.StatusBadRequest,
+			fmt.Sprintf("vocabulary.Handler.copyVocabulary: %v", err))
 	}
 
 	err = h.vocabSvc.CopyVocab(ctx, uid, vid)
 	if err != nil {
-		return http.StatusInternalServerError, nil,
-			fmt.Errorf("vocabulary.delivery.Handler.copyVocabulary: %v", err)
+		return fiber.NewError(http.StatusInternalServerError,
+			fmt.Sprintf("vocabulary.Handler.copyVocabulary: %v", err))
 	}
 
-	return http.StatusOK, gin.H{}, nil
+	return c.SendStatus(http.StatusOK)
 }
 
-func (h *Handler) getRecommendedVocabularies(c *ginext.Context) (int, any, error) {
-	ctx := c.Request.Context()
+func (h *Handler) getRecommendedVocabularies(c *fiber.Ctx) error {
+	ctx := c.Context()
 	uid, _ := runtime.UserIDFromContext(ctx)
 
 	vocabs, err := h.vocabSvc.GetRecommendedVocabularies(ctx, uid)
 	if err != nil {
-		return http.StatusInternalServerError, nil,
-			fmt.Errorf("vocabulary.delivery.Handler.getRecommendedVocabularies: %v", err)
+		return fiber.NewError(http.StatusInternalServerError,
+			fmt.Sprintf("vocabulary.Handler.getRecommendedVocabularies: %v", err))
 	}
 
 	vocabulariesRs := make([]VocabularyRs, 0, len(vocabs))
@@ -322,5 +317,5 @@ func (h *Handler) getRecommendedVocabularies(c *ginext.Context) (int, any, error
 		})
 	}
 
-	return http.StatusOK, vocabulariesRs, nil
+	return c.Status(http.StatusOK).JSON(vocabulariesRs)
 }

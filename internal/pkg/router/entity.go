@@ -1,10 +1,11 @@
-package ginext
+package router
 
 import "github.com/av-ugolkov/lingua-evo/runtime"
 
 const (
-	Language     = "language"
-	RefreshToken = "refresh_token"
+	Language       = "language"
+	RefreshToken   = "refresh_token"
+	CookiePathAuth = "/auth"
 )
 const (
 	Authorization = "Authorization"

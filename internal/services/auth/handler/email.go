@@ -10,43 +10,45 @@ import (
 
 	"github.com/av-ugolkov/lingua-evo/internal/config"
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
-	ginext "github.com/av-ugolkov/lingua-evo/internal/pkg/gin-ext"
-	msgerr "github.com/av-ugolkov/lingua-evo/internal/pkg/msg-error"
+	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler/middleware"
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/msgerr"
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/router"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/utils"
 	"github.com/av-ugolkov/lingua-evo/internal/services/auth"
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/auth"
 	"github.com/av-ugolkov/lingua-evo/internal/services/auth/dto"
 	"github.com/av-ugolkov/lingua-evo/runtime"
 
+	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 )
 
-func (h *Handler) initEmailHandler(r *ginext.Engine) {
-	r.POST(handler.SignIn, h.signIn)
-	r.POST(handler.SignUp, h.signUp)
-	r.POST(handler.SendCode, h.sendCode)
+func (h *Handler) initEmailHandler(r *fiber.App) {
+	r.Post(handler.SignIn, h.signIn)
+	r.Post(handler.SignUp, h.signUp)
+	r.Post(handler.SendCode, h.sendCode)
 }
 
-func (h *Handler) signIn(c *ginext.Context) (int, any, error) {
-	ctx := c.Request.Context()
-	authorization, err := c.GetHeaderAuthorization(ginext.AuthTypeBasic)
+func (h *Handler) signIn(c *fiber.Ctx) error {
+	ctx := c.Context()
+	authorization, err := middleware.GetTokenAuth(c, router.AuthTypeBasic)
 	if err != nil {
-		return http.StatusBadRequest, nil,
-			fmt.Errorf("auth.handler.Handler.signIn: %w", err)
+		return fiber.NewError(http.StatusBadRequest,
+			fmt.Sprintf("auth.Handler.signIn: %м", err))
 	}
 
 	var data dto.CreateSessionRq
 	err = decodeBasicAuth(authorization, &data)
 	if err != nil {
-		return http.StatusInternalServerError, nil,
-			fmt.Errorf("auth.handler.Handler.signIn: %v", err)
+		return fiber.NewError(http.StatusInternalServerError,
+			fmt.Sprintf("auth.Handler.signIn: %v", err))
 	}
-	var fingerprint string
-	if fingerprint = c.GetHeader(ginext.Fingerprint); fingerprint == runtime.EmptyString {
-		return http.StatusBadRequest, nil,
-			fmt.Errorf("auth.handler.Handler.signIn: fingerprint not found")
+	fingerprint := c.GetReqHeaders()[router.Fingerprint]
+	if fingerprint[0] == runtime.EmptyString {
+		return fiber.NewError(http.StatusBadRequest,
+			fmt.Sprintf("auth.Handler.signIn: fingerprint not found"))
 	}
-	data.Fingerprint = fingerprint
+	data.Fingerprint = fingerprint[0]
 
 	refreshTokenID := uuid.New()
 	sessionRs, refreshToken, err := h.authSvc.SignIn(ctx, data.User, data.Password, data.Fingerprint, refreshTokenID)
@@ -54,100 +56,90 @@ func (h *Handler) signIn(c *ginext.Context) (int, any, error) {
 		switch {
 		case errors.Is(err, entity.ErrNotFoundUser) ||
 			errors.Is(err, auth.ErrWrongPassword):
-			return http.StatusNotFound, nil,
-				msgerr.New(fmt.Errorf("auth.handler.Handler.signIn: %w", err),
-					"User doesn't exist or password is wrong")
+			return fiber.NewError(http.StatusNotFound, "User doesn't exist or password is wrong")
 		default:
-			return http.StatusInternalServerError, nil,
-				msgerr.New(fmt.Errorf("auth.handler.Handler.signIn: %w", err),
-					msgerr.ErrMsgInternal)
+			return fiber.NewError(http.StatusInternalServerError, msgerr.ErrMsgInternal)
 		}
 	}
 
 	additionalTime := config.GetConfig().JWT.ExpireRefresh
 	duration := time.Duration(additionalTime) * time.Second
-	c.SetCookieRefreshToken(refreshToken, duration)
-
-	return http.StatusOK, sessionRs, nil
+	c.Cookie(&fiber.Cookie{
+		Name:     router.RefreshToken,
+		Value:    refreshToken,
+		MaxAge:   int(duration.Seconds()),
+		Path:     router.CookiePathAuth,
+		Secure:   true,
+		HTTPOnly: true,
+	})
+	return c.Status(http.StatusOK).JSON(sessionRs)
 }
 
-func (h *Handler) signUp(c *ginext.Context) (int, any, error) {
+func (h *Handler) signUp(c *fiber.Ctx) error {
 	var data dto.CreateUserRq
-	err := c.BindJSON(&data)
+	err := c.BodyParser(&data)
 	if err != nil {
-		return http.StatusBadRequest, nil,
-			msgerr.New(
-				fmt.Errorf("auth.handler.Handler.signUp: %v", err),
-				msgerr.ErrMsgBadRequest)
-
+		return fiber.NewError(http.StatusBadRequest, msgerr.ErrMsgBadRequest)
 	}
 
 	if !utils.IsPasswordValid(data.Password) {
-		return http.StatusBadRequest, nil,
-			msgerr.New(fmt.Errorf("auth.handler.Handler.signUp: invalid password"),
-				"Invalid password")
+		return fiber.NewError(http.StatusBadRequest, "Invalid password")
 	}
 
 	if !utils.IsEmailValid(data.Email) {
-		return http.StatusBadRequest, nil,
-			msgerr.New(fmt.Errorf("auth.handler.Handler.signUp: invalid email"),
-				msgerr.ErrMsgBadEmail)
+		return fiber.NewError(http.StatusBadRequest, msgerr.ErrMsgBadEmail)
 	}
 
-	fingerprint := c.GetHeader(ginext.Fingerprint)
-	if fingerprint == runtime.EmptyString {
-		return http.StatusInternalServerError, nil, fmt.Errorf("auth.handler.Handler.signUp: fingerprimt is empty")
+	fingerprint := c.GetReqHeaders()[router.Fingerprint]
+	if fingerprint[0] == runtime.EmptyString {
+		return fiber.NewError(http.StatusInternalServerError,
+			fmt.Sprintf("auth.Handler.signUp: fingerprimt is empty"))
 	}
 
-	uid, err := h.authSvc.SignUp(c.Request.Context(), entity.User{
+	uid, err := h.authSvc.SignUp(c.Context(), entity.User{
 		Nickname: runtime.GenerateNickname(),
 		Password: data.Password,
 		Email:    data.Email,
 		Role:     runtime.User,
 		Code:     data.Code,
-	}, fingerprint)
+	}, fingerprint[0])
 	if err != nil {
-		return http.StatusInternalServerError, nil,
-			fmt.Errorf("auth.handler.Handler.signUp: %w", err)
+		return fiber.NewError(http.StatusInternalServerError,
+			fmt.Sprintf("auth.Handler.signUp: %v", err))
 	}
 
 	createUserRs := &dto.CreateUserRs{
 		UserID: uid,
 	}
 
-	return http.StatusCreated, createUserRs, nil
+	return c.Status(http.StatusCreated).JSON(createUserRs)
 }
 
-func (h *Handler) sendCode(c *ginext.Context) (int, any, error) {
-	ctx := c.Request.Context()
+func (h *Handler) sendCode(c *fiber.Ctx) error {
+	ctx := c.Context()
 
 	var data dto.CreateCodeRq
-	err := c.BindJSON(&data)
+	err := c.BodyParser(&data)
 	if err != nil {
-		return http.StatusBadRequest, nil,
-			msgerr.New(fmt.Errorf("auth.handler.Handler.sendCode: %v", err),
-				msgerr.ErrMsgBadRequest)
+		return fiber.NewError(http.StatusBadRequest, msgerr.ErrMsgBadRequest)
 	}
 
 	if !utils.IsEmailValid(data.Email) {
-		return http.StatusBadRequest, nil,
-			msgerr.New(fmt.Errorf("auth.handler.Handler.sendCode - email format is invalid"),
-				msgerr.ErrMsgBadEmail)
+		return fiber.NewError(http.StatusBadRequest, msgerr.ErrMsgBadEmail)
 	}
 
-	fingerprint := c.GetHeader(ginext.Fingerprint)
-	if fingerprint == runtime.EmptyString {
-		return http.StatusInternalServerError, nil, fmt.Errorf("auth.handler.Handler.sendCode: fingerprimt is empty")
+	fingerprint := c.GetReqHeaders()[router.Fingerprint]
+	if fingerprint[0] == runtime.EmptyString {
+		return fiber.NewError(http.StatusInternalServerError,
+			fmt.Sprintf("auth.Handler.sendCode: fingerprimt is empty"))
 	}
 
-	err = h.authSvc.CreateCode(ctx, data.Email, fingerprint)
+	err = h.authSvc.CreateCode(ctx, data.Email, fingerprint[0])
 	if err != nil {
-		return http.StatusInternalServerError, nil,
-			msgerr.New(fmt.Errorf("auth.handler.Handler.sendCode: %v", err),
-				msgerr.ErrMsgInternal)
+		return fiber.NewError(http.StatusInternalServerError, msgerr.ErrMsgInternal)
 	}
 
-	return http.StatusOK, nil, nil
+	return c.SendStatus(http.StatusOK)
 }
 
 func decodeBasicAuth(basicToken string, data *dto.CreateSessionRq) error {

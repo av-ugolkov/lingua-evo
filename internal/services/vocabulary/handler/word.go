@@ -4,15 +4,13 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"unicode/utf8"
 
-	"github.com/av-ugolkov/lingua-evo/internal/pkg/gin-ext"
-	"github.com/av-ugolkov/lingua-evo/internal/pkg/msg-error"
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/msgerr"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/utils/slices"
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary"
 	"github.com/av-ugolkov/lingua-evo/runtime"
 
-	"github.com/gin-gonic/gin"
+	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 )
 
@@ -49,13 +47,13 @@ type (
 	}
 )
 
-func (h *Handler) addWord(c *ginext.Context) (int, any, error) {
-	ctx := c.Request.Context()
+func (h *Handler) addWord(c *fiber.Ctx) error {
+	ctx := c.Context()
 
 	userID, err := runtime.UserIDFromContext(ctx)
 	if err != nil {
-		return http.StatusUnauthorized, nil,
-			fmt.Errorf("word.delivery.Handler.addWord: %v", err)
+		return fiber.NewError(http.StatusUnauthorized,
+			fmt.Sprintf("word.Handler.addWord: %v", err))
 	}
 
 	var data struct {
@@ -65,41 +63,29 @@ func (h *Handler) addWord(c *ginext.Context) (int, any, error) {
 		Translates []string  `json:"translates,omitempty"`
 		Examples   []string  `json:"examples,omitempty"`
 	}
-	err = c.Bind(&data)
+	err = c.BodyParser(&data)
 	if err != nil {
-		return http.StatusInternalServerError, nil,
-			msgerr.New(fmt.Errorf("word.delivery.Handler.addWord: %v", err),
-				msgerr.ErrMsgBadRequest)
+		return fiber.NewError(http.StatusInternalServerError, msgerr.ErrMsgBadRequest)
 	}
 
-	if utf8.RuneCountInString(data.Native.Text) > 100 {
-		return http.StatusBadRequest, nil,
-			msgerr.New(fmt.Errorf("word.delivery.Handler.addWord: word is too long"),
-				ErrWordTooLong)
+	if len(data.Native.Text) > 100 {
+		return fiber.NewError(http.StatusBadRequest, ErrWordTooLong)
 	}
 
-	if utf8.RuneCountInString(data.Native.Pronunciation) > 100 {
-		return http.StatusBadRequest, nil,
-			msgerr.New(fmt.Errorf("word.delivery.Handler.addWord: pronunciation is too long"),
-				ErrPronunciationTooLong)
+	if len(data.Native.Pronunciation) > 100 {
+		return fiber.NewError(http.StatusBadRequest, ErrPronunciationTooLong)
 	}
 
-	if utf8.RuneCountInString(data.Definition) > 100 {
-		return http.StatusBadRequest, nil,
-			msgerr.New(fmt.Errorf("word.delivery.Handler.addWord: definition is too long"),
-				ErrDefinitionTooLong)
+	if len(data.Definition) > 100 {
+		return fiber.NewError(http.StatusBadRequest, ErrDefinitionTooLong)
 	}
 
 	if len(data.Translates) > 10 {
-		return http.StatusBadRequest, nil,
-			msgerr.New(fmt.Errorf("word.delivery.Handler.addWord: translates more than 10"),
-				ErrCountTranslates)
+		return fiber.NewError(http.StatusBadRequest, ErrCountTranslates)
 	}
 
 	if slices.HasDuplicates(data.Translates) {
-		return http.StatusBadRequest, nil,
-			msgerr.New(fmt.Errorf("word.delivery.Handler.addWord: translates contains duplicates"),
-				ErrWordIsExists)
+		return fiber.NewError(http.StatusBadRequest, ErrWordIsExists)
 	}
 
 	translates := make([]entity.DictWord, 0, len(data.Translates))
@@ -110,9 +96,7 @@ func (h *Handler) addWord(c *ginext.Context) (int, any, error) {
 	}
 
 	if len(data.Examples) > 5 {
-		return http.StatusBadRequest, nil,
-			msgerr.New(fmt.Errorf("word.delivery.Handler.addWord: translates more than 5"),
-				ErrCountExamples)
+		return fiber.NewError(http.StatusBadRequest, ErrCountExamples)
 	}
 	examples := make([]entity.Example, 0, len(data.Examples))
 	for _, example := range data.Examples {
@@ -134,13 +118,9 @@ func (h *Handler) addWord(c *ginext.Context) (int, any, error) {
 	if err != nil {
 		switch {
 		case errors.Is(err, entity.ErrDuplicate):
-			return http.StatusConflict, nil,
-				msgerr.New(fmt.Errorf("word.delivery.Handler.addWord: %v", err),
-					ErrWordIsExists)
+			return fiber.NewError(http.StatusConflict, ErrWordIsExists)
 		default:
-			return http.StatusInternalServerError, nil,
-				msgerr.New(fmt.Errorf("word.delivery.Handler.addWord: %v", err),
-					msgerr.ErrMsgInternal)
+			return fiber.NewError(http.StatusInternalServerError, msgerr.ErrMsgInternal)
 		}
 	}
 
@@ -153,14 +133,15 @@ func (h *Handler) addWord(c *ginext.Context) (int, any, error) {
 		Updated: vocabWord.UpdatedAt.UnixMilli(),
 	}
 
-	return http.StatusCreated, wordRs, nil
+	return c.Status(http.StatusCreated).JSON(wordRs)
 }
 
-func (h *Handler) updateWordText(c *ginext.Context) (int, any, error) {
-	ctx := c.Request.Context()
+func (h *Handler) updateWordText(c *fiber.Ctx) error {
+	ctx := c.Context()
 	userID, err := runtime.UserIDFromContext(ctx)
 	if err != nil {
-		return http.StatusUnauthorized, nil, fmt.Errorf("service.vocabulary.Handler.updateWordText: %v", err)
+		return fiber.NewError(http.StatusUnauthorized,
+			fmt.Sprintf("service.vocabulary.Handler.updateWordText: %v", err))
 	}
 
 	var data struct {
@@ -171,17 +152,13 @@ func (h *Handler) updateWordText(c *ginext.Context) (int, any, error) {
 			Text string    `json:"text"`
 		}
 	}
-	err = c.Bind(&data)
+	err = c.BodyParser(&data)
 	if err != nil {
-		return http.StatusInternalServerError, nil,
-			msgerr.New(fmt.Errorf("service.vocabulary.Handler.updateWordText: %v", err),
-				msgerr.ErrMsgBadRequest)
+		return fiber.NewError(http.StatusInternalServerError, msgerr.ErrMsgBadRequest)
 	}
 
-	if utf8.RuneCountInString(data.Native.Text) > 100 {
-		return http.StatusBadRequest, nil,
-			msgerr.New(fmt.Errorf("service.vocabulary.Handler.updateWordText: word is too long"),
-				ErrWordTooLong)
+	if len(data.Native.Text) > 100 {
+		return fiber.NewError(http.StatusBadRequest, ErrWordTooLong)
 	}
 
 	vocabWord, err := h.vocabSvc.UpdateWordText(ctx, userID, entity.VocabWordData{
@@ -193,8 +170,8 @@ func (h *Handler) updateWordText(c *ginext.Context) (int, any, error) {
 		},
 	})
 	if err != nil {
-		return http.StatusInternalServerError, nil,
-			fmt.Errorf("service.vocabulary.Handler.updateWordText: %v", err)
+		return fiber.NewError(http.StatusInternalServerError,
+			fmt.Sprintf("service.vocabulary.Handler.updateWordText: %v", err))
 	}
 
 	wordRs := &VocabWordRs{
@@ -205,14 +182,15 @@ func (h *Handler) updateWordText(c *ginext.Context) (int, any, error) {
 		Updated: vocabWord.UpdatedAt.UnixMilli(),
 	}
 
-	return http.StatusOK, wordRs, nil
+	return c.Status(http.StatusOK).JSON(wordRs)
 }
 
-func (h *Handler) updateWordPronunciation(c *ginext.Context) (int, any, error) {
-	ctx := c.Request.Context()
+func (h *Handler) updateWordPronunciation(c *fiber.Ctx) error {
+	ctx := c.Context()
 	userID, err := runtime.UserIDFromContext(ctx)
 	if err != nil {
-		return http.StatusUnauthorized, nil, fmt.Errorf("service.vocabulary.Handler.updateWordPronunciation: %v", err)
+		return fiber.NewError(http.StatusUnauthorized,
+			fmt.Sprintf("service.vocabulary.Handler.updateWordPronunciation: %v", err))
 	}
 
 	var data struct {
@@ -224,17 +202,13 @@ func (h *Handler) updateWordPronunciation(c *ginext.Context) (int, any, error) {
 			Pronunciation string    `json:"pronunciation"`
 		}
 	}
-	err = c.Bind(&data)
+	err = c.BodyParser(&data)
 	if err != nil {
-		return http.StatusInternalServerError, nil,
-			msgerr.New(fmt.Errorf("service.vocabulary.Handler.updateWordPronunciation: %v", err),
-				msgerr.ErrMsgBadRequest)
+		return fiber.NewError(http.StatusInternalServerError, msgerr.ErrMsgBadRequest)
 	}
 
-	if utf8.RuneCountInString(data.Native.Pronunciation) > 100 {
-		return http.StatusBadRequest, nil,
-			msgerr.New(fmt.Errorf("service.vocabulary.Handler.updateWordPronunciation: pronunciation is too long"),
-				ErrPronunciationTooLong)
+	if len(data.Native.Pronunciation) > 100 {
+		return fiber.NewError(http.StatusBadRequest, ErrPronunciationTooLong)
 	}
 
 	vocabWord, err := h.vocabSvc.UpdateWordPronunciation(ctx, userID, entity.VocabWordData{
@@ -247,8 +221,8 @@ func (h *Handler) updateWordPronunciation(c *ginext.Context) (int, any, error) {
 		},
 	})
 	if err != nil {
-		return http.StatusInternalServerError, nil,
-			fmt.Errorf("service.vocabulary.Handler.updateWordPronunciation: %v", err)
+		return fiber.NewError(http.StatusInternalServerError,
+			fmt.Sprintf("service.vocabulary.Handler.updateWordPronunciation: %v", err))
 	}
 
 	wordRs := &VocabWordRs{
@@ -256,14 +230,15 @@ func (h *Handler) updateWordPronunciation(c *ginext.Context) (int, any, error) {
 		Updated: vocabWord.UpdatedAt.UnixMilli(),
 	}
 
-	return http.StatusOK, wordRs, nil
+	return c.Status(http.StatusOK).JSON(wordRs)
 }
 
-func (h *Handler) updateWordDefinition(c *ginext.Context) (int, any, error) {
-	ctx := c.Request.Context()
+func (h *Handler) updateWordDefinition(c *fiber.Ctx) error {
+	ctx := c.Context()
 	userID, err := runtime.UserIDFromContext(ctx)
 	if err != nil {
-		return http.StatusUnauthorized, nil, fmt.Errorf("service.vocabulary.Handler.updateWordDefinition: %v", err)
+		return fiber.NewError(http.StatusUnauthorized,
+			fmt.Sprintf("service.vocabulary.Handler.updateWordDefinition: %v", err))
 	}
 
 	var data struct {
@@ -275,17 +250,13 @@ func (h *Handler) updateWordDefinition(c *ginext.Context) (int, any, error) {
 		}
 		Definition string `json:"definition"`
 	}
-	err = c.Bind(&data)
+	err = c.BodyParser(&data)
 	if err != nil {
-		return http.StatusInternalServerError, nil,
-			msgerr.New(fmt.Errorf("service.vocabulary.Handler.updateWordDefinition: %v", err),
-				msgerr.ErrMsgBadRequest)
+		return fiber.NewError(http.StatusInternalServerError, msgerr.ErrMsgBadRequest)
 	}
 
-	if utf8.RuneCountInString(data.Definition) > 100 {
-		return http.StatusBadRequest, nil,
-			msgerr.New(fmt.Errorf("service.vocabulary.Handler.updateWordDefinition: definition is too long"),
-				ErrDefinitionTooLong)
+	if len(data.Definition) > 100 {
+		return fiber.NewError(http.StatusBadRequest, ErrDefinitionTooLong)
 	}
 
 	vocabWord, err := h.vocabSvc.UpdateWordDefinition(ctx, userID, entity.VocabWordData{
@@ -294,8 +265,8 @@ func (h *Handler) updateWordDefinition(c *ginext.Context) (int, any, error) {
 		Definition: data.Definition,
 	})
 	if err != nil {
-		return http.StatusInternalServerError, nil,
-			fmt.Errorf("service.vocabulary.Handler.updateWordDefinition: %v", err)
+		return fiber.NewError(http.StatusInternalServerError,
+			fmt.Sprintf("service.vocabulary.Handler.updateWordDefinition: %v", err))
 	}
 
 	wordRs := &VocabWordRs{
@@ -303,14 +274,14 @@ func (h *Handler) updateWordDefinition(c *ginext.Context) (int, any, error) {
 		Updated: vocabWord.UpdatedAt.UnixMilli(),
 	}
 
-	return http.StatusOK, wordRs, nil
+	return c.Status(http.StatusOK).JSON(wordRs)
 }
 
-func (h *Handler) updateWordTranslates(c *ginext.Context) (int, any, error) {
-	ctx := c.Request.Context()
+func (h *Handler) updateWordTranslates(c *fiber.Ctx) error {
+	ctx := c.Context()
 	userID, err := runtime.UserIDFromContext(ctx)
 	if err != nil {
-		return http.StatusUnauthorized, nil, fmt.Errorf("service.vocabulary.Handler.updateWordTranslates: %v", err)
+		return fiber.NewError(http.StatusUnauthorized, msgerr.ErrMsgUnauthorized)
 	}
 
 	var data struct {
@@ -318,23 +289,17 @@ func (h *Handler) updateWordTranslates(c *ginext.Context) (int, any, error) {
 		VocabID    uuid.UUID `json:"vocab_id"`
 		Translates []string  `json:"translates"`
 	}
-	err = c.Bind(&data)
+	err = c.BodyParser(&data)
 	if err != nil {
-		return http.StatusInternalServerError, nil,
-			msgerr.New(fmt.Errorf("service.vocabulary.Handler.updateWordTranslates: %v", err),
-				msgerr.ErrMsgBadRequest)
+		return fiber.NewError(http.StatusInternalServerError, msgerr.ErrMsgBadRequest)
 	}
 
 	if len(data.Translates) > 10 {
-		return http.StatusBadRequest, nil,
-			msgerr.New(fmt.Errorf("service.vocabulary.Handler.updateWordTranslates: translates more than 10"),
-				ErrCountTranslates)
+		return fiber.NewError(http.StatusBadRequest, ErrCountTranslates)
 	}
 
 	if slices.HasDuplicates(data.Translates) {
-		return http.StatusBadRequest, nil,
-			msgerr.New(fmt.Errorf("service.vocabulary.Handler.updateWordTranslates: translates must be unique"),
-				ErrWordIsExists)
+		return fiber.NewError(http.StatusBadRequest, ErrWordIsExists)
 	}
 
 	translates := make([]entity.DictWord, 0, len(data.Translates))
@@ -350,8 +315,8 @@ func (h *Handler) updateWordTranslates(c *ginext.Context) (int, any, error) {
 		Translates: translates,
 	})
 	if err != nil {
-		return http.StatusInternalServerError, nil,
-			fmt.Errorf("service.vocabulary.Handler.updateWordTranslates: %w", err)
+		return fiber.NewError(http.StatusInternalServerError,
+			fmt.Sprintf("service.vocabulary.Handler.updateWordTranslates: %v", err))
 	}
 
 	wordRs := &VocabWordRs{
@@ -359,14 +324,14 @@ func (h *Handler) updateWordTranslates(c *ginext.Context) (int, any, error) {
 		Updated: vocabWord.UpdatedAt.UnixMilli(),
 	}
 
-	return http.StatusOK, wordRs, nil
+	return c.Status(http.StatusOK).JSON(wordRs)
 }
 
-func (h *Handler) updateWordExamples(c *ginext.Context) (int, any, error) {
-	ctx := c.Request.Context()
+func (h *Handler) updateWordExamples(c *fiber.Ctx) error {
+	ctx := c.Context()
 	userID, err := runtime.UserIDFromContext(ctx)
 	if err != nil {
-		return http.StatusUnauthorized, nil, fmt.Errorf("service.vocabulary.Handler.updateWordExamples: %v", err)
+		return fiber.NewError(http.StatusUnauthorized, msgerr.ErrMsgUnauthorized)
 	}
 
 	var data struct {
@@ -374,23 +339,17 @@ func (h *Handler) updateWordExamples(c *ginext.Context) (int, any, error) {
 		VocabID  uuid.UUID `json:"vocab_id"`
 		Examples []string  `json:"examples"`
 	}
-	err = c.Bind(&data)
+	err = c.BodyParser(&data)
 	if err != nil {
-		return http.StatusInternalServerError, nil,
-			msgerr.New(fmt.Errorf("service.vocabulary.Handler.updateWordExamples: %v", err),
-				msgerr.ErrMsgBadRequest)
+		return fiber.NewError(http.StatusInternalServerError, msgerr.ErrMsgBadRequest)
 	}
 
 	if len(data.Examples) > 5 {
-		return http.StatusBadRequest, nil,
-			msgerr.New(fmt.Errorf("service.vocabulary.Handler.updateWordExamples: translates more than 5"),
-				ErrCountExamples)
+		return fiber.NewError(http.StatusBadRequest, ErrCountExamples)
 	}
 
 	if slices.HasDuplicates(data.Examples) {
-		return http.StatusBadRequest, nil,
-			msgerr.New(fmt.Errorf("service.vocabulary.Handler.updateWordExamples: examples must be unique"),
-				ErrExampleIsExists)
+		return fiber.NewError(http.StatusBadRequest, ErrExampleIsExists)
 	}
 
 	examples := make([]entity.Example, 0, len(data.Examples))
@@ -406,8 +365,8 @@ func (h *Handler) updateWordExamples(c *ginext.Context) (int, any, error) {
 		Examples: examples,
 	})
 	if err != nil {
-		return http.StatusInternalServerError, nil,
-			fmt.Errorf("service.vocabulary.Handler.updateWordExamples: %v", err)
+		return fiber.NewError(http.StatusInternalServerError,
+			fmt.Sprintf("service.vocabulary.Handler.updateWordExamples: %v", err))
 	}
 
 	wordRs := &VocabWordRs{
@@ -415,56 +374,50 @@ func (h *Handler) updateWordExamples(c *ginext.Context) (int, any, error) {
 		Updated: vocabWord.UpdatedAt.UnixMilli(),
 	}
 
-	return http.StatusOK, wordRs, nil
+	return c.Status(http.StatusOK).JSON(wordRs)
 }
 
-func (h *Handler) deleteWord(c *ginext.Context) (int, any, error) {
-	ctx := c.Request.Context()
+func (h *Handler) deleteWord(c *fiber.Ctx) error {
+	ctx := c.Context()
 
 	uid, err := runtime.UserIDFromContext(ctx)
 	if err != nil {
-		return http.StatusUnauthorized, nil,
-			msgerr.New(fmt.Errorf("word.delivery.Handler.deleteWord: %v", err),
-				msgerr.ErrMsgInternal)
+		return fiber.NewError(http.StatusUnauthorized, msgerr.ErrMsgInternal)
 	}
 
 	var data RemoveVocabWordRq
-	err = c.Bind(&data)
+	err = c.BodyParser(&data)
 	if err != nil {
-		return http.StatusInternalServerError, nil,
-			msgerr.New(fmt.Errorf("word.delivery.Handler.deleteWord: %v", err),
-				msgerr.ErrMsgInternal)
+		return fiber.NewError(http.StatusInternalServerError, msgerr.ErrMsgInternal)
 	}
 
 	err = h.vocabSvc.DeleteWord(ctx, uid, data.VocabID, data.WordID)
 	if err != nil {
-		return http.StatusInternalServerError, nil,
-			msgerr.New(fmt.Errorf("word.delivery.Handler.deleteWord: %v", err),
-				msgerr.ErrMsgInternal)
+		return fiber.NewError(http.StatusInternalServerError, msgerr.ErrMsgInternal)
 	}
 
-	return http.StatusOK, gin.H{}, nil
+	return c.SendStatus(http.StatusOK)
 }
 
-func (h *Handler) getWord(c *ginext.Context) (int, any, error) {
-	ctx := c.Request.Context()
+func (h *Handler) getWord(c *fiber.Ctx) error {
+	ctx := c.Context()
 
-	vid, err := c.GetQueryUUID(paramsID)
+	vid, err := uuid.Parse(c.Query(paramsID))
 	if err != nil {
-		return http.StatusInternalServerError, nil,
-			fmt.Errorf("word.delivery.Handler.getWords: %w", err)
+		return fiber.NewError(http.StatusInternalServerError,
+			fmt.Sprintf("word.Handler.getWords: %v", err))
 	}
 
-	wordID, err := c.GetQueryUUID(paramsWordID)
+	wordID, err := uuid.Parse(c.Query(paramsWordID))
 	if err != nil {
-		return http.StatusInternalServerError, nil,
-			fmt.Errorf("word.delivery.Handler.getWords: %w", err)
+		return fiber.NewError(http.StatusInternalServerError,
+			fmt.Sprintf("word.Handler.getWords: %v", err))
 	}
 
 	vocabWord, err := h.vocabSvc.GetWord(ctx, vid, wordID)
 	if err != nil {
-		return http.StatusInternalServerError, nil,
-			fmt.Errorf("word.delivery.Handler.getWords: %w", err)
+		return fiber.NewError(http.StatusInternalServerError,
+			fmt.Sprintf("word.Handler.getWords: %v", err))
 	}
 
 	translates := make([]string, 0, len(vocabWord.Translates))
@@ -489,24 +442,24 @@ func (h *Handler) getWord(c *ginext.Context) (int, any, error) {
 		Examples:   examples,
 	}
 
-	return http.StatusOK, wordRs, nil
+	return c.Status(http.StatusOK).JSON(wordRs)
 }
 
-func (h *Handler) getWords(c *ginext.Context) (int, any, error) {
-	ctx := c.Request.Context()
+func (h *Handler) getWords(c *fiber.Ctx) error {
+	ctx := c.Context()
 
 	uid, _ := runtime.UserIDFromContext(ctx)
 
-	vid, err := c.GetQueryUUID(paramsID)
+	vid, err := uuid.Parse(c.Query(paramsID))
 	if err != nil {
-		return http.StatusInternalServerError, nil,
-			fmt.Errorf("word.delivery.Handler.getWords: %w", err)
+		return fiber.NewError(http.StatusBadRequest,
+			fmt.Sprintf("word.Handler.getWords: %v", err))
 	}
 
 	vocabWords, err := h.vocabSvc.GetWords(ctx, uid, vid)
 	if err != nil {
-		return http.StatusInternalServerError, nil,
-			fmt.Errorf("word.delivery.Handler.getWords: %w", err)
+		return fiber.NewError(http.StatusInternalServerError,
+			fmt.Sprintf("word.Handler.getWords: %v", err))
 	}
 
 	wordsRs := make([]VocabWordRs, 0, len(vocabWords))
@@ -537,5 +490,5 @@ func (h *Handler) getWords(c *ginext.Context) (int, any, error) {
 		wordsRs = append(wordsRs, wordRs)
 	}
 
-	return http.StatusOK, wordsRs, nil
+	return c.Status(http.StatusOK).JSON(wordsRs)
 }

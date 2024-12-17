@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/av-ugolkov/lingua-evo/internal/pkg/msg-error"
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/access"
 	"github.com/av-ugolkov/lingua-evo/internal/services/access/dto"
 )
@@ -28,7 +27,7 @@ func NewService(repo repoAccess) *Service {
 func (s *Service) GetAccessesDTO(ctx context.Context) ([]dto.AccessRs, error) {
 	accesses, err := s.repo.GetAccesses(ctx)
 	if err != nil {
-		return nil, msgerr.New(fmt.Errorf("access.Service.GetAccesses: %v", err), msgerr.ErrMsgInternal)
+		return nil, fmt.Errorf("access.Service.GetAccesses: %v", err)
 	}
 
 	accessesRs := dto.AccessesToDto(accesses)

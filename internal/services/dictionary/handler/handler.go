@@ -2,19 +2,17 @@ package handler
 
 import (
 	"fmt"
-	"log/slog"
 	"net/http"
 	"time"
 
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler/middleware"
-	"github.com/av-ugolkov/lingua-evo/internal/pkg/gin-ext"
-	"github.com/av-ugolkov/lingua-evo/internal/pkg/msg-error"
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/msgerr"
 	dictionarySvc "github.com/av-ugolkov/lingua-evo/internal/services/dictionary"
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/dictionary"
 	"github.com/av-ugolkov/lingua-evo/runtime"
-	"github.com/gin-gonic/gin"
 
+	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 )
 
@@ -66,14 +64,14 @@ type Handler struct {
 	dictSvc *dictionarySvc.Service
 }
 
-func Create(r *ginext.Engine, dictSvc *dictionarySvc.Service) {
+func Create(r *fiber.App, dictSvc *dictionarySvc.Service) {
 	h := newHandler(dictSvc)
 
-	r.GET(handler.Dictionary, h.getDictionary)
-	r.POST(handler.DictionaryWord, middleware.Auth(h.addWord))
-	r.GET(handler.DictionaryWord, h.getWord)
-	r.GET(handler.GetRandomWord, h.getRandomWords)
-	r.GET(handler.WordPronunciation, middleware.Auth(h.getPronunciation))
+	r.Get(handler.Dictionary, h.getDictionary)
+	r.Post(handler.DictionaryWord, middleware.Auth(h.addWord))
+	r.Get(handler.DictionaryWord, h.getWord)
+	r.Get(handler.GetRandomWord, h.getRandomWords)
+	r.Get(handler.WordPronunciation, middleware.Auth(h.getPronunciation))
 }
 
 func newHandler(dictSvc *dictionarySvc.Service) *Handler {
@@ -82,35 +80,31 @@ func newHandler(dictSvc *dictionarySvc.Service) *Handler {
 	}
 }
 
-func (h *Handler) getDictionary(c *ginext.Context) (int, any, error) {
-	ctx := c.Request.Context()
+func (h *Handler) getDictionary(c *fiber.Ctx) error {
+	ctx := c.Context()
 
-	langCode, err := c.GetQuery(QueryParamLangCode)
-	if err != nil {
-		return http.StatusBadRequest, nil,
-			fmt.Errorf("dictionary.delivery.Handler.getDictionary: %w", err)
+	langCode := c.Query(QueryParamLangCode)
+	if langCode == runtime.EmptyString {
+		return fiber.NewError(http.StatusBadRequest,
+			fmt.Sprintf("dictionary.delivery.Handler.getDictionary: not found query [%s]", QueryParamLangCode))
 	}
 
-	page, err := c.GetQueryInt(QueryParamPage)
-	if err != nil {
-		return http.StatusBadRequest, nil,
-			fmt.Errorf("dictionary.delivery.Handler.getDictionary: %w", err)
+	page := c.QueryInt(QueryParamPage, -1)
+	if page == -1 {
+		return fiber.NewError(http.StatusBadRequest,
+			fmt.Sprintf("dictionary.delivery.Handler.getDictionary: not found query [%s]", QueryParamPage))
 	}
-	itemsPerPage, err := c.GetQueryInt(QueryParamPerPage)
-	if err != nil {
-		return http.StatusBadRequest, nil,
-			fmt.Errorf("dictionary.delivery.Handler.getDictionary: %w", err)
+	itemsPerPage := c.QueryInt(QueryParamPerPage, -1)
+	if itemsPerPage == -1 {
+		return fiber.NewError(http.StatusBadRequest,
+			fmt.Sprintf("dictionary.delivery.Handler.getDictionary: not found query [%s]", QueryParamPerPage))
 	}
-	search, err := c.GetQuery(QueryParamSearch)
-	if err != nil {
-		return http.StatusBadRequest, nil,
-			fmt.Errorf("dictionary.delivery.Handler.getDictionary: %w", err)
-	}
+	search := c.Query(QueryParamSearch)
 
 	dict, countWords, err := h.dictSvc.GetDictionary(ctx, langCode, search, page, itemsPerPage)
 	if err != nil {
-		return http.StatusInternalServerError, nil,
-			fmt.Errorf("dictionary.delivery.Handler.getDictionary: %v", err)
+		return fiber.NewError(http.StatusInternalServerError,
+			fmt.Sprintf("dictionary.delivery.Handler.getDictionary: %v", err))
 	}
 
 	wordsRs := make([]WordDataRs, 0, len(dict))
@@ -125,17 +119,15 @@ func (h *Handler) getDictionary(c *ginext.Context) (int, any, error) {
 		})
 	}
 
-	return http.StatusOK, gin.H{"words": wordsRs, "count_words": countWords}, nil
+	return c.Status(http.StatusOK).JSON(fiber.Map{"words": wordsRs, "count_words": countWords})
 }
 
-func (h *Handler) addWord(c *ginext.Context) (int, any, error) {
-	ctx := c.Request.Context()
+func (h *Handler) addWord(c *fiber.Ctx) error {
+	ctx := c.Context()
 
 	var data WordRq
-	if err := c.Bind(&data); err != nil {
-		return http.StatusBadRequest, nil,
-			msgerr.New(fmt.Errorf("dictionary.delivery.Handler.addWord: %v", err),
-				msgerr.ErrMsgBadRequest)
+	if err := c.BodyParser(&data); err != nil {
+		return fiber.NewError(http.StatusBadRequest, msgerr.ErrMsgBadRequest)
 	}
 
 	words, err := h.dictSvc.GetOrAddWords(ctx, []entity.DictWord{
@@ -148,9 +140,7 @@ func (h *Handler) addWord(c *ginext.Context) (int, any, error) {
 		},
 	})
 	if err != nil {
-		return http.StatusInternalServerError, nil,
-			msgerr.New(fmt.Errorf("dictionary.delivery.Handler.addWord: %v", err),
-				msgerr.ErrMsgInternal)
+		return fiber.NewError(http.StatusInternalServerError, msgerr.ErrMsgInternal)
 	}
 
 	wordRs := &WordRs{
@@ -161,27 +151,20 @@ func (h *Handler) addWord(c *ginext.Context) (int, any, error) {
 		UpdatedAt:     &words[0].UpdatedAt,
 	}
 
-	return http.StatusOK, wordRs, nil
+	return c.Status(http.StatusOK).JSON(wordRs)
 }
 
-func (h *Handler) getWord(c *ginext.Context) (int, any, error) {
-	ctx := c.Request.Context()
+func (h *Handler) getWord(c *fiber.Ctx) error {
+	ctx := c.Context()
 
-	text, err := c.GetQuery(QueryParamText)
-	if err != nil {
-		return http.StatusBadRequest, nil,
-			fmt.Errorf("dictionary.delivery.Handler.getWord: %w", err)
+	text := c.Query(QueryParamText)
+	if text == runtime.EmptyString {
+		return fiber.NewError(http.StatusBadRequest, "You must specify the text of the word")
 	}
 
-	langCode, err := c.GetQuery(QueryParamLangCode)
-	if err != nil {
-		return http.StatusBadRequest, nil,
-			fmt.Errorf("dictionary.delivery.Handler.getWord: %w", err)
-	}
-
+	langCode := c.Query(QueryParamLangCode)
 	if langCode == runtime.EmptyString {
-		return http.StatusBadRequest, nil,
-			fmt.Errorf("dictionary.delivery.Handler.getWord - empty lang code")
+		return fiber.NewError(http.StatusBadRequest, "You must specify the language code")
 	}
 
 	wordIDs, err := h.dictSvc.GetWordsByText(ctx, []entity.DictWord{
@@ -191,40 +174,30 @@ func (h *Handler) getWord(c *ginext.Context) (int, any, error) {
 		},
 	})
 	if err != nil {
-		return http.StatusInternalServerError, nil,
-			fmt.Errorf("dictionary.delivery.Handler.getWord: %v", err)
+		return fiber.NewError(http.StatusInternalServerError, msgerr.ErrMsgInternal)
 	}
 
 	if len(wordIDs) == 0 {
-		return http.StatusNotFound, nil,
-			msgerr.New(fmt.Errorf("dictionary.delivery.Handler.getWord: word not found"),
-				ErrMsgNotFoundWord)
+		return fiber.NewError(http.StatusNotFound, ErrMsgNotFoundWord)
 	}
 
-	return http.StatusOK, &WordRs{
+	return c.Status(http.StatusOK).JSON(&WordRs{
 		ID: &wordIDs[0].ID,
-	}, nil
+	})
 }
 
-func (h *Handler) getRandomWords(c *ginext.Context) (int, any, error) {
-	ctx := c.Request.Context()
+func (h *Handler) getRandomWords(c *fiber.Ctx) error {
+	ctx := c.Context()
 
-	langCode, err := c.GetQuery(QueryParamLangCode)
-	if err != nil {
-		return http.StatusBadRequest, nil,
-			fmt.Errorf("dictionary.delivery.Handler.getRandomWord: %w", err)
+	langCode := c.Query(QueryParamLangCode)
+	if langCode == runtime.EmptyString {
+		return fiber.NewError(http.StatusBadRequest, "You must specify the language code")
 	}
 
-	count, err := c.GetQueryInt(QueryParamRandomWordsLimit)
-	if err != nil {
-		slog.Warn(fmt.Sprintf("dictionary.delivery.Handler.getRandomWord: %v", err))
-		count = 1
-	}
-
+	count := c.QueryInt(QueryParamRandomWordsLimit, 1)
 	word, err := h.dictSvc.GetRandomWords(ctx, langCode, count)
 	if err != nil {
-		return http.StatusInternalServerError, nil,
-			fmt.Errorf("dictionary.delivery.Handler.getRandomWord: %v", err)
+		return fiber.NewError(http.StatusInternalServerError, msgerr.ErrMsgInternal)
 	}
 
 	wordsRs := make([]WordRs, 0, len(word))
@@ -236,29 +209,26 @@ func (h *Handler) getRandomWords(c *ginext.Context) (int, any, error) {
 		})
 	}
 
-	return http.StatusOK, wordsRs, nil
+	return c.Status(http.StatusOK).JSON(wordsRs)
 }
 
-func (h *Handler) getPronunciation(c *ginext.Context) (int, any, error) {
-	ctx := c.Request.Context()
+func (h *Handler) getPronunciation(c *fiber.Ctx) error {
+	ctx := c.Context()
 
-	text, err := c.GetQuery(QueryParamText)
-	if err != nil {
-		return http.StatusInternalServerError, nil,
-			fmt.Errorf("word.delivery.Handler.getPronunciation: %w", err)
+	text := c.Query(QueryParamText)
+	if text == runtime.EmptyString {
+		return fiber.NewError(http.StatusBadRequest, "You must specify the text")
 	}
 
-	langCode, err := c.GetQuery(QueryParamLangCode)
-	if err != nil {
-		return http.StatusInternalServerError, nil,
-			fmt.Errorf("word.delivery.Handler.getPronunciation: %w", err)
+	langCode := c.Query(QueryParamLangCode)
+	if langCode == runtime.EmptyString {
+		return fiber.NewError(http.StatusBadRequest, "You must specify the language code")
 	}
 
 	pronunciation, err := h.dictSvc.GetPronunciation(ctx, text, langCode)
 	if err != nil {
-		return http.StatusInternalServerError, nil,
-			fmt.Errorf("word.delivery.Handler.getPronunciation: %w", err)
+		return fiber.NewError(http.StatusInternalServerError, msgerr.ErrMsgInternal)
 	}
 
-	return http.StatusOK, gin.H{"pronunciation": pronunciation}, nil
+	return c.Status(http.StatusOK).JSON(fiber.Map{"pronunciation": pronunciation})
 }

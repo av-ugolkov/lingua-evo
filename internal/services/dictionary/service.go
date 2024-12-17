@@ -7,7 +7,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/av-ugolkov/lingua-evo/internal/pkg/msg-error"
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/msgerr"
 	entityLanguage "github.com/av-ugolkov/lingua-evo/internal/services/language"
 	"github.com/av-ugolkov/lingua-evo/runtime"
 

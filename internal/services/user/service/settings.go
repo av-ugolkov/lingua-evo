@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	msgerr "github.com/av-ugolkov/lingua-evo/internal/pkg/msg-error"
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/msgerr"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/utils"
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/user"
 

@@ -1,19 +1,17 @@
 package handler
 
 import (
-	"fmt"
 	"net/http"
 	"time"
 
-	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
-
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler/middleware"
-	ginext "github.com/av-ugolkov/lingua-evo/internal/pkg/gin-ext"
-	msgerr "github.com/av-ugolkov/lingua-evo/internal/pkg/msg-error"
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/msgerr"
 	"github.com/av-ugolkov/lingua-evo/internal/services/events/service"
 	"github.com/av-ugolkov/lingua-evo/runtime"
+
+	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 )
 
 type (
@@ -42,51 +40,43 @@ type Handler struct {
 	eventsSvc *service.Service
 }
 
-func Create(r *ginext.Engine, eventsSvc *service.Service) {
+func Create(r *fiber.App, eventsSvc *service.Service) {
 	h := &Handler{
 		eventsSvc: eventsSvc,
 	}
 
-	r.GET(handler.CountEvents, middleware.Auth(h.getCountEvents))
-	r.GET(handler.Events, middleware.Auth(h.getEvents))
-	r.POST(handler.MarkWatched, middleware.Auth(h.markEventAsWatched))
+	r.Get(handler.CountEvents, middleware.Auth(h.getCountEvents))
+	r.Get(handler.Events, middleware.Auth(h.getEvents))
+	r.Post(handler.MarkWatched, middleware.Auth(h.markEventAsWatched))
 }
 
-func (h *Handler) getCountEvents(c *ginext.Context) (int, any, error) {
-	ctx := c.Request.Context()
+func (h *Handler) getCountEvents(c *fiber.Ctx) error {
+	ctx := c.Context()
 
 	uid, err := runtime.UserIDFromContext(ctx)
 	if err != nil {
-		return http.StatusUnauthorized, nil,
-			msgerr.New(fmt.Errorf("events.delivery.Handler.getCountEvents: %v", err),
-				msgerr.ErrMsgUnauthorized)
+		return fiber.NewError(http.StatusUnauthorized, msgerr.ErrMsgUnauthorized)
 	}
 
 	count, err := h.eventsSvc.GetCountEvents(ctx, uid)
 	if err != nil {
-		return http.StatusInternalServerError, nil,
-			msgerr.New(fmt.Errorf("events.delivery.Handler.getCountEvents: %v", err),
-				msgerr.ErrMsgInternal)
+		return fiber.NewError(http.StatusInternalServerError, msgerr.ErrMsgInternal)
 	}
 
-	return http.StatusOK, CountEventsRs{Count: count}, nil
+	return c.Status(http.StatusOK).JSON(CountEventsRs{Count: count})
 }
 
-func (h *Handler) getEvents(c *ginext.Context) (int, any, error) {
-	ctx := c.Request.Context()
+func (h *Handler) getEvents(c *fiber.Ctx) error {
+	ctx := c.Context()
 
 	uid, err := runtime.UserIDFromContext(ctx)
 	if err != nil {
-		return http.StatusUnauthorized, nil,
-			msgerr.New(fmt.Errorf("events.delivery.Handler.getEvents: %v", err),
-				msgerr.ErrMsgUnauthorized)
+		return fiber.NewError(http.StatusUnauthorized, msgerr.ErrMsgUnauthorized)
 	}
 
 	events, err := h.eventsSvc.GetEvents(ctx, uid)
 	if err != nil {
-		return http.StatusInternalServerError, nil,
-			msgerr.New(fmt.Errorf("events.delivery.Handler.getEvents: %v", err),
-				msgerr.ErrMsgInternal)
+		return fiber.NewError(http.StatusInternalServerError, msgerr.ErrMsgInternal)
 	}
 
 	eventsRs := make([]EventsRs, 0, len(events))
@@ -105,32 +95,26 @@ func (h *Handler) getEvents(c *ginext.Context) (int, any, error) {
 		})
 	}
 
-	return http.StatusOK, eventsRs, nil
+	return c.Status(http.StatusOK).JSON(eventsRs)
 }
 
-func (h *Handler) markEventAsWatched(c *ginext.Context) (int, any, error) {
-	ctx := c.Request.Context()
+func (h *Handler) markEventAsWatched(c *fiber.Ctx) error {
+	ctx := c.Context()
 
 	uid, err := runtime.UserIDFromContext(ctx)
 	if err != nil {
-		return http.StatusUnauthorized, nil,
-			msgerr.New(fmt.Errorf("events.delivery.Handler.markEventAsWatched: %w", err),
-				msgerr.ErrMsgUnauthorized)
+		return fiber.NewError(http.StatusUnauthorized, msgerr.ErrMsgUnauthorized)
 	}
 
-	eid, err := c.GetQueryUUID("event_id")
+	eid, err := uuid.Parse(c.Query("event_id"))
 	if err != nil {
-		return http.StatusBadRequest, nil,
-			msgerr.New(fmt.Errorf("events.delivery.Handler.markEventAsWatched: %w", err),
-				msgerr.ErrMsgInternal)
+		return fiber.NewError(http.StatusBadRequest, msgerr.ErrMsgInternal)
 	}
 
 	err = h.eventsSvc.ReadEvent(ctx, uid, eid)
 	if err != nil {
-		return http.StatusInternalServerError, nil,
-			msgerr.New(fmt.Errorf("events.delivery.Handler.markEventAsWatched: %w", err),
-				msgerr.ErrMsgInternal)
+		return fiber.NewError(http.StatusInternalServerError, msgerr.ErrMsgInternal)
 	}
 
-	return http.StatusOK, gin.H{}, nil
+	return c.SendStatus(http.StatusOK)
 }
