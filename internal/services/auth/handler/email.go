@@ -9,15 +9,23 @@ import (
 	"time"
 
 	"github.com/av-ugolkov/lingua-evo/internal/config"
+	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
 	ginext "github.com/av-ugolkov/lingua-evo/internal/pkg/gin-ext"
 	msgerr "github.com/av-ugolkov/lingua-evo/internal/pkg/msg-error"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/utils"
 	"github.com/av-ugolkov/lingua-evo/internal/services/auth"
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/auth"
+	"github.com/av-ugolkov/lingua-evo/internal/services/auth/dto"
 	"github.com/av-ugolkov/lingua-evo/runtime"
 
 	"github.com/google/uuid"
 )
+
+func (h *Handler) initEmailHandler(r *ginext.Engine) {
+	r.POST(handler.SignIn, h.signIn)
+	r.POST(handler.SignUp, h.signUp)
+	r.POST(handler.SendCode, h.sendCode)
+}
 
 func (h *Handler) signIn(c *ginext.Context) (int, any, error) {
 	ctx := c.Request.Context()
@@ -27,7 +35,7 @@ func (h *Handler) signIn(c *ginext.Context) (int, any, error) {
 			fmt.Errorf("auth.handler.Handler.signIn: %w", err)
 	}
 
-	var data CreateSessionRq
+	var data dto.CreateSessionRq
 	err = decodeBasicAuth(authorization, &data)
 	if err != nil {
 		return http.StatusInternalServerError, nil,
@@ -41,7 +49,7 @@ func (h *Handler) signIn(c *ginext.Context) (int, any, error) {
 	data.Fingerprint = fingerprint
 
 	refreshTokenID := uuid.New()
-	tokens, err := h.authSvc.SignIn(ctx, data.User, data.Password, data.Fingerprint, refreshTokenID)
+	sessionRs, refreshToken, err := h.authSvc.SignIn(ctx, data.User, data.Password, data.Fingerprint, refreshTokenID)
 	if err != nil {
 		switch {
 		case errors.Is(err, entity.ErrNotFoundUser) ||
@@ -56,20 +64,16 @@ func (h *Handler) signIn(c *ginext.Context) (int, any, error) {
 		}
 	}
 
-	sessionRs := &CreateSessionRs{
-		AccessToken: tokens.AccessToken,
-	}
-
 	additionalTime := config.GetConfig().JWT.ExpireRefresh
 	duration := time.Duration(additionalTime) * time.Second
+	c.SetCookieRefreshToken(refreshToken, duration)
 
-	c.SetCookieRefreshToken(tokens.RefreshToken, duration)
 	return http.StatusOK, sessionRs, nil
 }
 
 func (h *Handler) signUp(c *ginext.Context) (int, any, error) {
-	var data CreateUserRq
-	err := c.Bind(&data)
+	var data dto.CreateUserRq
+	err := c.BindJSON(&data)
 	if err != nil {
 		return http.StatusBadRequest, nil,
 			msgerr.New(
@@ -107,7 +111,7 @@ func (h *Handler) signUp(c *ginext.Context) (int, any, error) {
 			fmt.Errorf("auth.handler.Handler.signUp: %w", err)
 	}
 
-	createUserRs := &CreateUserRs{
+	createUserRs := &dto.CreateUserRs{
 		UserID: uid,
 	}
 
@@ -117,8 +121,8 @@ func (h *Handler) signUp(c *ginext.Context) (int, any, error) {
 func (h *Handler) sendCode(c *ginext.Context) (int, any, error) {
 	ctx := c.Request.Context()
 
-	var data CreateCodeRq
-	err := c.Bind(&data)
+	var data dto.CreateCodeRq
+	err := c.BindJSON(&data)
 	if err != nil {
 		return http.StatusBadRequest, nil,
 			msgerr.New(fmt.Errorf("auth.handler.Handler.sendCode: %v", err),
@@ -146,7 +150,7 @@ func (h *Handler) sendCode(c *ginext.Context) (int, any, error) {
 	return http.StatusOK, nil, nil
 }
 
-func decodeBasicAuth(basicToken string, data *CreateSessionRq) error {
+func decodeBasicAuth(basicToken string, data *dto.CreateSessionRq) error {
 	base, err := base64.StdEncoding.DecodeString(basicToken)
 	if err != nil {
 		return fmt.Errorf("auth.handler.decodeBasicAuth: %v", err)

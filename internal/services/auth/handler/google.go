@@ -7,14 +7,21 @@ import (
 	"time"
 
 	"github.com/av-ugolkov/lingua-evo/internal/config"
+	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
 	ginext "github.com/av-ugolkov/lingua-evo/internal/pkg/gin-ext"
 	msgerr "github.com/av-ugolkov/lingua-evo/internal/pkg/msg-error"
 	"github.com/av-ugolkov/lingua-evo/internal/services/auth"
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/auth"
+	"github.com/av-ugolkov/lingua-evo/internal/services/auth/dto"
 	"github.com/av-ugolkov/lingua-evo/runtime"
 
 	"github.com/gin-gonic/gin"
 )
+
+func (h *Handler) initGoogleHandler(r *ginext.Engine) {
+	r.GET(handler.GoogleAuth, h.googleAuthUrl)
+	r.POST(handler.GoogleAuth, h.googleAuth)
+}
 
 func (h *Handler) googleAuthUrl(c *ginext.Context) (int, any, error) {
 	url := h.authSvc.GoogleAuthUrl()
@@ -24,7 +31,7 @@ func (h *Handler) googleAuthUrl(c *ginext.Context) (int, any, error) {
 func (h *Handler) googleAuth(c *ginext.Context) (int, any, error) {
 	ctx := c.Request.Context()
 
-	var data GoogleAuthCode
+	var data dto.GoogleAuthCode
 	err := c.Bind(&data)
 	if err != nil {
 		return http.StatusBadRequest, nil,
@@ -55,7 +62,7 @@ func (h *Handler) googleAuth(c *ginext.Context) (int, any, error) {
 		}
 	}
 
-	sessionRs := &CreateSessionRs{
+	sessionRs := &dto.CreateSessionRs{
 		AccessToken: tokens.AccessToken,
 	}
 

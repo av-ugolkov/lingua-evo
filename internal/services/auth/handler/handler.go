@@ -13,41 +13,6 @@ import (
 	"github.com/av-ugolkov/lingua-evo/runtime"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
-)
-
-type (
-	CreateSessionRq struct {
-		User        string `json:"user"`
-		Password    string `json:"password"`
-		Fingerprint string `json:"fingerprint"`
-	}
-
-	CreateSessionRs struct {
-		AccessToken string `json:"access_token"`
-	}
-
-	CreateUserRq struct {
-		Password string `json:"password"`
-		Email    string `json:"email"`
-		Code     int    `json:"code"`
-	}
-
-	CreateUserRs struct {
-		UserID uuid.UUID `json:"user_id"`
-	}
-
-	CreateCodeRq struct {
-		Email string `json:"email"`
-	}
-
-	GoogleAuthCode struct {
-		Code     string   `json:"code"`
-		State    string   `json:"state"`
-		Scope    []string `json:"scope"`
-		Authuser int      `json:"authuser"`
-		Prompt   string   `json:"prompt"`
-	}
 )
 
 type Handler struct {
@@ -55,21 +20,15 @@ type Handler struct {
 }
 
 func Create(r *ginext.Engine, authSvc *auth.Service) {
-	h := newHandler(authSvc)
-
-	r.POST(handler.SignIn, h.signIn)
-	r.POST(handler.SignUp, h.signUp)
-	r.GET(handler.Refresh, h.refresh)
-	r.POST(handler.SignOut, middleware.Auth(h.signOut))
-	r.POST(handler.SendCode, h.sendCode)
-	r.GET(handler.GoogleAuth, h.googleAuthUrl)
-	r.POST(handler.GoogleAuth, h.googleAuth)
-}
-
-func newHandler(authSvc *auth.Service) *Handler {
-	return &Handler{
+	h := &Handler{
 		authSvc: authSvc,
 	}
+
+	r.GET(handler.Refresh, h.refresh)
+	r.POST(handler.SignOut, middleware.Auth(h.signOut))
+
+	h.initEmailHandler(r)
+	h.initGoogleHandler(r)
 }
 
 func (h *Handler) refresh(c *ginext.Context) (int, any, error) {
@@ -101,20 +60,16 @@ func (h *Handler) refresh(c *ginext.Context) (int, any, error) {
 			fmt.Errorf("auth.handler.Handler.refresh: %v", err)
 	}
 
-	tokens, err := h.authSvc.RefreshSessionToken(ctx, uid, refreshToken, fingerprint)
+	sessionRs, err := h.authSvc.RefreshSessionToken(ctx, uid, refreshToken, fingerprint)
 	if err != nil {
 		return http.StatusInternalServerError, nil,
 			fmt.Errorf("auth.handler.Handler.refresh: %v", err)
 	}
 
-	sessionRs := &CreateSessionRs{
-		AccessToken: tokens.AccessToken,
-	}
-
 	additionalTime := config.GetConfig().JWT.ExpireRefresh
 	duration := time.Duration(additionalTime) * time.Second
+	c.SetCookieRefreshToken(refreshToken, duration)
 
-	c.SetCookieRefreshToken(tokens.RefreshToken, duration)
 	return http.StatusOK, sessionRs, nil
 }
 
