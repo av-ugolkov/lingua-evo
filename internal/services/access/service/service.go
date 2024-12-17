@@ -1,15 +1,17 @@
-package access
+package service
 
 import (
 	"context"
 	"fmt"
 
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/msg-error"
+	entity "github.com/av-ugolkov/lingua-evo/internal/services/access"
+	"github.com/av-ugolkov/lingua-evo/internal/services/access/dto"
 )
 
 type (
 	repoAccess interface {
-		GetAccesses(ctx context.Context) ([]Access, error)
+		GetAccesses(ctx context.Context) ([]entity.Access, error)
 	}
 )
 
@@ -23,11 +25,13 @@ func NewService(repo repoAccess) *Service {
 	}
 }
 
-func (s *Service) GetAccesses(ctx context.Context) ([]Access, error) {
+func (s *Service) GetAccessesDTO(ctx context.Context) ([]dto.AccessRs, error) {
 	accesses, err := s.repo.GetAccesses(ctx)
 	if err != nil {
 		return nil, msgerr.New(fmt.Errorf("access.Service.GetAccesses: %v", err), msgerr.ErrMsgInternal)
 	}
 
-	return accesses, nil
+	accessesRs := dto.AccessesToDto(accesses)
+
+	return accessesRs, nil
 }
