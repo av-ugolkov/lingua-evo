@@ -8,6 +8,7 @@ import (
 
 	"github.com/av-ugolkov/lingua-evo/internal/config"
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/fext"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/msgerr"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/router"
 	"github.com/av-ugolkov/lingua-evo/internal/services/auth"
@@ -25,7 +26,7 @@ func (h *Handler) initGoogleHandler(r *fiber.App) {
 
 func (h *Handler) googleAuthUrl(c *fiber.Ctx) error {
 	url := h.authSvc.GoogleAuthUrl()
-	return c.Status(http.StatusOK).JSON(fiber.Map{"url": url})
+	return c.Status(http.StatusOK).JSON(fext.D(fiber.Map{"url": url}))
 }
 
 func (h *Handler) googleAuth(c *fiber.Ctx) error {
@@ -34,28 +35,28 @@ func (h *Handler) googleAuth(c *fiber.Ctx) error {
 	var data dto.GoogleAuthCode
 	err := c.BodyParser(&data)
 	if err != nil {
-		return fiber.NewError(http.StatusBadRequest, msgerr.ErrMsgBadRequest)
+		return c.Status(http.StatusBadRequest).JSON(fext.E(err, msgerr.ErrMsgBadRequest))
 	}
 
-	fingerprint := c.GetReqHeaders()[router.Fingerprint]
+	fingerprint := c.GetReqHeaders()[router.HeaderFingerprint]
 	if fingerprint[0] == runtime.EmptyString {
-		return fiber.NewError(http.StatusInternalServerError,
-			fmt.Sprintf("auth.handler.Handler.googleAuth: fingerprimt is empty"))
+		return c.Status(http.StatusInternalServerError).JSON(fext.E(
+			fmt.Errorf("auth.handler.Handler.googleAuth: fingerprimt is empty")))
 	}
 
 	tokens, err := h.authSvc.AuthByGoogle(ctx, data.Code, fingerprint[0])
 	if err != nil {
-		var msgErr *msgerr.Error
+		var msgErr *msgerr.MsgErr
 		switch {
 		case errors.Is(err, entity.ErrNotFoundUser) ||
 			errors.Is(err, auth.ErrWrongPassword):
-			return fiber.NewError(http.StatusBadRequest,
-				"User doesn't exist or password is wrong")
+			return c.Status(http.StatusBadRequest).JSON(fext.E(err,
+				"User doesn't exist or password is wrong"))
 		case errors.As(err, &msgErr):
-			return fiber.NewError(http.StatusBadRequest, msgErr.Msg)
+			return c.Status(http.StatusBadRequest).JSON(fext.E(msgErr))
 		default:
-			return fiber.NewError(http.StatusInternalServerError,
-				"Sorry! We can't sign you in. Please try again.")
+			return c.Status(http.StatusInternalServerError).JSON(fext.E(err,
+				"Sorry! We can't sign you in. Please try again."))
 		}
 	}
 
@@ -74,5 +75,5 @@ func (h *Handler) googleAuth(c *fiber.Ctx) error {
 		Secure:   true,
 		HTTPOnly: true,
 	})
-	return c.Status(http.StatusOK).JSON(sessionRs)
+	return c.Status(http.StatusOK).JSON(fext.D(sessionRs))
 }

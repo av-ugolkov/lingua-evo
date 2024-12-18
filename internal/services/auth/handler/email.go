@@ -11,6 +11,7 @@ import (
 	"github.com/av-ugolkov/lingua-evo/internal/config"
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler/middleware"
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/fext"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/msgerr"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/router"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/utils"
@@ -33,20 +34,18 @@ func (h *Handler) signIn(c *fiber.Ctx) error {
 	ctx := c.Context()
 	authorization, err := middleware.GetTokenAuth(c, router.AuthTypeBasic)
 	if err != nil {
-		return fiber.NewError(http.StatusBadRequest,
-			fmt.Sprintf("auth.Handler.signIn: %м", err))
+		return c.Status(http.StatusBadRequest).JSON(fext.E(err))
 	}
 
 	var data dto.CreateSessionRq
 	err = decodeBasicAuth(authorization, &data)
 	if err != nil {
-		return fiber.NewError(http.StatusInternalServerError,
-			fmt.Sprintf("auth.Handler.signIn: %v", err))
+		return c.Status(http.StatusInternalServerError).JSON(fext.E(err))
 	}
-	fingerprint := c.GetReqHeaders()[router.Fingerprint]
+	fingerprint := c.GetReqHeaders()[router.HeaderFingerprint]
 	if fingerprint[0] == runtime.EmptyString {
-		return fiber.NewError(http.StatusBadRequest,
-			fmt.Sprintf("auth.Handler.signIn: fingerprint not found"))
+		return c.Status(http.StatusBadRequest).JSON(fext.E(
+			fmt.Errorf("auth.Handler.signIn: fingerprint not found")))
 	}
 	data.Fingerprint = fingerprint[0]
 
@@ -56,9 +55,9 @@ func (h *Handler) signIn(c *fiber.Ctx) error {
 		switch {
 		case errors.Is(err, entity.ErrNotFoundUser) ||
 			errors.Is(err, auth.ErrWrongPassword):
-			return fiber.NewError(http.StatusNotFound, "User doesn't exist or password is wrong")
+			return c.Status(http.StatusNotFound).JSON(fext.E(err, "User doesn't exist or password is wrong"))
 		default:
-			return fiber.NewError(http.StatusInternalServerError, msgerr.ErrMsgInternal)
+			return c.Status(http.StatusInternalServerError).JSON(fext.E(err, msgerr.ErrMsgInternal))
 		}
 	}
 
@@ -72,28 +71,28 @@ func (h *Handler) signIn(c *fiber.Ctx) error {
 		Secure:   true,
 		HTTPOnly: true,
 	})
-	return c.Status(http.StatusOK).JSON(sessionRs)
+	return c.Status(http.StatusOK).JSON(fext.D(sessionRs))
 }
 
 func (h *Handler) signUp(c *fiber.Ctx) error {
 	var data dto.CreateUserRq
 	err := c.BodyParser(&data)
 	if err != nil {
-		return fiber.NewError(http.StatusBadRequest, msgerr.ErrMsgBadRequest)
+		return c.Status(http.StatusBadRequest).JSON(fext.E(err, msgerr.ErrMsgBadRequest))
 	}
 
 	if !utils.IsPasswordValid(data.Password) {
-		return fiber.NewError(http.StatusBadRequest, "Invalid password")
+		return c.Status(http.StatusBadRequest).JSON(fext.E(err, "Invalid password"))
 	}
 
 	if !utils.IsEmailValid(data.Email) {
-		return fiber.NewError(http.StatusBadRequest, msgerr.ErrMsgBadEmail)
+		return c.Status(http.StatusBadRequest).JSON(fext.E(err, msgerr.ErrMsgBadEmail))
 	}
 
-	fingerprint := c.GetReqHeaders()[router.Fingerprint]
+	fingerprint := c.GetReqHeaders()[router.HeaderFingerprint]
 	if fingerprint[0] == runtime.EmptyString {
-		return fiber.NewError(http.StatusInternalServerError,
-			fmt.Sprintf("auth.Handler.signUp: fingerprimt is empty"))
+		return c.Status(http.StatusInternalServerError).JSON(fext.E(
+			fmt.Errorf("auth.Handler.signUp: fingerprimt is empty")))
 	}
 
 	uid, err := h.authSvc.SignUp(c.Context(), entity.User{
@@ -104,15 +103,14 @@ func (h *Handler) signUp(c *fiber.Ctx) error {
 		Code:     data.Code,
 	}, fingerprint[0])
 	if err != nil {
-		return fiber.NewError(http.StatusInternalServerError,
-			fmt.Sprintf("auth.Handler.signUp: %v", err))
+		return c.Status(http.StatusInternalServerError).JSON(fext.E(err))
 	}
 
 	createUserRs := &dto.CreateUserRs{
 		UserID: uid,
 	}
 
-	return c.Status(http.StatusCreated).JSON(createUserRs)
+	return c.Status(http.StatusCreated).JSON(fext.D(createUserRs))
 }
 
 func (h *Handler) sendCode(c *fiber.Ctx) error {
@@ -121,22 +119,23 @@ func (h *Handler) sendCode(c *fiber.Ctx) error {
 	var data dto.CreateCodeRq
 	err := c.BodyParser(&data)
 	if err != nil {
-		return fiber.NewError(http.StatusBadRequest, msgerr.ErrMsgBadRequest)
+		return c.Status(http.StatusBadRequest).JSON(fext.E(err, msgerr.ErrMsgBadRequest))
 	}
 
 	if !utils.IsEmailValid(data.Email) {
-		return fiber.NewError(http.StatusBadRequest, msgerr.ErrMsgBadEmail)
+		return c.Status(http.StatusBadRequest).JSON(fext.E(
+			fmt.Errorf("auth.Handler.sendCode: email is invalid"), msgerr.ErrMsgBadEmail))
 	}
 
-	fingerprint := c.GetReqHeaders()[router.Fingerprint]
+	fingerprint := c.GetReqHeaders()[router.HeaderFingerprint]
 	if fingerprint[0] == runtime.EmptyString {
-		return fiber.NewError(http.StatusInternalServerError,
-			fmt.Sprintf("auth.Handler.sendCode: fingerprimt is empty"))
+		return c.Status(http.StatusInternalServerError).JSON(fext.E(
+			fmt.Errorf("auth.Handler.sendCode: fingerprimt is empty")))
 	}
 
 	err = h.authSvc.CreateCode(ctx, data.Email, fingerprint[0])
 	if err != nil {
-		return fiber.NewError(http.StatusInternalServerError, msgerr.ErrMsgInternal)
+		return c.Status(http.StatusInternalServerError).JSON(fext.E(err, msgerr.ErrMsgInternal))
 	}
 
 	return c.SendStatus(http.StatusOK)

@@ -8,8 +8,8 @@ const (
 	CookiePathAuth = "/auth"
 )
 const (
-	Authorization = "Authorization"
-	Fingerprint   = "Fingerprint"
+	HeaderAuthorization = "Authorization"
+	HeaderFingerprint   = "Fingerprint"
 )
 
 const (

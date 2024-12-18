@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/fext"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/router"
 	"github.com/av-ugolkov/lingua-evo/internal/services/language"
 	"github.com/av-ugolkov/lingua-evo/runtime"
@@ -51,14 +52,14 @@ func (h *Handler) getCurrentLanguage(c *fiber.Ctx) error {
 		HTTPOnly: true,
 	})
 
-	return c.Status(http.StatusOK).JSON(languageRs)
+	return c.Status(http.StatusOK).JSON(fext.D(languageRs))
 }
 
 func (h *Handler) getAvailableLanguages(c *fiber.Ctx) error {
 	ctx := c.Context()
 	languages, err := h.langSvc.GetAvailableLanguages(ctx)
 	if err != nil {
-		return c.Status(http.StatusInternalServerError).JSON(err)
+		return c.Status(http.StatusInternalServerError).JSON(fext.E(err))
 	}
 
 	languagesRs := make([]LanguageRs, 0, len(languages))
@@ -69,5 +70,5 @@ func (h *Handler) getAvailableLanguages(c *fiber.Ctx) error {
 		})
 	}
 
-	return c.Status(http.StatusOK).JSON(languagesRs)
+	return c.Status(http.StatusOK).JSON(fext.D(languagesRs))
 }

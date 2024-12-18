@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/fext"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/msgerr"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/utils"
 	"github.com/av-ugolkov/lingua-evo/internal/services/support"
@@ -39,11 +40,13 @@ func (h *Handler) sendRequest(c *fiber.Ctx) error {
 	var data SupportRq
 	err := c.BodyParser(&data)
 	if err != nil {
-		return fiber.NewError(http.StatusBadRequest, msgerr.ErrMsgBadRequest)
+		return c.Status(http.StatusBadRequest).JSON(fext.E(err, msgerr.ErrMsgBadRequest))
 	}
 
 	if !utils.IsEmailValid(data.Email) {
-		return fiber.NewError(http.StatusBadRequest, msgerr.ErrMsgBadEmail)
+		return c.Status(http.StatusBadRequest).JSON(fext.E(
+			fmt.Errorf("support.Handler.sendRequest: email is invalid"),
+			msgerr.ErrMsgBadEmail))
 	}
 
 	if len(data.Name) > 100 {
@@ -51,11 +54,15 @@ func (h *Handler) sendRequest(c *fiber.Ctx) error {
 	}
 
 	if len(data.Message) == 0 {
-		return fiber.NewError(http.StatusBadRequest, "Message is empty")
+		return c.Status(http.StatusBadRequest).JSON(fext.E(
+			fmt.Errorf("support.Handler.sendRequest: message is empty")),
+			"Message is empty")
 	}
 
 	if len(data.Message) > 500 {
-		return fiber.NewError(http.StatusBadRequest, "Message is too long")
+		return c.Status(http.StatusBadRequest).JSON(fext.E(
+			fmt.Errorf("support.Handler.sendRequest: message is too long"),
+			"Message is too long"))
 	}
 
 	err = h.supportSvc.SendRequest(ctx, support.SupportRequest{
@@ -65,9 +72,9 @@ func (h *Handler) sendRequest(c *fiber.Ctx) error {
 		Message: data.Message,
 	})
 	if err != nil {
-		return fiber.NewError(http.StatusBadRequest, "Something went wrong. Try a bit later!")
+		return c.Status(http.StatusBadRequest).JSON(fext.E(err, "Something went wrong. Try a bit later!"))
 	}
 
-	return c.Status(http.StatusCreated).JSON(fiber.Map{
-		"msg": "Thank you for your message! We will try to respond as soon as possible."})
+	return c.Status(http.StatusCreated).JSON(fext.D(fiber.Map{
+		"msg": "Thank you for your message! We will try to respond as soon as possible."}))
 }

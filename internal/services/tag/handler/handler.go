@@ -1,11 +1,11 @@
 package handler
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler/middleware"
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/fext"
 	tagSvc "github.com/av-ugolkov/lingua-evo/internal/services/tag"
 
 	"github.com/gofiber/fiber/v2"
@@ -44,14 +44,12 @@ func (h *Handler) getTags(c *fiber.Ctx) error {
 
 	vocabID, err := uuid.Parse(c.Query(paramsVocabID))
 	if err != nil {
-		return fiber.NewError(http.StatusBadRequest,
-			fmt.Sprintf("tag.Handler.getTags: %v", err))
+		return c.Status(http.StatusBadRequest).JSON(fext.E(err))
 	}
 
 	tags, err := h.tagSvc.GetTagsInVocabulary(ctx, vocabID)
 	if err != nil {
-		return fiber.NewError(http.StatusInternalServerError,
-			fmt.Sprintf("tag.Handler.getTags: %v", err))
+		return c.Status(http.StatusInternalServerError).JSON(fext.E(err))
 	}
 
 	tagsRs := make([]TagRs, 0, len(tags))
@@ -62,5 +60,5 @@ func (h *Handler) getTags(c *fiber.Ctx) error {
 		})
 	}
 
-	return c.Status(http.StatusOK).JSON(tagsRs)
+	return c.Status(http.StatusOK).JSON(fext.D(tagsRs))
 }

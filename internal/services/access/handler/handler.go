@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/fext"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/msgerr"
 	"github.com/av-ugolkov/lingua-evo/internal/services/access/service"
 
@@ -27,8 +28,8 @@ func (h *Handler) getAccesses(c *fiber.Ctx) error {
 
 	accessesRs, err := h.accessSvc.GetAccessesDTO(ctx)
 	if err != nil {
-		return fiber.NewError(http.StatusInternalServerError, msgerr.ErrMsgInternal)
+		return c.Status(http.StatusInternalServerError).JSON(fext.E(err, msgerr.ErrMsgInternal))
 	}
 
-	return c.Status(http.StatusOK).JSON(accessesRs)
+	return c.Status(http.StatusOK).JSON(fext.D(accessesRs))
 }

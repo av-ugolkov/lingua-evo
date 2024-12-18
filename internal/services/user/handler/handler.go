@@ -7,6 +7,8 @@ import (
 
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler/middleware"
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/fext"
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/msgerr"
 	user "github.com/av-ugolkov/lingua-evo/internal/services/user/service"
 	"github.com/av-ugolkov/lingua-evo/runtime"
 
@@ -53,15 +55,13 @@ func Create(r *fiber.App, userSvc *user.Service) {
 
 func (h *Handler) getUserByID(c *fiber.Ctx) error {
 	ctx := c.Context()
-	userID, err := runtime.UserIDFromContext(ctx)
+	userID, err := fext.UserIDFromContext(c)
 	if err != nil {
-		return fiber.NewError(http.StatusUnauthorized,
-			fmt.Sprintf("user.delivery.Handler.getUserByID: %v", err))
+		return c.Status(http.StatusUnauthorized).JSON(fext.E(err, msgerr.ErrMsgUnauthorized))
 	}
 	usr, err := h.userSvc.GetUserByID(ctx, userID)
 	if err != nil {
-		return fiber.NewError(http.StatusInternalServerError,
-			fmt.Sprintf("user.delivery.Handler.getUserByID: %v", err))
+		return c.Status(http.StatusInternalServerError).JSON(fext.E(err))
 	}
 
 	userRs := &UserRs{
@@ -71,39 +71,38 @@ func (h *Handler) getUserByID(c *fiber.Ctx) error {
 		Role:     usr.Role,
 	}
 
-	return c.Status(http.StatusOK).JSON(userRs)
+	return c.Status(http.StatusOK).JSON(fext.D(userRs))
 }
 
 func (h *Handler) getUsers(c *fiber.Ctx) error {
 	ctx := c.Context()
 
-	uid, _ := runtime.UserIDFromContext(ctx)
+	uid, _ := fext.UserIDFromContext(c)
 
 	page := c.QueryInt(paramsPage, 1)
 	perPage := c.QueryInt(paramsPerPage)
 	if perPage == 0 {
-		return fiber.NewError(fiber.StatusBadRequest,
-			fmt.Sprintf("user.delivery.Handler.getUsers: not found query [%s]", paramsPerPage))
+		return c.Status(fiber.StatusBadRequest).JSON(fext.E(
+			fmt.Errorf("user.Handler.getUsers: not found query [%s]", paramsPerPage)))
 	}
 
 	search := c.Query(paramsSearch)
 
 	sort := c.QueryInt(paramsSort, -1)
 	if sort == -1 {
-		return fiber.NewError(fiber.StatusBadRequest,
-			fmt.Sprintf("user.delivery.Handler.getUsers: not found query [%s]", paramsSort))
+		return c.Status(fiber.StatusBadRequest).JSON(fext.E(
+			fmt.Errorf("user.Handler.getUsers: not found query [%s]", paramsSort)))
 	}
 
 	order := c.QueryInt(paramsOrder)
 	if order == -1 {
-		return fiber.NewError(fiber.StatusBadRequest,
-			fmt.Sprintf("user.delivery.Handler.getUsers: not found query [%s]", paramsOrder))
+		return c.Status(fiber.StatusBadRequest).JSON(fext.E(
+			fmt.Errorf("user.Handler.getUsers: not found query [%s]", paramsOrder)))
 	}
 
 	users, countUsers, err := h.userSvc.GetUsers(ctx, uid, page, perPage, sort, order, search)
 	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError,
-			fmt.Sprintf("user.delivery.Handler.getUsers: %v", err))
+		return c.Status(fiber.StatusInternalServerError).JSON(fext.E(err))
 	}
 
 	usersRs := make([]UserRs, 0, len(users))
@@ -116,8 +115,8 @@ func (h *Handler) getUsers(c *fiber.Ctx) error {
 		})
 	}
 
-	return c.Status(http.StatusOK).JSON(fiber.Map{
+	return c.Status(http.StatusOK).JSON(fext.D(fiber.Map{
 		"users":       usersRs,
 		"count_users": countUsers,
-	})
+	}))
 }

@@ -33,7 +33,7 @@ func (r *EventRepo) GetCountVocabEvents(ctx context.Context, vocabIDs []uuid.UUI
 	var count int
 	err := r.tr.QueryRow(ctx, query, vocabIDs).Scan(&count)
 	if err != nil {
-		return 0, fmt.Errorf("events.delivery.repository.UserRepo.GetCountUserEvents: %w", err)
+		return 0, fmt.Errorf("events.repository.UserRepo.GetCountUserEvents: %w", err)
 	}
 
 	return count, nil
@@ -52,7 +52,7 @@ func (r *EventRepo) GetVocabEvents(ctx context.Context, vocabIDs []uuid.UUID) ([
 
 	rows, err := r.tr.Query(ctx, query, vocabIDs)
 	if err != nil {
-		return nil, fmt.Errorf("events.delivery.repository.UserRepo.GetEventsVocab: %w", err)
+		return nil, fmt.Errorf("events.repository.UserRepo.GetEventsVocab: %w", err)
 	}
 
 	events := make([]entity.Event, 0, 10)
@@ -60,12 +60,12 @@ func (r *EventRepo) GetVocabEvents(ctx context.Context, vocabIDs []uuid.UUID) ([
 		var event entity.Event
 		var jsonData []byte
 		if err := rows.Scan(&event.ID, &event.User.ID, &event.User.Nickname, &event.Type, &jsonData, &event.Watched, &event.CreatedAt); err != nil {
-			return nil, fmt.Errorf("events.delivery.repository.UserRepo.GetEventsVocab: %w", err)
+			return nil, fmt.Errorf("events.repository.UserRepo.GetEventsVocab: %w", err)
 		}
 
 		event.Payload, err = entity.Unmarshal(event.Type, jsonData)
 		if err != nil {
-			slog.Error(fmt.Sprintf("events.delivery.repository.UserRepo.GetEventsVocab: %v", err))
+			slog.Error(fmt.Sprintf("events.repository.UserRepo.GetEventsVocab: %v", err))
 		}
 
 		events = append(events, event)
@@ -85,7 +85,7 @@ func (r *EventRepo) AddEvent(ctx context.Context, uid uuid.UUID, typeEvent entit
 	var eid uuid.UUID
 	err := r.tr.QueryRow(ctx, query, uuid.New(), uid, typeEvent, payload, time.Now().UTC()).Scan(&eid)
 	if err != nil {
-		return uuid.Nil, fmt.Errorf("events.delivery.repository.UserRepo.AddEvent: %w", err)
+		return uuid.Nil, fmt.Errorf("events.repository.UserRepo.AddEvent: %w", err)
 	}
 
 	return eid, nil
@@ -94,7 +94,7 @@ func (r *EventRepo) AddEvent(ctx context.Context, uid uuid.UUID, typeEvent entit
 func (r *EventRepo) ReadEvent(ctx context.Context, uid uuid.UUID, eventID uuid.UUID) (err error) {
 	defer func() {
 		if err != nil {
-			err = fmt.Errorf("events.delivery.repository.UserRepo.ReadEvent: %w", err)
+			err = fmt.Errorf("events.repository.UserRepo.ReadEvent: %w", err)
 		}
 	}()
 
@@ -122,14 +122,14 @@ func (r *EventRepo) GetWatchedEvents(ctx context.Context, uid uuid.UUID) ([]enti
 
 	rows, err := r.tr.Query(ctx, query, uid)
 	if err != nil {
-		return nil, fmt.Errorf("events.delivery.repository.UserRepo.GetWatchedEvents: %w", err)
+		return nil, fmt.Errorf("events.repository.UserRepo.GetWatchedEvents: %w", err)
 	}
 
 	eventsWatched := make([]entity.EventWatched, 0, 10)
 	for rows.Next() {
 		var event entity.EventWatched
 		if err := rows.Scan(&event.EventID, &event.UserID, &event.WatchedAt); err != nil {
-			return nil, fmt.Errorf("events.delivery.repository.UserRepo.GetWatchedEvents: %w", err)
+			return nil, fmt.Errorf("events.repository.UserRepo.GetWatchedEvents: %w", err)
 		}
 		eventsWatched = append(eventsWatched, event)
 	}
@@ -140,7 +140,7 @@ func (r *EventRepo) GetWatchedEvents(ctx context.Context, uid uuid.UUID) ([]enti
 func (r *EventRepo) DeleteWatchedEvent(ctx context.Context, uid uuid.UUID, eventID uuid.UUID) (err error) {
 	defer func() {
 		if err != nil {
-			err = fmt.Errorf("events.delivery.repository.UserRepo.DeleteWatchedEvent: %w", err)
+			err = fmt.Errorf("events.repository.UserRepo.DeleteWatchedEvent: %w", err)
 		}
 	}()
 

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/fext"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/msgerr"
 	"github.com/av-ugolkov/lingua-evo/internal/services/vocabulary"
 	"github.com/av-ugolkov/lingua-evo/runtime"
@@ -20,24 +21,27 @@ const (
 
 func (h *Handler) userAddVocabulary(c *fiber.Ctx) error {
 	ctx := c.Context()
-	userID, err := runtime.UserIDFromContext(ctx)
+	userID, err := fext.UserIDFromContext(c)
 	if err != nil {
-		return fiber.NewError(http.StatusUnauthorized,
-			fmt.Sprintf("vocabulary.Handler.addVocabulary: %v", err))
+		return c.Status(http.StatusUnauthorized).JSON(fext.E(err, msgerr.ErrMsgUnauthorized))
 	}
 
 	var data VocabularyRq
 	err = c.BodyParser(&data)
 	if err != nil {
-		return fiber.NewError(http.StatusBadRequest, msgerr.ErrMsgBadRequest)
+		return c.Status(http.StatusBadRequest).JSON(fext.E(err, msgerr.ErrMsgBadRequest))
 	}
 
 	if len(data.Name) > 50 {
-		return fiber.NewError(http.StatusBadRequest, ErrMsgNameTooLong)
+		return c.Status(http.StatusBadRequest).JSON(fext.E(
+			fmt.Errorf("vocabulary.Handler.addVocabulary: name is too long"),
+			ErrMsgNameTooLong))
 	}
 
 	if len(data.Description) > 250 {
-		return fiber.NewError(http.StatusBadRequest, ErrMsgDescriptionTooLong)
+		return c.Status(http.StatusBadRequest).JSON(fext.E(
+			fmt.Errorf("vocabulary.Handler.addVocabulary: description is too long"),
+			ErrMsgDescriptionTooLong))
 	}
 
 	vocab, err := h.vocabSvc.UserAddVocabulary(ctx, vocabulary.Vocab{
@@ -49,39 +53,36 @@ func (h *Handler) userAddVocabulary(c *fiber.Ctx) error {
 		Description:   data.Description,
 	})
 	if err != nil {
-		return fiber.NewError(http.StatusInternalServerError, msgerr.ErrMsgInternal)
+		return c.Status(http.StatusInternalServerError).JSON(fext.E(err, msgerr.ErrMsgInternal))
 	}
 
-	return c.Status(http.StatusOK).JSON(VocabularyRs{
+	return c.Status(http.StatusOK).JSON(fext.D(VocabularyRs{
 		ID:        &vocab.ID,
 		UserID:    &vocab.UserID,
 		CreatedAt: &vocab.CreatedAt,
 		UpdatedAt: &vocab.UpdatedAt,
-	})
+	}))
 }
 
 func (h *Handler) userDeleteVocabulary(c *fiber.Ctx) error {
 	ctx := c.Context()
-	userID, err := runtime.UserIDFromContext(ctx)
+	userID, err := fext.UserIDFromContext(c)
 	if err != nil {
-		return fiber.NewError(http.StatusUnauthorized,
-			fmt.Sprintf("vocabulary.Handler.deleteVocabulary: %v", err))
+		return c.Status(http.StatusUnauthorized).JSON(fext.E(err, msgerr.ErrMsgUnauthorized))
 	}
 
 	name := c.Query(paramsVocabName)
 	if name == runtime.EmptyString {
-		return fiber.NewError(http.StatusInternalServerError,
-			fmt.Sprintf("vocabulary.Handler.deleteVocabulary: %v", err))
+		return c.Status(http.StatusInternalServerError).JSON(fext.E(
+			fmt.Errorf("vocabulary.Handler.deleteVocabulary: %v", err)))
 	}
 
 	err = h.vocabSvc.UserDeleteVocabulary(ctx, userID, name)
 	switch {
 	case errors.Is(err, vocabulary.ErrVocabularyNotFound):
-		return fiber.NewError(http.StatusNotFound,
-			fmt.Sprintf("vocabulary.Handler.deleteVocabulary: %v", err))
+		return c.Status(http.StatusNotFound).JSON(fext.E(err))
 	case err != nil:
-		return fiber.NewError(http.StatusInternalServerError,
-			fmt.Sprintf("vocabulary.Handler.deleteVocabulary: %v", err))
+		return c.Status(http.StatusInternalServerError).JSON(fext.E(err))
 	}
 
 	return c.SendStatus(http.StatusOK)
@@ -89,52 +90,51 @@ func (h *Handler) userDeleteVocabulary(c *fiber.Ctx) error {
 
 func (h *Handler) userGetVocabularies(c *fiber.Ctx) error {
 	ctx := c.Context()
-	userID, err := runtime.UserIDFromContext(ctx)
+	userID, err := fext.UserIDFromContext(c)
 	if err != nil {
-		return fiber.NewError(http.StatusUnauthorized, msgerr.ErrMsgUnauthorized)
+		return c.Status(http.StatusUnauthorized).JSON(fext.E(err, msgerr.ErrMsgUnauthorized))
 	}
 
 	page := c.QueryInt(paramsPage)
 	if page == 0 {
-		return fiber.NewError(http.StatusInternalServerError,
-			fmt.Sprintf("vocabulary.Handler.getVocabularies: %v", err))
+		return c.Status(http.StatusInternalServerError).JSON(fext.E(
+			fmt.Errorf("vocabulary.Handler.getVocabularies: not found query [%s]", paramsPage)))
 	}
 
 	itemsPerPage := c.QueryInt(paramsPerPage)
 	if itemsPerPage == 0 {
-		return fiber.NewError(http.StatusInternalServerError,
-			fmt.Sprintf("vocabulary.Handler.getVocabularies: %v", err))
+		return c.Status(http.StatusInternalServerError).JSON(fext.E(
+			fmt.Errorf("vocabulary.Handler.getVocabularies: not found query [%s]", paramsPerPage)))
 	}
 
 	typeSort := c.QueryInt(paramsSort, -1)
 	if typeSort == -1 {
-		return fiber.NewError(http.StatusInternalServerError,
-			fmt.Sprintf("vocabulary.Handler.getVocabularies: %v", err))
+		return c.Status(http.StatusInternalServerError).JSON(fext.E(
+			fmt.Errorf("vocabulary.Handler.getVocabularies: not found query [%s]", paramsSort)))
 	}
 
 	order := c.QueryInt(paramsOrder, -1)
 	if order == -1 {
-		return fiber.NewError(http.StatusInternalServerError,
-			fmt.Sprintf("vocabulary.Handler.getVocabularies: %v", err))
+		return c.Status(http.StatusInternalServerError).JSON(fext.E(
+			fmt.Errorf("vocabulary.Handler.getVocabularies: not found query [%s]", paramsOrder)))
 	}
 
 	search := c.Query(paramsSearch)
 	nativeLang := c.Query(paramsNativeLang)
 	if nativeLang == runtime.EmptyString {
-		return fiber.NewError(http.StatusInternalServerError,
-			fmt.Sprintf("vocabulary.Handler.getVocabularies: %v", err))
+		return c.Status(http.StatusInternalServerError).JSON(fext.E(
+			fmt.Errorf("vocabulary.Handler.getVocabularies: not found query [%s]", paramsNativeLang)))
 	}
 
 	translateLang := c.Query(paramsTranslateLang)
 	if translateLang == runtime.EmptyString {
-		return fiber.NewError(http.StatusInternalServerError,
-			fmt.Sprintf("vocabulary.Handler.getVocabularies: %v", err))
+		return c.Status(http.StatusInternalServerError).JSON(fext.E(
+			fmt.Errorf("vocabulary.Handler.getVocabularies: not found query [%s]", paramsTranslateLang)))
 	}
 
 	vocabs, totalCount, err := h.vocabSvc.UserGetVocabularies(ctx, userID, page, itemsPerPage, typeSort, order, search, nativeLang, translateLang)
 	if err != nil {
-		return fiber.NewError(http.StatusInternalServerError,
-			fmt.Sprintf("vocabulary.Handler.getVocabularies: %v", err))
+		return c.Status(http.StatusInternalServerError).JSON(fext.E(err))
 	}
 
 	vocabulariesRs := make([]VocabularyRs, 0, len(vocabs))
@@ -152,10 +152,10 @@ func (h *Handler) userGetVocabularies(c *fiber.Ctx) error {
 		})
 	}
 
-	return c.Status(http.StatusOK).JSON(fiber.Map{
+	return c.Status(http.StatusOK).JSON(fext.D(fiber.Map{
 		"vocabularies": vocabulariesRs,
 		"total_count":  totalCount,
-	})
+	}))
 }
 
 func (h *Handler) userEditVocabulary(c *fiber.Ctx) error {
@@ -164,15 +164,19 @@ func (h *Handler) userEditVocabulary(c *fiber.Ctx) error {
 	var data VocabularyRq
 	err := c.BodyParser(&data)
 	if err != nil {
-		return fiber.NewError(http.StatusBadRequest, msgerr.ErrMsgBadRequest)
+		return c.Status(http.StatusBadRequest).JSON(fext.E(err, msgerr.ErrMsgBadRequest))
 	}
 
 	if len(data.Name) > 50 {
-		return fiber.NewError(http.StatusBadRequest, ErrMsgNameTooLong)
+		return c.Status(http.StatusBadRequest).JSON(fext.E(
+			fmt.Errorf("vocabulary.Handler.editVocabulary: name is too long"),
+			ErrMsgNameTooLong))
 	}
 
 	if len(data.Description) > 250 {
-		return fiber.NewError(http.StatusBadRequest, ErrMsgDescriptionTooLong)
+		return c.Status(http.StatusBadRequest).JSON(fext.E(
+			fmt.Errorf("vocabulary.Handler.editVocabulary: description is too long"),
+			ErrMsgDescriptionTooLong))
 	}
 
 	err = h.vocabSvc.UserEditVocabulary(ctx, vocabulary.Vocab{
@@ -182,8 +186,7 @@ func (h *Handler) userEditVocabulary(c *fiber.Ctx) error {
 		Access:      data.Access,
 	})
 	if err != nil {
-		return fiber.NewError(http.StatusInternalServerError,
-			fmt.Sprintf("vocabulary.Handler.editVocabulary: %v", err))
+		return c.Status(http.StatusInternalServerError).JSON(fext.E(err))
 	}
 
 	return c.SendStatus(http.StatusOK)

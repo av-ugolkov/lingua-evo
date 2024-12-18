@@ -30,7 +30,7 @@ func (r *VocabRepo) GetVocabulariesByUser(ctx context.Context, userID uuid.UUID)
 	GROUP BY v.id, u.nickname;`
 	rows, err := r.tr.Query(ctx, query, userID)
 	if err != nil {
-		return nil, fmt.Errorf("vocabulary.delivery.repository.VocabRepo.GetVocabulariesByUser: %w", err)
+		return nil, fmt.Errorf("vocabulary.repository.VocabRepo.GetVocabulariesByUser: %w", err)
 	}
 	defer rows.Close()
 
@@ -49,7 +49,7 @@ func (r *VocabRepo) GetVocabulariesByUser(ctx context.Context, userID uuid.UUID)
 			&vocab.UserName,
 			&vocab.WordsCount)
 		if err != nil {
-			return nil, fmt.Errorf("vocabulary.delivery.repository.VocabRepo.GetVocabularies - scan: %w", err)
+			return nil, fmt.Errorf("vocabulary.repository.VocabRepo.GetVocabularies - scan: %w", err)
 		}
 
 		vocabularies = append(vocabularies, vocab)
@@ -72,7 +72,7 @@ func (r *VocabRepo) GetVocabulariesCountByUser(ctx context.Context, uid uuid.UUI
 	var countLine int
 	err := r.tr.QueryRow(ctx, query, uid, access, search).Scan(&countLine)
 	if err != nil {
-		return 0, fmt.Errorf("vocabulary.delivery.repository.VocabRepo.GetVocabulariesCountByAccess: %w", err)
+		return 0, fmt.Errorf("vocabulary.repository.VocabRepo.GetVocabulariesCountByAccess: %w", err)
 	}
 
 	return countLine, nil
@@ -113,7 +113,7 @@ func (r *VocabRepo) GetSortedVocabulariesByUser(ctx context.Context, userID uuid
 		getSorted(typeSort, sorted.TypeOrder(order)))
 	rows, err := r.tr.Query(ctx, query, userID, accessTypes, search, itemsPerPage, (page-1)*itemsPerPage)
 	if err != nil {
-		return nil, fmt.Errorf("vocabulary.delivery.repository.VocabRepo.GetSortedVocabulariesByUser: %w", err)
+		return nil, fmt.Errorf("vocabulary.repository.VocabRepo.GetSortedVocabulariesByUser: %w", err)
 	}
 	defer rows.Close()
 
@@ -134,7 +134,7 @@ func (r *VocabRepo) GetSortedVocabulariesByUser(ctx context.Context, userID uuid
 			&vocab.CreatedAt,
 		)
 		if err != nil {
-			return nil, fmt.Errorf("vocabulary.delivery.repository.VocabRepo.GetSortedVocabulariesByUser - scan: %w", err)
+			return nil, fmt.Errorf("vocabulary.repository.VocabRepo.GetSortedVocabulariesByUser - scan: %w", err)
 		}
 
 		vocabularies = append(vocabularies, vocab)

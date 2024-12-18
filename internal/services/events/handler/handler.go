@@ -6,9 +6,9 @@ import (
 
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler/middleware"
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/fext"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/msgerr"
 	"github.com/av-ugolkov/lingua-evo/internal/services/events/service"
-	"github.com/av-ugolkov/lingua-evo/runtime"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
@@ -53,30 +53,30 @@ func Create(r *fiber.App, eventsSvc *service.Service) {
 func (h *Handler) getCountEvents(c *fiber.Ctx) error {
 	ctx := c.Context()
 
-	uid, err := runtime.UserIDFromContext(ctx)
+	uid, err := fext.UserIDFromContext(c)
 	if err != nil {
-		return fiber.NewError(http.StatusUnauthorized, msgerr.ErrMsgUnauthorized)
+		return c.Status(http.StatusUnauthorized).JSON(fext.E(err, msgerr.ErrMsgUnauthorized))
 	}
 
 	count, err := h.eventsSvc.GetCountEvents(ctx, uid)
 	if err != nil {
-		return fiber.NewError(http.StatusInternalServerError, msgerr.ErrMsgInternal)
+		return c.Status(http.StatusInternalServerError).JSON(fext.E(err, msgerr.ErrMsgInternal))
 	}
 
-	return c.Status(http.StatusOK).JSON(CountEventsRs{Count: count})
+	return c.Status(http.StatusOK).JSON(fext.D(CountEventsRs{Count: count}))
 }
 
 func (h *Handler) getEvents(c *fiber.Ctx) error {
 	ctx := c.Context()
 
-	uid, err := runtime.UserIDFromContext(ctx)
+	uid, err := fext.UserIDFromContext(c)
 	if err != nil {
-		return fiber.NewError(http.StatusUnauthorized, msgerr.ErrMsgUnauthorized)
+		return c.Status(http.StatusUnauthorized).JSON(fext.E(err, msgerr.ErrMsgUnauthorized))
 	}
 
 	events, err := h.eventsSvc.GetEvents(ctx, uid)
 	if err != nil {
-		return fiber.NewError(http.StatusInternalServerError, msgerr.ErrMsgInternal)
+		return c.Status(http.StatusInternalServerError).JSON(fext.E(err, msgerr.ErrMsgInternal))
 	}
 
 	eventsRs := make([]EventsRs, 0, len(events))
@@ -95,25 +95,25 @@ func (h *Handler) getEvents(c *fiber.Ctx) error {
 		})
 	}
 
-	return c.Status(http.StatusOK).JSON(eventsRs)
+	return c.Status(http.StatusOK).JSON(fext.D(eventsRs))
 }
 
 func (h *Handler) markEventAsWatched(c *fiber.Ctx) error {
 	ctx := c.Context()
 
-	uid, err := runtime.UserIDFromContext(ctx)
+	uid, err := fext.UserIDFromContext(c)
 	if err != nil {
-		return fiber.NewError(http.StatusUnauthorized, msgerr.ErrMsgUnauthorized)
+		return c.Status(http.StatusUnauthorized).JSON(fext.E(err, msgerr.ErrMsgUnauthorized))
 	}
 
 	eid, err := uuid.Parse(c.Query("event_id"))
 	if err != nil {
-		return fiber.NewError(http.StatusBadRequest, msgerr.ErrMsgInternal)
+		return c.Status(http.StatusBadRequest).JSON(fext.E(err, msgerr.ErrMsgInternal))
 	}
 
 	err = h.eventsSvc.ReadEvent(ctx, uid, eid)
 	if err != nil {
-		return fiber.NewError(http.StatusInternalServerError, msgerr.ErrMsgInternal)
+		return c.Status(http.StatusInternalServerError).JSON(fext.E(err, msgerr.ErrMsgInternal))
 	}
 
 	return c.SendStatus(http.StatusOK)

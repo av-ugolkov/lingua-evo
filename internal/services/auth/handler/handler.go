@@ -8,6 +8,7 @@ import (
 	"github.com/av-ugolkov/lingua-evo/internal/config"
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler/middleware"
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/fext"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/msgerr"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/router"
 	auth "github.com/av-ugolkov/lingua-evo/internal/services/auth/service"
@@ -44,26 +45,24 @@ func (h *Handler) refresh(c *fiber.Ctx) error {
 
 	refreshToken := c.Cookies(router.RefreshToken)
 	if refreshToken == runtime.EmptyString {
-		return fiber.NewError(http.StatusBadRequest,
-			fmt.Sprintf("auth.handler.Handler.refresh - refresh token not found"))
+		return c.Status(http.StatusBadRequest).JSON(fext.E(
+			fmt.Errorf("auth.handler.Handler.refresh: refresh token not found")))
 	}
 
-	fingerprint := c.GetReqHeaders()[router.Fingerprint]
+	fingerprint := c.GetReqHeaders()[router.HeaderFingerprint]
 	if fingerprint[0] == runtime.EmptyString {
-		return fiber.NewError(http.StatusBadRequest,
-			fmt.Sprintf("auth.handler.Handler.refresh: fingerprint is empty"))
+		return c.Status(http.StatusBadRequest).JSON(fext.E(
+			fmt.Errorf("auth.handler.Handler.refresh: fingerprint is empty")))
 	}
 
 	uid, err := uuid.Parse(c.Query("uid"))
 	if err != nil {
-		return fiber.NewError(http.StatusBadRequest,
-			fmt.Sprintf("auth.handler.Handler.refresh: %v", err))
+		return c.Status(http.StatusBadRequest).JSON(fext.E(err))
 	}
 
 	sessionRs, err := h.authSvc.RefreshSessionToken(ctx, uid, refreshToken, fingerprint[0])
 	if err != nil {
-		return fiber.NewError(http.StatusInternalServerError,
-			fmt.Sprintf("auth.handler.Handler.refresh: %v", err))
+		return c.Status(http.StatusInternalServerError).JSON(fext.E(err))
 	}
 
 	additionalTime := config.GetConfig().JWT.ExpireRefresh
@@ -77,35 +76,33 @@ func (h *Handler) refresh(c *fiber.Ctx) error {
 		HTTPOnly: true,
 	})
 
-	return c.Status(http.StatusOK).JSON(sessionRs)
+	return c.Status(http.StatusOK).JSON(fext.D(sessionRs))
 }
 
 func (h *Handler) signOut(c *fiber.Ctx) error {
 	ctx := c.Context()
 
-	uid, err := runtime.UserIDFromContext(ctx)
+	uid, err := fext.UserIDFromContext(c)
 	if err != nil {
 		c.ClearCookie(router.RefreshToken, router.CookiePathAuth)
-		return fiber.NewError(http.StatusInternalServerError,
-			msgerr.ErrMsgUnauthorized)
+		return c.Status(http.StatusInternalServerError).JSON(fext.E(err, msgerr.ErrMsgUnauthorized))
 	}
 
 	refreshToken := c.Cookies(router.RefreshToken)
 	if refreshToken == runtime.EmptyString {
-		return fiber.NewError(http.StatusInternalServerError,
-			fmt.Sprintf("auth.handler.Handler.signOut: %v", err))
+		return c.Status(http.StatusInternalServerError).JSON(fext.E(
+			fmt.Errorf("auth.handler.Handler.signOut: refresh token not found")))
 	}
 
-	fingerprint := c.GetReqHeaders()[router.Fingerprint]
+	fingerprint := c.GetReqHeaders()[router.HeaderFingerprint]
 	if fingerprint[0] == runtime.EmptyString {
-		return fiber.NewError(http.StatusInternalServerError,
-			fmt.Sprintf("auth.handler.Handler.signOut: fingerprimt is empty"))
+		return c.Status(http.StatusInternalServerError).JSON(fext.E(
+			fmt.Errorf("auth.handler.Handler.signOut: fingerprimt is empty")))
 	}
 
 	err = h.authSvc.SignOut(ctx, uid, refreshToken, fingerprint[0])
 	if err != nil {
-		return fiber.NewError(http.StatusInternalServerError,
-			fmt.Sprintf("auth.handler.Handler.signOut: %v", err))
+		return c.Status(http.StatusInternalServerError).JSON(fext.E(err))
 	}
 
 	c.ClearCookie(router.RefreshToken, router.CookiePathAuth)

@@ -110,6 +110,8 @@ func ServerStart(cfg *config.Config) {
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
+			slog.Error(err.Error())
+
 			if e, ok := err.(*fiber.Error); ok {
 				return c.Status(e.Code).JSON(fiber.Map{
 					"error": e.Message,

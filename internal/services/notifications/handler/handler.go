@@ -1,10 +1,10 @@
 package handler
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/fext"
 	"github.com/av-ugolkov/lingua-evo/internal/services/notifications"
 
 	"github.com/gofiber/fiber/v2"
@@ -35,21 +35,18 @@ func newHandler(notificationsSvc *notifications.Service) *Handler {
 func (h *Handler) setNotificationVocab(c *fiber.Ctx) error {
 	uid, err := uuid.Parse(c.Query(paramsUserID))
 	if err != nil {
-		return fiber.NewError(http.StatusBadRequest,
-			fmt.Sprintf("notifications.delivery.Handler.setNotificationVocab: %v", err))
+		return c.Status(http.StatusBadRequest).JSON(fext.E(err))
 	}
 
 	vid, err := uuid.Parse(c.Query(paramsVocabID))
 	if err != nil {
-		return fiber.NewError(http.StatusBadRequest,
-			fmt.Sprintf("notifications.delivery.Handler.setNotificationVocab: %v", err))
+		return c.Status(http.StatusBadRequest).JSON(fext.E(err))
 	}
 
 	ok, err := h.notificationsSvc.SetVocabNotification(c.Context(), uid, vid)
 	if err != nil {
-		return fiber.NewError(http.StatusInternalServerError,
-			fmt.Sprintf("notifications.delivery.Handler.setNotificationVocab: %w", err))
+		return c.Status(http.StatusInternalServerError).JSON(fext.E(err))
 	}
 
-	return c.Status(http.StatusOK).JSON(fiber.Map{"notification": ok})
+	return c.Status(http.StatusOK).JSON(fext.D(fiber.Map{"notification": ok}))
 }

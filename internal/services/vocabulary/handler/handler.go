@@ -7,6 +7,8 @@ import (
 
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler/middleware"
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/fext"
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/msgerr"
 	vocabulary "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary/service"
 	"github.com/av-ugolkov/lingua-evo/runtime"
 	"github.com/av-ugolkov/lingua-evo/runtime/access"
@@ -116,55 +118,54 @@ func newHandler(vocabSvc *vocabulary.Service) *Handler {
 
 func (h *Handler) getVocabularies(c *fiber.Ctx) error {
 	ctx := c.Context()
-	uid, _ := runtime.UserIDFromContext(ctx)
+	uid, _ := fext.UserIDFromContext(c)
 
 	page := c.QueryInt(paramsPage)
 	if page == 0 {
-		return fiber.NewError(http.StatusBadRequest,
-			fmt.Sprintf("vocabulary.Handler.getVocabularies: not found query [%s]", paramsPage))
+		return c.Status(http.StatusBadRequest).JSON(fext.E(
+			fmt.Errorf("vocabulary.Handler.getVocabularies: not found query [%s]", paramsPage)))
 	}
 
 	itemsPerPage := c.QueryInt(paramsPerPage)
 	if itemsPerPage == 0 {
-		return fiber.NewError(http.StatusBadRequest,
-			fmt.Sprintf("vocabulary.Handler.getVocabularies: not found query [%s]", paramsPerPage))
+		return c.Status(http.StatusBadRequest).JSON(fext.E(
+			fmt.Errorf("vocabulary.Handler.getVocabularies: not found query [%s]", paramsPerPage)))
 	}
 
 	typeSort := c.QueryInt(paramsSort, -1)
 	if typeSort == -1 {
-		return fiber.NewError(http.StatusBadRequest,
-			fmt.Sprintf("vocabulary.Handler.getVocabularies: not found query [%s]", paramsSort))
+		return c.Status(http.StatusBadRequest).JSON(fext.E(
+			fmt.Errorf("vocabulary.Handler.getVocabularies: not found query [%s]", paramsSort)))
 	}
 
 	order := c.QueryInt(paramsOrder, -1)
 	if order == -1 {
-		return fiber.NewError(http.StatusBadRequest,
-			fmt.Sprintf("vocabulary.Handler.getVocabularies: not found query [%s]", paramsOrder))
+		return c.Status(http.StatusBadRequest).JSON(fext.E(
+			fmt.Errorf("vocabulary.Handler.getVocabularies: not found query [%s]", paramsOrder)))
 	}
 
 	search := c.Query(paramsSearch)
 	nativeLang := c.Query(paramsNativeLang)
 	if nativeLang == runtime.EmptyString {
-		return fiber.NewError(http.StatusBadRequest,
-			fmt.Sprintf("vocabulary.Handler.getVocabularies: not found query [%s]", paramsNativeLang))
+		return c.Status(http.StatusBadRequest).JSON(fext.E(
+			fmt.Errorf("vocabulary.Handler.getVocabularies: not found query [%s]", paramsNativeLang)))
 	}
 
 	translateLang := c.Query(paramsTranslateLang)
 	if translateLang == runtime.EmptyString {
-		return fiber.NewError(http.StatusBadRequest,
-			fmt.Sprintf("vocabulary.Handler.getVocabularies: not found query [%s]", paramsNativeLang))
+		return c.Status(http.StatusBadRequest).JSON(fext.E(
+			fmt.Errorf("vocabulary.Handler.getVocabularies: not found query [%s]", paramsNativeLang)))
 	}
 
 	limitWords := c.QueryInt(paramsLimitWords)
 	if limitWords == 0 {
-		return fiber.NewError(http.StatusBadRequest,
-			fmt.Sprintf("vocabulary.Handler.getVocabularies: not found query [%s]", paramsLimitWords))
+		return c.Status(http.StatusBadRequest).JSON(fext.E(
+			fmt.Errorf("vocabulary.Handler.getVocabularies: not found query [%s]", paramsLimitWords)))
 	}
 
 	vocabularies, totalCount, err := h.vocabSvc.GetVocabularies(ctx, uid, page, itemsPerPage, typeSort, order, search, nativeLang, translateLang, limitWords)
 	if err != nil {
-		return fiber.NewError(http.StatusInternalServerError,
-			fmt.Sprintf("vocabulary.Handler.getVocabularies: %v", err))
+		return c.Status(http.StatusInternalServerError).JSON(fext.E(err))
 	}
 
 	vocabsWithWordsRs := make([]VocabularyWithWords, 0, len(vocabularies))
@@ -187,27 +188,25 @@ func (h *Handler) getVocabularies(c *fiber.Ctx) error {
 		})
 	}
 
-	return c.Status(http.StatusOK).JSON(fiber.Map{
+	return c.Status(http.StatusOK).JSON(fext.D(fiber.Map{
 		"vocabularies": vocabsWithWordsRs,
 		"total_count":  totalCount,
-	})
+	}))
 }
 
 func (h *Handler) getVocabulariesByUser(c *fiber.Ctx) error {
 	ctx := c.Context()
 
-	uid, _ := runtime.UserIDFromContext(ctx)
+	uid, _ := fext.UserIDFromContext(c)
 
 	owner, err := uuid.Parse(c.Query(paramsUserID))
-	if err == nil {
-		return fiber.NewError(http.StatusBadRequest,
-			fmt.Sprintf("vocabulary.Handler.getVocabulariesByUser: %v", err))
+	if err != nil {
+		return c.Status(http.StatusBadRequest).JSON(fext.E(err))
 	}
 
 	vocabs, err := h.vocabSvc.GetVocabulariesByUser(ctx, uid, owner, []access.Type{access.Public, access.Subscribers})
 	if err != nil {
-		return fiber.NewError(http.StatusInternalServerError,
-			fmt.Sprintf("vocabulary.Handler.getVocabulariesByUser: %v", err))
+		return c.Status(http.StatusInternalServerError).JSON(fext.E(err))
 	}
 
 	vocabulariesRs := make([]VocabByUserRs, 0, len(vocabs))
@@ -227,28 +226,26 @@ func (h *Handler) getVocabulariesByUser(c *fiber.Ctx) error {
 		})
 	}
 
-	return c.Status(http.StatusOK).JSON(vocabulariesRs)
+	return c.Status(http.StatusOK).JSON(fext.D(vocabulariesRs))
 }
 
 func (h *Handler) getVocabularyInfo(c *fiber.Ctx) error {
 	ctx := c.Context()
 
-	uid, _ := runtime.UserIDFromContext(ctx)
+	uid, _ := fext.UserIDFromContext(c)
 
 	vid, err := uuid.Parse(c.Query(paramsID))
 	if err != nil {
-		return fiber.NewError(http.StatusBadRequest,
-			fmt.Sprintf("vocabulary.Handler.getVocabulary: %v", err))
+		return c.Status(http.StatusBadRequest).JSON(fext.E(err))
 	}
 
 	vocab, err := h.vocabSvc.GetVocabularyInfo(ctx, uid, vid)
 	if err != nil {
-		return fiber.NewError(http.StatusInternalServerError,
-			fmt.Sprintf("vocabulary.Handler.getVocabulary: %v", err))
+		return c.Status(http.StatusInternalServerError).JSON(fext.E(err))
 	}
 	if vocab.ID == uuid.Nil {
-		return fiber.NewError(http.StatusNotFound,
-			fmt.Sprintf("vocabulary.Handler.getVocabulary - vocabulary not found: %v", err))
+		return c.Status(http.StatusNotFound).JSON(fext.E(
+			fmt.Errorf("vocabulary.Handler.getVocabulary - vocabulary not found")))
 	}
 
 	vocabRs := VocabularyRs{
@@ -266,28 +263,25 @@ func (h *Handler) getVocabularyInfo(c *fiber.Ctx) error {
 		UpdatedAt:     &vocab.UpdatedAt,
 	}
 
-	return c.Status(http.StatusOK).JSON(vocabRs)
+	return c.Status(http.StatusOK).JSON(fext.D(vocabRs))
 }
 
 func (h *Handler) copyVocabulary(c *fiber.Ctx) error {
 	ctx := c.Context()
 
-	uid, err := runtime.UserIDFromContext(ctx)
+	uid, err := fext.UserIDFromContext(c)
 	if err != nil {
-		return fiber.NewError(http.StatusUnauthorized,
-			fmt.Sprintf("vocabulary.Handler.copyVocabulary: %v", err))
+		return c.Status(http.StatusUnauthorized).JSON(fext.E(err, msgerr.ErrMsgUnauthorized))
 	}
 
 	vid, err := uuid.Parse(c.Query(paramsID))
 	if err != nil {
-		return fiber.NewError(http.StatusBadRequest,
-			fmt.Sprintf("vocabulary.Handler.copyVocabulary: %v", err))
+		return c.Status(http.StatusBadRequest).JSON(fext.E(err))
 	}
 
 	err = h.vocabSvc.CopyVocab(ctx, uid, vid)
 	if err != nil {
-		return fiber.NewError(http.StatusInternalServerError,
-			fmt.Sprintf("vocabulary.Handler.copyVocabulary: %v", err))
+		return c.Status(http.StatusInternalServerError).JSON(fext.E(err))
 	}
 
 	return c.SendStatus(http.StatusOK)
@@ -295,12 +289,11 @@ func (h *Handler) copyVocabulary(c *fiber.Ctx) error {
 
 func (h *Handler) getRecommendedVocabularies(c *fiber.Ctx) error {
 	ctx := c.Context()
-	uid, _ := runtime.UserIDFromContext(ctx)
+	uid, _ := fext.UserIDFromContext(c)
 
 	vocabs, err := h.vocabSvc.GetRecommendedVocabularies(ctx, uid)
 	if err != nil {
-		return fiber.NewError(http.StatusInternalServerError,
-			fmt.Sprintf("vocabulary.Handler.getRecommendedVocabularies: %v", err))
+		return c.Status(http.StatusInternalServerError).JSON(fext.E(err))
 	}
 
 	vocabulariesRs := make([]VocabularyRs, 0, len(vocabs))
@@ -317,5 +310,5 @@ func (h *Handler) getRecommendedVocabularies(c *fiber.Ctx) error {
 		})
 	}
 
-	return c.Status(http.StatusOK).JSON(vocabulariesRs)
+	return c.Status(http.StatusOK).JSON(fext.D(vocabulariesRs))
 }
