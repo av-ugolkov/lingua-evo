@@ -1,14 +1,14 @@
 package handler
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
-	"github.com/av-ugolkov/lingua-evo/internal/pkg/gin-ext"
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/fext"
 	"github.com/av-ugolkov/lingua-evo/internal/services/notifications"
 
-	"github.com/gin-gonic/gin"
+	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 )
 
 const (
@@ -20,10 +20,10 @@ type Handler struct {
 	notificationsSvc *notifications.Service
 }
 
-func Create(g *ginext.Engine, notificationsSvc *notifications.Service) {
+func Create(g *fiber.App, notificationsSvc *notifications.Service) {
 	h := newHandler(notificationsSvc)
 
-	g.POST(handler.NotificationVocab, h.setNotificationVocab)
+	g.Post(handler.NotificationVocab, h.setNotificationVocab)
 }
 
 func newHandler(notificationsSvc *notifications.Service) *Handler {
@@ -32,24 +32,21 @@ func newHandler(notificationsSvc *notifications.Service) *Handler {
 	}
 }
 
-func (h *Handler) setNotificationVocab(c *ginext.Context) (int, any, error) {
-	uid, err := c.GetQueryUUID(paramsUserID)
+func (h *Handler) setNotificationVocab(c *fiber.Ctx) error {
+	uid, err := uuid.Parse(c.Query(paramsUserID))
 	if err != nil {
-		return http.StatusBadRequest, nil,
-			fmt.Errorf("notifications.delivery.Handler.setNotificationVocab: %v", err)
+		return c.Status(http.StatusBadRequest).JSON(fext.E(err))
 	}
 
-	vid, err := c.GetQueryUUID(paramsVocabID)
+	vid, err := uuid.Parse(c.Query(paramsVocabID))
 	if err != nil {
-		return http.StatusBadRequest, nil,
-			fmt.Errorf("notifications.delivery.Handler.setNotificationVocab: %v", err)
+		return c.Status(http.StatusBadRequest).JSON(fext.E(err))
 	}
 
-	ok, err := h.notificationsSvc.SetVocabNotification(c.Request.Context(), uid, vid)
+	ok, err := h.notificationsSvc.SetVocabNotification(c.Context(), uid, vid)
 	if err != nil {
-		return http.StatusInternalServerError, nil,
-			fmt.Errorf("notifications.delivery.Handler.setNotificationVocab: %w", err)
+		return c.Status(http.StatusInternalServerError).JSON(fext.E(err))
 	}
 
-	return http.StatusOK, gin.H{"notification": ok}, nil
+	return c.Status(http.StatusOK).JSON(fext.D(fiber.Map{"notification": ok}))
 }

@@ -21,7 +21,7 @@ func (r *Repo) GetVocabNotification(ctx context.Context, uid, vid uuid.UUID) (bo
 
 	result, err := r.tr.Exec(ctx, query, uid, vid)
 	if err != nil {
-		return false, fmt.Errorf("notifications.delivery.repository.GetVocabNotification: %w", err)
+		return false, fmt.Errorf("notifications.repository.GetVocabNotification: %w", err)
 	}
 
 	return result.RowsAffected() == 1, nil
@@ -35,14 +35,14 @@ func (r *Repo) GetVocabNotifications(ctx context.Context, uid uuid.UUID) ([]uuid
 
 	rows, err := r.tr.Query(ctx, query, uid)
 	if err != nil {
-		return nil, fmt.Errorf("notifications.delivery.repository.GetVocabNotifications: %w", err)
+		return nil, fmt.Errorf("notifications.repository.GetVocabNotifications: %w", err)
 	}
 
 	var result []uuid.UUID
 	for rows.Next() {
 		var id uuid.UUID
 		if err := rows.Scan(&id); err != nil {
-			return nil, fmt.Errorf("notifications.delivery.repository.GetVocabNotifications: %w", err)
+			return nil, fmt.Errorf("notifications.repository.GetVocabNotifications: %w", err)
 		}
 		result = append(result, id)
 	}
@@ -55,7 +55,7 @@ func (r *Repo) SetVocabNotification(ctx context.Context, uid, vid uuid.UUID) err
 
 	_, err := r.tr.Exec(ctx, query, uid, vid, time.Now().UTC())
 	if err != nil {
-		return fmt.Errorf("notifications.delivery.repository.SetVocabNotifications: %w", err)
+		return fmt.Errorf("notifications.repository.SetVocabNotifications: %w", err)
 	}
 
 	return nil
@@ -66,7 +66,7 @@ func (r *Repo) DeleteVocabNotification(ctx context.Context, uid, vid uuid.UUID) 
 
 	_, err := r.tr.Exec(ctx, query, uid, vid)
 	if err != nil {
-		return fmt.Errorf("notifications.delivery.repository.DeleteVocabNotification: %w", err)
+		return fmt.Errorf("notifications.repository.DeleteVocabNotification: %w", err)
 	}
 
 	return nil

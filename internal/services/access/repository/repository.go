@@ -22,7 +22,7 @@ func (r *AccessRepo) GetAccesses(ctx context.Context) ([]entity.Access, error) {
 	query := `SELECT id, type, name FROM access`
 	rows, err := r.tr.Query(ctx, query)
 	if err != nil {
-		return nil, fmt.Errorf("access.delivery.repository.AccessRepo.GetAccesses: %w", err)
+		return nil, fmt.Errorf("access.repository.AccessRepo.GetAccesses: %w", err)
 	}
 	defer rows.Close()
 
@@ -30,7 +30,7 @@ func (r *AccessRepo) GetAccesses(ctx context.Context) ([]entity.Access, error) {
 	for rows.Next() {
 		var access entity.Access
 		if err := rows.Scan(&access.ID, &access.Type, &access.Name); err != nil {
-			return nil, fmt.Errorf("access.delivery.repository.AccessRepo.GetAccesses: %w", err)
+			return nil, fmt.Errorf("access.repository.AccessRepo.GetAccesses: %w", err)
 		}
 		accesses = append(accesses, access)
 	}

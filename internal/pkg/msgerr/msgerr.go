@@ -9,19 +9,23 @@ const (
 	ErrMsgBadEmail     = "Email format is invalid"
 )
 
-type ApiError struct {
-	Err error
-	Msg string
+type MsgErr struct {
+	err error
+	msg string
 }
 
 func New(err error, msg string) error {
-	return &ApiError{Err: err, Msg: msg}
+	return &MsgErr{err: err, msg: msg}
 }
 
-func (e *ApiError) Error() string {
-	return e.Err.Error()
+func (e *MsgErr) Error() string {
+	return e.err.Error()
 }
 
-func (e *ApiError) Unwrap() error {
-	return e.Err
+func (e *MsgErr) Unwrap() error {
+	return e.err
+}
+
+func (e *MsgErr) Msg() string {
+	return e.msg
 }

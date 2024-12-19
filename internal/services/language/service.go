@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/av-ugolkov/lingua-evo/internal/pkg/msg-error"
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/msgerr"
 	"github.com/av-ugolkov/lingua-evo/runtime"
 )
 
@@ -26,7 +26,8 @@ func NewService(repo langRepo) *Service {
 func (s *Service) GetLangByCode(ctx context.Context, lang string) (string, error) {
 	language, err := s.repo.GetLanguage(ctx, lang)
 	if err != nil {
-		return runtime.EmptyString, msgerr.New(fmt.Errorf("language.Service.GetLanguage: %v", err), msgerr.ErrMsgInternal)
+		return runtime.EmptyString, msgerr.New(fmt.Errorf("language.Service.GetLanguage: %v", err),
+			msgerr.ErrMsgInternal)
 	}
 
 	return language, nil

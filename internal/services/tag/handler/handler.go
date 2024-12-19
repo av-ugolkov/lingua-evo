@@ -1,14 +1,14 @@
 package handler
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler/middleware"
-	"github.com/av-ugolkov/lingua-evo/internal/pkg/gin-ext"
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/fext"
 	tagSvc "github.com/av-ugolkov/lingua-evo/internal/services/tag"
 
+	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 )
 
@@ -27,10 +27,10 @@ type Handler struct {
 	tagSvc *tagSvc.Service
 }
 
-func Create(r *ginext.Engine, tagSvc *tagSvc.Service) {
+func Create(r *fiber.App, tagSvc *tagSvc.Service) {
 	h := newHandler(tagSvc)
 
-	r.GET(handler.VocabularyTags, middleware.Auth(h.getTags))
+	r.Get(handler.VocabularyTags, middleware.Auth(h.getTags))
 }
 
 func newHandler(tagSvc *tagSvc.Service) *Handler {
@@ -39,19 +39,17 @@ func newHandler(tagSvc *tagSvc.Service) *Handler {
 	}
 }
 
-func (h *Handler) getTags(c *ginext.Context) (int, any, error) {
-	ctx := c.Request.Context()
+func (h *Handler) getTags(c *fiber.Ctx) error {
+	ctx := c.Context()
 
-	vocabID, err := c.GetQueryUUID(paramsVocabID)
+	vocabID, err := uuid.Parse(c.Query(paramsVocabID))
 	if err != nil {
-		return http.StatusBadRequest, nil,
-			fmt.Errorf("tag.delivery.Handler.getTags: %v", err)
+		return c.Status(http.StatusBadRequest).JSON(fext.E(err))
 	}
 
 	tags, err := h.tagSvc.GetTagsInVocabulary(ctx, vocabID)
 	if err != nil {
-		return http.StatusInternalServerError, nil,
-			fmt.Errorf("tag.delivery.Handler.getTags: %v", err)
+		return c.Status(http.StatusInternalServerError).JSON(fext.E(err))
 	}
 
 	tagsRs := make([]TagRs, 0, len(tags))
@@ -62,5 +60,5 @@ func (h *Handler) getTags(c *ginext.Context) (int, any, error) {
 		})
 	}
 
-	return http.StatusOK, tagsRs, nil
+	return c.Status(http.StatusOK).JSON(fext.D(tagsRs))
 }

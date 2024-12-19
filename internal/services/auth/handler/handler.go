@@ -8,139 +8,103 @@ import (
 	"github.com/av-ugolkov/lingua-evo/internal/config"
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler/middleware"
-	"github.com/av-ugolkov/lingua-evo/internal/pkg/gin-ext"
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/fext"
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/msgerr"
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/router"
 	auth "github.com/av-ugolkov/lingua-evo/internal/services/auth/service"
 	"github.com/av-ugolkov/lingua-evo/runtime"
 
-	"github.com/gin-gonic/gin"
+	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
-)
-
-type (
-	CreateSessionRq struct {
-		User        string `json:"user"`
-		Password    string `json:"password"`
-		Fingerprint string `json:"fingerprint"`
-	}
-
-	CreateSessionRs struct {
-		AccessToken string `json:"access_token"`
-	}
-
-	CreateUserRq struct {
-		Password string `json:"password"`
-		Email    string `json:"email"`
-		Code     int    `json:"code"`
-	}
-
-	CreateUserRs struct {
-		UserID uuid.UUID `json:"user_id"`
-	}
-
-	CreateCodeRq struct {
-		Email string `json:"email"`
-	}
-
-	GoogleAuthCode struct {
-		Code     string   `json:"code"`
-		State    string   `json:"state"`
-		Scope    []string `json:"scope"`
-		Authuser int      `json:"authuser"`
-		Prompt   string   `json:"prompt"`
-	}
 )
 
 type Handler struct {
 	authSvc *auth.Service
 }
 
-func Create(r *ginext.Engine, authSvc *auth.Service) {
-	h := newHandler(authSvc)
-
-	r.POST(handler.SignIn, h.signIn)
-	r.POST(handler.SignUp, h.signUp)
-	r.GET(handler.Refresh, h.refresh)
-	r.POST(handler.SignOut, middleware.Auth(h.signOut))
-	r.POST(handler.SendCode, h.sendCode)
-	r.GET(handler.GoogleAuth, h.googleAuthUrl)
-	r.POST(handler.GoogleAuth, h.googleAuth)
-}
-
-func newHandler(authSvc *auth.Service) *Handler {
-	return &Handler{
+func Create(r *fiber.App, authSvc *auth.Service) {
+	h := &Handler{
 		authSvc: authSvc,
 	}
+
+	r.Get(handler.Refresh, h.refresh)
+	r.Post(handler.SignOut, middleware.Auth(h.signOut))
+
+	h.initEmailHandler(r)
+	h.initGoogleHandler(r)
 }
 
-func (h *Handler) refresh(c *ginext.Context) (int, any, error) {
-	ctx := c.Request.Context()
+func (h *Handler) refresh(c *fiber.Ctx) error {
+	ctx := c.Context()
 	var err error
 	defer func() {
 		if err != nil {
-			c.DeleteCookie(ginext.RefreshToken, "/auth")
+			c.ClearCookie(router.RefreshToken, router.CookiePathAuth)
 		}
 	}()
 
-	refreshToken, err := c.Cookie(ginext.RefreshToken)
-	if err != nil {
-		return http.StatusBadRequest, nil, fmt.Errorf("auth.handler.Handler.refresh: %v", err)
-	}
+	refreshToken := c.Cookies(router.RefreshToken)
 	if refreshToken == runtime.EmptyString {
-		return http.StatusBadRequest, nil, fmt.Errorf("auth.handler.Handler.refresh - refresh token not found")
+		return c.Status(http.StatusBadRequest).JSON(fext.E(
+			fmt.Errorf("auth.handler.Handler.refresh: refresh token not found")))
 	}
 
-	fingerprint := c.GetHeader(ginext.Fingerprint)
-	if fingerprint == runtime.EmptyString {
-		return http.StatusBadRequest, nil,
-			fmt.Errorf("auth.handler.Handler.refresh: fingerprint is empty")
+	fingerprint := c.GetReqHeaders()[router.HeaderFingerprint]
+	if fingerprint[0] == runtime.EmptyString {
+		return c.Status(http.StatusBadRequest).JSON(fext.E(
+			fmt.Errorf("auth.handler.Handler.refresh: fingerprint is empty")))
 	}
 
-	uid, err := c.GetQueryUUID("uid")
+	uid, err := uuid.Parse(c.Query("uid"))
 	if err != nil {
-		return http.StatusBadRequest, nil,
-			fmt.Errorf("auth.handler.Handler.refresh: %v", err)
+		return c.Status(http.StatusBadRequest).JSON(fext.E(err))
 	}
 
-	tokens, err := h.authSvc.RefreshSessionToken(ctx, uid, refreshToken, fingerprint)
+	sessionRs, err := h.authSvc.RefreshSessionToken(ctx, uid, refreshToken, fingerprint[0])
 	if err != nil {
-		return http.StatusInternalServerError, nil,
-			fmt.Errorf("auth.handler.Handler.refresh: %v", err)
-	}
-
-	sessionRs := &CreateSessionRs{
-		AccessToken: tokens.AccessToken,
+		return c.Status(http.StatusInternalServerError).JSON(fext.E(err))
 	}
 
 	additionalTime := config.GetConfig().JWT.ExpireRefresh
 	duration := time.Duration(additionalTime) * time.Second
+	c.Cookie(&fiber.Cookie{
+		Name:     router.RefreshToken,
+		Value:    refreshToken,
+		MaxAge:   int(duration.Seconds()),
+		Path:     router.CookiePathAuth,
+		Secure:   true,
+		HTTPOnly: true,
+	})
 
-	c.SetCookieRefreshToken(tokens.RefreshToken, duration)
-	return http.StatusOK, sessionRs, nil
+	return c.Status(http.StatusOK).JSON(fext.D(sessionRs))
 }
 
-func (h *Handler) signOut(c *ginext.Context) (int, any, error) {
-	ctx := c.Request.Context()
+func (h *Handler) signOut(c *fiber.Ctx) error {
+	ctx := c.Context()
 
-	uid, err := runtime.UserIDFromContext(ctx)
+	uid, err := fext.UserIDFromContext(c)
 	if err != nil {
-		return http.StatusInternalServerError, nil, fmt.Errorf("auth.handler.Handler.signOut: %v", err)
+		c.ClearCookie(router.RefreshToken, router.CookiePathAuth)
+		return c.Status(http.StatusInternalServerError).JSON(fext.E(err, msgerr.ErrMsgUnauthorized))
 	}
 
-	refreshToken, err := c.Cookie(ginext.RefreshToken)
+	refreshToken := c.Cookies(router.RefreshToken)
+	if refreshToken == runtime.EmptyString {
+		return c.Status(http.StatusInternalServerError).JSON(fext.E(
+			fmt.Errorf("auth.handler.Handler.signOut: refresh token not found")))
+	}
+
+	fingerprint := c.GetReqHeaders()[router.HeaderFingerprint]
+	if fingerprint[0] == runtime.EmptyString {
+		return c.Status(http.StatusInternalServerError).JSON(fext.E(
+			fmt.Errorf("auth.handler.Handler.signOut: fingerprimt is empty")))
+	}
+
+	err = h.authSvc.SignOut(ctx, uid, refreshToken, fingerprint[0])
 	if err != nil {
-		return http.StatusInternalServerError, nil, fmt.Errorf("auth.handler.Handler.signOut: %v", err)
+		return c.Status(http.StatusInternalServerError).JSON(fext.E(err))
 	}
 
-	fingerprint := c.GetHeader(ginext.Fingerprint)
-	if fingerprint == runtime.EmptyString {
-		return http.StatusInternalServerError, nil, fmt.Errorf("auth.handler.Handler.signOut: fingerprimt is empty")
-	}
-
-	err = h.authSvc.SignOut(ctx, uid, refreshToken, fingerprint)
-	if err != nil {
-		return http.StatusInternalServerError, nil, fmt.Errorf("auth.handler.Handler.signOut: %v", err)
-	}
-
-	c.DeleteCookie(ginext.RefreshToken, "/auth")
-	return http.StatusOK, gin.H{}, nil
+	c.ClearCookie(router.RefreshToken, router.CookiePathAuth)
+	return c.SendStatus(http.StatusOK)
 }

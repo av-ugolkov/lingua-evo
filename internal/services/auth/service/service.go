@@ -11,6 +11,7 @@ import (
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/aes"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/utils"
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/auth"
+	"github.com/av-ugolkov/lingua-evo/internal/services/auth/dto"
 	entityUser "github.com/av-ugolkov/lingua-evo/internal/services/user"
 
 	"github.com/google/uuid"
@@ -62,7 +63,7 @@ func NewService(repo sessionRepo, userSvc userSvc, email emailSvc) *Service {
 	}
 }
 
-func (s *Service) RefreshSessionToken(ctx context.Context, uid uuid.UUID, oldTokenID string, fingerprint string) (*entity.Tokens, error) {
+func (s *Service) RefreshSessionToken(ctx context.Context, uid uuid.UUID, oldTokenID string, fingerprint string) (*dto.CreateSessionRs, error) {
 	oldRefreshSession, err := s.repo.GetSession(ctx, fmt.Sprintf("%s:%s:%s", uid, fingerprint, RedisRefreshToken))
 	if err != nil {
 		return nil, fmt.Errorf("auth.Service.RefreshSessionToken: %v", err)
@@ -98,14 +99,12 @@ func (s *Service) RefreshSessionToken(ctx context.Context, uid uuid.UUID, oldTok
 		return nil, fmt.Errorf("auth.Service.RefreshSessionToken: %v", err)
 	}
 
-	tokens.RefreshToken = oldRefreshSession.RefreshToken
-
 	err = s.userSvc.UpdateVisitedAt(ctx, oldRefreshSession.UserID)
 	if err != nil {
 		return nil, fmt.Errorf("auth.Service.RefreshSessionToken: %v", err)
 	}
 
-	return tokens, nil
+	return dto.CreateSessionToDTO(tokens), nil
 }
 
 func (s *Service) SignOut(ctx context.Context, uid uuid.UUID, refreshToken string, fingerprint string) error {

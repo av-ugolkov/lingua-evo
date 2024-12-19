@@ -9,24 +9,26 @@ import (
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/token"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/utils"
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/auth"
+	"github.com/av-ugolkov/lingua-evo/internal/services/auth/dto"
 	entityUser "github.com/av-ugolkov/lingua-evo/internal/services/user"
+	"github.com/av-ugolkov/lingua-evo/runtime"
 
 	"github.com/google/uuid"
 )
 
-func (s *Service) SignIn(ctx context.Context, user, password, fingerprint string, refreshTokenID uuid.UUID) (*entity.Tokens, error) {
+func (s *Service) SignIn(ctx context.Context, user, password, fingerprint string, refreshTokenID uuid.UUID) (*dto.CreateSessionRs, string, error) {
 	u, err := s.userSvc.GetUser(ctx, user)
 	if err != nil {
-		return nil, fmt.Errorf("auth.Service.SignIn: %w", err)
+		return nil, runtime.EmptyString, fmt.Errorf("auth.Service.SignIn: %w", err)
 	}
 
 	pswHash, err := s.userSvc.GetPswHash(ctx, u.ID)
 	if err != nil {
-		return nil, fmt.Errorf("auth.Service.SignIn: %w", err)
+		return nil, runtime.EmptyString, fmt.Errorf("auth.Service.SignIn: %w", err)
 	}
 
 	if err := utils.CheckPasswordHash(password, pswHash); err != nil {
-		return nil, fmt.Errorf("auth.Service.SignIn - [%w]: %v", entity.ErrWrongPassword, err)
+		return nil, runtime.EmptyString, fmt.Errorf("auth.Service.SignIn - [%w]: %v", entity.ErrWrongPassword, err)
 	}
 
 	additionalTime := config.GetConfig().JWT.ExpireAccess
@@ -41,17 +43,17 @@ func (s *Service) SignIn(ctx context.Context, user, password, fingerprint string
 
 	err = s.addRefreshSession(ctx, fmt.Sprintf("%s:%s:%s", u.ID, fingerprint, RedisRefreshToken), session)
 	if err != nil {
-		return nil, fmt.Errorf("auth.Service.SignIn: %v", err)
+		return nil, runtime.EmptyString, fmt.Errorf("auth.Service.SignIn: %v", err)
 	}
 
 	accessToken, err := token.NewJWTToken(u.ID, refreshTokenID.String(), now.Add(duration))
 	if err != nil {
-		return nil, fmt.Errorf("auth.Service.SignIn: %v", err)
+		return nil, runtime.EmptyString, fmt.Errorf("auth.Service.SignIn: %v", err)
 	}
 
 	err = s.userSvc.UpdateVisitedAt(ctx, u.ID)
 	if err != nil {
-		return nil, fmt.Errorf("auth.Service.SignIn: %v", err)
+		return nil, runtime.EmptyString, fmt.Errorf("auth.Service.SignIn: %v", err)
 	}
 
 	tokens := &entity.Tokens{
@@ -59,7 +61,7 @@ func (s *Service) SignIn(ctx context.Context, user, password, fingerprint string
 		RefreshToken: session.RefreshToken,
 	}
 
-	return tokens, nil
+	return dto.CreateSessionToDTO(tokens), session.RefreshToken, nil
 }
 
 func (s *Service) SignUp(ctx context.Context, usr entity.User, fingerprint string) (uuid.UUID, error) {
