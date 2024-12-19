@@ -5,10 +5,10 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler/middleware"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/fext"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/msgerr"
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/valid"
 	dictionarySvc "github.com/av-ugolkov/lingua-evo/internal/services/dictionary"
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/dictionary"
 	"github.com/av-ugolkov/lingua-evo/runtime"
@@ -23,7 +23,7 @@ const (
 
 const (
 	QueryParamText             = "text"
-	QueryParamLangCode         = "lang_code"
+	QueryParamLangCode         = "lang-code"
 	QueryParamRandomWordsLimit = "limit"
 	QueryParamPage             = "page"
 	QueryParamPerPage          = "per_page"
@@ -68,11 +68,15 @@ type Handler struct {
 func Create(r *fiber.App, dictSvc *dictionarySvc.Service) {
 	h := newHandler(dictSvc)
 
-	r.Get(handler.Dictionary, h.getDictionary)
-	r.Post(handler.DictionaryWord, middleware.Auth(h.addWord))
-	r.Get(handler.DictionaryWord, h.getWord)
-	r.Get(handler.GetRandomWord, h.getRandomWords)
-	r.Get(handler.WordPronunciation, middleware.Auth(h.getPronunciation))
+	r.Route("/dictionary", func(r fiber.Router) {
+		r.Get("/", h.getDictionary)
+		r.Route("/word", func(r fiber.Router) {
+			r.Post("/", middleware.Auth(h.addWord))
+			r.Get("/", h.getWord)
+			r.Get("/random", h.getRandomWords)
+			r.Get("/pronunciation", middleware.Auth(h.getPronunciation))
+		})
+	})
 }
 
 func newHandler(dictSvc *dictionarySvc.Service) *Handler {
@@ -193,16 +197,24 @@ func (h *Handler) getWord(c *fiber.Ctx) error {
 
 func (h *Handler) getRandomWords(c *fiber.Ctx) error {
 	ctx := c.Context()
-
-	langCode := c.Query(QueryParamLangCode)
-	if langCode == runtime.EmptyString {
-		return c.Status(http.StatusBadRequest).JSON(fext.E(
-			fmt.Errorf("dictionary.Handler.getRandomWords: not found query [%s]", QueryParamLangCode),
-			"You must specify the language code"))
+	fmt.Println(c)
+	var queries struct {
+		Count int `query:"count" validate:"gte=1,lte=10"`
+	}
+	err := c.QueryParser(&queries)
+	if err != nil {
+		return c.Status(http.StatusBadRequest).JSON(fext.E(err, msgerr.ErrMsgBadRequest))
+	}
+	if queries.Count == 0 {
+		queries.Count = 1
 	}
 
-	count := c.QueryInt(QueryParamRandomWordsLimit, 1)
-	word, err := h.dictSvc.GetRandomWords(ctx, langCode, count)
+	err = valid.Struct(queries)
+	if err != nil {
+		return c.Status(http.StatusBadRequest).JSON(fext.E(err, msgerr.ErrMsgValidation))
+	}
+
+	word, err := h.dictSvc.GetRandomWords(ctx, queries.Count)
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(fext.E(err, msgerr.ErrMsgInternal))
 	}

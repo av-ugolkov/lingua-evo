@@ -6,6 +6,7 @@ const (
 	ErrMsgForbidden    = "Access denied."
 	ErrMsgInternal     = "Sorry, something went wrong."
 	ErrMsgBadRequest   = "You don't fill one or several fields."
+	ErrMsgValidation   = "One or more fields are not valid."
 	ErrMsgBadEmail     = "Email format is invalid"
 )
 

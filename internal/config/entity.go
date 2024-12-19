@@ -46,6 +46,7 @@ type JWT struct {
 type Service struct {
 	Port           uint16   `yaml:"port" env-default:"8080"`
 	AllowedOrigins []string `yaml:"allowed_origins" env-default:"http://localhost:5173"`
+	EnableSwagger  bool     `yaml:"enable_swagger" env-default:"false"`
 }
 
 type DbSQL struct {

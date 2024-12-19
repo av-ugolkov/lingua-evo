@@ -20,6 +20,7 @@ service:
     port: 5000
     allowed_origins:
         - "http://localhost:5173"
+    enable_swagger: true
 postgres:
     name: pg-lingua-evo
     user: lingua

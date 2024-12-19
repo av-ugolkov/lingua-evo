@@ -12,11 +12,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/cors"
-	"github.com/jackc/pgx/v5/pgxpool"
-	jsoniter "github.com/json-iterator/go"
-
 	"github.com/av-ugolkov/lingua-evo/internal/closer"
 	"github.com/av-ugolkov/lingua-evo/internal/config"
 	pg "github.com/av-ugolkov/lingua-evo/internal/db/postgres"
@@ -41,6 +36,9 @@ import (
 	eventService "github.com/av-ugolkov/lingua-evo/internal/services/events/service"
 	exampleService "github.com/av-ugolkov/lingua-evo/internal/services/example"
 	exampleRepository "github.com/av-ugolkov/lingua-evo/internal/services/example/repository"
+	gamesHandler "github.com/av-ugolkov/lingua-evo/internal/services/games/handler"
+	gamesRepository "github.com/av-ugolkov/lingua-evo/internal/services/games/repository"
+	gamesService "github.com/av-ugolkov/lingua-evo/internal/services/games/service"
 	langService "github.com/av-ugolkov/lingua-evo/internal/services/language"
 	languageHandler "github.com/av-ugolkov/lingua-evo/internal/services/language/handler"
 	langRepository "github.com/av-ugolkov/lingua-evo/internal/services/language/repository"
@@ -61,6 +59,12 @@ import (
 	vocabHandler "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary/handler"
 	vocabRepository "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary/repository"
 	vocabService "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary/service"
+
+	"github.com/gofiber/contrib/swagger"
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/jackc/pgx/v5/pgxpool"
+	jsoniter "github.com/json-iterator/go"
 )
 
 func ServerStart(cfg *config.Config) {
@@ -130,6 +134,13 @@ func ServerStart(cfg *config.Config) {
 		AllowCredentials: true,
 		AllowHeaders:     "Authorization,Content-Type,Fingerprint",
 	}))
+	if cfg.Service.EnableSwagger {
+		router.Use(swagger.New(swagger.Config{
+			FilePath: "../openapi/openapi.yml",
+			Path:     "/openapi",
+			CacheAge: 1,
+		}))
+	}
 	initServer(cfg, router, pgxPool, redisDB)
 
 	address := fmt.Sprintf(":%d", cfg.Service.Port)
@@ -202,6 +213,8 @@ func initServer(cfg *config.Config, r *fiber.App, pgxPool *pgxpool.Pool, redis *
 	authRepo := authRepository.NewRepo(redis)
 	authSvc := authService.NewService(authRepo, userSvc, emailSvc)
 	supportSvc := supportService.NewService(emailSvc)
+	gamesRepo := gamesRepository.New(tr)
+	gamesSvc := gamesService.New(gamesRepo)
 
 	slog.Info("create handlers")
 	userHandler.Create(r, userSvc)
@@ -215,6 +228,7 @@ func initServer(cfg *config.Config, r *fiber.App, pgxPool *pgxpool.Pool, redis *
 	notificationHandler.Create(r, notificationSvc)
 	supportHandler.Create(r, supportSvc)
 	eventsHandler.Create(r, eventsSvc)
+	gamesHandler.Create(r, gamesSvc)
 
 	slog.Info("end init services")
 }
