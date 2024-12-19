@@ -272,7 +272,7 @@ func (r *DictionaryRepo) DeleteWordByText(ctx context.Context, w *entity.DictWor
 	return nil
 }
 
-func (r *DictionaryRepo) GetRandomWords(ctx context.Context, langCode string, count int) ([]entity.DictWord, error) {
+func (r *DictionaryRepo) GetRandomWords(ctx context.Context, count int) ([]entity.DictWord, error) {
 	const query = `
 		SELECT 
 			id, 

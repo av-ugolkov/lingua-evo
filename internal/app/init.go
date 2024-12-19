@@ -12,11 +12,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/cors"
-	"github.com/jackc/pgx/v5/pgxpool"
-	jsoniter "github.com/json-iterator/go"
-
 	"github.com/av-ugolkov/lingua-evo/internal/closer"
 	"github.com/av-ugolkov/lingua-evo/internal/config"
 	pg "github.com/av-ugolkov/lingua-evo/internal/db/postgres"
@@ -64,6 +59,12 @@ import (
 	vocabHandler "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary/handler"
 	vocabRepository "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary/repository"
 	vocabService "github.com/av-ugolkov/lingua-evo/internal/services/vocabulary/service"
+
+	"github.com/gofiber/contrib/swagger"
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/jackc/pgx/v5/pgxpool"
+	jsoniter "github.com/json-iterator/go"
 )
 
 func ServerStart(cfg *config.Config) {
@@ -133,6 +134,13 @@ func ServerStart(cfg *config.Config) {
 		AllowCredentials: true,
 		AllowHeaders:     "Authorization,Content-Type,Fingerprint",
 	}))
+	if cfg.Service.EnableSwagger {
+		router.Use(swagger.New(swagger.Config{
+			FilePath: "../openapi/openapi.yml",
+			Path:     "/openapi",
+			CacheAge: 1,
+		}))
+	}
 	initServer(cfg, router, pgxPool, redisDB)
 
 	address := fmt.Sprintf(":%d", cfg.Service.Port)
