@@ -2,17 +2,15 @@ package handler
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler/middleware"
-	ginext "github.com/av-ugolkov/lingua-evo/internal/pkg/gin-ext"
-	msgerr "github.com/av-ugolkov/lingua-evo/internal/pkg/msg-error"
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/fext"
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/msgerr"
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/user"
-	"github.com/av-ugolkov/lingua-evo/runtime"
 
-	"github.com/gin-gonic/gin"
+	"github.com/gofiber/fiber/v2"
 )
 
 type (
@@ -32,31 +30,27 @@ type (
 	}
 )
 
-func (h *Handler) initSettingsHandler(g *ginext.Engine) {
-	g.GET(handler.AccountSettingsAccount, middleware.Auth(h.getSettingsAccount))
-	g.GET(handler.AccountSettingsPersonalInfo, middleware.Auth(h.getSettingsPersonalInfo))
-	g.GET(handler.AccountSettingsEmailNotif, middleware.Auth(h.getSettingsEmailNotif))
-	g.POST(handler.AccountSettingsUpdatePswCode, middleware.Auth(h.updatePswSendCode))
-	g.POST(handler.AccountSettingsUpdatePsw, middleware.Auth(h.updatePsw))
-	g.POST(handler.AccountSettingsUpdateEmailCode, middleware.Auth(h.updateEmailSendCode))
-	g.POST(handler.AccountSettingsUpdateEmail, middleware.Auth(h.updateEmail))
-	g.POST(handler.AccountSettingsUpdateNickname, middleware.Auth(h.updateNickname))
+func (h *Handler) initSettingsHandler(g *fiber.App) {
+	g.Get(handler.AccountSettingsAccount, middleware.Auth(h.getSettingsAccount))
+	g.Get(handler.AccountSettingsPersonalInfo, middleware.Auth(h.getSettingsPersonalInfo))
+	g.Get(handler.AccountSettingsEmailNotif, middleware.Auth(h.getSettingsEmailNotif))
+	g.Post(handler.AccountSettingsUpdatePswCode, middleware.Auth(h.updatePswSendCode))
+	g.Post(handler.AccountSettingsUpdatePsw, middleware.Auth(h.updatePsw))
+	g.Post(handler.AccountSettingsUpdateEmailCode, middleware.Auth(h.updateEmailSendCode))
+	g.Post(handler.AccountSettingsUpdateEmail, middleware.Auth(h.updateEmail))
+	g.Post(handler.AccountSettingsUpdateNickname, middleware.Auth(h.updateNickname))
 }
 
-func (h *Handler) getSettingsAccount(c *ginext.Context) (int, any, error) {
-	ctx := c.Request.Context()
-
-	uid, err := runtime.UserIDFromContext(ctx)
+func (h *Handler) getSettingsAccount(c *fiber.Ctx) error {
+	ctx := c.Context()
+	uid, err := fext.UserIDFromContext(c)
 	if err != nil {
-		return http.StatusUnauthorized, nil,
-			msgerr.New(fmt.Errorf("user.handler.Handler.getSettingsAccount: %v", err),
-				msgerr.ErrMsgUnauthorized)
+		return c.Status(http.StatusUnauthorized).JSON(fext.E(err, msgerr.ErrMsgUnauthorized))
 	}
 
 	usr, err := h.userSvc.GetUserByID(ctx, uid)
 	if err != nil {
-		return http.StatusInternalServerError, nil,
-			fmt.Errorf("user.handler.Handler.getSettingsAccount: %v", err)
+		return c.Status(http.StatusInternalServerError).JSON(fext.E(err))
 	}
 
 	userRs := UserRs{
@@ -64,146 +58,125 @@ func (h *Handler) getSettingsAccount(c *ginext.Context) (int, any, error) {
 		Email:    usr.Email,
 	}
 
-	return http.StatusOK, userRs, nil
+	return c.Status(http.StatusOK).JSON(fext.D(userRs))
 }
 
-func (h *Handler) getSettingsPersonalInfo(c *ginext.Context) (int, any, error) {
-	return http.StatusOK, nil, nil
+func (h *Handler) getSettingsPersonalInfo(c *fiber.Ctx) error {
+	return c.SendStatus(http.StatusOK)
 }
 
-func (h *Handler) getSettingsEmailNotif(c *ginext.Context) (int, any, error) {
-	return http.StatusOK, nil, nil
+func (h *Handler) getSettingsEmailNotif(c *fiber.Ctx) error {
+	return c.SendStatus(http.StatusOK)
 }
 
-func (h *Handler) updatePswSendCode(c *ginext.Context) (int, any, error) {
-	ctx := c.Request.Context()
+func (h *Handler) updatePswSendCode(c *fiber.Ctx) error {
+	ctx := c.Context()
 
-	uid, err := runtime.UserIDFromContext(ctx)
+	uid, err := fext.UserIDFromContext(c)
 	if err != nil {
-		return http.StatusUnauthorized, nil,
-			msgerr.New(fmt.Errorf("user.handler.Handler.updatePswSendCode: %v", err),
-				msgerr.ErrMsgUnauthorized)
+		return c.Status(http.StatusUnauthorized).JSON(fext.E(err, msgerr.ErrMsgUnauthorized))
 	}
 
 	var data UpdatePswRq
-	err = c.Bind(&data)
+	err = c.BodyParser(&data)
 	if err != nil {
-		return http.StatusBadRequest, nil,
-			msgerr.New(fmt.Errorf("user.handler.Handler.updatePswSendCode: %v", err),
-				msgerr.ErrMsgBadRequest)
+		return c.Status(http.StatusBadRequest).JSON(fext.E(err, msgerr.ErrMsgBadRequest))
 	}
 
 	ttl, err := h.userSvc.SendSecurityCodeForUpdatePsw(ctx, uid, data.OldPsw)
 	switch {
 	case errors.Is(err, entity.ErrDuplicateCode):
-		return http.StatusConflict, gin.H{"ttl": ttl}, fmt.Errorf("user.handler.Handler.updatePswSendCode: %w", err)
+		return c.Status(http.StatusConflict).JSON(fext.DE(fiber.Map{"ttl": ttl}, err))
 	case err != nil:
-		return http.StatusInternalServerError, nil,
-			fmt.Errorf("user.handler.Handler.updatePswSendCode: %w", err)
+		return c.Status(http.StatusInternalServerError).JSON(fext.E(err))
 	}
 
-	return http.StatusOK, nil, nil
+	return c.SendStatus(http.StatusOK)
 }
 
-func (h *Handler) updatePsw(c *ginext.Context) (int, any, error) {
-	ctx := c.Request.Context()
+func (h *Handler) updatePsw(c *fiber.Ctx) error {
+	ctx := c.Context()
 
-	uid, err := runtime.UserIDFromContext(ctx)
+	uid, err := fext.UserIDFromContext(c)
 	if err != nil {
-		return http.StatusUnauthorized, nil,
-			msgerr.New(fmt.Errorf("user.handler.Handler.updatePsw: %v", err),
-				msgerr.ErrMsgUnauthorized)
+		return c.Status(http.StatusUnauthorized).JSON(fext.E(err, msgerr.ErrMsgUnauthorized))
 	}
 
 	var data UpdatePswRq
-	err = c.Bind(&data)
+	err = c.BodyParser(&data)
 	if err != nil {
-		return http.StatusBadRequest, nil,
-			msgerr.New(fmt.Errorf("user.handler.Handler.updatePsw: %v", err),
-				msgerr.ErrMsgBadRequest)
+		return c.Status(http.StatusBadRequest).JSON(fext.E(err, msgerr.ErrMsgBadRequest))
 	}
 
 	err = h.userSvc.UpdatePsw(ctx, uid, data.OldPsw, data.NewPsw, data.Code)
 	if err != nil {
-		return http.StatusInternalServerError, nil,
-			fmt.Errorf("user.handler.Handler.updatePsw: %w", err)
+		return c.Status(http.StatusInternalServerError).JSON(fext.E(err))
 	}
 
-	return http.StatusOK, nil, nil
+	return c.SendStatus(http.StatusOK)
 }
 
-func (h *Handler) updateEmailSendCode(c *ginext.Context) (int, any, error) {
-	ctx := c.Request.Context()
+func (h *Handler) updateEmailSendCode(c *fiber.Ctx) error {
+	ctx := c.Context()
 
-	uid, err := runtime.UserIDFromContext(ctx)
+	uid, err := fext.UserIDFromContext(c)
 	if err != nil {
-		return http.StatusUnauthorized, nil,
-			msgerr.New(fmt.Errorf("user.handler.Handler.updateEmailSendCode: %v", err),
-				msgerr.ErrMsgUnauthorized)
+		return c.Status(http.StatusUnauthorized).JSON(fext.E(err, msgerr.ErrMsgUnauthorized))
 	}
 
 	ttl, err := h.userSvc.SendSecurityCodeForUpdateEmail(ctx, uid)
 	switch {
 	case errors.Is(err, entity.ErrDuplicateCode):
-		return http.StatusConflict, gin.H{"ttl": ttl}, fmt.Errorf("user.handler.Handler.updateEmailSendCode: %w", err)
+		return c.Status(http.StatusConflict).JSON(fext.DE(fiber.Map{"ttl": ttl}, err))
 	case err != nil:
-		return http.StatusInternalServerError, nil,
-			fmt.Errorf("user.handler.Handler.updateEmailSendCode: %w", err)
+		return c.Status(http.StatusInternalServerError).JSON(fext.E(err))
 	}
 
-	return http.StatusOK, gin.H{"msg": "Could you check your email. We have sent you a code for updating your email"}, nil
+	return c.Status(http.StatusOK).JSON(fext.D(fiber.Map{
+		"msg": "Could you check your email. We have sent you a code for updating your email",
+	}))
 }
 
-func (h *Handler) updateEmail(c *ginext.Context) (int, any, error) {
-	ctx := c.Request.Context()
+func (h *Handler) updateEmail(c *fiber.Ctx) error {
+	ctx := c.Context()
 
-	uid, err := runtime.UserIDFromContext(ctx)
+	uid, err := fext.UserIDFromContext(c)
 	if err != nil {
-		return http.StatusUnauthorized, nil,
-			msgerr.New(fmt.Errorf("user.handler.Handler.updateEmail: %v", err),
-				msgerr.ErrMsgUnauthorized)
+		return c.Status(http.StatusUnauthorized).JSON(fext.E(err, msgerr.ErrMsgUnauthorized))
 	}
 
 	var data UpdateEmailRq
-	err = c.Bind(&data)
+	err = c.BodyParser(&data)
 	if err != nil {
-		return http.StatusBadRequest, nil,
-			msgerr.New(fmt.Errorf("user.handler.Handler.updateEmail: %v", err),
-				msgerr.ErrMsgBadRequest)
+		return c.Status(http.StatusBadRequest).JSON(fext.E(err, msgerr.ErrMsgBadRequest))
 	}
 
 	err = h.userSvc.UpdateEmail(ctx, uid, data.NewEmail, data.Code)
 	if err != nil {
-		return http.StatusInternalServerError, nil,
-			fmt.Errorf("user.handler.Handler.updateEmail: %w", err)
+		return c.Status(http.StatusInternalServerError).JSON(fext.E(err))
 	}
 
-	return http.StatusOK, nil, nil
+	return c.SendStatus(http.StatusOK)
 }
 
-func (h *Handler) updateNickname(c *ginext.Context) (int, any, error) {
-	ctx := c.Request.Context()
+func (h *Handler) updateNickname(c *fiber.Ctx) error {
+	ctx := c.Context()
 
-	uid, err := runtime.UserIDFromContext(ctx)
+	uid, err := fext.UserIDFromContext(c)
 	if err != nil {
-		return http.StatusUnauthorized, nil,
-			msgerr.New(fmt.Errorf("user.handler.Handler.updateNickname: %v", err),
-				msgerr.ErrMsgUnauthorized)
+		return c.Status(http.StatusUnauthorized).JSON(fext.E(err, msgerr.ErrMsgUnauthorized))
 	}
 
 	var data UpdateNickname
-	err = c.Bind(&data)
+	err = c.BodyParser(&data)
 	if err != nil {
-		return http.StatusBadRequest, nil,
-			msgerr.New(fmt.Errorf("user.handler.Handler.updateNickname: %v", err),
-				msgerr.ErrMsgBadRequest)
+		return c.Status(http.StatusBadRequest).JSON(fext.E(err, msgerr.ErrMsgBadRequest))
 	}
 
 	err = h.userSvc.UpdateNickname(ctx, uid, data.Nickname)
 	if err != nil {
-		return http.StatusInternalServerError, nil,
-			fmt.Errorf("user.handler.Handler.updateNickname: %w", err)
+		return c.Status(http.StatusInternalServerError).JSON(fext.E(err))
 	}
 
-	return http.StatusOK, nil, nil
+	return c.SendStatus(http.StatusOK)
 }

@@ -41,7 +41,7 @@ func (r *VocabRepo) AddVocab(ctx context.Context, vocab entity.Vocab) (uuid.UUID
 	vid := uuid.New()
 	_, err := r.tr.Exec(ctx, query, vid, vocab.UserID, vocab.Name, vocab.NativeLang, vocab.TranslateLang, vocab.Description, time.Now().UTC(), vocab.Access)
 	if err != nil {
-		return uuid.Nil, fmt.Errorf("vocabulary.delivery.repository.VocabRepo.Add: %w", err)
+		return uuid.Nil, fmt.Errorf("vocabulary.repository.VocabRepo.Add: %w", err)
 	}
 
 	return vid, nil
@@ -51,10 +51,10 @@ func (r *VocabRepo) DeleteVocab(ctx context.Context, vocab entity.Vocab) error {
 	query := `DELETE FROM vocabulary WHERE user_id=$1 AND name=$2;`
 	result, err := r.tr.Exec(ctx, query, vocab.UserID, vocab.Name)
 	if err != nil {
-		return fmt.Errorf("vocabulary.delivery.repository.VocabRepo.Delete: %w", err)
+		return fmt.Errorf("vocabulary.repository.VocabRepo.Delete: %w", err)
 	}
 	if rows := result.RowsAffected(); rows == 0 {
-		return fmt.Errorf("vocabulary.delivery.repository.VocabRepo.Delete: %w", entity.ErrVocabularyNotFound)
+		return fmt.Errorf("vocabulary.repository.VocabRepo.Delete: %w", entity.ErrVocabularyNotFound)
 	}
 
 	return nil
@@ -86,7 +86,7 @@ func (r *VocabRepo) GetVocab(ctx context.Context, vid uuid.UUID) (entity.Vocab, 
 		&vocab.CreatedAt,
 		&vocab.UpdatedAt)
 	if err != nil {
-		return vocab, fmt.Errorf("vocabulary.delivery.repository.VocabRepo.Get: %w", err)
+		return vocab, fmt.Errorf("vocabulary.repository.VocabRepo.Get: %w", err)
 	}
 
 	return vocab, nil
@@ -100,7 +100,7 @@ func (r *VocabRepo) GetCreatorVocab(ctx context.Context, vocabID uuid.UUID) (uui
 	var userID uuid.UUID
 	err := r.tr.QueryRow(ctx, query, vocabID).Scan(&userID)
 	if err != nil {
-		return userID, fmt.Errorf("vocabulary.delivery.repository.VocabRepo.GetCreatorVocab: %w", err)
+		return userID, fmt.Errorf("vocabulary.repository.VocabRepo.GetCreatorVocab: %w", err)
 	}
 	return userID, nil
 }
@@ -113,7 +113,7 @@ func (r *VocabRepo) GetByName(ctx context.Context, userID uuid.UUID, name string
 	var vocab entity.Vocab
 	err := r.tr.QueryRow(ctx, query, userID, name).Scan(&vocab.ID, &vocab.UserID, &vocab.Name, &vocab.NativeLang, &vocab.TranslateLang, &vocab.Description)
 	if err != nil {
-		return vocab, fmt.Errorf("vocabulary.delivery.repository.VocabRepo.GetByName: %w", err)
+		return vocab, fmt.Errorf("vocabulary.repository.VocabRepo.GetByName: %w", err)
 	}
 	return vocab, nil
 }
@@ -126,7 +126,7 @@ func (r *VocabRepo) GetTagsVocabulary(ctx context.Context, vocabID uuid.UUID) ([
 	WHERE v.id=$1;`
 	rows, err := r.tr.Query(ctx, query, vocabID)
 	if err != nil {
-		return nil, fmt.Errorf("vocabulary.delivery.repository.VocabRepo.GetByName: %w", err)
+		return nil, fmt.Errorf("vocabulary.repository.VocabRepo.GetByName: %w", err)
 	}
 	defer rows.Close()
 
@@ -134,7 +134,7 @@ func (r *VocabRepo) GetTagsVocabulary(ctx context.Context, vocabID uuid.UUID) ([
 	for rows.Next() {
 		var tag string
 		if err := rows.Scan(&tag); err != nil {
-			return nil, fmt.Errorf("vocabulary.delivery.repository.VocabRepo.GetByName: %w", err)
+			return nil, fmt.Errorf("vocabulary.repository.VocabRepo.GetByName: %w", err)
 		}
 
 		tags = append(tags, tag)
@@ -159,10 +159,10 @@ func (r *VocabRepo) EditVocab(ctx context.Context, vocab entity.Vocab) error {
 	query := `UPDATE vocabulary SET name=$2, access=$3, description=$4 WHERE id=$1;`
 	result, err := r.tr.Exec(ctx, query, vocab.ID, vocab.Name, vocab.Access, vocab.Description)
 	if err != nil {
-		return fmt.Errorf("vocabulary.delivery.repository.VocabRepo.Edit: %w", err)
+		return fmt.Errorf("vocabulary.repository.VocabRepo.Edit: %w", err)
 	}
 	if rows := result.RowsAffected(); rows == 0 {
-		return fmt.Errorf("vocabulary.delivery.repository.VocabRepo.Edit: %w", entity.ErrVocabularyNotFound)
+		return fmt.Errorf("vocabulary.repository.VocabRepo.Edit: %w", entity.ErrVocabularyNotFound)
 	}
 	return nil
 }
@@ -179,7 +179,7 @@ func (r *VocabRepo) GetVocabulariesCountByAccess(ctx context.Context, uid uuid.U
 	var countLine int
 	err := r.tr.QueryRow(ctx, query, uid, accessTypes, search).Scan(&countLine)
 	if err != nil {
-		return 0, fmt.Errorf("vocabulary.delivery.repository.VocabRepo.GetVocabulariesCountByAccess: %w", err)
+		return 0, fmt.Errorf("vocabulary.repository.VocabRepo.GetVocabulariesCountByAccess: %w", err)
 	}
 
 	return countLine, nil
@@ -210,7 +210,7 @@ func (r *VocabRepo) GetVocabulariesByAccess(ctx context.Context, uid uuid.UUID, 
 	OFFSET $5;`, "%", getEqualLanguage("v.native_lang", nativeLang), getEqualLanguage("v.translate_lang", translateLang), getSorted(typeSort, sorted.TypeOrder(order)))
 	rows, err := r.tr.Query(ctx, query, uid, accessTypes, search, itemsPerPage, (page-1)*itemsPerPage)
 	if err != nil {
-		return nil, fmt.Errorf("vocabulary.delivery.repository.VocabRepo.GetVocabulariesByAccess: %w", err)
+		return nil, fmt.Errorf("vocabulary.repository.VocabRepo.GetVocabulariesByAccess: %w", err)
 	}
 	defer rows.Close()
 
@@ -231,7 +231,7 @@ func (r *VocabRepo) GetVocabulariesByAccess(ctx context.Context, uid uuid.UUID, 
 			&vocab.CreatedAt,
 		)
 		if err != nil {
-			return nil, fmt.Errorf("vocabulary.delivery.repository.VocabRepo.GetVocabulariesByAccess - scan: %w", err)
+			return nil, fmt.Errorf("vocabulary.repository.VocabRepo.GetVocabulariesByAccess - scan: %w", err)
 		}
 
 		vocabularies = append(vocabularies, vocab)
@@ -244,7 +244,7 @@ func (r *VocabRepo) GetAccess(ctx context.Context, vid uuid.UUID) (uint8, error)
 	var accessID uint8
 	err := r.tr.QueryRow(ctx, "SELECT access FROM vocabulary WHERE id=$1", vid).Scan(&accessID)
 	if err != nil {
-		return 0, fmt.Errorf("vocabulary.delivery.repository.VocabRepo.GetAccess: %w", err)
+		return 0, fmt.Errorf("vocabulary.repository.VocabRepo.GetAccess: %w", err)
 	}
 	return accessID, nil
 }
@@ -252,13 +252,13 @@ func (r *VocabRepo) GetAccess(ctx context.Context, vid uuid.UUID) (uint8, error)
 func (r *VocabRepo) CopyVocab(ctx context.Context, uid, vid uuid.UUID) (uuid.UUID, error) {
 	vocab, err := r.GetVocab(ctx, vid)
 	if err != nil {
-		return uuid.Nil, fmt.Errorf("vocabulary.delivery.repository.VocabRepo.Copy - get vocab: %w", err)
+		return uuid.Nil, fmt.Errorf("vocabulary.repository.VocabRepo.Copy - get vocab: %w", err)
 	}
 
 	vocab.UserID = uid
 	vid, err = r.AddVocab(ctx, vocab)
 	if err != nil {
-		return uuid.Nil, fmt.Errorf("vocabulary.delivery.repository.VocabRepo.Copy - add vocab: %w", err)
+		return uuid.Nil, fmt.Errorf("vocabulary.repository.VocabRepo.Copy - add vocab: %w", err)
 	}
 
 	return vid, nil
@@ -270,7 +270,7 @@ func (r *VocabRepo) GetVocabsWithCountWords(ctx context.Context, uid, owner uuid
 		SELECT count(v.id) FROM vocabulary v
 		WHERE v.user_id = $1 AND "access" = any($2)`, owner, access).Scan(&limit)
 	if err != nil {
-		return nil, fmt.Errorf("vocabulary.delivery.repository.VocabRepo.GetVocabsWithCountWords - get limit: %w", err)
+		return nil, fmt.Errorf("vocabulary.repository.VocabRepo.GetVocabsWithCountWords - get limit: %w", err)
 	}
 
 	query := `
@@ -291,7 +291,7 @@ func (r *VocabRepo) GetVocabsWithCountWords(ctx context.Context, uid, owner uuid
 
 	rows, err := r.tr.Query(ctx, query, owner, access, uid, limit)
 	if err != nil {
-		return nil, fmt.Errorf("vocabulary.delivery.repository.VocabRepo.GetWithCountWords: %w", err)
+		return nil, fmt.Errorf("vocabulary.repository.VocabRepo.GetWithCountWords: %w", err)
 	}
 
 	vocabs := make([]entity.VocabWithUser, 0, limit)
@@ -299,7 +299,7 @@ func (r *VocabRepo) GetVocabsWithCountWords(ctx context.Context, uid, owner uuid
 	for rows.Next() {
 		err := rows.Scan(&vocab.ID, &vocab.Name, &vocab.NativeLang, &vocab.TranslateLang, &vocab.Access, &vocab.WordsCount, &vocab.Notification)
 		if err != nil {
-			return nil, fmt.Errorf("vocabulary.delivery.repository.VocabRepo.GetWithCountWords - scan: %w", err)
+			return nil, fmt.Errorf("vocabulary.repository.VocabRepo.GetWithCountWords - scan: %w", err)
 		}
 		vocabs = append(vocabs, vocab)
 	}
@@ -342,7 +342,7 @@ func (r *VocabRepo) GetWithCountWords(ctx context.Context, vid uuid.UUID) (entit
 		&vocab.UserName,
 	)
 	if err != nil {
-		return entity.VocabWithUser{}, fmt.Errorf("vocabulary.delivery.repository.VocabRepo.GetWithCountWords: %w", err)
+		return entity.VocabWithUser{}, fmt.Errorf("vocabulary.repository.VocabRepo.GetWithCountWords: %w", err)
 	}
 
 	return vocab, nil
@@ -369,7 +369,7 @@ func (r *VocabRepo) GetVocabulariesWithMaxWords(ctx context.Context, access []ui
 
 	rows, err := r.tr.Query(ctx, query, limit, access)
 	if err != nil {
-		return nil, fmt.Errorf("vocabulary.delivery.repository.VocabRepo.GetVocabulariesRandom: %w", err)
+		return nil, fmt.Errorf("vocabulary.repository.VocabRepo.GetVocabulariesRandom: %w", err)
 	}
 
 	vocabs := make([]entity.VocabWithUser, 0, limit)
@@ -386,7 +386,7 @@ func (r *VocabRepo) GetVocabulariesWithMaxWords(ctx context.Context, access []ui
 			&vocab.Description,
 		)
 		if err != nil {
-			return nil, fmt.Errorf("vocabulary.delivery.repository.VocabRepo.GetVocabulariesRandom - scan: %w", err)
+			return nil, fmt.Errorf("vocabulary.repository.VocabRepo.GetVocabulariesRandom - scan: %w", err)
 		}
 		vocabs = append(vocabs, vocab)
 	}
@@ -417,7 +417,7 @@ func (r *VocabRepo) GetVocabulariesRecommended(ctx context.Context, uid uuid.UUI
 
 	rows, err := r.tr.Query(ctx, query, uid, access, limit)
 	if err != nil {
-		return nil, fmt.Errorf("vocabulary.delivery.repository.VocabRepo.GetVocabulariesRecommended: %w", err)
+		return nil, fmt.Errorf("vocabulary.repository.VocabRepo.GetVocabulariesRecommended: %w", err)
 	}
 	defer rows.Close()
 
@@ -435,7 +435,7 @@ func (r *VocabRepo) GetVocabulariesRecommended(ctx context.Context, uid uuid.UUI
 			&vocab.Description,
 		)
 		if err != nil {
-			return nil, fmt.Errorf("vocabulary.delivery.repository.VocabRepo.GetVocabulariesRecommended - scan: %w", err)
+			return nil, fmt.Errorf("vocabulary.repository.VocabRepo.GetVocabulariesRecommended - scan: %w", err)
 		}
 		vocabs = append(vocabs, vocab)
 	}

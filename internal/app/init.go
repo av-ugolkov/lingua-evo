@@ -8,12 +8,14 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
-	"github.com/gin-contrib/cors"
-	"github.com/gin-gonic/gin"
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/jackc/pgx/v5/pgxpool"
+	jsoniter "github.com/json-iterator/go"
 
 	"github.com/av-ugolkov/lingua-evo/internal/closer"
 	"github.com/av-ugolkov/lingua-evo/internal/config"
@@ -23,11 +25,10 @@ import (
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/google"
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/kafka"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/analytic"
-	"github.com/av-ugolkov/lingua-evo/internal/pkg/gin-ext"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/log"
-	accessService "github.com/av-ugolkov/lingua-evo/internal/services/access"
 	accessHandler "github.com/av-ugolkov/lingua-evo/internal/services/access/handler"
 	accessRepository "github.com/av-ugolkov/lingua-evo/internal/services/access/repository"
+	accessService "github.com/av-ugolkov/lingua-evo/internal/services/access/service"
 	authHandler "github.com/av-ugolkov/lingua-evo/internal/services/auth/handler"
 	authRepository "github.com/av-ugolkov/lingua-evo/internal/services/auth/repository"
 	authService "github.com/av-ugolkov/lingua-evo/internal/services/auth/service"
@@ -105,26 +106,36 @@ func ServerStart(cfg *config.Config) {
 		return nil
 	})
 
-	gin.SetMode(gin.ReleaseMode)
-	router := ginext.NewEngine(gin.New())
+	router := fiber.New(fiber.Config{
+		AppName:      "Lingua Evo",
+		JSONEncoder:  jsoniter.Marshal,
+		JSONDecoder:  jsoniter.Unmarshal,
+		WriteTimeout: 15 * time.Second,
+		ReadTimeout:  15 * time.Second,
+		ErrorHandler: func(c *fiber.Ctx, err error) error {
+			slog.Error(err.Error())
+
+			if e, ok := err.(*fiber.Error); ok {
+				return c.Status(e.Code).JSON(fiber.Map{
+					"error": e.Message,
+				})
+			}
+
+			// Для других ошибок — возвращаем 500
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": "Internal Server Error",
+			})
+		},
+	})
 	router.Use(cors.New(cors.Config{
-		AllowOrigins:     cfg.Service.AllowedOrigins,
-		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"},
+		AllowOrigins:     strings.Join(cfg.Service.AllowedOrigins, ","),
+		AllowMethods:     "GET,POST,PUT,DELETE,PATCH,OPTIONS",
 		AllowCredentials: true,
-		AllowHeaders:     []string{"Authorization", "Content-Type", "Fingerprint"},
-		AllowWildcard:    true,
-	}), ginext.Logger())
+		AllowHeaders:     "Authorization,Content-Type,Fingerprint",
+	}))
 	initServer(cfg, router, pgxPool, redisDB)
 
 	address := fmt.Sprintf(":%d", cfg.Service.Port)
-
-	server := http.Server{
-		Addr:         address,
-		Handler:      router.Handler(),
-		WriteTimeout: 15 * time.Second,
-		ReadTimeout:  15 * time.Second,
-		ErrorLog:     logger.ServerLogger,
-	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
@@ -132,9 +143,9 @@ func ServerStart(cfg *config.Config) {
 	slog.Info("start server")
 	go func() {
 		if cfg.SSL.Enable {
-			err = server.ListenAndServeTLS(cfg.SSL.GetPublic(), cfg.SSL.GetPrivate())
+			err = router.ListenTLS(address, cfg.SSL.GetPublic(), cfg.SSL.GetPrivate())
 		} else {
-			err = server.ListenAndServe()
+			err = router.Listen(address)
 		}
 
 		if err != nil {
@@ -155,7 +166,7 @@ func ServerStart(cfg *config.Config) {
 
 	shutdownPprof(ctx)
 
-	if err := server.Shutdown(ctx); err != nil {
+	if err := router.ShutdownWithContext(ctx); err != nil {
 		slog.Error(fmt.Sprintf("server shutdown returned an err: %v\n", err))
 	}
 
@@ -167,7 +178,7 @@ func ServerStart(cfg *config.Config) {
 	slog.Info("final")
 }
 
-func initServer(cfg *config.Config, r *ginext.Engine, pgxPool *pgxpool.Pool, redis *redis.Redis) {
+func initServer(cfg *config.Config, r *fiber.App, pgxPool *pgxpool.Pool, redis *redis.Redis) {
 	tr := transactor.NewTransactor(pgxPool)
 	slog.Info("create services")
 	emailSvc := emailService.NewService(cfg.Email)

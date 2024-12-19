@@ -9,7 +9,7 @@ import (
 
 	"github.com/av-ugolkov/lingua-evo/internal/config"
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/google"
-	msgerr "github.com/av-ugolkov/lingua-evo/internal/pkg/msg-error"
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/msgerr"
 	jwtToken "github.com/av-ugolkov/lingua-evo/internal/pkg/token"
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/auth"
 	entityUser "github.com/av-ugolkov/lingua-evo/internal/services/user"
@@ -36,9 +36,6 @@ func (s *Service) AuthByGoogle(ctx context.Context, code, fingerprint string) (_
 			if err != nil {
 				err = fmt.Errorf("auth.Service.AuthByGoogle: %w", err)
 			}
-
-			err = msgerr.New(err,
-				"Sorry! We can't sign you in. Please try again.")
 		}
 	}()
 
@@ -63,9 +60,8 @@ func (s *Service) AuthByGoogle(ctx context.Context, code, fingerprint string) (_
 			GoogleID: profile.ID,
 		})
 		if err != nil {
-			return nil,
-				msgerr.New(fmt.Errorf("auth.Service.AuthByGoogle: %w", err),
-					"The user exists with the same email or nickname")
+			return nil, msgerr.New(fmt.Errorf("auth.Service.AuthByGoogle: %w", err),
+				entity.ErrMsgUserExists)
 		}
 
 		session = &entity.Session{

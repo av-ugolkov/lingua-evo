@@ -4,9 +4,12 @@ import (
 	"net/http"
 
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
-	"github.com/av-ugolkov/lingua-evo/internal/pkg/gin-ext"
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/fext"
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/router"
 	"github.com/av-ugolkov/lingua-evo/internal/services/language"
 	"github.com/av-ugolkov/lingua-evo/runtime"
+
+	"github.com/gofiber/fiber/v2"
 )
 
 type (
@@ -20,11 +23,11 @@ type (
 	}
 )
 
-func Create(r *ginext.Engine, langSvc *language.Service) {
+func Create(r *fiber.App, langSvc *language.Service) {
 	h := newHandler(langSvc)
 
-	r.GET(handler.CurrentLanguage, h.getCurrentLanguage)
-	r.GET(handler.AvailableLanguages, h.getAvailableLanguages)
+	r.Get(handler.CurrentLanguage, h.getCurrentLanguage)
+	r.Get(handler.AvailableLanguages, h.getAvailableLanguages)
 }
 
 func newHandler(langSvc *language.Service) *Handler {
@@ -33,24 +36,30 @@ func newHandler(langSvc *language.Service) *Handler {
 	}
 }
 
-func (h *Handler) getCurrentLanguage(c *ginext.Context) (int, any, error) {
-	langCode, err := c.Cookie(ginext.Language)
-	if err != nil {
-		langCode = runtime.GetLanguage("en")
-	}
+func (h *Handler) getCurrentLanguage(c *fiber.Ctx) error {
+	langCode := c.Cookies(router.Language, "en")
 	languageRs := &LanguageRs{
 		Code: langCode,
 	}
 
-	c.SetCookie(ginext.Language, languageRs.Code, 0, "/", runtime.EmptyString, false, true)
-	return http.StatusOK, languageRs, nil
+	c.Cookie(&fiber.Cookie{
+		Name:     router.Language,
+		Value:    langCode,
+		MaxAge:   0,
+		Path:     "/",
+		Domain:   runtime.EmptyString,
+		Secure:   false,
+		HTTPOnly: true,
+	})
+
+	return c.Status(http.StatusOK).JSON(fext.D(languageRs))
 }
 
-func (h *Handler) getAvailableLanguages(c *ginext.Context) (int, any, error) {
-	ctx := c.Request.Context()
+func (h *Handler) getAvailableLanguages(c *fiber.Ctx) error {
+	ctx := c.Context()
 	languages, err := h.langSvc.GetAvailableLanguages(ctx)
 	if err != nil {
-		return http.StatusInternalServerError, nil, err
+		return c.Status(http.StatusInternalServerError).JSON(fext.E(err))
 	}
 
 	languagesRs := make([]LanguageRs, 0, len(languages))
@@ -61,5 +70,5 @@ func (h *Handler) getAvailableLanguages(c *ginext.Context) (int, any, error) {
 		})
 	}
 
-	return http.StatusOK, languagesRs, nil
+	return c.Status(http.StatusOK).JSON(fext.D(languagesRs))
 }

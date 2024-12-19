@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/av-ugolkov/lingua-evo/internal/pkg/msg-error"
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/msgerr"
 	entityDict "github.com/av-ugolkov/lingua-evo/internal/services/dictionary"
 	entityEvents "github.com/av-ugolkov/lingua-evo/internal/services/events"
 	entityExample "github.com/av-ugolkov/lingua-evo/internal/services/example"
