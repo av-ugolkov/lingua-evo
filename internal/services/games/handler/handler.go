@@ -1,15 +1,14 @@
 package handler
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/av-ugolkov/lingua-evo/internal/delivery/handler"
-	ginext "github.com/av-ugolkov/lingua-evo/internal/pkg/gin-ext"
-	msgerr "github.com/av-ugolkov/lingua-evo/internal/pkg/msg-error"
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/fext"
+	"github.com/av-ugolkov/lingua-evo/internal/pkg/msgerr"
 	"github.com/av-ugolkov/lingua-evo/internal/services/games/service"
-	"github.com/av-ugolkov/lingua-evo/runtime"
 
+	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 )
 
@@ -25,38 +24,32 @@ type Handler struct {
 	gameSvc *service.Service
 }
 
-func Create(r *ginext.Engine, gameSvc *service.Service) {
+func Create(r *fiber.App, gameSvc *service.Service) {
 	h := &Handler{
 		gameSvc: gameSvc,
 	}
 
-	r.GET(handler.ReviseGame, h.getReviseGame)
+	r.Get(handler.ReviseGame, h.getReviseGame)
 }
 
-func (h *Handler) getReviseGame(c *ginext.Context) (int, any, error) {
-	ctx := c.Request.Context()
+func (h *Handler) getReviseGame(c *fiber.Ctx) error {
+	ctx := c.Context()
 
-	uid, err := runtime.UserIDFromContext(ctx)
+	uid, err := fext.UserIDFromContext(c)
 	if err != nil {
-		return http.StatusUnauthorized, nil,
-			msgerr.New(fmt.Errorf("games.delivery.Handler.getReviseGame: %v", err),
-				msgerr.ErrMsgUnauthorized)
+		return c.Status(http.StatusUnauthorized).JSON(fext.E(err, msgerr.ErrMsgUnauthorized))
 	}
 
 	var data ReviseGameRq
-	err = c.Bind(&data)
+	err = c.BodyParser(&data)
 	if err != nil {
-		return http.StatusInternalServerError, nil,
-			msgerr.New(fmt.Errorf("games.delivery.Handler.getReviseGame: %v", err),
-				msgerr.ErrMsgInternal)
+		return c.Status(http.StatusBadRequest).JSON(fext.E(err, msgerr.ErrMsgInternal))
 	}
 
 	err = h.gameSvc.GameRevise(ctx, uid, reviseGameFromRsToEntity(data))
 	if err != nil {
-		return http.StatusInternalServerError, nil,
-			msgerr.New(fmt.Errorf("games.delivery.Handler.getReviseGame: %v", err),
-				msgerr.ErrMsgInternal)
+		return c.Status(http.StatusBadRequest).JSON(fext.E(err, msgerr.ErrMsgInternal))
 	}
 
-	return http.StatusOK, nil, nil
+	return c.SendStatus(http.StatusOK)
 }
