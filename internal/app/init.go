@@ -41,6 +41,9 @@ import (
 	eventService "github.com/av-ugolkov/lingua-evo/internal/services/events/service"
 	exampleService "github.com/av-ugolkov/lingua-evo/internal/services/example"
 	exampleRepository "github.com/av-ugolkov/lingua-evo/internal/services/example/repository"
+	gamesHandler "github.com/av-ugolkov/lingua-evo/internal/services/games/handler"
+	gamesRepository "github.com/av-ugolkov/lingua-evo/internal/services/games/repository"
+	gamesService "github.com/av-ugolkov/lingua-evo/internal/services/games/service"
 	langService "github.com/av-ugolkov/lingua-evo/internal/services/language"
 	languageHandler "github.com/av-ugolkov/lingua-evo/internal/services/language/handler"
 	langRepository "github.com/av-ugolkov/lingua-evo/internal/services/language/repository"
@@ -202,6 +205,8 @@ func initServer(cfg *config.Config, r *fiber.App, pgxPool *pgxpool.Pool, redis *
 	authRepo := authRepository.NewRepo(redis)
 	authSvc := authService.NewService(authRepo, userSvc, emailSvc)
 	supportSvc := supportService.NewService(emailSvc)
+	gamesRepo := gamesRepository.New(tr)
+	gamesSvc := gamesService.New(gamesRepo)
 
 	slog.Info("create handlers")
 	userHandler.Create(r, userSvc)
@@ -215,6 +220,7 @@ func initServer(cfg *config.Config, r *fiber.App, pgxPool *pgxpool.Pool, redis *
 	notificationHandler.Create(r, notificationSvc)
 	supportHandler.Create(r, supportSvc)
 	eventsHandler.Create(r, eventsSvc)
+	gamesHandler.Create(r, gamesSvc)
 
 	slog.Info("end init services")
 }
