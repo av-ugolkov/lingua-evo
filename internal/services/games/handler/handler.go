@@ -46,7 +46,7 @@ func (h *Handler) getReviseGame(c *fiber.Ctx) error {
 		return c.Status(http.StatusBadRequest).JSON(fext.E(err, msgerr.ErrMsgInternal))
 	}
 
-	err = h.gameSvc.GameRevise(ctx, uid, reviseGameFromRsToEntity(data))
+	err = h.gameSvc.GameRevise(ctx, uid, reviseGameToEntity(data))
 	if err != nil {
 		return c.Status(http.StatusBadRequest).JSON(fext.E(err, msgerr.ErrMsgInternal))
 	}
