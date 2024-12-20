@@ -22,12 +22,8 @@ const (
 )
 
 const (
-	QueryParamText             = "text"
-	QueryParamLangCode         = "lang-code"
-	QueryParamRandomWordsLimit = "limit"
-	QueryParamPage             = "page"
-	QueryParamPerPage          = "per_page"
-	QueryParamSearch           = "search"
+	QueryParamText     = "text"
+	QueryParamLangCode = "lang_code"
 )
 
 type (
@@ -85,28 +81,33 @@ func newHandler(dictSvc *dictionarySvc.Service) *Handler {
 	}
 }
 
+// getDictionary
+//
+// in - queries: lang_code, page, per_page, search
+//
+// out 200 - {words: []words: {id*, text*, pronunciation*, lang_code*, creator*, created_at*}, count_words: int}
+//
+// out 4..,5.. - {msg: error}
 func (h *Handler) getDictionary(c *fiber.Ctx) error {
 	ctx := c.Context()
 
-	langCode := c.Query(QueryParamLangCode)
-	if langCode == runtime.EmptyString {
-		return c.Status(http.StatusBadRequest).JSON(fext.E(
-			fmt.Errorf("dictionary.Handler.getDictionary: not found query [%s]", QueryParamLangCode)))
+	var queries struct {
+		LangCode     string `query:"lang_code" validate:"required"`
+		Page         int    `query:"page" validate:"required, gte=1"`
+		ItemsPerPage int    `query:"per_page" validate:"required, gte=1"`
+		Search       string `query:"search"`
+	}
+	err := c.QueryParser(&queries)
+	if err != nil {
+		return c.Status(http.StatusBadRequest).JSON(fext.E(err, msgerr.ErrMsgBadRequest))
 	}
 
-	page := c.QueryInt(QueryParamPage, -1)
-	if page == -1 {
-		return c.Status(http.StatusBadRequest).JSON(fext.E(
-			fmt.Errorf("dictionary.Handler.getDictionary: not found query [%s]", QueryParamPage)))
+	if err := valid.Struct(queries); err != nil {
+		return c.Status(http.StatusBadRequest).JSON(fext.E(err, msgerr.ErrMsgBadRequest))
 	}
-	itemsPerPage := c.QueryInt(QueryParamPerPage, -1)
-	if itemsPerPage == -1 {
-		return c.Status(http.StatusBadRequest).JSON(fext.E(
-			fmt.Errorf("dictionary.Handler.getDictionary: not found query [%s]", QueryParamPerPage)))
-	}
-	search := c.Query(QueryParamSearch)
 
-	dict, countWords, err := h.dictSvc.GetDictionary(ctx, langCode, search, page, itemsPerPage)
+	dict, countWords, err := h.dictSvc.GetDictionary(ctx,
+		queries.LangCode, queries.Search, queries.Page, queries.ItemsPerPage)
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(fext.E(err))
 	}
@@ -195,9 +196,16 @@ func (h *Handler) getWord(c *fiber.Ctx) error {
 	}))
 }
 
+// getRandomWords
+//
+// in - queries: count = 1...10
+//
+// out 200 - {data: []words: {text*, lang_code*, pronunciation}}
+//
+// out 4..,5.. - {msg: error}
 func (h *Handler) getRandomWords(c *fiber.Ctx) error {
 	ctx := c.Context()
-	fmt.Println(c)
+
 	var queries struct {
 		Count int `query:"count" validate:"gte=1,lte=10"`
 	}
@@ -231,24 +239,31 @@ func (h *Handler) getRandomWords(c *fiber.Ctx) error {
 	return c.Status(http.StatusOK).JSON(fext.D(wordsRs))
 }
 
+// getPronunciation
+//
+// in - queries: text, lang_code
+//
+// out 200 - {data: {pronunciation}}
+//
+// out 4..,5.. - {msg: error}
 func (h *Handler) getPronunciation(c *fiber.Ctx) error {
 	ctx := c.Context()
 
-	text := c.Query(QueryParamText)
-	if text == runtime.EmptyString {
-		return c.Status(http.StatusBadRequest).JSON(fext.E(
-			fmt.Errorf("dictionary.Handler.getPronunciation: not found query [%s]", QueryParamText),
-			"You must specify the text"))
+	var queries struct {
+		Text     string `query:"text" validate:"required"`
+		LangCode string `query:"lang_code" validate:"required"`
+	}
+	err := c.QueryParser(&queries)
+	if err != nil {
+		return c.Status(http.StatusBadRequest).JSON(fext.E(err, msgerr.ErrMsgBadRequest))
 	}
 
-	langCode := c.Query(QueryParamLangCode)
-	if langCode == runtime.EmptyString {
-		return c.Status(http.StatusBadRequest).JSON(fext.E(
-			fmt.Errorf("dictionary.Handler.getPronunciation: not found query [%s]", QueryParamLangCode),
-			"You must specify the language code"))
+	err = valid.Struct(queries)
+	if err != nil {
+		return c.Status(http.StatusBadRequest).JSON(fext.E(err, msgerr.ErrMsgValidation))
 	}
 
-	pronunciation, err := h.dictSvc.GetPronunciation(ctx, text, langCode)
+	pronunciation, err := h.dictSvc.GetPronunciation(ctx, queries.Text, queries.LangCode)
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(fext.E(err, msgerr.ErrMsgInternal))
 	}

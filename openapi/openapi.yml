@@ -50,37 +50,7 @@ paths:
             - write:pets
             - read:pets
   /dictionary/word/random:
-    get:
-      tags:
-        - dictionary
-      summary: Get random words
-      description: Get random words
-      operationId: dictionaryGetRandomWords
-      parameters:
-        - in: query
-          name: count
-          schema:
-            type: integer
-            example: 3
-          required: false
-      responses:
-        '200':
-          description: Successful operation
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                  - data
-                properties:
-                  data:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/WordRs'
-        '400': 
-          description: Invalid queries parameters
-        '500':
-          description: Server error
+    $ref: ./paths/dict.yaml
 components:
   schemas:
     CreateSessionRq:
@@ -101,27 +71,6 @@ components:
         access_token:
           type: string
           example: 12345
-    WordRs:
-      type: object
-      properties:
-        id:
-          type: integer
-          format: uuid
-          example: 12345678-1234-1234-1234-1234567890ab
-        text:
-          type: string
-          example: word
-        lang_code:
-          type: string
-          example: en
-        creator:
-          type: string
-          format: uuid
-          example: 12345678-1234-1234-1234-1234567890ab
-        moderator:
-          type: string
-          format: uuid
-          example: 12345678-1234-1234-1234-1234567890ab
     ErrorResponse:
       type: object
       properties:

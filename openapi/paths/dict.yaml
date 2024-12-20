@@ -1,0 +1,44 @@
+get:
+  tags:
+    - dictionary
+  summary: Get random words
+  description: Get random words
+  operationId: dictGetRandomWords
+  parameters:
+    - in: query
+      name: count
+      schema:
+        type: integer
+        example: 3
+      required: false
+  responses:
+    '200':
+      description: Successful operation
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                type: array
+                items:
+                  type: object
+                  required:
+                    - text
+                    - lang_code
+                  properties:
+                    text:
+                      type: string
+                      example: word
+                    lang_code:
+                      type: string
+                      example: en
+                    pronunciation:
+                      type: string
+                      example: word
+    '400': 
+      description: Invalid queries parameters
+    '500':
+      description: Server error
