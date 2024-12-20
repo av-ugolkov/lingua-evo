@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/access"
-	"github.com/av-ugolkov/lingua-evo/internal/services/access/dto"
 )
 
 type (
@@ -24,13 +23,11 @@ func NewService(repo repoAccess) *Service {
 	}
 }
 
-func (s *Service) GetAccessesDTO(ctx context.Context) ([]dto.AccessRs, error) {
+func (s *Service) GetAccesses(ctx context.Context) ([]entity.Access, error) {
 	accesses, err := s.repo.GetAccesses(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("access.Service.GetAccesses: %v", err)
 	}
 
-	accessesRs := dto.AccessesToDto(accesses)
-
-	return accessesRs, nil
+	return accesses, nil
 }
