@@ -49,8 +49,10 @@ paths:
         - petstore_auth:
             - write:pets
             - read:pets
+  /dictionary/word:
+    $ref: ./paths/dict/dictGetWord.yaml
   /dictionary/word/random:
-    $ref: ./paths/dict.yaml
+    $ref: ./paths/dict/dictGetRandomWords.yaml
 components:
   schemas:
     CreateSessionRq:

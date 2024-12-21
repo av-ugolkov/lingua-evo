@@ -11,8 +11,8 @@ import (
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/valid"
 	dictionarySvc "github.com/av-ugolkov/lingua-evo/internal/services/dictionary"
 	entity "github.com/av-ugolkov/lingua-evo/internal/services/dictionary"
-	"github.com/av-ugolkov/lingua-evo/runtime"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 )
@@ -159,27 +159,42 @@ func (h *Handler) addWord(c *fiber.Ctx) error {
 	return c.Status(http.StatusOK).JSON(fext.D(wordRs))
 }
 
+// getWord
+//
+// in - queries: text, lang_code
+//
+// out 200 - {words: []words: {id*, text*, pronunciation*, lang_code*, creator*, created_at*}}
+//
+// out 4..,5.. - {msg: error}
 func (h *Handler) getWord(c *fiber.Ctx) error {
 	ctx := c.Context()
 
-	text := c.Query(QueryParamText)
-	if text == runtime.EmptyString {
-		return c.Status(http.StatusBadRequest).JSON(fext.E(
-			fmt.Errorf("dictionary.Handler.getWord: not found query [%s]", QueryParamText),
-			"You must specify the text of the word"))
+	var queries struct {
+		Text     string `query:"text" validate:"required"`
+		LangCode string `query:"lang_code" validate:"required"`
+	}
+	err := c.QueryParser(&queries)
+	if err != nil {
+		return c.Status(http.StatusBadRequest).JSON(fext.E(err, msgerr.ErrMsgBadRequest))
 	}
 
-	langCode := c.Query(QueryParamLangCode)
-	if langCode == runtime.EmptyString {
-		return c.Status(http.StatusBadRequest).JSON(fext.E(
-			fmt.Errorf("dictionary.Handler.getWord: not found query [%s]", QueryParamLangCode),
-			"You must specify the language code"))
+	if err := valid.Struct(queries); err != nil {
+		fe := err.(validator.ValidationErrors)
+		for _, e := range fe {
+			switch e.Namespace() {
+			case "Text":
+				return c.Status(http.StatusBadRequest).JSON(fext.E(e, "You must specify the text of the word"))
+			case "LangCode":
+				return c.Status(http.StatusBadRequest).JSON(fext.E(e, "You must specify the language code"))
+			}
+		}
+		return c.Status(http.StatusBadRequest).JSON(fext.E(err, msgerr.ErrMsgValidation))
 	}
 
 	wordIDs, err := h.dictSvc.GetWordsByText(ctx, []entity.DictWord{
 		{
-			Text:     text,
-			LangCode: langCode,
+			Text:     queries.Text,
+			LangCode: queries.LangCode,
 		},
 	})
 	if err != nil {
@@ -188,7 +203,7 @@ func (h *Handler) getWord(c *fiber.Ctx) error {
 
 	if len(wordIDs) == 0 {
 		return c.Status(http.StatusNotFound).JSON(fext.E(
-			fmt.Errorf("dictionary.Handler.getWord: not found words")), ErrMsgNotFoundWord)
+			fmt.Errorf("dictionary.Handler.getWord: not found words"), ErrMsgNotFoundWord))
 	}
 
 	return c.Status(http.StatusOK).JSON(fext.D(&WordRs{
@@ -239,7 +254,7 @@ func (h *Handler) getRandomWords(c *fiber.Ctx) error {
 	return c.Status(http.StatusOK).JSON(fext.D(wordsRs))
 }
 
-// getPronunciation
+// getPronunciation (secure)
 //
 // in - queries: text, lang_code
 //

@@ -1,0 +1,44 @@
+get:
+  tags:
+    - dictionary
+  summary: Get word
+  description: Get word
+  operationId: dictGetWord
+  parameters:
+    - in: query
+      name: text
+      schema:
+        type: integer
+        example: word
+      required: true
+    - in: query
+      name: lang_code
+      schema:
+        type: string
+        example: en
+      required: true
+  responses:
+    '200':
+      description: Successful operation
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                type: object
+                required:
+                  - id
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                    example: 12345678-1234-1234-1234-1234567890ab
+    '400': 
+      description: Invalid queries parameters
+    '404':
+      description: Word not found
+    '500':
+      description: Server error
