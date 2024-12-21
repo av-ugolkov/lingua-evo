@@ -11,6 +11,7 @@ import (
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/fext"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/msgerr"
 	"github.com/av-ugolkov/lingua-evo/internal/pkg/router"
+	"github.com/av-ugolkov/lingua-evo/internal/services/auth/dto"
 	auth "github.com/av-ugolkov/lingua-evo/internal/services/auth/service"
 	"github.com/av-ugolkov/lingua-evo/runtime"
 
@@ -60,10 +61,12 @@ func (h *Handler) refresh(c *fiber.Ctx) error {
 		return c.Status(http.StatusBadRequest).JSON(fext.E(err))
 	}
 
-	sessionRs, err := h.authSvc.RefreshSessionToken(ctx, uid, refreshToken, fingerprint[0])
+	tokens, err := h.authSvc.RefreshSessionToken(ctx, uid, refreshToken, fingerprint[0])
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(fext.E(err))
 	}
+
+	sessionRs := dto.CreateSessionToDTO(tokens)
 
 	additionalTime := config.GetConfig().JWT.ExpireRefresh
 	duration := time.Duration(additionalTime) * time.Second

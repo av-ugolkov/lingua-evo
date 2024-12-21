@@ -50,7 +50,7 @@ func (h *Handler) signIn(c *fiber.Ctx) error {
 	data.Fingerprint = fingerprint[0]
 
 	refreshTokenID := uuid.New()
-	sessionRs, refreshToken, err := h.authSvc.SignIn(ctx, data.User, data.Password, data.Fingerprint, refreshTokenID)
+	tokens, err := h.authSvc.SignIn(ctx, data.User, data.Password, data.Fingerprint, refreshTokenID)
 	if err != nil {
 		switch {
 		case errors.Is(err, entity.ErrNotFoundUser) ||
@@ -61,11 +61,13 @@ func (h *Handler) signIn(c *fiber.Ctx) error {
 		}
 	}
 
+	sessionRs := dto.CreateSessionToDTO(tokens)
+
 	additionalTime := config.GetConfig().JWT.ExpireRefresh
 	duration := time.Duration(additionalTime) * time.Second
 	c.Cookie(&fiber.Cookie{
 		Name:     router.RefreshToken,
-		Value:    refreshToken,
+		Value:    tokens.RefreshToken,
 		MaxAge:   int(duration.Seconds()),
 		Path:     router.CookiePathAuth,
 		Secure:   true,

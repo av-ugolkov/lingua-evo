@@ -24,6 +24,7 @@ service:
         - 'https://linguaevo.twc1.net'
         - 'http://www.linguaevo.twc1.net/'
         - 'https://www.linguaevo.twc1.net/'
+    enable_swagger: true
 postgres:
     name: pg-lingua-evo
     user: lingua

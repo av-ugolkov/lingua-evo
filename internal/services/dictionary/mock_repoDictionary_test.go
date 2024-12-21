@@ -154,25 +154,25 @@ func (_m *mockRepoDictionary) GetPronunciation(ctx context.Context, text string,
 	return r0, r1
 }
 
-// GetRandomWords provides a mock function with given fields: ctx, langCode, count
-func (_m *mockRepoDictionary) GetRandomWords(ctx context.Context, langCode string, count int) ([]DictWord, error) {
-	ret := _m.Called(ctx, langCode, count)
+// GetRandomWords provides a mock function with given fields: ctx, count
+func (_m *mockRepoDictionary) GetRandomWords(ctx context.Context, count int) ([]DictWord, error) {
+	ret := _m.Called(ctx, count)
 
 	var r0 []DictWord
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, int) ([]DictWord, error)); ok {
-		return rf(ctx, langCode, count)
+	if rf, ok := ret.Get(0).(func(context.Context, int) ([]DictWord, error)); ok {
+		return rf(ctx, count)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, int) []DictWord); ok {
-		r0 = rf(ctx, langCode, count)
+	if rf, ok := ret.Get(0).(func(context.Context, int) []DictWord); ok {
+		r0 = rf(ctx, count)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]DictWord)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, int) error); ok {
-		r1 = rf(ctx, langCode, count)
+	if rf, ok := ret.Get(1).(func(context.Context, int) error); ok {
+		r1 = rf(ctx, count)
 	} else {
 		r1 = ret.Error(1)
 	}
